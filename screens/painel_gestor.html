@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet">
+    <script type="module" src="../js/manager-context.js?v=2.7"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#10B981",
+                        "background-light": "#f5f6f8",
+                        "background-dark": "#101622",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk"]
+                    },
+                    borderRadius: { "DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+    <script type="module">
+        import { Auth } from '../js/auth.js';
+        import { UI } from '../js/ui-utils.js';
+        const user = Auth.checkSession(['manager', 'gestor', 'admin']);
+
+        if (user) {
+            window.addEventListener('DOMContentLoaded', () => {
+                const userData = Auth.getUser();
+                document.querySelector('h2.text-2xl.font-bold').innerText = userData.name.split(' ')[0].toUpperCase();
+                document.querySelector('p.text-slate-500').innerHTML = `
+                    Cargo/Função: ${userData.role.toUpperCase()}<br>
+                    Setor: ${userData.setor}<br>
+                    ID: ${userData.nickname}
+                `;
+            });
+        }
+    </script>
+    <title>ChronoSync - Gestor Dashboard</title>
+
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen flex flex-col pb-24">
+    <!-- Top Header / Profile Section -->
+    <header
+        class="p-6 pt-8 flex flex-col items-center border-b border-primary/10 bg-background-dark/50 backdrop-blur-sm">
+        <div class="flex items-center justify-between w-full mb-6">
+            <div id="sideMenuTrigger" class="cursor-pointer">
+                <span class="material-symbols-outlined text-slate-400 hover:text-primary transition-colors">menu</span>
+            </div>
+            <h1 id="headerTitle" class="text-[10px] font-black tracking-[0.2em] text-slate-500 uppercase">Protocolo
+                Gestor</h1>
+            <span class="material-symbols-outlined text-slate-400">settings</span>
+        </div>
+
+        <div class="flex flex-col items-center text-center w-full max-w-md">
+            <div class="relative mb-6">
+                <div
+                    class="w-24 h-24 rounded-full border-2 border-primary p-1 bg-background-dark shadow-[0_0_30px_rgba(16,185,129,0.15)]">
+                    <img id="user-photo" src="https://ui-avatars.com/api/?name=Manager&background=10B981&color=fff"
+                        class="w-full h-full rounded-full object-cover">
+                </div>
+                <div id="user-timer"
+                    class="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-primary px-4 py-1 rounded-full text-[10px] font-black text-white shadow-xl border border-white/10 whitespace-nowrap">
+                    +00:00:00
+                </div>
+            </div>
+
+            <h2 id="display-name" class="text-3xl font-black text-slate-100 tracking-tight mb-1 uppercase">GESTOR</h2>
+            <p id="user-role-setor"
+                class="text-[10px] font-bold text-primary uppercase tracking-[0.2em] mb-6 opacity-80 italic">
+                GESTOR | SETOR CENTRAL
+            </p>
+
+            <div class="grid grid-cols-3 w-full border-t border-white/5 pt-6 divide-x divide-white/5">
+                <div class="px-2">
+                    <p class="text-[8px] text-slate-500 uppercase font-black mb-1 opacity-60">Matrícula</p>
+                    <p id="user-nickname" class="text-xs font-bold text-slate-200">#---</p>
+                </div>
+                <div class="px-2">
+                    <p class="text-[8px] text-slate-500 uppercase font-black mb-1 opacity-60">Nível</p>
+                    <p id="user-level-display" class="text-xs font-bold text-primary uppercase">GESTOR</p>
+                </div>
+                <div class="px-2">
+                    <p class="text-[8px] text-slate-500 uppercase font-black mb-1 opacity-60">Status</p>
+                    <p id="status-text" class="text-xs font-bold text-slate-500 uppercase">OFFLINE</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Stats Grid -->
+        <div class="w-full max-w-md grid grid-cols-3 gap-3 mt-8">
+            <div
+                class="bg-primary/5 border border-primary/20 rounded-xl p-3 text-center transition-all hover:bg-primary/10">
+                <p class="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Equipe</p>
+                <p id="statTotalEquipe" class="text-lg font-black text-slate-100">--</p>
+            </div>
+            <div
+                class="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-3 text-center transition-all hover:bg-emerald-500/10">
+                <p class="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Online</p>
+                <p id="statOnline" class="text-lg font-black text-emerald-400">--</p>
+            </div>
+            <div
+                class="bg-amber-500/5 border border-amber-500/20 rounded-xl p-3 text-center transition-all hover:bg-amber-500/10">
+                <p class="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Pendências</p>
+                <p id="statPendencias" class="text-lg font-black text-amber-500">--</p>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 p-6 space-y-8 max-w-2xl mx-auto w-full">
+        <!-- Punch Button Area -->
+        <div class="w-full max-w-md flex justify-center mb-4 mx-auto">
+            <button id="punchButton"
+                class="relative group w-44 h-44 rounded-full bg-primary flex flex-col items-center justify-center text-center p-6 shadow-xl border-4 border-primary/30 hover:scale-105 transition-all">
+                <span class="material-symbols-outlined text-4xl mb-2 text-white">power_settings_new</span>
+                <span
+                    class="text-[11px] font-black text-white leading-tight tracking-wider uppercase">REGISTRAR<br>PONTO</span>
+            </button>
+        </div>
+
+        <!-- Session Stats -->
+        <div
+            class="w-full max-w-md bg-white/5 border border-slate-200 dark:border-primary/20 rounded-2xl p-6 backdrop-blur-sm mx-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                    <span class="material-symbols-outlined text-lg text-primary">timer</span> MINHA SESSÃO
+                </h3>
+            </div>
+            <div class="grid grid-cols-3 gap-4">
+                <div class="text-center">
+                    <p class="text-[9px] text-slate-500 uppercase font-bold mb-1">Início</p>
+                    <p id="stats-inicio" class="text-xs font-bold">--:--</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-[9px] text-slate-500 uppercase font-bold mb-1">Fim</p>
+                    <p id="stats-fim" class="text-xs font-bold text-slate-400">--:--</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-[9px] text-slate-500 uppercase font-bold mb-1">Duração</p>
+                    <p id="stats-total" class="text-xs font-bold text-primary">00:00</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Daily Tasks -->
+        <div class="w-full max-w-md space-y-4 mx-auto">
+            <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                <span class="material-symbols-outlined text-lg">task_alt</span>MISSÕES DIÁRIAS
+            </h3>
+            <div class="grid grid-cols-2 gap-3">
+                <a href="anotacao_diaria.html"
+                    class="bg-white/5 border border-white/5 p-4 rounded-xl flex flex-col items-center gap-2 hover:bg-primary/10 transition-colors text-center">
+                    <span class="material-symbols-outlined text-primary">edit_note</span>
+                    <span class="text-[9px] font-bold uppercase tracking-tighter">Anotação</span>
+                </a>
+                <a href="justificativa.html"
+                    class="bg-white/5 border border-white/5 p-4 rounded-xl flex flex-col items-center gap-2 hover:bg-primary/10 transition-colors text-center">
+                    <span class="material-symbols-outlined text-amber-500">hourglass_top</span>
+                    <span class="text-[9px] font-bold uppercase tracking-tighter">Justificativa</span>
+                </a>
+            </div>
+        </div>
+
+
+        <!-- Calendar Section -->
+        <section class="space-y-4 max-w-md mx-auto border-t border-white/5 pt-8">
+            <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                <span class="material-symbols-outlined text-lg">calendar_month</span> CRONOGRAMA SETORIAL
+            </h3>
+            <div class="bg-white/5 border border-white/5 rounded-2xl p-4">
+                <div id="calendar-header" class="flex justify-between items-center mb-4 px-2">
+                    <p id="calendar-month" class="text-[11px] font-black text-slate-200 uppercase tracking-widest">MARÇO
+                        2026</p>
+                    <div class="flex gap-2 text-slate-400">
+                        <span
+                            class="material-symbols-outlined text-sm cursor-pointer hover:text-primary">chevron_left</span>
+                        <span
+                            class="material-symbols-outlined text-sm cursor-pointer hover:text-primary">chevron_right</span>
+                    </div>
+                </div>
+                <div class="grid grid-cols-7 gap-1 text-center mb-2">
+                    <p class="text-[8px] font-black text-slate-600">DOM</p>
+                    <p class="text-[8px] font-black text-slate-600">SEG</p>
+                    <p class="text-[8px] font-black text-slate-600">TER</p>
+                    <p class="text-[8px] font-black text-slate-600">QUA</p>
+                    <p class="text-[8px] font-black text-slate-600">QUI</p>
+                    <p class="text-[8px] font-black text-slate-600">SEX</p>
+                    <p class="text-[8px] font-black text-slate-600">SAB</p>
+                </div>
+                <div id="app-calendar" class="grid grid-cols-7 gap-1">
+                    <!-- Gerado dinamicamente -->
+                </div>
+            </div>
+        </section>
+    </main>
+    <nav
+        class="fixed bottom-0 left-0 right-0 bg-white dark:bg-background-dark border-t border-slate-200 dark:border-primary/10 py-3 z-50 flex justify-center">
+        <div class="flex items-center w-full max-w-md">
+            <a class="flex-1 flex flex-col items-center gap-1 text-primary" href="painel_gestor.html">
+                <span class="material-symbols-outlined fill-1">home</span>
+                <span class="text-[10px] font-bold uppercase tracking-tighter">INÍCIO</span>
+            </a>
+            <a class="flex-1 flex flex-col items-center gap-1 text-slate-400" href="estatistica_funcionario.html">
+                <span class="material-symbols-outlined">bar_chart</span>
+                <span class="text-[10px] font-bold uppercase tracking-tighter">ESTATÍSTICA</span>
+            </a>
+            <a class="flex-1 flex flex-col items-center gap-1 text-slate-400" href="historico_anual.html">
+                <span class="material-symbols-outlined">history</span>
+                <span class="text-[10px] font-bold uppercase tracking-tighter">HISTÓRICO</span>
+            </a>
+            <a id="nav-perfil-link" class="flex-1 flex flex-col items-center gap-1 text-slate-400"
+                href="perfil_funcionario.html">
+                <span class="material-symbols-outlined">person</span>
+                <span class="text-[10px] font-bold uppercase tracking-tighter">PERFIL</span>
+            </a>
+        </div>
+    </nav>
+    <!-- Sidebar Menu Overlay -->
+    <div id="sidebarOverlay"
+        class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] hidden transition-opacity duration-300 opacity-0">
+    </div>
+
+    <!-- Sidebar Menu -->
+    <aside id="sidebarMenu"
+        class="fixed top-0 left-0 h-full w-72 bg-white dark:bg-background-dark border-r border-slate-200 dark:border-primary/20 z-[70] transform -translate-x-full transition-transform duration-300 flex flex-col">
+        <div class="p-6 border-b border-slate-200 dark:border-primary/10 flex items-center justify-between">
+            <h2 class="font-bold text-primary tracking-widest uppercase">Protocolo Admin</h2>
+            <button id="closeSidebar" class="material-symbols-outlined text-slate-400 hover:text-primary">close</button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-4 space-y-2" id="sidebarNav">
+            <!-- Items de navegação para o Gestor -->
+            <a href="painel_gestor.html"
+                class="flex items-center gap-4 p-3 rounded-lg hover:bg-primary/10 text-slate-600 dark:text-slate-300 hover:text-primary transition-all group">
+                <span class="material-symbols-outlined text-slate-400 group-hover:text-primary">home</span>
+                <span class="text-sm font-bold uppercase tracking-tight">Início</span>
+            </a>
+            <a href="relacao_funcionarios.html"
+                class="flex items-center gap-4 p-3 rounded-lg hover:bg-primary/10 text-slate-600 dark:text-slate-300 hover:text-primary transition-all group">
+                <span class="material-symbols-outlined text-slate-400 group-hover:text-primary">group</span>
+                <span class="text-sm font-bold uppercase tracking-tight">Funcionários</span>
+            </a>
+            <a href="autorizacoes_abono.html"
+                class="flex items-center gap-4 p-3 rounded-lg hover:bg-primary/10 text-slate-600 dark:text-slate-300 hover:text-primary transition-all group">
+                <span class="material-symbols-outlined text-slate-400 group-hover:text-primary">pending_actions</span>
+                <span class="text-sm font-bold uppercase tracking-tight">Pendências</span>
+            </a>
+        </div>
+        <div class="p-6 border-t border-slate-200 dark:border-primary/10">
+            <button id="logoutBtn"
+                class="flex items-center gap-3 text-slate-400 hover:text-red-500 transition-colors uppercase text-xs font-bold tracking-widest">
+                <span class="material-symbols-outlined">logout</span> Sair do Sistema
+            </button>
+        </div>
+    </aside>
+
+    <script type="module">
+        import { supabase } from '../js/supabase-config.js';
+        import { Auth } from '../js/auth.js';
+        import { UI } from '../js/ui-utils.js';
+
+        let currentUser = null;
+
+        async function initDashboard() {
+            currentUser = Auth.getUser();
+            if (!currentUser) return;
+
+            // Setup User Info
+            document.getElementById('display-name').innerText = (currentUser.nickname || currentUser.name || "GESTOR").toUpperCase();
+            document.getElementById('user-role-setor').innerText = `${currentUser.role.toUpperCase()} | ${currentUser.setor.toUpperCase()}`;
+            document.getElementById('user-nickname').innerText = currentUser.matricula || `#${currentUser.nickname || 'GESTOR'}`;
+
+            // Ajuste do nível hierárquico
+            const levelDisplay = document.getElementById('user-level-display');
+            if (levelDisplay) levelDisplay.innerText = currentUser.role.toUpperCase();
+
+            const statusText = document.getElementById('status-text');
+            statusText.innerText = 'OFFLINE';
+            statusText.className = 'text-[11px] font-bold text-slate-500 uppercase';
+
+            // Cache bust perfil
+            const profileLink = document.getElementById('nav-perfil-link');
+            if (profileLink) profileLink.href = `perfil_funcionario.html?id=${currentUser.id}&v=5`;
+
+            renderCalendar();
+            loadDashboardStats();
+            loadOnlineStaff();
+            setupPunchLogic(currentUser.id);
+        }
+
+        function renderCalendar() {
+            const container = document.getElementById('app-calendar');
+            const now = new Date();
+            const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+            document.getElementById('calendar-month').innerText = `${monthNames[now.getMonth()]} ${now.getFullYear()}`;
+
+            const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).getDay();
+            const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+
+            container.innerHTML = '';
+            for (let i = 0; i < firstDay; i++) {
+                container.innerHTML += '<div class="h-8"></div>';
+            }
+
+            for (let d = 1; d <= daysInMonth; d++) {
+                const isToday = d === now.getDate();
+                const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                container.innerHTML += `
+                    <a href="resumo_dia.html?date=${dateStr}" class="h-8 flex items-center justify-center rounded-lg text-[10px] font-bold transition-all ${isToday ? 'bg-primary text-white shadow-lg shadow-primary/30 border border-white/20' : 'text-slate-400 hover:bg-white/5'}">
+                        ${d}
+                    </a>
+                `;
+            }
+        }
+
+        async function setupPunchLogic(userId) {
+            const btn = document.getElementById('punchButton');
+            const today = new Date().toISOString().split('T')[0];
+
+            async function refreshTodayStats() {
+                const { data: pts } = await supabase.from('pontos').select('*').eq('funcionario_id', userId).gte('data_hora', `${today}T00:00:00`).order('data_hora', { ascending: true });
+                const statusText = document.getElementById('status-text');
+
+                if (pts && pts.length > 0) {
+                    document.getElementById('stats-inicio').innerText = new Date(pts[0].data_hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                    const isOnline = pts.length % 2 !== 0;
+                    if (isOnline) {
+                        statusText.innerText = 'ONLINE';
+                        statusText.className = 'text-emerald-500 animate-pulse font-black';
+                        btn.classList.add('bg-emerald-600', 'border-emerald-400/50');
+                        btn.querySelector('span:last-child').innerHTML = 'SAÍDA<br>SERVIÇO';
+                        startTimer(pts[pts.length - 1].data_hora);
+                    } else {
+                        statusText.innerText = 'OFFLINE';
+                        statusText.className = 'text-slate-500 font-black';
+                        btn.classList.remove('bg-emerald-600', 'border-emerald-400/50');
+                        btn.querySelector('span:last-child').innerHTML = 'INICIAR<br>SESSÃO';
+                        document.getElementById('stats-fim').innerText = new Date(pts[pts.length - 1].data_hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                        stopTimer();
+                    }
+                }
+            }
+
+            let timerInterval;
+            function startTimer(startTime) {
+                stopTimer();
+                const start = new Date(startTime).getTime();
+                timerInterval = setInterval(() => {
+                    const diff = new Date().getTime() - start;
+                    const h = Math.floor(diff / 3600000);
+                    const m = Math.floor((diff % 3600000) / 60000);
+                    const s = Math.floor((diff % 60000) / 1000);
+                    document.getElementById('user-timer').innerText = `+${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+                }, 1000);
+            }
+
+            function stopTimer() {
+                if (timerInterval) clearInterval(timerInterval);
+                document.getElementById('user-timer').innerText = '+00:00:00';
+            }
+
+            btn.onclick = async () => {
+                UI.showLoader();
+                try {
+                    await supabase.from('pontos').insert([{ funcionario_id: userId, data_hora: new Date().toISOString() }]);
+                    UI.showToast('Ponto registrado!', 'success');
+                    await refreshTodayStats();
+                } catch (e) { UI.showToast('Erro ao carregar', 'error'); }
+                finally { UI.hideLoader(); }
+            };
+
+            await refreshTodayStats();
+        }
+
+        async function loadDashboardStats() {
+            if (!currentUser) return;
+            const today = new Date().toISOString().split('T')[0];
+            try {
+                // 2. Monitoramento de Batidas (Online Today)
+                const { count: onlineCount } = await supabase
+                    .from('pontos')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('data', today)
+                    .is('hora_saida', null);
+
+                document.getElementById('statOnlineGlobal').innerText = onlineCount || '0';
+            } catch (error) {
+                console.error('Erro ao carregar estatísticas:', error);
+            }
+        }
+
+        async function loadOnlineStaff() {
+            if (!currentUser) return;
+            const listContainer = document.getElementById('monitoramentoList');
+            const today = new Date().toISOString().split('T')[0];
+
+            try {
+                // Buscar batidas de hoje para o setor
+                const { data: punches } = await supabase
+                    .from('pontos')
+                    .select('*, funcionarios!inner(nome_completo, setor, funcao, nickname)')
+                    .eq('funcionarios.setor', currentUser.setor)
+                    .gte('data_hora', `${today}T00:00:00`);
+
+                if (!punches) return;
+
+                // Agrupar por funcionário e contar batidas
+                const staffStatus = {};
+                punches.forEach(p => {
+                    const id = p.funcionario_id;
+                    if (!staffStatus[id]) {
+                        staffStatus[id] = {
+                            count: 0,
+                            name: p.funcionarios.nome_completo,
+                            funcao: p.funcionarios.funcao,
+                            nickname: p.funcionarios.nickname,
+                            lastTime: p.data_hora
+                        };
+                    }
+                    staffStatus[id].count++;
+                    if (new Date(p.data_hora) > new Date(staffStatus[id].lastTime)) {
+                        staffStatus[id].lastTime = p.data_hora;
+                    }
+                });
+
+                // Filtrar quem tem número ímpar de batidas (Online)
+                const onlineStaff = Object.values(staffStatus).filter(s => s.count % 2 !== 0);
+                document.getElementById('statOnline').innerText = onlineStaff.length;
+
+                if (onlineStaff.length === 0) {
+                    listContainer.innerHTML = `
+                            <div class="text-center py-8 opacity-40 bg-white/5 rounded-xl border border-dashed border-white/10">
+                                <p class="text-[10px] uppercase font-bold tracking-widest">Ninguém online no momento</p>
+                            </div>
+                        `;
+                    return;
+                }
+
+                listContainer.innerHTML = onlineStaff.map(s => `
+                        <div class="bg-card-dark border border-white/5 p-3 rounded-xl flex items-center justify-between group hover:border-primary/30 transition-all">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20 relative">
+                                    <span class="material-symbols-outlined text-primary text-lg">person</span>
+                                    <span class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-background-dark"></span>
+                                </div>
+                                <div>
+                                    <p class="text-[11px] font-bold text-slate-100">${s.name}</p>
+                                    <p class="text-[9px] text-slate-500 uppercase tracking-tighter">${s.funcao} • #${s.nickname}</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-[9px] font-bold text-emerald-400 uppercase">Presente</p>
+                                <p class="text-[8px] text-slate-500 uppercase">Entrada: ${new Date(s.lastTime).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
+                            </div>
+                        </div>
+                    `).join('');
+
+            } catch (err) {
+                console.error('Erro ao carregar monitoramento:', err);
+            }
+        }
+
+        async function loadRecentJustificativas() {
+            if (!currentUser) return;
+            const container = document.getElementById('recentJustificativas');
+
+            try {
+                const { data, error } = await supabase
+                    .from('justificativas')
+                    .select('*, funcionarios!inner(nome_completo, setor)')
+                    .eq('funcionarios.setor', currentUser.setor)
+                    .eq('status', 'pending')
+                    .order('created_at', { ascending: false })
+                    .limit(3);
+
+                if (!data || data.length === 0) {
+                    container.innerHTML = `
+                            <div class="text-center py-6 opacity-40">
+                                <p class="text-[10px] uppercase">Nenhuma pendência recente</p>
+                            </div>
+                        `;
+                    return;
+                }
+
+                container.innerHTML = data.map(j => `
+                        <div onclick="window.location.href='autorizacoes_abono.html'" class="bg-amber-500/5 border border-amber-500/10 p-4 rounded-xl flex items-center gap-4 cursor-pointer hover:bg-amber-500/10 transition-colors">
+                            <div class="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-500">
+                                <span class="material-symbols-outlined">warning</span>
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-xs font-bold text-slate-100">${j.funcionarios.nome_completo}</p>
+                                <p class="text-[10px] text-slate-500 uppercase truncate">${j.descricao}</p>
+                            </div>
+                            <span class="material-symbols-outlined text-slate-600 text-sm">chevron_right</span>
+                        </div>
+                    `).join('');
+
+            } catch (err) {
+                console.error('Erro ao carregar justificativas:', err);
+            }
+        }
+
+        document.getElementById('logoutBtn').addEventListener('click', () => Auth.logout());
+        initDashboard();
+    </script>
+
+    <script>
+        // Sidebar Control
+        const sidebarMenu = document.getElementById('sidebarMenu');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        const sideMenuTrigger = document.getElementById('sideMenuTrigger');
+        const closeSidebar = document.getElementById('closeSidebar');
+
+        function toggleSidebar(show) {
+            if (show) {
+                sidebarOverlay.classList.remove('hidden');
+                setTimeout(() => {
+                    sidebarOverlay.classList.add('opacity-100');
+                    sidebarMenu.classList.remove('-translate-x-full');
+                }, 10);
+            } else {
+                sidebarOverlay.classList.remove('opacity-100');
+                sidebarMenu.classList.add('-translate-x-full');
+                setTimeout(() => {
+                    sidebarOverlay.classList.add('hidden');
+                }, 300);
+            }
+        }
+
+        sideMenuTrigger.addEventListener('click', () => toggleSidebar(true));
+        closeSidebar.addEventListener('click', () => toggleSidebar(false));
+        sidebarOverlay.addEventListener('click', () => toggleSidebar(false));
+    </script>
+</body>
+
+</html>

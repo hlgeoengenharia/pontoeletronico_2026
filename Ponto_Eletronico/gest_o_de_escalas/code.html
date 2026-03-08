@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-BR"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Gestão de Escalas - Admin</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#0d59f2",
+                        "background-light": "#f5f6f8",
+                        "background-dark": "#101622",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        .sci-fi-border {
+            border: 1px solid rgba(13, 89, 242, 0.3);
+            box-shadow: 0 0 15px rgba(13, 89, 242, 0.1);
+        }
+        .sci-fi-gradient {
+            background: linear-gradient(135deg, rgba(13, 89, 242, 0.1) 0%, rgba(16, 22, 34, 1) 100%);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen pb-24">
+<!-- Header -->
+<header class="sticky top-0 z-50 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md border-b border-primary/20 p-4 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">arrow_back</span>
+<h1 class="text-xl font-bold tracking-tight text-primary uppercase">Gestão de Escalas</h1>
+</div>
+<div class="size-10 rounded-full bg-primary/20 flex items-center justify-center border border-primary/40">
+<span class="material-symbols-outlined text-primary">admin_panel_settings</span>
+</div>
+</header>
+<main class="p-4 max-w-2xl mx-auto space-y-6">
+<!-- Create Section -->
+<section class="sci-fi-gradient sci-fi-border rounded-xl p-6">
+<div class="flex items-center gap-2 mb-6">
+<span class="material-symbols-outlined text-primary">add_circle</span>
+<h2 class="text-lg font-bold uppercase tracking-wider">Criar Nova Escala</h2>
+</div>
+<form class="space-y-4">
+<div>
+<label class="block text-sm font-medium mb-1 text-slate-400">Nome da Escala</label>
+<input class="w-full bg-background-dark/50 border-primary/30 rounded-lg focus:ring-primary focus:border-primary text-slate-100 p-3" placeholder="Ex: Plantão Alfa" type="text"/>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div>
+<label class="block text-sm font-medium mb-1 text-slate-400">Carga Horária</label>
+<input class="w-full bg-background-dark/50 border-primary/30 rounded-lg focus:ring-primary focus:border-primary text-slate-100 p-3" placeholder="40h" type="text"/>
+</div>
+<div>
+<label class="block text-sm font-medium mb-1 text-slate-400">Tipo</label>
+<select class="w-full bg-background-dark/50 border-primary/30 rounded-lg focus:ring-primary focus:border-primary text-slate-100 p-3">
+<option>Presencial</option>
+<option>Remoto</option>
+<option>Híbrido</option>
+</select>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div>
+<label class="block text-sm font-medium mb-1 text-slate-400">Entrada</label>
+<input class="w-full bg-background-dark/50 border-primary/30 rounded-lg focus:ring-primary focus:border-primary text-slate-100 p-3" type="time"/>
+</div>
+<div>
+<label class="block text-sm font-medium mb-1 text-slate-400">Saída</label>
+<input class="w-full bg-background-dark/50 border-primary/30 rounded-lg focus:ring-primary focus:border-primary text-slate-100 p-3" type="time"/>
+</div>
+</div>
+<!-- Calendar Component -->
+<div class="pt-4">
+<label class="block text-sm font-medium mb-3 text-slate-400 uppercase tracking-widest text-center">Selecionar Dias Ativos (Novembro)</label>
+<div class="grid grid-cols-7 gap-1 text-center text-xs mb-2">
+<div class="text-primary font-bold">D</div>
+<div>S</div>
+<div>T</div>
+<div>Q</div>
+<div>Q</div>
+<div>S</div>
+<div class="text-primary font-bold">S</div>
+</div>
+<div class="grid grid-cols-7 gap-1">
+<!-- Empty slots for alignment -->
+<div class="h-10"></div><div class="h-10"></div><div class="h-10"></div><div class="h-10"></div><div class="h-10"></div>
+<!-- Days -->
+<button class="h-10 rounded bg-primary/10 border border-primary/20 flex items-center justify-center hover:bg-primary/40" type="button">1</button>
+<button class="h-10 rounded bg-primary/10 border border-primary/20 flex items-center justify-center hover:bg-primary/40" type="button">2</button>
+<button class="h-10 rounded bg-primary border border-primary flex items-center justify-center shadow-[0_0_10px_rgba(13,89,242,0.5)]" type="button">3</button>
+<button class="h-10 rounded bg-primary border border-primary flex items-center justify-center shadow-[0_0_10px_rgba(13,89,242,0.5)]" type="button">4</button>
+<button class="h-10 rounded bg-primary border border-primary flex items-center justify-center shadow-[0_0_10px_rgba(13,89,242,0.5)]" type="button">5</button>
+<button class="h-10 rounded bg-primary/10 border border-primary/20 flex items-center justify-center hover:bg-primary/40" type="button">6</button>
+<button class="h-10 rounded bg-primary/10 border border-primary/20 flex items-center justify-center hover:bg-primary/40" type="button">7</button>
+<button class="h-10 rounded bg-primary/10 border border-primary/20 flex items-center justify-center hover:bg-primary/40" type="button">8</button>
+<button class="h-10 rounded bg-primary/10 border border-primary/20 flex items-center justify-center hover:bg-primary/40" type="button">9</button>
+<button class="h-10 rounded bg-primary border border-primary flex items-center justify-center shadow-[0_0_10px_rgba(13,89,242,0.5)]" type="button">10</button>
+<button class="h-10 rounded bg-primary border border-primary flex items-center justify-center shadow-[0_0_10px_rgba(13,89,242,0.5)]" type="button">11</button>
+<button class="h-10 rounded bg-primary border border-primary flex items-center justify-center shadow-[0_0_10px_rgba(13,89,242,0.5)]" type="button">12</button>
+<button class="h-10 rounded bg-primary/10 border border-primary/20 flex items-center justify-center hover:bg-primary/40" type="button">13</button>
+<button class="h-10 rounded bg-primary/10 border border-primary/20 flex items-center justify-center hover:bg-primary/40" type="button">14</button>
+</div>
+</div>
+<button class="w-full bg-primary hover:bg-primary/80 text-white font-bold py-4 rounded-xl shadow-lg transition-all transform active:scale-95 uppercase tracking-widest mt-4" type="submit">
+                    Confirmar Nova Escala
+                </button>
+</form>
+</section>
+<!-- Manage List Section -->
+<section class="space-y-4">
+<div class="flex items-center justify-between px-2">
+<h2 class="text-lg font-bold uppercase tracking-wider text-primary">Escalas Ativas</h2>
+<span class="text-xs text-slate-500 font-mono">Total: 03</span>
+</div>
+<div class="space-y-3">
+<!-- Item 1 -->
+<div class="bg-background-dark/40 border border-slate-800 p-4 rounded-xl flex items-center justify-between group hover:border-primary/50 transition-colors">
+<div class="flex items-center gap-4">
+<div class="size-12 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">nightlight_round</span>
+</div>
+<div>
+<h3 class="font-bold">Plantão Noturno</h3>
+<p class="text-sm text-slate-500">22:00 - 06:00 • 36h/sem</p>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="p-2 hover:bg-primary/20 rounded-lg text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">edit</span>
+</button>
+<button class="p-2 hover:bg-red-500/20 rounded-lg text-red-500 transition-colors">
+<span class="material-symbols-outlined text-[20px]">delete</span>
+</button>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="bg-background-dark/40 border border-slate-800 p-4 rounded-xl flex items-center justify-between group hover:border-primary/50 transition-colors">
+<div class="flex items-center gap-4">
+<div class="size-12 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">wb_sunny</span>
+</div>
+<div>
+<h3 class="font-bold">Administrativo I</h3>
+<p class="text-sm text-slate-500">08:00 - 17:00 • 44h/sem</p>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="p-2 hover:bg-primary/20 rounded-lg text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">edit</span>
+</button>
+<button class="p-2 hover:bg-red-500/20 rounded-lg text-red-500 transition-colors">
+<span class="material-symbols-outlined text-[20px]">delete</span>
+</button>
+</div>
+</div>
+<!-- Item 3 -->
+<div class="bg-background-dark/40 border border-slate-800 p-4 rounded-xl flex items-center justify-between group hover:border-primary/50 transition-colors">
+<div class="flex items-center gap-4">
+<div class="size-12 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">emergency</span>
+</div>
+<div>
+<h3 class="font-bold">Suporte Emergencial</h3>
+<p class="text-sm text-slate-500">12:00 - 00:00 • 40h/sem</p>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="p-2 hover:bg-primary/20 rounded-lg text-primary transition-colors">
+<span class="material-symbols-outlined text-[20px]">edit</span>
+</button>
+<button class="p-2 hover:bg-red-500/20 rounded-lg text-red-500 transition-colors">
+<span class="material-symbols-outlined text-[20px]">delete</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Bottom Nav Bar -->
+<nav class="fixed bottom-0 left-0 right-0 z-50 bg-background-light dark:bg-background-dark/95 backdrop-blur-xl border-t border-primary/20">
+<div class="max-w-2xl mx-auto flex items-center justify-around p-2 pb-6">
+<a class="flex flex-col items-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="text-[10px] font-medium uppercase tracking-tighter">Início</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-500 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="text-[10px] font-medium uppercase tracking-tighter">Estatística</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-500 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">history</span>
+<span class="text-[10px] font-medium uppercase tracking-tighter">Histórico</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-500 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[10px] font-medium uppercase tracking-tighter">Perfil</span>
+</a>
+</div>
+</nav>
+</body></html>

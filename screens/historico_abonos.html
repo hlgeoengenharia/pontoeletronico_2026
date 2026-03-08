@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-br">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap"
+    rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+    rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+    rel="stylesheet" />
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#0d59f2",
+            "accent": "#eab308", // Neon Yellow accent
+            "background-light": "#f5f6f8",
+            "background-dark": "#0a0e17",
+            "card-dark": "#161c2a",
+          },
+          fontFamily: {
+            "display": ["Space Grotesk", "sans-serif"]
+          },
+          borderRadius: { "DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px" },
+        },
+      },
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+    }
+
+    .scanline {
+      width: 100%;
+      height: 2px;
+      background: rgba(13, 89, 242, 0.1);
+      position: absolute;
+      z-index: 10;
+    }
+
+    .glow-blue {
+      box-shadow: 0 0 15px rgba(13, 89, 242, 0.3);
+    }
+
+    .glow-yellow {
+      box-shadow: 0 0 10px rgba(234, 179, 8, 0.2);
+    }
+  </style>
+
+</head>
+
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col pb-24">
+  <!-- Header / Mission Status -->
+  <header class="border-b border-primary/20 bg-background-dark/80 backdrop-blur-md sticky top-0 z-50">
+    <div class="flex items-center p-4 justify-between">
+      <div onclick="history.back()"
+        class="text-primary flex size-10 shrink-0 items-center justify-center rounded-lg border border-primary/30 bg-primary/10 cursor-pointer hover:bg-primary/20 transition-all">
+        <span class="material-symbols-outlined">arrow_back</span>
+      </div>
+      <h2 class="text-slate-100 text-lg font-bold leading-tight tracking-wider uppercase flex-1 text-center">ABONADO
+      </h2>
+      <div class="flex w-10 items-center justify-end">
+        <button class="relative text-accent">
+          <span class="material-symbols-outlined">notifications</span>
+          <span class="absolute top-0 right-0 block h-2 w-2 rounded-full bg-accent animate-pulse"></span>
+        </button>
+      </div>
+    </div>
+    <!-- Agent Progress Bar -->
+  </header>
+  <main class="flex-1 overflow-y-auto p-4 space-y-6">
+    <!-- Mission Briefing / Form Section -->
+    <!-- Previous Logs Section -->
+    <section class="space-y-4 pb-20">
+      <div class="flex justify-between items-center">
+        <h3 class="text-slate-100 text-sm font-bold tracking-widest uppercase flex items-center gap-2">
+          <span class="material-symbols-outlined text-sm">history</span> Histórico
+        </h3>
+        <span class="text-[10px] text-slate-500 uppercase tracking-tighter">Total: 14 divergências</span>
+      </div>
+      <!-- Log Card 1: Pending -->
+      <!-- Log Card 2: Approved -->
+      <div
+        class="bg-card-dark border-l-4 border-green-500 border-r border-t border-b border-white/5 rounded-lg p-4 space-y-3">
+        <div class="flex justify-between items-start">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-green-500 text-[10px] font-bold uppercase tracking-widest">ABONADO PELO GETOR</span>
+              <span class="text-slate-500 text-[10px]">• 10 Out, 2023</span>
+            </div>
+            <h4 class="text-slate-100 font-bold mt-1">TIPO DE DIVERGÊNCIA</h4>
+          </div>
+          <div class="text-green-500">
+            <span class="material-symbols-outlined">check_circle</span>
+          </div>
+        </div>
+        <p class="text-slate-400 text-xs leading-relaxed italic">RELATÓRIO DETALHADO: "O sistema de autenticação
+          biométrica falhou ao reconhecer o ID do agente.</p>
+      </div>
+      <!-- Log Card 3: Rejected -->
+      <div
+        class="bg-card-dark border-l-4 border-red-500 border-r border-t border-b border-white/5 rounded-lg p-4 space-y-3">
+        <div class="flex justify-between items-start">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-red-500 text-[10px] font-bold uppercase tracking-widest">ABONO Negado PELO GESTOR</span>
+              <span class="text-slate-500 text-[10px]">• 08 Out, 2023</span>
+            </div>
+            <h4 class="text-slate-100 font-bold mt-1">TIPO DE DIVERGÊNCIA</h4>
+          </div>
+          <div class="text-red-500">
+            <span class="material-symbols-outlined">cancel</span>
+          </div>
+        </div>
+        <p class="text-slate-400 text-xs leading-relaxed italic">RELATÓRIO DETALHADO: "O sistema de autenticação
+          biométrica falhou ao reconhecer o ID do agente.</p>
+        <div class="bg-red-500/10 p-2 rounded text-[10px] text-red-400 border border-red-500/20">
+          <strong>Feedback:</strong> Motivo insuficiente para abono de horas extras.
+        </div>
+      </div>
+    </section>
+  </main>
+    <nav class="fixed bottom-0 w-full bg-white dark:bg-background-dark border-t border-slate-200 dark:border-primary/10 px-6 py-4 z-50">
+      <div class="flex justify-between items-center max-w-md mx-auto">
+        <a class="flex flex-col items-center gap-1 text-slate-400 transition-all duration-300 hover:text-primary" href="painel_funcionario.html">
+          <span class="material-symbols-outlined ">home</span>
+          <span class="text-[10px] font-bold uppercase tracking-tighter">INÍCIO</span>
+        </a>
+        <a class="flex flex-col items-center gap-1 text-slate-400 transition-all duration-300 hover:text-primary" href="estatistica_funcionario.html">
+          <span class="material-symbols-outlined ">bar_chart</span>
+          <span class="text-[10px] font-bold uppercase tracking-tighter">ESTATÍSTICA</span>
+        </a>
+        <a class="flex flex-col items-center gap-1 text-primary transition-all duration-300 hover:text-primary" href="historico_anual.html">
+          <span class="material-symbols-outlined fill-1">history</span>
+          <span class="text-[10px] font-bold uppercase tracking-tighter">HISTÓRICO</span>
+        </a>
+        <a class="flex flex-col items-center gap-1 text-slate-400 transition-all duration-300 hover:text-primary" href="perfil_funcionario.html">
+          <span class="material-symbols-outlined ">person</span>
+          <span class="text-[10px] font-bold uppercase tracking-tighter">PERFIL</span>
+        </a>
+      </div>
+    </nav>
+</body>
+
+</html>

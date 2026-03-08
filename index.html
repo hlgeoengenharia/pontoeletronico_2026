@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projeto V01 - Dashboard do Desenvolvedor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --glass: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1000px;
+            width: 100%;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 0 15px rgba(99, 102, 241, 0.3);
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, transparent 100%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .card:hover::before {
+            opacity: 1;
+        }
+
+        .card h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .card span {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .main-btn {
+            display: inline-block;
+            margin-top: 2rem;
+            padding: 1rem 2rem;
+            background: var(--primary);
+            color: white;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: background 0.2s;
+            box-shadow: 0 4px 14px 0 rgba(99, 102, 241, 0.39);
+        }
+
+        .main-btn:hover {
+            background: var(--primary-hover);
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--card-bg);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>Projeto V01</h1>
+            <p>Navegação entre Telas - Ambiente de Desenvolvimento</p>
+            <a href="screens/pagina_login_01.html" class="main-btn">Iniciar Fluxo (Login)</a>
+        </header>
+
+        <div class="grid">
+            <a href="screens/pagina_login_01.html" class="card">
+                <span>Autenticação</span>
+                <h3>Login 01</h3>
+            </a>
+
+            <a href="screens/painel_funcionario.html" class="card">
+                <span>Dashboard</span>
+                <h3>Painel do Funcionário</h3>
+            </a>
+            <a href="screens/painel_gestor.html" class="card">
+                <span>Dashboard</span>
+                <h3>Painel do Gestor</h3>
+            </a>
+            <a href="screens/painel_admin.html" class="card">
+                <span>Dashboard</span>
+                <h3>Painel do Administrador</h3>
+            </a>
+            <a href="screens/cadastro_funcionario.html" class="card">
+                <span>Gestão</span>
+                <h3>Cadastro de Funcionário</h3>
+            </a>
+            <a href="screens/resumo_dia.html" class="card">
+                <span>Operacional</span>
+                <h3>Resumo do Dia</h3>
+            </a>
+            <a href="screens/anotacao_diaria.html" class="card">
+                <span>Operacional</span>
+                <h3>Anotação Diária</h3>
+            </a>
+            <a href="screens/justificativa.html" class="card">
+                <span>Operacional</span>
+                <h3>Justificativa</h3>
+            </a>
+            <a href="screens/historico_mensal.html" class="card">
+                <span>Relatórios</span>
+                <h3>Histórico Mensal</h3>
+            </a>
+            <a href="screens/historico_anual.html" class="card">
+                <span>Relatórios</span>
+                <h3>Histórico Anual</h3>
+            </a>
+            <a href="screens/historico_abonos.html" class="card">
+                <span>Relatórios</span>
+                <h3>Histórico de Abonos</h3>
+            </a>
+            <a href="screens/relacao_funcionarios.html" class="card">
+                <span>Gestão</span>
+                <h3>Relação de Funcionários</h3>
+            </a>
+            <a href="screens/relacao_setores.html" class="card">
+                <span>Gestão</span>
+                <h3>Relação de Setores</h3>
+            </a>
+            <a href="screens/autorizacoes_abono.html" class="card">
+                <span>Gestão</span>
+                <h3>Autorizações de Abono</h3>
+            </a>
+            <a href="screens/cadastro_setores.html" class="card">
+                <span>Configuração</span>
+                <h3>Cadastro de Setores</h3>
+            </a>
+            <a href="screens/cadastro_cargos.html" class="card">
+                <span>Configuração</span>
+                <h3>Cadastro de Cargos</h3>
+            </a>
+            <a href="screens/cadastro_escalas.html" class="card">
+                <span>Configuração</span>
+                <h3>Cadastro de Escalas</h3>
+            </a>
+            <a href="screens/estatistica_funcionario.html" class="card">
+                <span>Análise</span>
+                <h3>Estatística do Funcionário</h3>
+            </a>
+            <a href="screens/perfil_funcionario.html" class="card">
+                <span>Perfil</span>
+                <h3>Perfil do Funcionário</h3>
+            </a>
+        </div>
+    </div>
+</body>
+
+</html>

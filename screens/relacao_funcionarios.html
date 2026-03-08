@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html class="dark" lang="pt-br">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap"
+    rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+    rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+    rel="stylesheet">
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#0d59f2",
+            "background-light": "#f5f6f8",
+            "background-dark": "#0a0e17",
+            "neon-cyan": "#00f2ff",
+          },
+          fontFamily: {
+            "display": ["Space Grotesk", "sans-serif"]
+          },
+          borderRadius: { "DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px" },
+        },
+      }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script type="module" src="../js/supabase-config.js"></script>
+  <style>
+    .neon-glow {
+      box-shadow: 0 0 10px rgba(13, 89, 242, 0.3);
+    }
+
+    .neon-border {
+      border: 1px solid rgba(0, 242, 255, 0.2);
+    }
+
+    .scanline {
+      background: linear-gradient(to bottom, transparent 50%, rgba(13, 89, 242, 0.05) 50%);
+      background-size: 100% 4px;
+    }
+  </style>
+  <style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  <script src="../js/manager-context.js?v=2.7"></script>
+</head>
+
+<body
+  class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen flex flex-col">
+  <!-- Header Section -->
+  <header class="border-b border-primary/20 bg-background-dark/80 backdrop-blur-md sticky top-0 z-50">
+    <div class="flex items-center p-4 justify-between max-w-2xl mx-auto">
+      <div onclick="history.back()"
+        class="text-primary flex size-10 shrink-0 items-center justify-center rounded-lg border border-primary/30 bg-primary/10 cursor-pointer hover:bg-primary/20 transition-all">
+        <span class="material-symbols-outlined">arrow_back</span>
+      </div>
+      <div class="flex-1 text-center">
+        <h2 class="text-slate-100 text-lg font-bold tracking-wider uppercase">RELAÇÃO DE FUNCIONÁRIOS</h2>
+        <span
+          class="text-[10px] text-primary font-black uppercase tracking-[0.2em] bg-primary/10 px-2 py-0.5 rounded-full inline-block mt-1 animate-pulse">3
+          Tripulantes Ativos</span>
+      </div>
+      <div
+        class="flex size-10 items-center justify-center rounded-lg bg-primary/10 border border-primary/30 text-primary">
+        <span class="material-symbols-outlined">notifications</span>
+      </div>
+    </div>
+  </header>
+  <!-- Main Content -->
+  <main class="flex-1 overflow-y-auto px-4 py-6 max-w-2xl mx-auto w-full pb-24">
+    <!-- Search Bar -->
+    <div class="mb-8">
+      <div class="relative group">
+        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+          <span class="material-symbols-outlined text-primary">search</span>
+        </div>
+        <input
+          class="block w-full pl-12 pr-4 py-4 bg-primary/5 border border-primary/20 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all placeholder-slate-500 text-slate-100"
+          placeholder="Localizar tripulante via ID ou Nome..." type="text">
+        <div class="absolute inset-y-0 right-0 pr-4 flex items-center">
+          <span class="text-[10px] font-bold text-primary/40 uppercase tracking-widest">Scanner Ativo</span>
+        </div>
+      </div>
+    </div>
+    <!-- Employee List -->
+    <!-- Employee List -->
+    <div id="lista-funcionarios" class="space-y-4">
+      <!-- Container Dinâmico -->
+    </div>
+
+    <script type="module">
+      import { supabase } from '../js/supabase-config.js';
+
+      let todosFuncionarios = [];
+
+      async function carregarFuncionarios() {
+        const container = document.getElementById('lista-funcionarios');
+        const urlParams = new URLSearchParams(window.location.search);
+        const setorId = urlParams.get('setor');
+
+        container.innerHTML = `
+            <div class="flex flex-col items-center justify-center py-20 opacity-50">
+              <span class="material-symbols-outlined animate-spin text-4xl mb-4 text-primary">sync</span>
+              <p class="uppercase tracking-widest text-sm font-bold">Escaneando Tripulação...</p>
+            </div>
+          `;
+
+        try {
+          // 1. Buscar Funcionários (com ou sem filtro de setor)
+          let query = supabase
+            .from('funcionarios')
+            .select('*, setores(nome)')
+            .order('nome_completo');
+
+          if (setorId) {
+            query = query.eq('setor_id', setorId);
+          }
+
+          const { data: funcData, error: funcError } = await query;
+
+          if (funcError) throw funcError;
+
+          // 2. Buscar Batidas de Hoje
+          const today = new Date().toISOString().split('T')[0];
+          const { data: punchData } = await supabase
+            .from('pontos')
+            .select('funcionario_id')
+            .gte('data_hora', `${today}T00:00:00`);
+
+          const onlineCounts = {};
+          punchData?.forEach(p => {
+            onlineCounts[p.funcionario_id] = (onlineCounts[p.funcionario_id] || 0) + 1;
+          });
+
+          todosFuncionarios = funcData.map(f => ({
+            ...f,
+            isOnline: (onlineCounts[f.id] || 0) % 2 !== 0
+          }));
+
+          renderizarLista(todosFuncionarios);
+
+          // Atualizar título e contador
+          const headerTitle = document.querySelector('header h2');
+          const contador = document.querySelector('header h2 + span');
+
+          if (setorId && funcData.length > 0 && funcData[0].setores) {
+            headerTitle.textContent = `FUNCIONÁRIOS: ${funcData[0].setores.nome.toUpperCase()}`;
+          }
+
+          if (contador) contador.textContent = `${funcData.length} Tripulantes Ativos`;
+
+        } catch (error) {
+          console.error('Erro:', error);
+          container.innerHTML = `<p class="text-center text-red-500 py-10">Erro ao carregar tripulação: ${error.message}</p>`;
+        }
+      }
+
+      function renderizarLista(lista) {
+        const container = document.getElementById('lista-funcionarios');
+        container.innerHTML = '';
+
+        if (lista.length === 0) {
+          container.innerHTML = `
+              <div class="text-center py-20 opacity-30 border-2 border-dashed border-white/5 rounded-2xl">
+                <span class="material-symbols-outlined text-6xl mb-4">person_off</span>
+                <p class="uppercase tracking-widest font-bold">Nenhum tripulante localizado</p>
+              </div>
+            `;
+          return;
+        }
+
+        lista.forEach(func => {
+          const card = document.createElement('div');
+          card.onclick = () => {
+            const userRole = localStorage.getItem('userRole') || '';
+            window.location.href = `painel_funcionario.html?id=${func.id}${userRole ? `&role=${userRole}` : ''}`;
+          };
+          card.className = "relative overflow-hidden p-4 bg-slate-900/50 rounded-xl neon-border group hover:bg-slate-800/60 transition-colors cursor-pointer animate-in fade-in slide-in-from-bottom-2 duration-300";
+
+          card.innerHTML = `
+              <div class="absolute top-0 right-0 p-2 opacity-10">
+                <span class="text-[32px] font-black italic select-none">#${func.matricula.slice(-5)}</span>
+              </div>
+              <div class="flex items-center gap-4 relative z-10">
+                <div class="relative">
+                  <div class="w-16 h-16 rounded-full border-2 border-primary/30 p-1 group-hover:border-primary transition-colors">
+                    <div class="w-full h-full rounded-full bg-slate-800 flex items-center justify-center">
+                      <span class="material-symbols-outlined text-primary text-3xl">person</span>
+                    </div>
+                  </div>
+                  ${func.isOnline ? `
+                    <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full border-2 border-background-dark shadow-[0_0_8px_#10b981]"></div>
+                  ` : `
+                    <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-slate-600 rounded-full border-2 border-background-dark"></div>
+                  `}
+                </div>
+                <div class="flex-1">
+                  <div>
+                    <h3 class="text-lg font-bold text-slate-100">${func.nome_completo}</h3>
+                    <p class="text-xs text-primary font-medium tracking-wider uppercase">${func.funcao || 'N/A'} | ${func.setores?.nome || 'N/A'}</p>
+                  </div>
+                  <div class="mt-3 flex items-center gap-4">
+                    <div class="flex flex-col">
+                      <span class="text-[10px] text-slate-500 uppercase font-bold">Matrícula</span>
+                      <span class="text-sm font-mono text-slate-300">#${func.matricula}</span>
+                    </div>
+                    <div class="h-6 w-px bg-slate-700"></div>
+                    <div class="flex flex-col">
+                      <span class="text-[10px] text-slate-500 uppercase font-bold">Nível</span>
+                      <span class="text-xs font-bold text-amber-500 uppercase">${func.nivel_acesso}</span>
+                    </div>
+                    <div class="h-6 w-px bg-slate-700"></div>
+                     <div class="flex flex-col">
+                      <span class="text-[10px] text-slate-500 uppercase font-bold">Status</span>
+                      <span class="text-[10px] font-bold ${func.isOnline ? 'text-emerald-400' : 'text-slate-500'} uppercase">${func.isOnline ? 'ONLINE' : 'OFFLINE'}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="scanline absolute inset-0 opacity-10 pointer-events-none"></div>
+            `;
+          container.appendChild(card);
+        });
+      }
+
+      // Busca em tempo real
+      document.querySelector('input[placeholder*="Localizar"]').addEventListener('input', (e) => {
+        const termo = e.target.value.toLowerCase();
+        const filtrados = todosFuncionarios.filter(f =>
+          f.nome_completo.toLowerCase().includes(termo) ||
+          f.matricula.toLowerCase().includes(termo)
+        );
+        renderizarLista(filtrados);
+      });
+
+      carregarFuncionarios();
+    </script>
+  </main>
+  <nav
+    class="fixed bottom-0 w-full bg-white dark:bg-background-dark border-t border-slate-200 dark:border-primary/10 px-6 py-4 z-50">
+    <div class="flex justify-between items-center max-w-md mx-auto">
+      <a class="flex flex-col items-center gap-1 text-slate-400 transition-all duration-300 hover:text-primary"
+        href="painel_gestor.html">
+        <span class="material-symbols-outlined ">home</span>
+        <span class="text-[10px] font-bold uppercase tracking-tighter">INÍCIO</span>
+      </a>
+      <a class="flex flex-col items-center gap-1 text-slate-400 transition-all duration-300 hover:text-primary"
+        href="estatistica_funcionario.html">
+        <span class="material-symbols-outlined ">bar_chart</span>
+        <span class="text-[10px] font-bold uppercase tracking-tighter">ESTATÍSTICA</span>
+      </a>
+      <a class="flex flex-col items-center gap-1 text-slate-400 transition-all duration-300 hover:text-primary"
+        href="historico_anual.html">
+        <span class="material-symbols-outlined ">history</span>
+        <span class="text-[10px] font-bold uppercase tracking-tighter">HISTÓRICO</span>
+      </a>
+      <a class="flex flex-col items-center gap-1 text-slate-400 transition-all duration-300 hover:text-primary"
+        href="perfil_funcionario.html">
+        <span class="material-symbols-outlined ">person</span>
+        <span class="text-[10px] font-bold uppercase tracking-tighter">PERFIL</span>
+      </a>
+    </div>
+  </nav>
+</body>
+
+</html>

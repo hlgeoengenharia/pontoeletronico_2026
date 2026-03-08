@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-br">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap"
+    rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+    rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+    rel="stylesheet" />
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#0d59f2",
+            "accent": "#eab308", // Neon Yellow accent
+            "background-light": "#f5f6f8",
+            "background-dark": "#0a0e17",
+            "card-dark": "#161c2a",
+          },
+          fontFamily: {
+            "display": ["Space Grotesk", "sans-serif"]
+          },
+          borderRadius: { "DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px" },
+        },
+      },
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+    }
+
+    .scanline {
+      width: 100%;
+      height: 2px;
+      background: rgba(13, 89, 242, 0.1);
+      position: absolute;
+      z-index: 10;
+    }
+
+    .glow-blue {
+      box-shadow: 0 0 15px rgba(13, 89, 242, 0.3);
+    }
+
+    .glow-yellow {
+      box-shadow: 0 0 10px rgba(234, 179, 8, 0.2);
+    }
+  </style>
+
+</head>
+
+<body
+  class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col pb-24">
+  <!-- Header / Mission Status -->
+  <header class="border-b border-primary/20 bg-background-dark/80 backdrop-blur-md sticky top-0 z-50">
+    <div class="flex items-center p-4 justify-between">
+      <div onclick="history.back()"
+        class="text-primary flex size-10 shrink-0 items-center justify-center rounded-lg border border-primary/30 bg-primary/10 cursor-pointer hover:bg-primary/20 transition-all">
+        <span class="material-symbols-outlined">arrow_back</span>
+      </div>
+      <h2 class="text-slate-100 text-lg font-bold leading-tight tracking-wider uppercase flex-1 text-center">
+        JUSTIFICATIVA</h2>
+      <div class="flex w-10 items-center justify-end">
+        <button class="relative text-accent">
+          <span class="material-symbols-outlined">notifications</span>
+          <span class="absolute top-0 right-0 block h-2 w-2 rounded-full bg-accent animate-pulse"></span>
+        </button>
+      </div>
+    </div>
+    <!-- Agent Progress Bar -->
+  </header>
+  <main class="flex-1 overflow-y-auto p-4 space-y-6">
+    <!-- Mission Briefing / Form Section -->
+    <section class="bg-card-dark border border-primary/20 rounded-xl p-5 relative overflow-hidden">
+      <div class="absolute top-0 right-0 p-2 opacity-10">
+        <span class="material-symbols-outlined text-6xl">description</span>
+      </div>
+      <h3 class="text-accent text-sm font-bold tracking-widest uppercase mb-4 flex items-center gap-2">
+        <span class="material-symbols-outlined text-sm">add_box</span> Nova Justificativa
+      </h3>
+      <div class="space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="flex flex-col gap-2">
+            <label class="text-slate-400 text-xs uppercase font-bold tracking-wider">Data do Incidente</label>
+            <div class="relative">
+              <input id="incidente_data"
+                class="w-full bg-background-dark border border-slate-700 rounded-lg py-3 px-4 text-slate-100 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                type="date" />
+            </div>
+          </div>
+          <div class="flex flex-col gap-2">
+            <label class="text-slate-400 text-xs uppercase font-bold tracking-wider">Tipo de Divergência</label>
+            <select id="incidente_tipo"
+              class="w-full bg-background-dark border border-slate-700 rounded-lg py-3 px-4 text-slate-100 focus:border-primary focus:ring-1 focus:ring-primary outline-none appearance-none transition-all">
+              <option>Esquecimento de Registro</option>
+              <option>Viagem a Trabalho</option>
+              <option>Problemas Técnicos</option>
+              <option>Outros</option>
+            </select>
+          </div>
+        </div>
+        <div class="flex flex-col gap-2">
+          <label class="text-slate-400 text-xs uppercase font-bold tracking-wider">JUSTIFICATIVA</label>
+          <textarea id="incidente_descricao"
+            class="w-full bg-background-dark border border-slate-700 rounded-lg py-3 px-4 text-slate-100 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+            placeholder='"O sistema de autenticação biométrica falhou ao reconhecer o ID do agente.'
+            rows="3"></textarea>
+        </div>
+        <div class="flex flex-col gap-2">
+          <label class="text-slate-400 text-xs uppercase font-bold tracking-wider">ANEXAR EVIDÊNCIA (FOTO/PDF)</label>
+          <button
+            class="w-full flex items-center justify-center gap-3 bg-background-dark border border-dashed border-primary/40 hover:border-primary text-slate-400 hover:text-primary py-4 rounded-lg transition-all transform active:scale-[0.98] group overflow-hidden relative">
+            <span class="material-symbols-outlined">add_a_photo</span>
+            <span class="uppercase tracking-widest text-[10px] font-bold">Anexar Documento</span>
+          </button>
+          <p class="text-[8px] text-slate-500 uppercase tracking-widest text-center mt-1">PDF, JPG, PNG • MÁX 10MB</p>
+        </div>
+        <button
+          class="w-full bg-primary hover:bg-primary/80 text-white font-bold py-4 rounded-lg uppercase tracking-[0.2em] shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2">
+          <span class="material-symbols-outlined">send</span> Enviar Justificativa</button>
+      </div>
+    </section>
+
+    <!-- Documents Identified Section (Migrated from arquivo_evidencias) -->
+    <section class="space-y-4">
+      <div class="flex items-center justify-between px-1">
+        <h3 class="text-slate-100 text-sm font-bold tracking-widest uppercase flex items-center gap-2">
+          <span class="material-symbols-outlined text-sm">attach_file</span> Arquivos Anexados
+        </h3>
+        <span id="labelTotalArquivos" class="text-[10px] text-slate-500 font-bold uppercase">0 Itens</span>
+      </div>
+      <div id="arquivosContainer" class="flex flex-col gap-3">
+        <div class="text-center py-4 bg-white/5 border border-dashed border-white/10 rounded-lg opacity-40">
+          <p class="text-[10px] uppercase tracking-tighter">Nenhum anexo</p>
+        </div>
+      </div>
+    </section>
+    </section>
+    <!-- Previous Logs Section -->
+    <section class="space-y-4 pb-20">
+      <div class="flex justify-between items-center">
+        <h3 class="text-slate-100 text-sm font-bold tracking-widest uppercase flex items-center gap-2">
+          <span class="material-symbols-outlined text-sm">history</span> Histórico
+        </h3>
+        <a href="historico_abonos.html"
+          class="text-[10px] text-primary hover:text-white font-black uppercase tracking-widest flex items-center gap-1 transition-colors">
+          Ver Status de Abonos
+          <span class="material-symbols-outlined text-xs">open_in_new</span>
+        </a>
+      </div>
+
+      <div id="historicoJustificativas" class="space-y-4">
+        <!-- Logs dynamically injected here -->
+      </div>
+    </section>
+    <!-- Log Card 2: Approved -->
+    <!-- Log Card 3: Rejected -->
+    </section>
+  </main>
+  <!-- Bottom Navigation -->
+  <nav
+    class="fixed bottom-0 w-full bg-white dark:bg-background-dark border-t border-slate-200 dark:border-primary/10 px-6 py-4 z-50">
+    <div class="flex justify-between items-center max-w-md mx-auto">
+      <a class="flex flex-col items-center gap-1 text-slate-400 transition-all duration-300 hover:text-primary"
+        href="painel_funcionario.html">
+        <span class="material-symbols-outlined ">home</span>
+        <span class="text-[10px] font-bold uppercase tracking-tighter">INÍCIO</span>
+      </a>
+      <a class="flex flex-col items-center gap-1 text-slate-400 transition-all duration-300 hover:text-primary"
+        href="estatistica_funcionario.html">
+        <span class="material-symbols-outlined ">bar_chart</span>
+        <span class="text-[10px] font-bold uppercase tracking-tighter">ESTATÍSTICA</span>
+      </a>
+      <a class="flex flex-col items-center gap-1 text-slate-400 transition-all duration-300 hover:text-primary"
+        href="historico_anual.html">
+        <span class="material-symbols-outlined ">history</span>
+        <span class="text-[10px] font-bold uppercase tracking-tighter">HISTÓRICO</span>
+      </a>
+      <a class="flex flex-col items-center gap-1 text-slate-400 transition-all duration-300 hover:text-primary"
+        href="perfil_funcionario.html">
+        <span class="material-symbols-outlined ">person</span>
+        <span class="text-[10px] font-bold uppercase tracking-tighter">PERFIL</span>
+      </a>
+    </div>
+  </nav>
+  <script type="module">
+    import { supabase } from '../js/supabase-config.js';
+    import { Auth } from '../js/auth.js';
+    import { UI } from '../js/ui-utils.js';
+
+    Auth.checkSession();
+
+    const inputData = document.getElementById('incidente_data');
+    const selectTipo = document.getElementById('incidente_tipo');
+    const inputDescricao = document.getElementById('incidente_descricao');
+    const btnEnviar = document.querySelector('button.bg-primary');
+    const historicoCont = document.getElementById('historicoJustificativas');
+    const totalLabel = document.getElementById('labelTotalJustificativas');
+
+    // 1. Process URL Parameters
+    window.addEventListener('load', function () {
+      const urlParams = new URLSearchParams(window.location.search);
+      const tipo = urlParams.get('tipo');
+      const motivo = urlParams.get('motivo');
+      const data = urlParams.get('data');
+
+      if (data) inputData.value = data;
+      else inputData.value = new Date().toISOString().split('T')[0];
+
+      if (tipo) {
+        // Check if option exists, otherwise add it
+        let found = false;
+        for (let i = 0; i < selectTipo.options.length; i++) {
+          if (selectTipo.options[i].text.toLowerCase().includes(tipo.toLowerCase())) {
+            selectTipo.selectedIndex = i;
+            found = true;
+            break;
+          }
+        }
+        if (!found) {
+          const opt = document.createElement('option');
+          opt.value = opt.text = tipo;
+          selectTipo.add(opt);
+          selectTipo.value = tipo;
+        }
+      }
+
+      if (motivo) inputDescricao.value = motivo;
+    });
+
+    // 2. Load History
+    async function loadHistory() {
+      const user = Auth.getUser();
+      if (!user.id) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('justificativas')
+          .select('*')
+          .eq('funcionario_id', user.id)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        totalLabel.innerText = `Total: ${data.length} registros`;
+
+        if (data.length === 0) {
+          historicoCont.innerHTML = `
+                   <div class="text-center py-10 opacity-30">
+                       <p class="text-xs uppercase tracking-widest">Nenhuma justificativa encontrada</p>
+                   </div>
+                `;
+          return;
+        }
+
+        historicoCont.innerHTML = data.map(item => {
+          const statusColor = item.status === 'aprovada' ? 'bg-green-500' : (item.status === 'rejeitada' ? 'bg-red-500' : 'bg-accent');
+          return `
+                <div class="bg-card-dark border-l-4 border-accent border-r border-t border-b border-white/5 rounded-lg p-4 space-y-3">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-accent text-[10px] font-bold uppercase tracking-widest">${item.tipo_divergencia}</span>
+                                <span class="text-slate-500 text-[10px]">• ${new Date(item.data_incidente).toLocaleDateString('pt-BR')}</span>
+                                <span class="${statusColor} text-[8px] text-black font-black px-2 py-0.5 rounded-full uppercase ml-2">${item.status}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-slate-400 text-xs leading-relaxed italic">"${item.descricao}"</p>
+                </div>
+                `;
+        }).join('');
+
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // 3. Save
+    async function saveJustificativa() {
+      const user = Auth.getUser();
+      const dataVal = inputData.value;
+      const tipoVal = selectTipo.value;
+      const descVal = inputDescricao.value.trim();
+
+      if (!dataVal || !descVal) {
+        UI.toast('Preencha a data e a descrição.', 'warning');
+        return;
+      }
+
+      UI.showLoader();
+      try {
+        const { error } = await supabase
+          .from('justificativas')
+          .insert([{
+            funcionario_id: user.id,
+            data_incidente: dataVal,
+            tipo_divergencia: tipoVal,
+            descricao: descVal,
+            status: 'pendente'
+          }]);
+
+        if (error) throw error;
+
+        UI.toast('Justificativa enviada com sucesso!', 'success');
+        inputDescricao.value = '';
+        loadHistory();
+      } catch (err) {
+        console.error(err);
+        UI.toast('Erro ao enviar justificativa.', 'error');
+      } finally {
+        UI.hideLoader();
+      }
+    }
+
+    btnEnviar.addEventListener('click', saveJustificativa);
+    loadHistory();
+  </script>
+</body>
+
+</html>

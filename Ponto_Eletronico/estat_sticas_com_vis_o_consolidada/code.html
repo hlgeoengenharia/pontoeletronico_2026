@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-BR" style=""><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#0d59f2",
+                        "background-light": "#f5f6f8",
+                        "background-dark": "#101622",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        .neon-border {
+            box-shadow: 0 0 10px rgba(13, 89, 242, 0.3);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col">
+<!-- Header Section -->
+<header class="sticky top-0 z-50 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md border-b border-primary/20 p-4 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" style="">arrow_back</span>
+</div>
+<h1 class="text-lg font-bold tracking-widest uppercase text-primary" style="">Estatísticas</h1>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" style="">settings</span>
+</div>
+</header>
+<main class="flex-1 overflow-y-auto pb-24">
+<!-- Profile Card -->
+<section class="p-6 flex flex-col items-center gap-6">
+<div class="relative">
+<div class="w-32 h-32 rounded-full border-4 border-primary p-1 bg-background-dark overflow-hidden">
+<img alt="Foto de perfil do funcionário" class="w-full h-full object-cover rounded-full" data-alt="Professional portrait of a male employee" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBU_FqaWjQXzZ7C3Oa0setIC-u7GwemfmfBPi6t7wezFmHNSK6NcI0B5hH40sgMmOzYC_KQXlLVUM88VSslHJ0H2QuiGePU_Pip0tLuoX4GggiyKMyW8BoIZrpmZ3qM5Ht44MPGwQxJf-4kD4VdqPFzxU8LlAAvb2RhU3nGFdiHQnchs0TE-2un9XlrGMSvzukBTNMbcCG3X7xPtHYyWTRXMK31p9ygsnsJXyXg_tLbdH22UhnaRQGTZEvYZGBb7lVKfmLjdJsoRyg" style=""/>
+</div>
+<div class="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-primary text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-tighter" style="">+00:05:35</div>
+</div>
+<div class="text-center">
+<h2 class="text-2xl font-bold dark:text-white" style="">Carla Silva</h2>
+<p class="text-primary font-medium" style=""><span style="color: rgb(148, 163, 184); font-size: 14px;">Engenheiro de Sistemas</span><div><div><span style='color: rgb(100, 116, 139); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 12px;'>#88291</span><span style="color: rgb(148, 163, 184); font-size: 14px;"></span></div></div></p>
+</div>
+<div class="w-full space-y-2">
+<div class="flex justify-between text-sm font-medium">
+<span class="" style="">Progresso no mês</span>
+<span class="" style="">15 / 30 MÊS</span>
+</div>
+<div class="w-full h-3 bg-primary/20 rounded-full overflow-hidden">
+<div class="h-full bg-primary shadow-[0_0_15px_rgba(13,89,242,0.6)]" style="width: 75%"></div>
+</div>
+<p class="text-xs text-slate-500 dark:text-slate-400 text-center" style="">Faltam 15 DIAS para o próximo mês</p>
+</div>
+</section>
+<!-- Mission Attributes -->
+<section class="px-6 py-4">
+<h3 class="text-lg font-bold mb-4 flex items-center gap-2" style=""><span class="material-symbols-outlined text-primary" style="">military_tech</span>Estatística do mês</h3>
+<div class="grid grid-cols-3 gap-3">
+<div class="bg-primary/10 border border-primary/20 p-4 rounded-xl flex flex-col items-center justify-center gap-2 text-center">
+<span class="material-symbols-outlined text-primary" style="">timer</span>
+<span class="text-xl font-bold" style="">98%</span>
+<span class="text-[10px] uppercase text-slate-400" style="">Pontualidade</span>
+</div>
+<div class="bg-primary/10 border border-primary/20 p-4 rounded-xl flex flex-col items-center justify-center gap-2 text-center">
+<span class="material-symbols-outlined text-primary" style="">schedule</span>
+<span class="text-xl font-bold" style="">168h</span>
+<span class="text-[10px] uppercase text-slate-400" style="">Total Mensal</span>
+</div>
+<div class="bg-primary/10 border border-primary/20 p-4 rounded-xl flex flex-col items-center justify-center gap-2 text-center">
+<span class="material-symbols-outlined text-primary" style="">check_circle</span>
+<span class="text-xl font-bold" style="">0</span>
+<span class="text-[10px] uppercase text-slate-400" style="">Faltas Injust.</span>
+</div>
+</div>
+</section>
+<!-- Competency Radar Mockup (Visual via CSS/HTML) -->
+<section class="px-6 py-4">
+<h3 class="text-lg font-bold mb-4 flex items-center gap-2" style=""><span class="material-symbols-outlined text-primary" style="">workspace_premium</span>Estatísica do ano</h3>
+<div class="grid grid-cols-3 gap-3">
+<div class="bg-primary/10 border border-primary/20 p-4 rounded-xl flex flex-col items-center justify-center gap-2 text-center">
+<span class="material-symbols-outlined text-primary" style="">timer</span>
+<span class="text-xl font-bold" style="">98%</span>
+<span class="text-[10px] uppercase text-slate-400" style="">Pontualidade</span>
+</div>
+<div class="bg-primary/10 border border-primary/20 p-4 rounded-xl flex flex-col items-center justify-center gap-2 text-center">
+<span class="material-symbols-outlined text-primary" style="">schedule</span>
+<span class="text-xl font-bold" style="">168h</span>
+<span class="text-[10px] uppercase text-slate-400" style="">Total Anual</span>
+</div>
+<div class="bg-primary/10 border border-primary/20 p-4 rounded-xl flex flex-col items-center justify-center gap-2 text-center">
+<span class="material-symbols-outlined text-primary" style="">check_circle</span>
+<span class="text-xl font-bold" style="">0</span>
+<span class="text-[10px] uppercase text-slate-400" style="">Faltas Injust.</span>
+</div>
+</div>
+</section><section class="px-6 py-4">
+<div class="flex gap-3">
+<button class="flex-1 bg-primary text-white py-3 rounded-xl font-bold text-xs uppercase tracking-wider shadow-[0_0_15px_rgba(13,89,242,0.4)] transition-all active:scale-95">
+      Consolidado Mensal
+    </button>
+<button class="flex-1 bg-primary/10 border border-primary/40 text-primary py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all hover:bg-primary/20 active:scale-95">
+      Consolidado Anual
+    </button>
+</div>
+</section>
+<!-- Medals of Honor -->
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 right-0 border-t border-primary/20 bg-background-light dark:bg-background-dark/95 backdrop-blur-lg px-4 pb-4 pt-2 flex justify-between items-center z-50">
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">home</span>
+<p class="text-[10px] font-medium uppercase tracking-wider">Início</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined fill-1">bar_chart_4_bars</span>
+<p class="text-[10px] font-medium uppercase tracking-wider">Estatística</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">history</span>
+<p class="text-[10px] font-medium uppercase tracking-wider">Histórico</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-400 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">person</span>
+<p class="text-[10px] font-medium uppercase tracking-wider">Perfil</p>
+</a>
+</nav>
+</body></html>

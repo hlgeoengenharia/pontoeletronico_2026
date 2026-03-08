@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html class="dark" lang="pt-BR">
+
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet">
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#0d59f2",
+                        "background-light": "#f5f6f8",
+                        "background-dark": "#101622",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk"]
+                    },
+                    borderRadius: { "DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script type="module" src="../js/supabase-config.js"></script>
+    <title>Cadastro de Funcionário | ChronoSync Admin</title>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen flex flex-col pb-24">
+    <!-- Header / Navigation -->
+    <div
+        class="flex items-center bg-background-light dark:bg-background-dark p-4 pb-2 justify-between border-b border-slate-200 dark:border-primary/20">
+        <div onclick="history.back()"
+            class="text-primary flex size-12 shrink-0 items-center justify-start cursor-pointer hover:opacity-70 transition-opacity">
+            <span class="material-symbols-outlined text-2xl">arrow_back</span>
+        </div>
+        <h2
+            class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-tight flex-1 text-center pr-12 uppercase tracking-widest">
+            GESTÃO DE FUNCIONÁRIO</h2>
+    </div>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-6 max-w-lg mx-auto w-full">
+        <header class="mb-8 text-center">
+            <h3 class="text-slate-900 dark:text-slate-100 tracking-tight text-3xl font-bold leading-tight pb-2">
+                Painel Administrativo</h3>
+            <p class="text-slate-600 dark:text-slate-400 text-base font-normal">Controle total de registros e permissões
+                de acesso ao cockpit.</p>
+        </header>
+
+        <form id="cadastro-form" class="space-y-8 pb-32">
+            <!-- Upload de Foto -->
+            <div class="flex flex-col items-center justify-center mb-8">
+                <div class="relative group cursor-pointer" onclick="document.getElementById('avatar-input').click()">
+                    <div
+                        class="size-28 rounded-full border-4 border-primary/20 p-1 group-hover:border-primary/50 transition-all overflow-hidden bg-slate-800 flex items-center justify-center">
+                        <img id="avatar-preview" src="" class="hidden w-full h-full object-cover">
+                        <span id="avatar-placeholder"
+                            class="material-symbols-outlined text-4xl text-primary/30 group-hover:text-primary transition-colors">add_a_photo</span>
+                    </div>
+                    <div
+                        class="absolute bottom-1 right-1 bg-primary text-white size-8 rounded-full flex items-center justify-center shadow-lg border-2 border-background-dark">
+                        <span class="material-symbols-outlined text-sm">edit</span>
+                    </div>
+                    <input type="file" id="avatar-input" class="hidden" accept="image/*">
+                </div>
+                <p class="text-[10px] text-slate-500 uppercase font-bold mt-4 tracking-widest">Foto do Tripulante</p>
+            </div>
+
+            <!-- Nome Completo -->
+            <div class="group">
+                <label class="block text-xs font-bold uppercase tracking-widest text-primary mb-3">Nome Completo</label>
+                <div class="relative">
+                    <span
+                        class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary">person</span>
+                    <input id="nome_completo"
+                        class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg py-3 pl-10 pr-4 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                        placeholder="Ex: Arthur Pendragon" type="text" required>
+                </div>
+            </div>
+
+            <!-- Identificador do USUÁRIO (Nickname) -->
+            <div class="group">
+                <label class="block text-xs font-bold uppercase tracking-widest text-primary mb-3">Identificador do
+                    USUÁRIO (Nickname)</label>
+                <div class="relative">
+                    <span
+                        class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary">badge</span>
+                    <input id="nickname"
+                        class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg py-3 pl-10 pr-4 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                        placeholder="Ex: Ghost_01" type="text" required>
+                </div>
+            </div>
+
+            <!-- CPF e RG -->
+            <div class="grid grid-cols-2 gap-4">
+                <div class="group">
+                    <label class="block text-xs font-bold uppercase tracking-widest text-primary mb-3">CPF</label>
+                    <div class="relative">
+                        <span
+                            class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary">fingerprint</span>
+                        <input id="cpf"
+                            class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg py-3 pl-10 pr-4 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                            placeholder="000.000.000-00" type="text">
+                    </div>
+                </div>
+                <div class="group">
+                    <label class="block text-xs font-bold uppercase tracking-widest text-primary mb-3">RG</label>
+                    <div class="relative">
+                        <span
+                            class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary">id_card</span>
+                        <input id="rg"
+                            class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg py-3 pl-10 pr-4 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                            placeholder="00.000.000-0" type="text">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dados Pessoais -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="group">
+                    <label class="block text-xs font-bold uppercase tracking-widest text-primary mb-3">Data de
+                        Nascimento</label>
+                    <input id="data_nasc"
+                        class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg py-3 px-4 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                        type="date">
+                </div>
+                <div class="group">
+                    <label class="block text-xs font-bold uppercase tracking-widest text-primary mb-3">Sexo</label>
+                    <div class="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
+                        <label
+                            class="flex-1 text-center py-2 px-2 cursor-pointer rounded-md has-[:checked]:bg-primary has-[:checked]:text-white text-slate-500 dark:text-slate-400 transition-all">
+                            <input class="hidden" name="gender" type="radio" value="M">
+                            <span class="text-sm font-bold">M</span>
+                        </label>
+                        <label
+                            class="flex-1 text-center py-2 px-2 cursor-pointer rounded-md has-[:checked]:bg-primary has-[:checked]:text-white text-slate-500 dark:text-slate-400 transition-all">
+                            <input class="hidden" name="gender" type="radio" value="F">
+                            <span class="text-sm font-bold">F</span>
+                        </label>
+                        <label
+                            class="flex-1 text-center py-2 px-2 cursor-pointer rounded-md has-[:checked]:bg-primary has-[:checked]:text-white text-slate-500 dark:text-slate-400 transition-all">
+                            <input class="hidden" name="gender" type="radio" value="NB">
+                            <span class="text-sm font-bold">NB</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contato -->
+            <div class="group">
+                <label class="block text-xs font-bold uppercase tracking-widest text-primary mb-3">Email de
+                    Enlace</label>
+                <div class="relative">
+                    <span
+                        class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary">alternate_email</span>
+                    <input id="email"
+                        class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg py-3 pl-10 pr-4 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                        placeholder="email@empresa.com" type="email">
+                </div>
+            </div>
+
+            <div class="group">
+                <label class="block text-xs font-bold uppercase tracking-widest text-primary mb-3">Telefone de
+                    Contato</label>
+                <div class="relative">
+                    <span
+                        class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary">call</span>
+                    <input id="whatsapp"
+                        class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg py-3 pl-10 pr-4 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                        placeholder="(00) 00000-0000" type="tel">
+                </div>
+            </div>
+
+            <hr class="border-primary/10 my-8">
+
+            <!-- Matrícula -->
+            <div class="group">
+                <label class="block text-xs font-bold uppercase tracking-widest text-primary mb-3">Matrícula</label>
+                <div class="relative">
+                    <span
+                        class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">fingerprint</span>
+                    <input id="matricula"
+                        class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg py-3 pl-10 pr-4 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                        placeholder="Ex: CR-2024-0000" type="text" required>
+                </div>
+            </div>
+
+            <!-- Nível de Acesso -->
+            <div class="group space-y-3">
+                <label class="block text-xs font-bold uppercase tracking-widest text-primary">Nível de Acesso ao
+                    Sistema</label>
+                <div
+                    class="grid grid-cols-3 gap-2 bg-slate-100 dark:bg-slate-800 p-1.5 rounded-xl border border-slate-200 dark:border-slate-800">
+                    <label
+                        class="relative flex flex-col items-center justify-center py-4 px-2 cursor-pointer rounded-lg border border-transparent has-[:checked]:border-primary/50 has-[:checked]:bg-primary/10 has-[:checked]:text-primary text-slate-500 dark:text-slate-400 transition-all group/level">
+                        <input class="hidden" name="access_level" type="radio" value="recruta" checked>
+                        <span
+                            class="material-symbols-outlined mb-1 group-has-[:checked]/level:text-primary">shield</span>
+                        <span class="text-[10px] font-bold uppercase tracking-tighter">Recruta</span>
+                    </label>
+                    <label
+                        class="relative flex flex-col items-center justify-center py-4 px-2 cursor-pointer rounded-lg border border-transparent has-[:checked]:border-primary/50 has-[:checked]:bg-primary/10 has-[:checked]:text-primary text-slate-500 dark:text-slate-400 transition-all group/level">
+                        <input class="hidden" name="access_level" type="radio" value="comandante">
+                        <span
+                            class="material-symbols-outlined mb-1 group-has-[:checked]/level:text-primary">military_tech</span>
+                        <span class="text-[10px] font-bold uppercase tracking-tighter">GESTOR</span>
+                    </label>
+                    <label
+                        class="relative flex flex-col items-center justify-center py-4 px-2 cursor-pointer rounded-lg border border-transparent has-[:checked]:border-primary/50 has-[:checked]:bg-primary/10 has-[:checked]:text-primary text-slate-500 dark:text-slate-400 transition-all group/level">
+                        <input class="hidden" name="access_level" type="radio" value="admin">
+                        <span
+                            class="material-symbols-outlined mb-1 group-has-[:checked]/level:text-primary">workspace_premium</span>
+                        <span class="text-[10px] font-bold uppercase tracking-tighter">Admin</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Função e Setor -->
+            <div class="grid grid-cols-2 gap-4">
+                <div class="group">
+                    <label class="block text-xs font-bold uppercase tracking-widest text-primary mb-3">Função</label>
+                    <select id="funcao-select"
+                        class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg py-3 px-4 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all appearance-none text-sm">
+                        <option value="">Selecionar...</option>
+                        <option value="Piloto Temporal">Piloto Temporal</option>
+                        <option value="Engenheiro de Sistemas">Engenheiro de Sistemas</option>
+                        <option value="Analista de Dados">Analista de Dados</option>
+                        <option value="Piloto de Logística">Piloto de Logística</option>
+                    </select>
+                </div>
+                <div class="group">
+                    <label class="block text-xs font-bold uppercase tracking-widest text-primary mb-3">Setor</label>
+                    <select id="setor-select"
+                        class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg py-3 px-4 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all appearance-none text-sm">
+                        <option value="">Carregando setores...</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Escala Dinâmica -->
+            <div class="group">
+                <label class="block text-xs font-bold uppercase tracking-widest text-primary mb-3">Escala</label>
+                <div class="relative">
+                    <select id="escala-select"
+                        class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg py-3 px-4 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all appearance-none text-sm">
+                        <option value="">Carregando escalas...</option>
+                    </select>
+                    <span
+                        class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span>
+                </div>
+            </div>
+
+            <!-- Card de Detalhes da Escala -->
+            <div id="detalhes-escala-card" class="hidden animate-in fade-in slide-in-from-top-4 duration-300">
+                <div
+                    class="bg-primary/5 dark:bg-primary/10 border border-primary/20 rounded-xl p-5 space-y-4 relative overflow-hidden">
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <h4 id="detalhe-nome" class="text-primary font-bold text-base uppercase tracking-wider">Nome
+                                da Escala</h4>
+                            <p id="detalhe-tipo" class="text-xs text-slate-500 dark:text-slate-400">Regime de Trabalho
+                            </p>
+                        </div>
+                        <button type="button" id="btn-personalizar"
+                            class="flex items-center gap-1 text-[10px] font-bold text-primary border border-primary/30 px-2 py-1 rounded bg-primary/5 hover:bg-primary/10 transition-all uppercase tracking-tighter">
+                            <span class="material-symbols-outlined text-xs">edit_note</span>
+                            Personalizar
+                        </button>
+                    </div>
+
+                    <div id="view-escala-padrao" class="grid grid-cols-2 gap-4 py-2 border-y border-primary/10">
+                        <div>
+                            <p class="text-[10px] text-slate-500 uppercase font-bold">Carga Semanal</p>
+                            <p id="detalhe-carga" class="text-sm font-semibold">--h</p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] text-slate-500 uppercase font-bold">Turno</p>
+                            <p id="detalhe-turno" class="text-sm font-semibold">--:-- às --:--</p>
+                        </div>
+                    </div>
+
+                    <div id="edit-escala-personalizada" class="hidden space-y-3 py-2 border-y border-primary/10">
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="text-[9px] text-primary uppercase font-black">Carga Horária / Sem</label>
+                                <input id="pers-carga"
+                                    class="w-full bg-background-dark/50 border-primary/20 rounded p-1.5 text-xs text-white"
+                                    type="number" placeholder="44">
+                            </div>
+                            <div>
+                                <label class="text-[9px] text-primary uppercase font-black">Dias de Trabalho /
+                                    Sem</label>
+                                <input id="pers-dias-semana"
+                                    class="w-full bg-background-dark/50 border-primary/20 rounded p-1.5 text-xs text-white"
+                                    type="number" placeholder="5">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="text-[9px] text-primary uppercase font-black">Entrada</label>
+                                <input id="pers-entrada"
+                                    class="w-full bg-background-dark/50 border-primary/20 rounded p-1.5 text-xs text-white"
+                                    type="time">
+                            </div>
+                            <div>
+                                <label class="text-[9px] text-primary uppercase font-black">Saída</label>
+                                <input id="pers-saida"
+                                    class="w-full bg-background-dark/50 border-primary/20 rounded p-1.5 text-xs text-white"
+                                    type="time">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <p id="label-calendario"
+                            class="text-[10px] text-slate-500 uppercase font-bold mb-2 text-center">Dias de Trabalho
+                            (Novembro)</p>
+                        <div id="mini-calendario" class="grid grid-cols-7 gap-1"></div>
+                        <p id="aviso-personalizacao" class="hidden text-[9px] text-primary/60 italic text-center mt-2">
+                            Modo de personalização ativo: Clique nos dias para ajustar.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="pt-6">
+                <button
+                    class="w-full bg-primary hover:bg-primary/90 text-white font-bold py-4 rounded-xl shadow-[0_0_20px_rgba(13,89,242,0.3)] transition-all flex items-center justify-center gap-3 group"
+                    type="submit">
+                    <span class="material-symbols-outlined">save</span>
+                    <span class="uppercase tracking-widest">SALVAR CADASTRO</span>
+                </button>
+            </div>
+        </form>
+    </main>
+
+    <nav
+        class="fixed bottom-0 w-full bg-white dark:bg-background-dark border-t border-slate-200 dark:border-primary/10 px-6 py-4 z-50">
+        <div class="flex justify-between items-center max-w-md mx-auto">
+            <a class="flex flex-col items-center gap-1 text-slate-400 transition-all duration-300 hover:text-primary"
+                href="painel_admin.html">
+                <span class="material-symbols-outlined ">home</span>
+                <span class="text-[10px] font-bold uppercase tracking-tighter">INÍCIO</span>
+            </a>
+            <a class="flex flex-col items-center gap-1 text-slate-400 transition-all duration-300 hover:text-primary"
+                href="estatistica_funcionario.html">
+                <span class="material-symbols-outlined ">bar_chart</span>
+                <span class="text-[10px] font-bold uppercase tracking-tighter">ESTATÍSTICA</span>
+            </a>
+            <a class="flex flex-col items-center gap-1 text-slate-400 transition-all duration-300 hover:text-primary"
+                href="historico_anual.html">
+                <span class="material-symbols-outlined ">history</span>
+                <span class="text-[10px] font-bold uppercase tracking-tighter">HISTÓRICO</span>
+            </a>
+            <a class="flex flex-col items-center gap-1 text-primary transition-all duration-300 hover:text-primary"
+                href="cadastro_funcionario.html">
+                <span class="material-symbols-outlined fill-1">person_add</span>
+                <span class="text-[10px] font-bold uppercase tracking-tighter">CADASTRO</span>
+            </a>
+        </div>
+    </nav>
+
+    <script type="module">
+        import { supabase } from '../js/supabase-config.js';
+        import { UI } from '../js/ui-utils.js';
+
+        let escalasData = {};
+        let modoPersonalizado = false;
+        let diasSelecionadosPers = [];
+        let diasPorSemanaPers = {};
+        let selectedAvatarFile = null;
+
+        // Preview da Imagem
+        document.getElementById('avatar-input').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                selectedAvatarFile = file;
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const preview = document.getElementById('avatar-preview');
+                    const placeholder = document.getElementById('avatar-placeholder');
+                    preview.src = event.target.result;
+                    preview.classList.remove('hidden');
+                    placeholder.classList.add('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        async function carregarDadosIniciais() {
+            UI.showLoader();
+            try {
+                // Carregar Setores
+                const { data: setores, error: errorSetores } = await supabase.from('setores').select('*').order('nome');
+                if (errorSetores) throw errorSetores;
+
+                const setorSelect = document.getElementById('setor-select');
+                setorSelect.innerHTML = '<option value="">Selecionar Setor...</option>';
+                setores.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s.id;
+                    opt.textContent = s.nome;
+                    setorSelect.appendChild(opt);
+                });
+
+                // Carregar Cargos
+                const { data: cargos, error: errorCargos } = await supabase.from('cargos').select('*').order('nome');
+                if (errorCargos) throw errorCargos;
+
+                const cargoSelect = document.getElementById('funcao-select');
+                cargoSelect.innerHTML = '<option value="">Selecionar Cargo...</option>';
+                cargos.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c.nome;
+                    opt.textContent = c.nome;
+                    cargoSelect.appendChild(opt);
+                });
+
+                // Carregar Escalas
+                const { data: escalas, error: errorEscalas } = await supabase.from('escalas').select('*').order('nome');
+                if (errorEscalas) throw errorEscalas;
+
+                const escalaSelect = document.getElementById('escala-select');
+                escalaSelect.innerHTML = '<option value="">Selecionar Escala...</option>';
+                escalas.forEach(e => {
+                    escalasData[e.id] = {
+                        nome: e.nome,
+                        carga: e.carga_horaria_semanal,
+                        tipo: "Presencial",
+                        entrada: e.horario_entrada,
+                        saida: e.horario_saida,
+                        diasSemana: e.dias_trabalho_semana,
+                        dias: e.dias_padrao || []
+                    };
+                    const opt = document.createElement('option');
+                    opt.value = e.id;
+                    opt.textContent = e.nome;
+                    escalaSelect.appendChild(opt);
+                });
+            } catch (err) {
+                console.error('Erro ao carregar dados:', err);
+                UI.showToast('Erro ao carregar dados básicos', 'error');
+            } finally {
+                UI.hideLoader();
+            }
+        }
+
+        // Funções de Escala (Mantidas do original com UI.showToast)
+        function renderizarMiniCalendario(diasTrabalho) {
+            const grid = document.getElementById('mini-calendario');
+            grid.innerHTML = '';
+            const offset = 5;
+            for (let i = 0; i < offset; i++) {
+                const empty = document.createElement('div');
+                empty.className = 'h-6';
+                grid.appendChild(empty);
+            }
+            for (let i = 1; i <= 30; i++) {
+                const day = document.createElement('div');
+                const isTrabalho = Array.isArray(diasTrabalho) && diasTrabalho.includes(i);
+                day.className = `h-6 rounded flex items-center justify-center text-[10px] border transition-all cursor-pointer ${isTrabalho
+                    ? 'bg-primary text-white border-primary shadow-[0_0_8px_rgba(13,89,242,0.4)] font-bold'
+                    : 'bg-slate-100 dark:bg-slate-800/50 border-transparent opacity-30'}`;
+                day.innerText = i;
+                day.onclick = () => toggleDiaPersonalizado(i, day);
+                grid.appendChild(day);
+            }
+        }
+
+        function toggleDiaPersonalizado(dia, btn) {
+            if (!modoPersonalizado) return;
+            const limiteDias = parseInt(document.getElementById('pers-dias-semana').value) || 0;
+            const offset = 5;
+            const indexSemana = Math.floor((offset + dia - 1) / 7);
+
+            if (!diasPorSemanaPers[indexSemana]) diasPorSemanaPers[indexSemana] = 0;
+
+            if (btn.classList.contains('bg-primary')) {
+                btn.classList.remove('bg-primary', 'shadow-[0_0_8px_rgba(13,89,242,0.4)]', 'font-bold');
+                btn.classList.add('bg-slate-100', 'dark:bg-slate-800/50', 'border-transparent', 'opacity-30');
+                diasSelecionadosPers = diasSelecionadosPers.filter(d => d !== dia);
+                diasPorSemanaPers[indexSemana]--;
+            } else {
+                if (limiteDias > 0 && (diasPorSemanaPers[indexSemana] || 0) >= limiteDias) {
+                    btn.classList.add('border-red-500');
+                    setTimeout(() => btn.classList.remove('border-red-500'), 500);
+                    return;
+                }
+                btn.classList.remove('bg-slate-100', 'dark:bg-slate-800/50', 'border-transparent', 'opacity-30');
+                btn.classList.add('bg-primary', 'text-white', 'border-primary', 'shadow-[0_0_8px_rgba(13,89,242,0.4)]', 'font-bold');
+                diasSelecionadosPers.push(dia);
+                diasPorSemanaPers[indexSemana] = (diasPorSemanaPers[indexSemana] || 0) + 1;
+            }
+        }
+
+        function atualizarDetalhesEscala() {
+            modoPersonalizado = false;
+            const select = document.getElementById('escala-select');
+            const card = document.getElementById('detalhes-escala-card');
+            const config = escalasData[select.value];
+
+            document.getElementById('view-escala-padrao').classList.remove('hidden');
+            document.getElementById('edit-escala-personalizada').classList.add('hidden');
+            document.getElementById('aviso-personalizacao').classList.add('hidden');
+
+            if (!config) {
+                card.classList.add('hidden');
+                return;
+            }
+            card.classList.remove('hidden');
+            document.getElementById('detalhe-nome').innerText = config.nome;
+            document.getElementById('detalhe-tipo').innerText = config.tipo;
+            document.getElementById('detalhe-carga').innerText = config.carga + 'h/sem';
+            document.getElementById('detalhe-turno').innerText = `${config.entrada} às ${config.saida}`;
+            renderizarMiniCalendario(config.dias);
+        }
+
+        function alternarPersonalizacao() {
+            modoPersonalizado = !modoPersonalizado;
+            const viewPadrao = document.getElementById('view-escala-padrao');
+            const editPers = document.getElementById('edit-escala-personalizada');
+            const aviso = document.getElementById('aviso-personalizacao');
+            const select = document.getElementById('escala-select');
+            const config = escalasData[select.value];
+
+            if (modoPersonalizado) {
+                viewPadrao.classList.add('hidden');
+                editPers.classList.remove('hidden');
+                aviso.classList.remove('hidden');
+                if (config) {
+                    document.getElementById('pers-carga').value = config.carga;
+                    document.getElementById('pers-dias-semana').value = config.diasSemana;
+                    document.getElementById('pers-entrada').value = config.entrada;
+                    document.getElementById('pers-saida').value = config.saida;
+                    diasSelecionadosPers = config.dias ? [...config.dias] : [];
+                    recalcularSemanasPers();
+                }
+            } else {
+                viewPadrao.classList.remove('hidden');
+                editPers.classList.add('hidden');
+                aviso.classList.add('hidden');
+            }
+            if (config) renderizarMiniCalendario(modoPersonalizado ? diasSelecionadosPers : config.dias);
+        }
+
+        function recalcularSemanasPers() {
+            diasPorSemanaPers = {};
+            const offset = 5;
+            diasSelecionadosPers.forEach(dia => {
+                const indexSemana = Math.floor((offset + dia - 1) / 7);
+                diasPorSemanaPers[indexSemana] = (diasPorSemanaPers[indexSemana] || 0) + 1;
+            });
+        }
+
+        document.getElementById('escala-select').addEventListener('change', atualizarDetalhesEscala);
+        document.getElementById('btn-personalizar').addEventListener('click', alternarPersonalizacao);
+
+        // Submit Final
+        document.getElementById('cadastro-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            UI.showLoader();
+
+            let avatarUrl = null;
+
+            try {
+                // 1. Upload do Avatar (se existir)
+                if (selectedAvatarFile) {
+                    const fileExt = selectedAvatarFile.name.split('.').pop();
+                    const fileName = `${Math.random()}.${fileExt}`;
+                    const filePath = `avatars/${fileName}`;
+
+                    const { error: uploadError, data: uploadData } = await supabase.storage
+                        .from('avatars')
+                        .upload(filePath, selectedAvatarFile);
+
+                    if (uploadError) throw uploadError;
+
+                    const { data: { publicUrl } } = supabase.storage
+                        .from('avatars')
+                        .getPublicUrl(filePath);
+
+                    avatarUrl = publicUrl;
+                }
+
+                // 2. Montar Dados
+                const dados = {
+                    nome_completo: document.getElementById('nome_completo').value,
+                    nickname: document.getElementById('nickname').value,
+                    cpf: document.getElementById('cpf').value,
+                    rg: document.getElementById('rg').value,
+                    data_nascimento: document.getElementById('data_nasc').value,
+                    sexo: e.target.querySelector('input[name="gender"]:checked')?.value || null,
+                    email: document.getElementById('email').value,
+                    telefone: document.getElementById('whatsapp').value,
+                    matricula: document.getElementById('matricula').value,
+                    funcao: document.getElementById('funcao-select').value,
+                    setor_id: document.getElementById('setor-select').value || null,
+                    escala_id: document.getElementById('escala-select').value || null,
+                    nivel_acesso: e.target.querySelector('input[name="access_level"]:checked')?.value || 'recruta',
+                    foto_url: avatarUrl,
+                    personalizacao_escala: modoPersonalizado ? {
+                        carga_horaria_semanal: parseInt(document.getElementById('pers-carga').value),
+                        dias_trabalho_semana: parseInt(document.getElementById('pers-dias-semana').value),
+                        horario_entrada: document.getElementById('pers-entrada').value,
+                        horario_saida: document.getElementById('pers-saida').value,
+                        dias_selecionados: diasSelecionadosPers
+                    } : null
+                };
+
+                // 3. Inserir no Banco
+                const { error } = await supabase.from('funcionarios').insert([dados]);
+                if (error) throw error;
+
+                UI.showToast('Tripulante registrado com sucesso!', 'success');
+                setTimeout(() => window.location.href = 'relacao_funcionarios.html', 1500);
+
+            } catch (err) {
+                console.error('Erro no cadastro:', err);
+                UI.showToast('Erro ao registrar tripulante', 'error');
+            } finally {
+                UI.hideLoader();
+            }
+        });
+
+        carregarDadosIniciais();
+    </script>
+</body>
+
+</html>

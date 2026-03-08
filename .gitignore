@@ -1,0 +1,16 @@
+# Configurações de API e Chaves
+*.json
+!package.json
+!composer.json
+
+# Ambiente e Logs
+.env
+*.log
+npm-debug.log*
+
+# IDEs
+.vscode/
+.idea/
+
+# Node
+node_modules/

@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html class="dark" lang="pt-BR">
+
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet">
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#0d59f2",
+                        "background-light": "#f5f6f8",
+                        "background-dark": "#101622",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk"]
+                    },
+                    borderRadius: { "DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script type="module" src="../js/supabase-config.js"></script>
+    <title>Recrutamento de Piloto | ChronoSync</title>
+
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen flex flex-col pb-24">
+    <!-- Header / Navigation -->
+    <div
+        class="flex items-center bg-background-light dark:bg-background-dark p-4 pb-2 justify-between border-b border-slate-200 dark:border-primary/20">
+        <div onclick="history.back()"
+            class="text-primary flex size-12 shrink-0 items-center justify-start cursor-pointer hover:opacity-70 transition-opacity">
+            <span class="material-symbols-outlined text-2xl">arrow_back</span>
+        </div>
+        <h2
+            class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-tight flex-1 text-center pr-12 uppercase tracking-widest">
+            CADASTRAR FUNCIONÁRIO</h2>
+    </div>
+    <!-- Progress Section -->
+    <div class="flex flex-col gap-3 p-6 bg-primary/5 border-b border-primary/10">
+        <div class="flex gap-6 justify-between items-center">
+            <p class="text-slate-700 dark:text-slate-300 text-sm font-medium leading-normal uppercase tracking-tighter">
+                Sincronização de Dados Neurais</p>
+            <p class="text-primary text-sm font-bold leading-normal">75%</p>
+        </div>
+        <div class="rounded-full bg-slate-200 dark:bg-slate-800 h-2 overflow-hidden">
+            <div class="h-full rounded-full bg-primary shadow-[0_0_10px_rgba(13,89,242,0.5)]" style="width: 75%;">
+            </div>
+        </div>
+        <p class="text-slate-500 dark:text-slate-400 text-xs font-normal leading-normal italic">Verificando
+            integridade do núcleo temporal...</p>
+    </div>
+    <!-- Form Section -->
+    <main class="flex-1 p-6 max-w-lg mx-auto w-full">
+        <header class="mb-8 text-center">
+            <h3 class="text-slate-900 dark:text-slate-100 tracking-tight text-3xl font-bold leading-tight pb-2">
+                Central de Cadastramento</h3>
+            <p class="text-slate-600 dark:text-slate-400 text-base font-normal">Insira suas credenciais
+                biométricas para acessar a rede de rastreamento temporal.</p>
+        </header>
+        <form class="space-y-6">
+            <!-- Nome Completo -->
+            <div class="group">
+                <label class="block text-xs font-bold uppercase tracking-widest text-primary mb-3">Nome Completo</label>
+                <div class="relative">
+                    <span
+                        class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary">person</span>
+                    <input id="nome_completo"
+                        class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg py-3 pl-10 pr-4 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                        placeholder="Ex: Arthur Pendragon" type="text" readonly>
+                </div>
+            </div>
+
+            <!-- Identificador do USUÁRIO (Nickname) -->
+            <div class="group">
+                <label class="block text-xs font-bold uppercase tracking-widest text-primary mb-3">Identificador do
+                    USUÁRIO (Nickname)</label>
+                <div class="relative">
+                    <span
+                        class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary">badge</span>
+                    <input id="nickname"
+                        class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg py-3 pl-10 pr-4 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                        placeholder="Ex: Ghost_01" type="text" readonly>
+                </div>
+            </div>
+
+            <!-- CPF e RG -->
+            <div class="grid grid-cols-2 gap-4">
+                <div class="group">
+                    <label class="block text-xs font-bold uppercase tracking-widest text-primary mb-3">CPF</label>
+                    <div class="relative">
+                        <span
+                            class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary">fingerprint</span>
+                        <input
+                            class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg py-3 pl-10 pr-4 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                            placeholder="000.000.000-00" type="text" value="123.456.789-00">
+                    </div>
+                </div>
+                <div class="group">
+                    <label class="block text-xs font-bold uppercase tracking-widest text-primary mb-3">RG</label>
+                    <div class="relative">
+                        <span
+                            class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary">id_card</span>
+                        <input
+                            class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg py-3 pl-10 pr-4 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                            placeholder="00.000.000-0" type="text" value="12.345.678-9">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dados Pessoais Editáveis -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Data de Nascimento -->
+                <div class="group">
+                    <label class="block text-xs font-bold uppercase tracking-widest text-primary mb-3">Data de
+                        Nascimento</label>
+                    <input
+                        class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg py-3 px-4 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                        type="date" value="1995-10-24">
+                </div>
+                <!-- Sexo/Gênero -->
+                <div class="group">
+                    <label class="block text-xs font-bold uppercase tracking-widest text-primary mb-3">Sexo</label>
+                    <div class="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
+                        <label
+                            class="flex-1 text-center py-2 px-2 cursor-pointer rounded-md has-[:checked]:bg-primary has-[:checked]:text-white text-slate-500 dark:text-slate-400 transition-all">
+                            <input checked="" class="hidden" name="gender" type="radio">
+                            <span class="text-sm font-bold">M</span>
+                        </label>
+                        <label
+                            class="flex-1 text-center py-2 px-2 cursor-pointer rounded-md has-[:checked]:bg-primary has-[:checked]:text-white text-slate-500 dark:text-slate-400 transition-all">
+                            <input class="hidden" name="gender" type="radio">
+                            <span class="text-sm font-bold">F</span>
+                        </label>
+                        <label
+                            class="flex-1 text-center py-2 px-2 cursor-pointer rounded-md has-[:checked]:bg-primary has-[:checked]:text-white text-slate-500 dark:text-slate-400 transition-all">
+                            <input class="hidden" name="gender" type="radio">
+                            <span class="text-sm font-bold">NB</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Email -->
+            <div class="group">
+                <label class="block text-xs font-bold uppercase tracking-widest text-primary mb-3">Email de
+                    Enlace</label>
+                <div class="relative">
+                    <span
+                        class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary">alternate_email</span>
+                    <input
+                        class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg py-3 pl-10 pr-4 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                        placeholder="piloto@chronosync.net" type="email" value="art.morgan@chronosync.net">
+                </div>
+            </div>
+
+            <!-- Telefone -->
+            <div class="group">
+                <label class="block text-xs font-bold uppercase tracking-widest text-primary mb-3">Telefone de
+                    Contato</label>
+                <div class="relative">
+                    <span
+                        class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary">call</span>
+                    <input
+                        class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg py-3 pl-10 pr-4 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                        placeholder="(00) 00000-0000" type="tel" value="(11) 98829-1995">
+                </div>
+            </div>
+
+            <!-- Senhas -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="group">
+                    <label class="block text-xs font-bold uppercase tracking-widest text-primary mb-3">Senha
+                        Atual</label>
+                    <div class="relative">
+                        <span
+                            class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary">lock</span>
+                        <input
+                            class="w-full bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-lg py-3 pl-10 pr-10 outline-none cursor-not-allowed text-slate-500 transition-all border-orange-500/30"
+                            placeholder="••••••••" readonly type="password" value="********">
+                    </div>
+                </div>
+                <div class="group">
+                    <label class="block text-xs font-bold uppercase tracking-widest text-neon-cyan mb-3">Nova
+                        Senha</label>
+                    <div class="relative">
+                        <span
+                            class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-neon-cyan">lock_reset</span>
+                        <input
+                            class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg py-3 pl-10 pr-10 focus:ring-2 focus:ring-neon-cyan focus:border-transparent outline-none transition-all"
+                            placeholder="Nova senha" type="password">
+                    </div>
+                </div>
+            </div>
+
+            <hr class="border-primary/10 my-8">
+
+            <!-- Matrícula -->
+            <div class="group">
+                <label class="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">Matrícula
+                    (Imutável)</label>
+                <div class="relative">
+                    <span
+                        class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">fingerprint</span>
+                    <input id="campo-matricula"
+                        class="w-full bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-lg py-3 pl-10 pr-4 outline-none cursor-not-allowed text-slate-500"
+                        readonly type="text" value="CR-2024-0042">
+                </div>
+            </div>
+
+            <!-- Nível de Acesso (Somente Leitura para o Funcionário) -->
+            <div class="group space-y-3">
+                <label class="block text-xs font-bold uppercase tracking-widest text-slate-500">Nível de Acesso ao
+                    Sistema</label>
+                <div
+                    class="flex gap-2 bg-slate-100 dark:bg-slate-800 p-1.5 rounded-xl border border-slate-200 dark:border-slate-800 opacity-70 pointer-events-none">
+                    <div
+                        class="flex-1 flex flex-col items-center justify-center py-4 px-2 rounded-lg bg-primary/10 text-primary border border-primary/50">
+                        <span class="material-symbols-outlined mb-1">shield</span>
+                        <span class="text-[10px] font-bold uppercase tracking-tighter">Recruta</span>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Função e Setor (Somente Leitura para o Funcionário) -->
+            <div class="grid grid-cols-2 gap-4">
+                <div class="group">
+                    <label class="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">Função</label>
+                    <div
+                        class="w-full bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-lg py-3 px-4 text-sm text-slate-500 cursor-not-allowed">
+                        Piloto Temporal
+                    </div>
+                </div>
+                <div class="group">
+                    <label class="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">Setor</label>
+                    <div
+                        class="w-full bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-lg py-3 px-4 text-sm text-slate-500 cursor-not-allowed">
+                        Operações Temporais
+                    </div>
+                </div>
+            </div>
+
+            <!-- Escala (Somente Leitura para o Funcionário) -->
+            <div class="group">
+                <label class="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">Escala
+                    Atual</label>
+                <div
+                    class="w-full bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-lg py-3 px-4 text-sm text-slate-500 cursor-not-allowed flex justify-between items-center">
+                    <span>Plantão Noturno</span>
+                    <span class="material-symbols-outlined text-sm">lock</span>
+                </div>
+                <input type="hidden" id="escala-select" value="noturno">
+            </div>
+
+            <!-- Card de Detalhes da Escala (Oculto por padrão) -->
+            <div id="detalhes-escala-card" class="hidden animate-in fade-in slide-in-from-top-4 duration-300">
+                <div class="bg-primary/5 dark:bg-primary/10 border border-primary/20 rounded-xl p-5 space-y-4">
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <h4 id="detalhe-nome" class="text-primary font-bold text-base uppercase tracking-wider">Nome
+                                da Escala</h4>
+                            <p id="detalhe-tipo" class="text-xs text-slate-500 dark:text-slate-400">Regime de Trabalho
+                            </p>
+                        </div>
+                        <span class="material-symbols-outlined text-primary text-3xl opacity-50">calendar_month</span>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 py-2 border-y border-primary/10">
+                        <div>
+                            <p class="text-[10px] text-slate-500 uppercase font-bold">Carga Semanal</p>
+                            <p id="detalhe-carga" class="text-sm font-semibold">--h</p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] text-slate-500 uppercase font-bold">Turno</p>
+                            <p id="detalhe-turno" class="text-sm font-semibold">--:-- às --:--</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <p class="text-[10px] text-slate-500 uppercase font-bold mb-2 text-center">Dias de Trabalho
+                            (Novembro)</p>
+                        <div class="grid grid-cols-7 gap-1 text-center text-[10px] mb-1 opacity-50">
+                            <div>D</div>
+                            <div>S</div>
+                            <div>T</div>
+                            <div>Q</div>
+                            <div>Q</div>
+                            <div>S</div>
+                            <div>S</div>
+                        </div>
+                        <div id="mini-calendario" class="grid grid-cols-7 gap-1">
+                            <!-- JS renderiza aqui -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <script type="module">
+                import { supabase } from '../js/supabase-config.js?v=2';
+
+                async function initProfile() {
+                    let escalasData = {};
+                    const urlParams = new URLSearchParams(window.location.search);
+                    let funcionarioId = urlParams.get('id') || localStorage.getItem('userId');
+
+                    if (!funcionarioId) {
+                        console.error('Erro: ID do funcionário não fornecido.');
+                        return;
+                    }
+
+                    try {
+                        // 1. Carregar Escalas para referência
+                        const { data: escalas, error: errEscalas } = await supabase.from('escalas').select('*');
+                        if (errEscalas) throw errEscalas;
+
+                        escalas.forEach(e => {
+                            escalasData[e.id] = {
+                                nome: e.nome,
+                                carga: e.carga_horaria_semanal,
+                                tipo: "Presencial",
+                                entrada: e.horario_entrada,
+                                saida: e.horario_saida,
+                                dias: e.dias_padrao
+                            };
+                        });
+
+                        // 2. Carregar o funcionário
+                        const { data: func, error: errFunc } = await supabase
+                            .from('funcionarios')
+                            .select('*, setores(nome)')
+                            .eq('id', funcionarioId)
+                            .single();
+
+                        if (errFunc) throw errFunc;
+
+                        preencherDados(func, escalasData);
+                    } catch (error) {
+                        console.error('Erro ao carregar perfil:', error);
+                    }
+                }
+
+                function preencherDados(func, escalasData) {
+                    if (!func) return;
+
+                    document.getElementById('nome_completo').value = func.nome_completo || '';
+                    document.getElementById('nickname').value = func.nickname || func.nome_completo.split(' ')[0];
+                    document.getElementById('campo-matricula').value = func.matricula || '';
+
+                    // Mudar título e cabeçalho
+                    const headerH2 = document.querySelector('h2');
+                    const headerH3 = document.querySelector('h3');
+                    const headerP = document.querySelector('header p');
+
+                    if (headerH2) headerH2.innerText = "PERFIL DO TRIPULANTE";
+                    if (headerH3) headerH3.innerText = (func.nome_completo || 'Tripulante').split(' ')[0].toUpperCase();
+                    if (headerP) headerP.innerText = `Gestão de dados neurais e escala de ${func.funcao || 'Tripulante'}.`;
+
+                    // Lógica de Escala
+                    const detalhesEscala = document.getElementById('detalhes-escala-card');
+                    if (detalhesEscala) {
+                        detalhesEscala.classList.remove('hidden');
+                        detalhesEscala.style.display = 'block'; // Forçar exibição
+                    }
+
+                    if (func.personalizacao_escala) {
+                        const p = func.personalizacao_escala;
+                        document.getElementById('detalhe-nome').innerText = "Escala Personalizada";
+                        document.getElementById('detalhe-tipo').innerText = "Ajuste Individual";
+                        document.getElementById('detalhe-carga').innerText = p.carga_horaria_semanal + 'h/sem';
+                        document.getElementById('detalhe-turno').innerText = `${p.horario_entrada} às ${p.horario_saida}`;
+                        renderizarMiniCalendario(p.dias_selecionados || []);
+                    } else if (func.escala_id) {
+                        const config = escalasData[func.escala_id];
+                        if (config) {
+                            document.getElementById('detalhe-nome').innerText = config.nome;
+                            document.getElementById('detalhe-tipo').innerText = config.tipo;
+                            document.getElementById('detalhe-carga').innerText = config.carga + 'h/sem';
+                            document.getElementById('detalhe-turno').innerText = `${config.entrada} às ${config.saida}`;
+                            renderizarMiniCalendario(config.dias || []);
+                        }
+                    }
+                }
+
+                function renderizarMiniCalendario(diasTrabalho) {
+                    const grid = document.getElementById('mini-calendario');
+                    if (!grid) return;
+
+                    grid.innerHTML = '';
+                    const offset = 5;
+                    for (let i = 0; i < offset; i++) {
+                        const empty = document.createElement('div');
+                        empty.className = 'h-6';
+                        grid.appendChild(empty);
+                    }
+                    for (let i = 1; i <= 30; i++) {
+                        const day = document.createElement('div');
+                        const isTrabalho = diasTrabalho.includes(i);
+                        day.className = `h-6 rounded flex items-center justify-center text-[10px] border transition-all ${isTrabalho
+                            ? 'bg-primary text-white border-primary shadow-[0_0_8px_rgba(13,89,242,0.4)] font-bold'
+                            : 'bg-slate-100 dark:bg-slate-800/50 border-transparent opacity-30'
+                            }`;
+                        day.innerText = i;
+                        grid.appendChild(day);
+                    }
+                }
+
+                document.addEventListener('DOMContentLoaded', initProfile);
+            </script>
+
+
+            <!-- Submit Button -->
+            <div class="pt-6">
+                <button
+                    class="w-full bg-primary hover:bg-primary/90 text-white font-bold py-4 rounded-xl shadow-[0_0_20px_rgba(13,89,242,0.3)] transition-all flex items-center justify-center gap-3 group"
+                    type="submit">
+                    <span class="material-symbols-outlined">rocket_launch</span>
+                    <span class="uppercase tracking-widest">Finalizar CADASTRO</span>
+                </button>
+                <p class="text-center text-xs text-slate-500 dark:text-slate-500 mt-4 uppercase tracking-tighter">Ao
+                    clicar, você aceita o Código de Conduta Intergaláctico</p>
+            </div>
+        </form>
+    </main>
+    <!-- UI Decor Elements -->
+    <div class="fixed top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-50">
+    </div>
+    <div class="fixed bottom-20 right-4 pointer-events-none opacity-10">
+        <span class="material-symbols-outlined text-[120px]">radar</span>
+    </div>
+    <nav
+        class="fixed bottom-0 w-full bg-white dark:bg-background-dark border-t border-slate-200 dark:border-primary/10 px-6 py-4 z-50">
+        <div class="flex justify-between items-center max-w-md mx-auto">
+            <a class="flex flex-col items-center gap-1 text-slate-400 transition-all duration-300 hover:text-primary"
+                href="painel_funcionario.html">
+                <span class="material-symbols-outlined ">home</span>
+                <span class="text-[10px] font-bold uppercase tracking-tighter">INÍCIO</span>
+            </a>
+            <a class="flex flex-col items-center gap-1 text-slate-400 transition-all duration-300 hover:text-primary"
+                href="estatistica_funcionario.html">
+                <span class="material-symbols-outlined ">bar_chart</span>
+                <span class="text-[10px] font-bold uppercase tracking-tighter">ESTATÍSTICA</span>
+            </a>
+            <a class="flex flex-col items-center gap-1 text-slate-400 transition-all duration-300 hover:text-primary"
+                href="historico_anual.html">
+                <span class="material-symbols-outlined ">history</span>
+                <span class="text-[10px] font-bold uppercase tracking-tighter">HISTÓRICO</span>
+            </a>
+            <a id="nav-perfil"
+                class="flex flex-col items-center gap-1 text-primary transition-all duration-300 hover:text-primary"
+                href="perfil_funcionario.html">
+                <span class="material-symbols-outlined fill-1">person</span>
+                <span class="text-[10px] font-bold uppercase tracking-tighter">PERFIL</span>
+            </a>
+        </div>
+    </nav>
+    <script type="module" src="../js/manager-context.js?v=2.7"></script>
+</body>
+
+</html>

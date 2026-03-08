@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-br"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#0d59f2",
+                        "background-light": "#f5f6f8",
+                        "background-dark": "#0a0e17",
+                        "neon-cyan": "#00f2ff",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .neon-glow {
+            box-shadow: 0 0 10px rgba(13, 89, 242, 0.3);
+        }
+        .neon-border {
+            border: 1px solid rgba(0, 242, 255, 0.2);
+        }
+        .scanline {
+            background: linear-gradient(to bottom, transparent 50%, rgba(13, 89, 242, 0.05) 50%);
+            background-size: 100% 4px;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen flex flex-col">
+<!-- Header Section -->
+<header class="sticky top-0 z-50 bg-background-dark/80 backdrop-blur-md border-b border-primary/20 px-4 py-4">
+<div class="flex items-center justify-between max-w-2xl mx-auto">
+<div class="flex items-center gap-2">
+<div class="w-2 h-8 bg-primary rounded-full shadow-[0_0_10px_#0d59f2]"></div>
+<h1 class="text-xl font-bold tracking-tighter uppercase text-slate-100">Relação de Setores</h1>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-lg bg-primary/10 border border-primary/30 text-primary">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+</div>
+</header>
+<!-- Main Content -->
+<main class="flex-1 overflow-y-auto px-4 py-6 max-w-2xl mx-auto w-full pb-24">
+<!-- Search Bar -->
+<div class="mb-8">
+<div class="relative group">
+<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-primary">search</span>
+</div>
+<input class="block w-full pl-12 pr-4 py-4 bg-primary/5 border border-primary/20 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all placeholder-slate-500 text-slate-100" placeholder="Localizar setor..." type="text"/>
+<div class="absolute inset-y-0 right-0 pr-4 flex items-center">
+<span class="text-[10px] font-bold text-primary/40 uppercase tracking-widest">Scanner Ativo</span>
+</div>
+</div>
+</div>
+<!-- Employee List -->
+<div class="space-y-4"><!-- Sector Card 1 -->
+<div class="relative overflow-hidden p-4 bg-slate-900/50 rounded-xl neon-border group hover:bg-slate-800/60 transition-colors">
+<div class="absolute top-0 right-0 p-2 opacity-20">
+<span class="text-[40px] font-black italic select-none">#ENG-01</span>
+</div>
+<div class="flex items-center gap-4 relative z-10">
+<div class="relative">
+<div class="w-16 h-16 rounded-full border-2 border-primary p-1 bg-background-dark flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-3xl">engineering</span>
+</div>
+<div class="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full border-2 border-background-dark shadow-[0_0_8px_#10b981]"></div>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="text-lg font-bold text-slate-100">Setor de Engenharia</h3>
+<p class="text-xs text-primary font-medium tracking-wider">Gestor Responsável: Arthur Morgan</p>
+</div>
+</div>
+<div class="mt-3 flex items-center gap-4">
+<div class="flex flex-col"><span class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">TOTAL DE FUNCIONÁRIOS: <span class="text-slate-300 font-mono text-sm ml-1">24</span></span></div>
+</div>
+</div>
+</div>
+<div class="scanline absolute inset-0 opacity-10 pointer-events-none"></div>
+</div>
+<!-- Sector Card 2 -->
+<div class="relative overflow-hidden p-4 bg-slate-900/50 rounded-xl neon-border group hover:bg-slate-800/60 transition-colors">
+<div class="absolute top-0 right-0 p-2 opacity-20">
+<span class="text-[40px] font-black italic select-none">#DAT-02</span>
+</div>
+<div class="flex items-center gap-4 relative z-10">
+<div class="relative">
+<div class="w-16 h-16 rounded-full border-2 border-primary p-1 bg-background-dark flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-3xl">analytics</span>
+</div>
+<div class="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full border-2 border-background-dark shadow-[0_0_8px_#10b981]"></div>
+</div>
+<div class="flex-1">
+<div>
+<h3 class="text-lg font-bold text-slate-100">Setor de Dados</h3>
+<p class="text-xs text-primary font-medium tracking-wider">Gestor Responsável: Elena Vance</p>
+</div>
+<div class="mt-3 flex items-center gap-4">
+<div class="flex flex-col"><span class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">TOTAL DE FUNCIONÁRIOS: <span class="text-slate-300 font-mono text-sm ml-1">12</span></span></div>
+</div>
+</div>
+</div>
+<div class="scanline absolute inset-0 opacity-10 pointer-events-none"></div>
+</div>
+<!-- Sector Card 3 -->
+<div class="relative overflow-hidden p-4 bg-slate-900/50 rounded-xl neon-border group hover:bg-slate-800/60 transition-colors">
+<div class="absolute top-0 right-0 p-2 opacity-20">
+<span class="text-[40px] font-black italic select-none">#LOG-03</span>
+</div>
+<div class="flex items-center gap-4 relative z-10">
+<div class="relative">
+<div class="w-16 h-16 rounded-full border-2 border-primary p-1 bg-background-dark flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-3xl">local_shipping</span>
+</div>
+<div class="absolute -bottom-1 -right-1 w-4 h-4 bg-amber-500 rounded-full border-2 border-background-dark shadow-[0_0_8px_#f59e0b]"></div>
+</div>
+<div class="flex-1">
+<div>
+<h3 class="text-lg font-bold text-slate-100">Setor de Logística</h3>
+<p class="text-xs text-primary font-medium tracking-wider">Gestor Responsável: James Holden</p>
+</div>
+<div class="mt-3 flex items-center gap-4">
+<div class="flex flex-col"><span class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">TOTAL DE FUNCIONÁRIOS: <span class="text-slate-300 font-mono text-sm ml-1">38</span></span></div>
+</div>
+</div>
+</div>
+<div class="scanline absolute inset-0 opacity-10 pointer-events-none"></div>
+</div></div>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-primary/30 px-6 pb-6 pt-3 z-50">
+<div class="max-w-2xl mx-auto flex justify-between items-center"><a class="flex flex-col items-center gap-1 text-slate-500 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">home</span>
+<span class="text-[10px] font-bold uppercase tracking-wider">Início</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-500 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">bar_chart</span>
+<span class="text-[10px] font-bold uppercase tracking-wider">Estatística</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-primary relative" href="#">
+<span class="material-symbols-outlined">history</span>
+<span class="text-[10px] font-bold uppercase tracking-wider">Histórico</span>
+<div class="absolute -top-1 w-8 h-0.5 bg-primary shadow-[0_0_8px_#0d59f2]"></div>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-500 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[10px] font-bold uppercase tracking-wider">Perfil</span>
+</a></div>
+</nav>
+</body></html>

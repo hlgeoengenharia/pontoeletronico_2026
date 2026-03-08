@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html class="dark" lang="pt-BR">
+
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script type="module" src="../js/manager-context.js?v=2.7"></script>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: { "primary": "#0d59f2", "background-light": "#f5f6f8", "background-dark": "#101622" },
+                    fontFamily: { "display": ["Space Grotesk"] },
+                    borderRadius: { "DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+    <title>ChronoSync - Painel do Tripulante</title>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen flex flex-col pb-24">
+
+    <header
+        class="p-6 pt-8 flex flex-col items-center border-b border-primary/10 bg-background-dark/50 backdrop-blur-sm">
+        <div class="flex items-center justify-between w-full mb-6">
+            <div id="sideMenuTrigger" class="cursor-pointer size-10 flex items-center justify-start">
+                <span class="material-symbols-outlined text-slate-400">menu</span>
+            </div>
+            <h1 class="text-[10px] font-black tracking-[0.2em] text-slate-500 uppercase text-center flex-1">Protocolo
+                Central</h1>
+            <span class="material-symbols-outlined text-slate-400 size-10 flex items-center justify-end">settings</span>
+        </div>
+
+        <div class="flex flex-col items-center text-center w-full max-w-md">
+            <div class="relative mb-6">
+                <div
+                    class="w-24 h-24 rounded-full border-2 border-primary p-1 bg-background-dark shadow-[0_0_30px_rgba(13,89,242,0.15)]">
+                    <img id="user-photo" src="https://ui-avatars.com/api/?name=User&background=0D59F2&color=fff"
+                        class="w-full h-full rounded-full object-cover">
+                </div>
+                <div id="user-timer"
+                    class="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-primary px-4 py-1 rounded-full text-[10px] font-black text-white shadow-xl border border-white/10 whitespace-nowrap">
+                    +00:00:00
+                </div>
+            </div>
+
+            <h2 id="display-name" class="text-3xl font-black text-slate-100 tracking-tight mb-1 uppercase">CARREGANDO...
+            </h2>
+            <p id="display-info"
+                class="text-[10px] font-bold text-primary uppercase tracking-[0.2em] mb-6 opacity-80 italic">PROCESSANDO
+                DADOS...</p>
+
+            <div class="grid grid-cols-3 w-full border-t border-white/5 pt-6 divide-x divide-white/5">
+                <div class="px-2">
+                    <p class="text-[8px] text-slate-500 uppercase font-black mb-1 opacity-60">Matrícula</p>
+                    <p id="user-nickname" class="text-xs font-bold text-slate-200">#---</p>
+                </div>
+                <div class="px-2">
+                    <p class="text-[8px] text-slate-500 uppercase font-black mb-1 opacity-60">Nível</p>
+                    <p id="user-level-display" class="text-xs font-bold text-primary uppercase">RECRUTA</p>
+                </div>
+                <div class="px-2">
+                    <p class="text-[8px] text-slate-500 uppercase font-black mb-1 opacity-60">Status</p>
+                    <p id="status-text" class="text-xs font-bold text-slate-500 uppercase">OFFLINE</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Banco de Horas (Substituto da XP Bar) -->
+        <div class="w-full max-w-md space-y-2 mt-8">
+            <div class="flex justify-between items-end">
+                <span class="text-[8px] font-black text-primary uppercase tracking-widest">Banco de Horas:</span>
+                <span id="saldo-total" class="text-[10px] font-bold text-slate-100">+00:00</span>
+            </div>
+            <div class="h-2 w-full bg-slate-200 dark:bg-primary/10 rounded-full overflow-hidden">
+                <div id="xp-bar"
+                    class="h-full bg-primary w-0 rounded-full shadow-[0_0_12px_rgba(13,89,242,0.5)] transition-all duration-1000">
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 flex flex-col items-center p-6 gap-8 w-full max-w-2xl mx-auto">
+        <div class="w-full max-w-md flex justify-center mb-8 mt-2">
+            <button id="punchButton"
+                class="relative group w-48 h-48 rounded-full bg-primary flex flex-col items-center justify-center text-center p-6 shadow-xl border-4 border-primary/30 hover:scale-105 transition-all">
+                <span class="material-symbols-outlined text-4xl mb-2 text-white">power_settings_new</span>
+                <span
+                    class="text-sm font-black text-white leading-tight tracking-wider uppercase">REGISTRAR<br>PONTO</span>
+            </button>
+        </div>
+
+        <div
+            class="w-full max-w-md bg-white/5 dark:bg-primary/5 border border-slate-200 dark:border-primary/20 rounded-2xl p-6 backdrop-blur-sm">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                    <span class="material-symbols-outlined text-lg text-primary">timer</span> SESSÃO ATUAL
+                </h3>
+            </div>
+            <div class="grid grid-cols-3 gap-4">
+                <div class="text-center">
+                    <p class="text-[10px] text-slate-500 uppercase font-bold mb-1">Início</p>
+                    <p id="stats-inicio" class="text-sm font-bold">--:--</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-[10px] text-slate-500 uppercase font-bold mb-1">Fim</p>
+                    <p id="stats-fim" class="text-sm font-bold text-slate-400">--:--</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-[10px] text-slate-500 uppercase font-bold mb-1">Total</p>
+                    <p id="stats-total" class="text-sm font-bold text-primary">00:00</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="w-full max-w-md space-y-4">
+            <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                <span class="material-symbols-outlined text-lg">task_alt</span>MISSÕES DIÁRIAS
+            </h3>
+            <div class="space-y-3">
+                <a href="anotacao_diaria.html"
+                    class="bg-white dark:bg-primary/5 border border-slate-200 dark:border-primary/20 p-4 rounded-xl flex items-center gap-4 hover:bg-primary/10 transition-colors">
+                    <div
+                        class="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400">
+                        <span class="material-symbols-outlined">edit_note</span>
+                    </div>
+                    <div class="flex-1 text-sm font-bold uppercase tracking-tight">Anotação Diária</div>
+                    <span class="material-symbols-outlined text-slate-300 dark:text-slate-700">chevron_right</span>
+                </a>
+                <a href="justificativa.html"
+                    class="bg-white dark:bg-primary/5 border border-slate-200 dark:border-primary/20 p-4 rounded-xl flex items-center gap-4 hover:bg-primary/10 transition-colors">
+                    <div
+                        class="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400">
+                        <span class="material-symbols-outlined">hourglass_top</span>
+                    </div>
+                    <div class="flex-1 text-sm font-bold uppercase tracking-tight">Justificativa</div>
+                    <span class="material-symbols-outlined text-slate-300 dark:text-slate-700">chevron_right</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Calendário -->
+        <section class="max-w-md mx-auto border-t border-white/5 pt-8 space-y-4 w-full">
+            <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2 px-2">
+                <span class="material-symbols-outlined text-lg text-primary">calendar_month</span> MEU CRONOGRAMA
+            </h3>
+            <div class="bg-white/5 border border-white/10 rounded-3xl p-6 shadow-inner">
+                <div class="flex justify-between items-center mb-6 px-2">
+                    <p id="calendar-month" class="text-xs font-black text-slate-100 uppercase tracking-widest">...</p>
+                    <div class="flex gap-4">
+                        <span
+                            class="material-symbols-outlined text-sm text-slate-600 cursor-pointer hover:text-primary transition-colors">chevron_left</span>
+                        <span
+                            class="material-symbols-outlined text-sm text-slate-600 cursor-pointer hover:text-primary transition-colors">chevron_right</span>
+                    </div>
+                </div>
+                <div id="app-calendar" class="grid grid-cols-7 gap-1"></div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Sidebar Menu Overlay -->
+    <div id="sidebarOverlay"
+        class="fixed inset-0 bg-black/80 z-[100] hidden opacity-0 transition-opacity duration-300 backdrop-blur-md">
+    </div>
+    <aside id="sidebarMenu"
+        class="fixed top-0 left-0 h-full w-72 bg-background-dark border-r border-white/10 z-[101] -translate-x-full transition-transform duration-300 flex flex-col shadow-2xl">
+        <div class="p-8 border-b border-white/5 flex items-center justify-between">
+            <h3 class="text-xs font-black text-primary uppercase tracking-[0.2em]">Protocolo Central</h3>
+            <button id="closeSidebar" class="text-slate-500 hover:text-white transition-colors">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-6 space-y-3" id="sidebarNav">
+            <a href="painel_funcionario.html"
+                class="flex items-center gap-4 p-4 rounded-2xl text-slate-400 font-bold text-xs uppercase hover:bg-white/5 hover:text-primary transition-all group">
+                <span class="material-symbols-outlined text-xl group-hover:scale-110 transition-transform">home</span>
+                Início
+            </a>
+            <a href="estatistica_funcionario.html"
+                class="flex items-center gap-4 p-4 rounded-2xl text-slate-400 font-bold text-xs uppercase hover:bg-white/5 hover:text-primary transition-all group">
+                <span
+                    class="material-symbols-outlined text-xl group-hover:scale-110 transition-transform">bar_chart</span>
+                Estatística
+            </a>
+            <a href="historico_anual.html"
+                class="flex items-center gap-4 p-4 rounded-2xl text-slate-400 font-bold text-xs uppercase hover:bg-white/5 hover:text-primary transition-all group">
+                <span
+                    class="material-symbols-outlined text-xl group-hover:scale-110 transition-transform">history</span>
+                Histórico
+            </a>
+            <a id="sidebar-perfil-link" href="#"
+                class="flex items-center gap-4 p-4 rounded-2xl text-slate-400 font-bold text-xs uppercase hover:bg-white/5 hover:text-primary transition-all group">
+                <span class="material-symbols-outlined text-xl group-hover:scale-110 transition-transform">person</span>
+                Perfil
+            </a>
+        </div>
+        <div class="p-8 border-t border-white/5">
+            <button id="logoutBtn"
+                class="flex items-center gap-4 text-rose-500/70 hover:text-rose-500 transition-all font-black text-xs uppercase tracking-widest">
+                <span class="material-symbols-outlined text-xl">logout</span> Sair do Sistema
+            </button>
+        </div>
+    </aside>
+
+    <script>
+        const sidebar = document.getElementById('sidebarMenu');
+        const overlay = document.getElementById('sidebarOverlay');
+        document.getElementById('sideMenuTrigger').onclick = () => {
+            overlay.classList.remove('hidden');
+            setTimeout(() => { overlay.classList.add('opacity-100'); sidebar.classList.remove('-translate-x-full'); }, 10);
+        };
+        const close = () => {
+            overlay.classList.remove('opacity-100'); sidebar.classList.add('-translate-x-full');
+            setTimeout(() => overlay.classList.add('hidden'), 300);
+        };
+        document.getElementById('closeSidebar').onclick = close;
+        overlay.onclick = close;
+
+        function renderCalendar() {
+            const container = document.getElementById('app-calendar');
+            const now = new Date();
+            const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+            const calendarMonthTitle = document.getElementById('calendar-month');
+            if (calendarMonthTitle) calendarMonthTitle.innerText = `${monthNames[now.getMonth()]} ${now.getFullYear()}`;
+
+            const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).getDay();
+            const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+
+            if (container) {
+                container.innerHTML = '';
+                for (let i = 0; i < firstDay; i++) {
+                    container.innerHTML += '<div class="h-8"></div>';
+                }
+
+                for (let d = 1; d <= daysInMonth; d++) {
+                    const isToday = d === now.getDate();
+                    const dStr = String(d).padStart(2, '0');
+                    const mStr = String(now.getMonth() + 1).padStart(2, '0');
+                    const dateStr = `${now.getFullYear()}-${mStr}-${dStr}`;
+
+                    container.innerHTML += `
+                        <a href="resumo_dia.html?date=${dateStr}" class="h-8 flex items-center justify-center rounded-lg text-[10px] font-semibold transition-all ${isToday ? 'bg-primary text-white shadow-lg' : 'text-slate-400 hover:bg-white/5'}">
+                            ${d}
+                        </a>
+                    `;
+                }
+            }
+        }
+        renderCalendar();
+    </script>
+
+    <nav
+        class="fixed bottom-0 left-0 right-0 bg-white dark:bg-background-dark border-t border-slate-200 dark:border-primary/10 py-3 z-50 flex justify-center">
+        <div class="flex items-center w-full max-w-md">
+            <a class="flex-1 flex flex-col items-center gap-1 text-primary" href="painel_funcionario.html">
+                <span class="material-symbols-outlined fill-1">home</span>
+                <span class="text-[10px] font-bold uppercase tracking-tighter">INÍCIO</span>
+            </a>
+            <a class="flex-1 flex flex-col items-center gap-1 text-slate-400" href="estatistica_funcionario.html">
+                <span class="material-symbols-outlined">bar_chart</span>
+                <span class="text-[10px] font-bold uppercase tracking-tighter">ESTATÍSTICA</span>
+            </a>
+            <a class="flex-1 flex flex-col items-center gap-1 text-slate-400" href="historico_anual.html">
+                <span class="material-symbols-outlined">history</span>
+                <span class="text-[10px] font-bold uppercase tracking-tighter">HISTÓRICO</span>
+            </a>
+            <a id="nav-perfil-link" class="flex-1 flex flex-col items-center gap-1 text-slate-400"
+                href="perfil_funcionario.html">
+                <span class="material-symbols-outlined">person</span>
+                <span class="text-[10px] font-bold uppercase tracking-tighter">PERFIL</span>
+            </a>
+        </div>
+    </nav>
+
+    <script type="module">
+        import { supabase } from '../js/supabase-config.js?v=5';
+
+        window.addEventListener('load', async function () {
+            const urlParams = new URLSearchParams(window.location.search);
+            const targetId = urlParams.get('id') || localStorage.getItem('userId');
+
+            if (!targetId) {
+                console.error('Erro de Inicialização: ID ausente');
+                document.getElementById('display-name').innerText = "ERRO DE ACESSO";
+                return;
+            }
+
+            try {
+                const { data: user, error } = await supabase.from('funcionarios').select('*, setores(nome)').eq('id', targetId).single();
+                if (error) throw error;
+
+                document.getElementById('display-name').innerText = user.nome_completo.split(' ')[0].toUpperCase();
+                document.getElementById('display-info').innerHTML = `
+                Cargo/Função: ${(user.funcao || 'Tripulante').toUpperCase()}<br>
+                Setor: ${user.setores?.nome || 'Não Definido'} • Matrícula: #${user.matricula}
+            `;
+                if (user.foto_url) document.getElementById('user-photo').src = user.foto_url;
+
+                // Atualizar link de perfil
+                const profileLink = document.getElementById('nav-perfil-link');
+                if (profileLink) {
+                    profileLink.href = `perfil_funcionario.html?id=${targetId}&v=5`;
+                    console.log('Link de perfil atualizado:', profileLink.href);
+                    const sidebarProfile = document.getElementById('sidebar-perfil-link');
+                    if (sidebarProfile) sidebarProfile.href = profileLink.href;
+                } else {
+                    console.error('ERRO: nav-perfil-link não encontrado no DOM!');
+                }
+
+
+                // Stats diários resumidos
+                const today = new Date().toISOString().split('T')[0];
+                const { data: pts } = await supabase.from('pontos').select('*').eq('funcionario_id', targetId).gte('data_hora', `${today}T00:00:00`).order('data_hora', { ascending: true });
+
+                if (pts && pts.length > 0) {
+                    document.getElementById('stats-inicio').innerText = new Date(pts[0].data_hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                    if (pts.length % 2 === 0) {
+                        document.getElementById('stats-fim').innerText = new Date(pts[pts.length - 1].data_hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                    }
+                }
+            } catch (e) {
+                console.error('Falha ao carregar perfil:', e);
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-br">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap"
+    rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+    rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+    rel="stylesheet" />
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#0d59f2",
+            "background-light": "#f5f6f8",
+            "background-dark": "#0a0e17",
+            "neon-red": "#ff3131",
+            "neon-blue": "#00f3ff",
+          },
+          fontFamily: {
+            "display": ["Space Grotesk", "sans-serif"]
+          },
+          borderRadius: { "DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px" },
+        },
+      },
+    }
+  </script>
+  <style>
+    .neon-border-blue {
+      border: 1px solid rgba(0, 243, 255, 0.3);
+      box-shadow: 0 0 15px rgba(0, 243, 255, 0.1);
+    }
+
+    .neon-border-red {
+      border: 1px solid rgba(255, 49, 49, 0.3);
+      box-shadow: 0 0 15px rgba(255, 49, 49, 0.1);
+    }
+
+    .scanline {
+      background: linear-gradient(to bottom, transparent 50%, rgba(13, 89, 242, 0.05) 51%);
+      background-size: 100% 4px;
+    }
+  </style>
+  <style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+
+<body
+  class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen scanline">
+  <div
+    class="relative flex min-h-screen w-full flex-col max-w-md mx-auto border-x border-slate-800 shadow-2xl bg-background-dark overflow-hidden">
+    <!-- Header -->
+    <header class="border-b border-primary/20 bg-background-dark/80 backdrop-blur-md sticky top-0 z-50">
+      <div class="flex items-center p-4 justify-between max-w-2xl mx-auto">
+        <div onclick="history.back()"
+          class="text-primary flex size-10 shrink-0 items-center justify-center rounded-lg border border-primary/30 bg-primary/10 cursor-pointer hover:bg-primary/20 transition-all">
+          <span class="material-symbols-outlined">arrow_back</span>
+        </div>
+        <h2 class="text-slate-100 text-lg font-bold tracking-wider uppercase flex-1 text-center">AUTORIZAÇÃO DO GESTOR
+        </h2>
+        <div
+          class="flex size-10 items-center justify-center rounded-lg bg-primary/10 border border-primary/30 text-primary">
+          <span class="material-symbols-outlined">settings_input_component</span>
+        </div>
+      </div>
+    </header>
+    <!-- Stats Grid -->
+    <!-- Section Title -->
+    <div class="px-6 py-2 flex items-center justify-between">
+      <h3 class="text-slate-400 text-xs font-bold uppercase tracking-[0.2em]">Solicitações Pendentes</h3>
+      <span class="flex h-2 w-2 rounded-full bg-neon-blue animate-pulse"></span>
+    </div>
+    <!-- Pending Requests List -->
+    <div id="lista-justificativas" class="flex flex-col gap-4 p-4 pb-32">
+      <!-- Container Dinâmico -->
+    </div>
+
+    <script type="module">
+      import { supabase } from '../js/supabase-config.js';
+      import { Auth } from '../js/auth.js';
+      import { UI } from '../js/ui-utils.js';
+
+      const user = Auth.getUser();
+
+      async function loadJustificativas() {
+        const container = document.getElementById('lista-justificativas');
+        container.innerHTML = `<div class="text-center py-20 opacity-50"><span class="material-symbols-outlined animate-spin text-4xl text-primary">sync</span></div>`;
+
+        try {
+          // Buscar justificativas pendentes dos funcionários do setor do gestor
+          // Nota: Tabelas: justificativas (funcionario_id, data_incidente, tipo_divergencia, descricao, status)
+          // Status no banco é 'pendente' (não 'pending')
+          let query = supabase
+            .from('justificativas')
+            .select('*, funcionarios!inner(nome_completo, matricula, setor_id, funcao)')
+            .eq('status', 'pendente');
+
+          // Se for gestor, filtra pelo setor dele. Se for admin, vê tudo.
+          if (user.role === 'gestor' || user.role === 'manager') {
+            if (user.setorId) {
+              query = query.eq('funcionarios.setor_id', user.setorId);
+            }
+          }
+
+          const { data, error } = await query;
+
+          if (error) throw error;
+
+          if (!data || data.length === 0) {
+            container.innerHTML = `
+                        <div class="text-center py-20 opacity-30 border-2 border-dashed border-white/5 rounded-2xl">
+                            <span class="material-symbols-outlined text-6xl mb-4">check_circle</span>
+                            <p class="uppercase tracking-widest font-bold">Nenhuma pendência encontrada</p>
+                        </div>
+                    `;
+            return;
+          }
+
+          container.innerHTML = data.map(j => `
+                    <div class="flex flex-col rounded-xl bg-[#0f172a] border border-slate-800/60 p-5 shadow-xl relative w-full animate-in fade-in slide-in-from-bottom-4">
+                        <div class="flex justify-between items-start mb-5">
+                            <div class="flex gap-4">
+                                <div class="relative flex-shrink-0">
+                                    <div class="h-14 w-14 rounded-full border-2 border-primary/40 p-0.5">
+                                        <div class="h-full w-full rounded-full bg-slate-800 flex items-center justify-center">
+                                            <span class="material-symbols-outlined text-primary text-2xl">person</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex flex-col">
+                                    <h2 class="text-slate-100 font-bold text-base">${j.funcionarios.nome_completo}</h2>
+                                    <p class="text-primary text-[11px] font-bold uppercase tracking-wider mb-0.5">${j.funcionarios.funcao || 'N/A'}</p>
+                                    <div class="mt-1">
+                                        <span class="text-[10px] px-2 py-0.5 rounded bg-amber-500/10 text-amber-500 border border-amber-500/20 font-bold uppercase inline-block">Aguardando</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3 flex items-center gap-1.5">
+                            <span class="material-symbols-outlined text-[16px] text-slate-400">calendar_month</span>
+                            <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">${new Date(j.data_incidente).toLocaleDateString('pt-BR')}</p>
+                        </div>
+
+                        <div class="bg-black/30 rounded-lg p-3.5 mb-5 border-l-4 border-neon-red">
+                            <p class="text-slate-200 text-xs leading-relaxed font-medium">Motivo: ${j.tipo_divergencia.toUpperCase()}</p>
+                            <p class="text-slate-400 text-[10px] mt-2 italic leading-relaxed">${j.descricao || 'Sem descrição detalhada.'}</p>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2.5">
+                            <button onclick="processarAbono('${j.id}', 'rejeitado')"
+                                class="flex items-center justify-center gap-1.5 h-11 rounded-lg bg-neon-red/10 hover:bg-neon-red/20 text-neon-red text-[10px] font-bold transition-all border border-neon-red/20">
+                                <span class="material-symbols-outlined text-sm">block</span> REJEITAR
+                            </button>
+                            <button onclick="processarAbono('${j.id}', 'aprovado')"
+                                class="flex items-center justify-center gap-1.5 h-11 rounded-lg bg-primary hover:bg-primary/90 text-white text-[10px] font-bold transition-all shadow-[0_4px_12px_rgba(13,89,242,0.3)]">
+                                <span class="material-symbols-outlined text-sm">verified</span> ABONAR
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+
+        } catch (err) {
+          console.error('Erro ao carregar justificativas:', err);
+          container.innerHTML = `<p class="text-red-500 text-center py-10 text-xs uppercase font-bold">Erro ao acessar base de dados</p>`;
+        }
+      }
+
+      window.processarAbono = async (id, status) => {
+        UI.showLoader();
+        try {
+          const { error } = await supabase
+            .from('justificativas')
+            .update({ status: status })
+            .eq('id', id);
+
+          if (error) throw error;
+
+          UI.showToast(status === 'aprovado' ? 'Solicitação aprovada!' : 'Solicitação rejeitada!', 'success');
+          loadJustificativas();
+        } catch (err) {
+          console.error('Erro ao processar:', err);
+          UI.showToast('Erro ao processar ação', 'error');
+        } finally {
+          UI.hideLoader();
+        }
+      };
+
+      loadJustificativas();
+    </script>
+    <nav
+      class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white dark:bg-background-dark border-t border-slate-200 dark:border-primary/10 px-6 py-4 z-50">
+      <div class="flex justify-between items-center w-full">
+        <a class="flex flex-col items-center gap-1 text-slate-400 transition-all duration-300 hover:text-primary"
+          href="painel_gestor.html">
+          <span class="material-symbols-outlined ">home</span>
+          <span class="text-[10px] font-bold uppercase tracking-tighter">INÍCIO</span>
+        </a>
+        <a class="flex flex-col items-center gap-1 text-slate-400 transition-all duration-300 hover:text-primary"
+          href="estatistica_funcionario.html">
+          <span class="material-symbols-outlined ">bar_chart</span>
+          <span class="text-[10px] font-bold uppercase tracking-tighter">ESTATÍSTICA</span>
+        </a>
+        <a class="flex flex-col items-center gap-1 text-slate-400 transition-all duration-300 hover:text-primary"
+          href="historico_anual.html">
+          <span class="material-symbols-outlined ">history</span>
+          <span class="text-[10px] font-bold uppercase tracking-tighter">HISTÓRICO</span>
+        </a>
+        <a class="flex flex-col items-center gap-1 text-slate-400 transition-all duration-300 hover:text-primary"
+          href="perfil_funcionario.html">
+          <span class="material-symbols-outlined ">person</span>
+          <span class="text-[10px] font-bold uppercase tracking-tighter">PERFIL</span>
+        </a>
+      </div>
+    </nav>
+  </div>
+</body>
+
+</html>

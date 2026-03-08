@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>Chronos Protocol - Login do Jogador</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap"
+    rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap"
+    rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+    rel="stylesheet">
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#0d59f2",
+            "background-light": "#f5f6f8",
+            "background-dark": "#101622",
+          },
+          fontFamily: {
+            "display": ["Space Grotesk"]
+          },
+          borderRadius: { "DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px" },
+        },
+      },
+    }
+  </script>
+  <style>
+    .glow-text {
+      text-shadow: 0 0 10px rgba(13, 89, 242, 0.6), 0 0 20px rgba(13, 89, 242, 0.4);
+    }
+
+    .neon-border {
+      box-shadow: 0 0 15px rgba(13, 89, 242, 0.3);
+    }
+
+    .bg-pattern {
+      background-image: radial-gradient(circle at 2px 2px, rgba(13, 89, 242, 0.05) 1px, transparent 0);
+      background-size: 24px 24px;
+    }
+  </style>
+  <style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+
+<body
+  class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen flex items-center justify-center p-4 bg-pattern">
+  <div
+    class="relative w-full max-w-md flex flex-col gap-8 bg-slate-900/40 backdrop-blur-xl border border-primary/20 p-8 rounded-xl neon-border">
+    <div class="absolute -top-12 left-1/2 -translate-x-1/2 bg-primary/10 border border-primary/30 p-3 rounded-full">
+      <span class="material-symbols-outlined text-primary text-4xl">timer</span>
+    </div>
+    <div class="text-center space-y-2 pt-4">
+      <h2 class="text-primary font-bold tracking-[0.2em] text-sm uppercase glow-text">PROTOCOLO DE SISTEMA</h2>
+      <h1 class="text-4xl font-bold tracking-tight text-slate-100 uppercase">LOGIN</h1>
+      <div class="h-1 w-24 bg-primary mx-auto rounded-full mt-4"></div>
+    </div>
+    <div class="space-y-6">
+      <div class="space-y-4">
+        <label class="block">
+          <span class="text-xs font-bold text-primary uppercase tracking-widest ml-1 mb-2 block">IDENTIFICADOR
+            DO usuário</span>
+          <div class="relative flex items-center group">
+            <div class="absolute left-4 text-primary/60 group-focus-within:text-primary transition-colors">
+              <span class="material-symbols-outlined">account_circle</span>
+            </div>
+            <input id="username"
+              class="w-full bg-slate-800/50 border-2 border-primary/20 rounded-lg py-4 pl-12 pr-4 focus:border-primary focus:ring-0 text-slate-100 placeholder:text-slate-500 transition-all"
+              placeholder="DIGITE O ID DO USUÁRIO..." type="text">
+          </div>
+        </label>
+        <label class="block">
+          <span class="text-xs font-bold text-primary uppercase tracking-widest ml-1 mb-2 block">CHAVE DE
+            ACESSO</span>
+          <div class="relative flex items-center group">
+            <div class="absolute left-4 text-primary/60 group-focus-within:text-primary transition-colors">
+              <span class="material-symbols-outlined">lock</span>
+            </div>
+            <input id="password"
+              class="w-full bg-slate-800/50 border-2 border-primary/20 rounded-lg py-4 pl-12 pr-4 focus:border-primary focus:ring-0 text-slate-100 placeholder:text-slate-500 transition-all"
+              placeholder="••••••••" type="password">
+          </div>
+        </label>
+      </div>
+      <div class="flex items-center justify-between px-1">
+        <label class="flex items-center gap-2 cursor-pointer group">
+          <input class="rounded border-primary/30 bg-slate-800 text-primary focus:ring-primary/20" type="checkbox">
+          <span class="text-xs font-medium text-slate-400 group-hover:text-slate-300 transition-colors">MANTER
+            CONECTADO</span>
+        </label>
+        <a class="text-xs font-medium text-primary hover:text-primary/80 transition-colors uppercase tracking-wider"
+          href="#">ESQUECEU A CHAVE?</a>
+      </div>
+      <button id="login-btn"
+        class="w-full bg-primary hover:bg-primary/90 text-white font-bold py-5 rounded-lg transition-all transform active:scale-[0.98] shadow-lg shadow-primary/20 flex items-center justify-center gap-3 group">
+        <span class="tracking-[0.15em] text-lg uppercase">INICIAR</span>
+        <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">bolt</span>
+      </button>
+    </div>
+    <div class="pt-4 border-t border-primary/10 text-center">
+      <p class="text-sm text-slate-400">
+        Novo Jogador?
+        <a class="text-primary font-bold hover:underline underline-offset-4 ml-1 uppercase tracking-tight"
+          href="#">FAZER CADASTRO</a>
+      </p>
+    </div>
+    <div class="absolute -bottom-10 left-0 w-full flex justify-center gap-8 opacity-20">
+      <div class="flex items-center gap-2 text-[10px] text-primary uppercase font-bold"><span
+          class="material-symbols-outlined text-sm">wifi</span> LINK ESTÁVEL</div>
+      <div class="flex items-center gap-2 text-[10px] text-primary uppercase font-bold"><span
+          class="material-symbols-outlined text-sm">shield</span> NÓ SEGURO</div>
+      <div class="flex items-center gap-2 text-[10px] text-primary uppercase font-bold">
+        <span class="material-symbols-outlined text-sm">memory</span> V2.4.0
+      </div>
+    </div>
+  </div>
+
+  <style>
+    /* Toast Styles */
+    .custom-toast {
+      backdrop-filter: blur(12px);
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    }
+
+    @keyframes slideDown {
+      from {
+        transform: translate(-50%, -20px);
+        opacity: 0;
+      }
+
+      to {
+        transform: translate(-50%, 0);
+        opacity: 1;
+      }
+    }
+  </style>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script type="module">
+    import { Auth } from '../js/auth.js?v=5';
+    import { UI } from '../js/ui-utils.js?v=5';
+
+    async function handleLogin() {
+      const user = document.getElementById('username').value;
+      const pass = document.getElementById('password').value;
+
+      if (!user || !pass) {
+        UI.showToast('Por favor, preencha todos os campos.', 'warning');
+        return;
+      }
+
+      UI.showLoader();
+      console.log('Tentando login para:', user);
+
+      try {
+        const result = await Auth.login(user, pass);
+        UI.hideLoader();
+
+        if (result.success) {
+          console.log('Login Sucesso:', result.user.nome_completo);
+          UI.showToast(`Bem-vindo, ${result.user.nome_completo}!`, 'success');
+
+          let targetPage = 'painel_funcionario.html';
+          const role = result.user.nivel_acesso;
+
+          if (role === 'admin') targetPage = 'painel_admin.html';
+          else if (role === 'manager' || role === 'gestor') targetPage = 'painel_gestor.html';
+
+          // Forçar redirecionamento
+          const finalUrl = `${targetPage}?id=${result.user.id}&role=${role}&v=5`;
+          console.log('Redirecionando...', finalUrl);
+
+          // Mudança no botão para fallback visual
+          const btn = document.getElementById('login-btn');
+          btn.innerHTML = 'ENTRANDO...';
+          btn.classList.add('bg-green-600');
+
+          window.location.assign(finalUrl);
+        } else {
+          console.warn('Falha no login:', result.error);
+          UI.showToast(result.error || 'Identificador ou Chave incorretos.', 'error');
+        }
+      } catch (err) {
+        UI.hideLoader();
+        console.error('Erro crítico no script de login:', err);
+        UI.showToast('Erro no sistema de autenticação.', 'error');
+      }
+    }
+
+    document.getElementById('login-btn').addEventListener('click', handleLogin);
+    document.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleLogin(); });
+  </script>
+
+</body>
+
+</html>

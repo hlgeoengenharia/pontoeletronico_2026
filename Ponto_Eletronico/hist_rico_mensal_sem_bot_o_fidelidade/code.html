@@ -1,0 +1,230 @@
+<!DOCTYPE html><html class="dark" lang="pt-BR"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#0d59f2",
+                        "background-light": "#f5f6f8",
+                        "background-dark": "#101622",
+                        "accent-cyan": "#00f2ff",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: "Space Grotesk", sans-serif;
+        }
+        .scifi-border {
+            border: 1px solid rgba(13, 89, 242, 0.3);
+            box-shadow: 0 0 15px rgba(13, 89, 242, 0.1);
+        }
+        .neon-text {
+            text-shadow: 0 0 8px rgba(0, 242, 255, 0.5);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col">
+<!-- Header Navigation -->
+<div class="flex items-center bg-background-light dark:bg-background-dark p-4 pb-2 justify-between sticky top-0 z-50 border-b border-primary/10 backdrop-blur-md">
+<div class="text-primary flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+<span class="material-symbols-outlined" style="">arrow_back</span>
+</div>
+<h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-tight flex-1 text-center font-display uppercase tracking-widest neon-text" style="">
+            Histórico Mensal</h2>
+<div class="flex w-10 items-center justify-end">
+<button class="flex size-10 cursor-pointer items-center justify-center rounded-lg bg-primary/10 text-primary" style="">
+<span class="material-symbols-outlined" style="">settings</span>
+</button>
+</div>
+</div>
+<!-- Main Content Container -->
+<main class="flex-1 overflow-y-auto pb-24">
+<!-- Employee Summary Section -->
+<section class="p-6 flex flex-col items-center gap-6">
+<div class="relative">
+<div class="w-32 h-32 rounded-full border-4 border-primary p-1 bg-background-dark overflow-hidden">
+<img alt="Foto de perfil do funcionário" class="w-full h-full object-cover rounded-full" data-alt="Professional portrait of a male employee" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCc_D_vLB-fui8QNc1yNt8uoy2P4PgaseCmMpEtfBx84tiFwF3obs74awvA4ttEF7WPO32KhWp_ugl4dOCXXudEkT8VC8OuAlU30pazYcmIMc7LN-VgYu00TznucyP9c-ErJA-1_I-e073u4rHMu0KGBLQMoiVVV8MAYzvfnMymf3zgxrw4RUZnnLfLLiEVt1PGPhAs8a38nFrDu8ToOF7MiI4vc7MTKB4FLRpLC5FpbU4xG7NZmW4DjWvmkvisVeoEbOGLngMQjgI" style="">
+</div>
+<div class="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-primary text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-tighter" style="">+00:01:15</div>
+</div>
+<div class="text-center">
+<h2 class="text-2xl font-bold dark:text-white" style="">Helton Leite</h2>
+<div class="text-primary font-medium flex flex-col items-center" style=""><span class="" style="color: rgb(148, 163, 184); font-size: 14px; text-transform: uppercase;">Engenheiro</span><div><div><span class="" style="color: rgb(100, 116, 139); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace; font-size: 12px;">#C012558</span></div></div></div>
+</div>
+<div class="w-full space-y-2">
+<div class="flex justify-between text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">
+<span class="" style="">progresso mensal</span>
+<span class="" style="">77%</span>
+</div>
+<div class="w-full h-2 bg-primary/20 rounded-full overflow-hidden">
+<div class="h-full bg-primary shadow-[0_0_15px_rgba(13,89,242,0.6)]" style="width: 77%"></div>
+</div>
+</div>
+</section>
+<!-- Monthly Stats Section -->
+<div class="px-4 py-2">
+<h3 class="text-slate-900 dark:text-slate-100 text-sm font-bold uppercase tracking-[0.2em] mb-4 flex items-center gap-2" style="">
+<span class="w-2 h-4 bg-primary rounded-sm"></span>
+                Estatísticas do Ciclo (janeiro/2023)</h3>
+<div class="grid grid-cols-3 gap-3">
+<div class="flex flex-col gap-1 rounded-xl p-4 bg-slate-100 dark:bg-slate-900/50 scifi-border">
+<span class="material-symbols-outlined text-primary text-sm" style="">schedule</span>
+<p class="text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase leading-tight" style="">Pontualidade</p>
+<p class="text-slate-900 dark:text-slate-100 text-xl font-bold font-display" style="">98%</p>
+<p class="text-emerald-500 text-[10px] font-bold" style="">+2% ↑</p>
+</div>
+<div class="flex flex-col gap-1 rounded-xl p-4 bg-slate-100 dark:bg-slate-900/50 scifi-border">
+<span class="material-symbols-outlined text-primary text-sm" style="">timelapse</span>
+<p class="text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase leading-tight" style="">Horas Totais</p>
+<p class="text-slate-900 dark:text-slate-100 text-xl font-bold font-display" style="">168h</p>
+<p class="text-emerald-500 text-[10px] font-bold" style="">+10h ↑</p>
+</div>
+<div class="flex flex-col gap-1 rounded-xl p-4 bg-slate-100 dark:bg-slate-900/50 scifi-border border-red-500/20">
+<span class="material-symbols-outlined text-red-500 text-sm" style="">warning</span>
+<p class="text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase leading-tight" style="">Faltas</p>
+<p class="text-slate-900 dark:text-slate-100 text-xl font-bold font-display" style="">0</p>
+<p class="text-slate-500 text-[10px] font-bold" style="">0% —</p>
+</div>
+</div>
+</div>
+<!-- Mission Logs Section -->
+<div class="px-4 py-6">
+<div class="flex justify-between items-center mb-4">
+<h3 class="text-slate-900 dark:text-slate-100 text-sm font-bold uppercase tracking-[0.2em] flex items-center gap-2" style="">
+<span class="w-2 h-4 bg-accent-cyan rounded-sm"></span>
+                    Logs de Missão
+                </h3>
+<button class="text-primary text-xs font-bold uppercase" style="">Ver Todos</button>
+</div>
+<div class="space-y-3">
+<!-- Log Entry 1 -->
+<div class="bg-slate-100 dark:bg-slate-900/40 rounded-lg p-4 flex items-center justify-between scifi-border border-l-4 border-l-emerald-500">
+<div class="flex items-center gap-4">
+<div class="text-center bg-slate-200 dark:bg-slate-800 rounded-lg p-2 min-w-[50px]">
+<p class="text-[10px] text-slate-500 uppercase font-bold" style="">OUT</p>
+<p class="text-lg font-bold leading-none" style="">24</p>
+</div>
+<div>
+<p class="text-sm font-bold text-slate-900 dark:text-slate-100" style="">08:00 - 17:00</p>
+<div class="flex gap-2 mt-1">
+<span class="material-symbols-outlined text-xs text-primary" style="" title="Evidência enviada">attachment</span>
+<span class="material-symbols-outlined text-xs text-primary" style="" title="Nota adicionada">sticky_note_2</span>
+</div>
+</div>
+</div>
+<div class="text-right">
+<p class="text-lg font-bold font-display text-emerald-500" style="">09:00h</p>
+<p class="text-[10px] text-slate-500 uppercase font-bold tracking-tighter" style="">Missão Completa</p>
+</div>
+</div>
+<!-- Log Entry 2 -->
+<div class="bg-slate-100 dark:bg-slate-900/40 rounded-lg p-4 flex items-center justify-between scifi-border border-l-4 border-l-emerald-500">
+<div class="flex items-center gap-4">
+<div class="text-center bg-slate-200 dark:bg-slate-800 rounded-lg p-2 min-w-[50px]">
+<p class="text-[10px] text-slate-500 uppercase font-bold" style="">OUT</p>
+<p class="text-lg font-bold leading-none" style="">23</p>
+</div>
+<div>
+<p class="text-sm font-bold text-slate-900 dark:text-slate-100" style="">08:05 - 17:15</p>
+<div class="flex gap-2 mt-1">
+<span class="material-symbols-outlined text-xs text-primary" style="">attachment</span>
+</div>
+</div>
+</div>
+<div class="text-right">
+<p class="text-lg font-bold font-display text-emerald-500" style="">09:10h</p>
+<p class="text-[10px] text-slate-500 uppercase font-bold tracking-tighter" style="">Missão Completa</p>
+</div>
+</div>
+<!-- Log Entry 3 -->
+<div class="bg-slate-100 dark:bg-slate-900/40 rounded-lg p-4 flex items-center justify-between scifi-border border-l-4 border-l-primary">
+<div class="flex items-center gap-4">
+<div class="text-center bg-slate-200 dark:bg-slate-800 rounded-lg p-2 min-w-[50px]">
+<p class="text-[10px] text-slate-500 uppercase font-bold" style="">OUT</p>
+<p class="text-lg font-bold leading-none" style="">22</p>
+</div>
+<div>
+<p class="text-sm font-bold text-slate-900 dark:text-slate-100" style="">07:55 - 16:55</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-lg font-bold font-display text-primary" style="">08:00h</p>
+<p class="text-[10px] text-slate-500 uppercase font-bold tracking-tighter" style="">Base Segura</p>
+</div>
+</div>
+<!-- Log Entry 4 -->
+<div class="bg-slate-100 dark:bg-slate-900/40 rounded-lg p-4 flex items-center justify-between scifi-border border-l-4 border-l-amber-500 opacity-80">
+<div class="flex items-center gap-4">
+<div class="text-center bg-slate-200 dark:bg-slate-800 rounded-lg p-2 min-w-[50px]">
+<p class="text-[10px] text-slate-500 uppercase font-bold" style="">OUT</p>
+<p class="text-lg font-bold leading-none" style="">21</p>
+</div>
+<div>
+<p class="text-sm font-bold text-slate-900 dark:text-slate-100" style="">08:30 - 17:00</p>
+<div class="flex gap-2 mt-1">
+<span class="material-symbols-outlined text-xs text-amber-500" style="">error</span>
+</div>
+</div>
+</div>
+<div class="text-right">
+<p class="text-lg font-bold font-display text-amber-500" style="">08:30h</p>
+<p class="text-[10px] text-slate-500 uppercase font-bold tracking-tighter" style="">Atraso Detectado</p>
+</div>
+</div>
+</div>
+</div>
+<div class="px-6 pb-8">
+<h3 class="text-xs font-bold uppercase tracking-[0.2em] text-primary/80 mb-4" style="">consolidado</h3>
+<div class="flex justify-center gap-8">
+<div class="flex flex-col items-center gap-2">
+<div class="size-14 rounded-full bg-primary/20 flex items-center justify-center border border-primary shadow-[0_0_10px_#0d59f2] text-primary">
+<span class="material-symbols-outlined text-2xl" style="">workspace_premium</span>
+</div>
+<p class="text-[9px] text-slate-400 font-bold uppercase text-center" style="">Mensal</p>
+</div>
+</div>
+</div></main>
+<!-- Bottom Navigation Bar -->
+<div class="fixed bottom-0 left-0 right-0 border-t border-primary/20 bg-background-light dark:bg-background-dark/95 backdrop-blur-xl px-4 pb-4 pt-2 z-50">
+<div class="flex gap-2 justify-around items-end">
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-slate-500 dark:text-slate-400" href="#" style="">
+<span class="material-symbols-outlined" style="">home</span>
+<p class="text-[10px] font-bold uppercase leading-normal tracking-wider" style="">Início</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-slate-500 dark:text-slate-400" href="#" style="">
+<span class="material-symbols-outlined" style="">leaderboard</span>
+<p class="text-[10px] font-bold uppercase leading-normal tracking-wider" style="">Estatística</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-primary" href="#" style="">
+<div class="relative">
+<span class="material-symbols-outlined text-primary" style="">history</span>
+<div class="absolute -top-1 -right-1 w-2 h-2 bg-accent-cyan rounded-full animate-pulse"></div>
+</div>
+<p class="text-[10px] font-bold uppercase leading-normal tracking-wider" style="">Histórico</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-end gap-1 text-slate-500 dark:text-slate-400" href="#" style="">
+<span class="material-symbols-outlined" style="">person</span>
+<p class="text-[10px] font-bold uppercase leading-normal tracking-wider" style="">Perfil</p>
+</a>
+</div>
+</div>
+</body></html>

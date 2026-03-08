@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-BR">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>Gestão de Escalas - Admin</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap"
+    rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap"
+    rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+    rel="stylesheet" />
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#0d59f2",
+            "background-light": "#f5f6f8",
+            "background-dark": "#101622",
+          },
+          fontFamily: {
+            "display": ["Space Grotesk", "sans-serif"]
+          },
+          borderRadius: { "DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px" },
+        },
+      },
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+    }
+
+    .sci-fi-border {
+      border: 1px solid rgba(13, 89, 242, 0.3);
+      box-shadow: 0 0 15px rgba(13, 89, 242, 0.1);
+    }
+
+    .sci-fi-gradient {
+      background: linear-gradient(135deg, rgba(13, 89, 242, 0.1) 0%, rgba(16, 22, 34, 1) 100%);
+    }
+  </style>
+
+</head>
+
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen pb-24">
+  <!-- Header -->
+  <header class="border-b border-primary/20 bg-background-dark/80 backdrop-blur-md sticky top-0 z-50">
+    <div class="flex items-center p-4 justify-between max-w-2xl mx-auto">
+      <div onclick="history.back()"
+        class="text-primary flex size-10 shrink-0 items-center justify-center rounded-lg border border-primary/30 bg-primary/10 cursor-pointer hover:bg-primary/20 transition-all">
+        <span class="material-symbols-outlined">arrow_back</span>
+      </div>
+      <h2 class="text-slate-100 text-lg font-bold tracking-wider uppercase flex-1 text-center">GESTÃO DE ESCALAS</h2>
+      <div
+        class="flex size-10 items-center justify-center rounded-lg bg-primary/10 border border-primary/30 text-primary">
+        <span class="material-symbols-outlined">admin_panel_settings</span>
+      </div>
+    </div>
+  </header>
+  <main class="p-4 max-w-2xl mx-auto space-y-6">
+    <!-- Create Section -->
+    <section class="sci-fi-gradient sci-fi-border rounded-xl p-6">
+      <div class="flex items-center gap-2 mb-6">
+        <span class="material-symbols-outlined text-primary">add_circle</span>
+        <h2 class="text-lg font-bold uppercase tracking-wider">Criar Nova Escala</h2>
+      </div>
+      <form id="form-escala" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium mb-1 text-slate-400">Nome da Escala</label>
+          <input id="nome_escala"
+            class="w-full bg-background-dark/50 border-primary/30 rounded-lg focus:ring-primary focus:border-primary text-slate-100 p-3"
+            placeholder="Ex: Plantão Alfa" type="text" required />
+        </div>
+        <div class="grid grid-cols-3 gap-4">
+          <div>
+            <label class="block text-sm font-medium mb-1 text-slate-400 text-[10px]">Carga Semanal</label>
+            <input id="carga_horaria"
+              class="w-full bg-background-dark/50 border-primary/30 rounded-lg focus:ring-primary focus:border-primary text-slate-100 p-3"
+              placeholder="44" type="number" required />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1 text-slate-400 text-[10px]">Dias/Semana</label>
+            <input id="dias_semana"
+              class="w-full bg-background-dark/50 border-primary/30 rounded-lg focus:ring-primary focus:border-primary text-slate-100 p-3"
+              placeholder="5" type="number" required />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1 text-slate-400 text-[10px]">Tipo</label>
+            <select id="tipo_regime"
+              class="w-full bg-background-dark/50 border-primary/30 rounded-lg focus:ring-primary focus:border-primary text-slate-100 p-3 outline-none">
+              <option value="Presencial">Presencial</option>
+              <option value="Semipresencial">Semipresencial</option>
+              <option value="Externo">Externo</option>
+              <option value="Home Office">Home Office</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium mb-1 text-slate-400">Entrada</label>
+            <input id="horario_entrada"
+              class="w-full bg-background-dark/50 border-primary/30 rounded-lg focus:ring-primary focus:border-primary text-slate-100 p-3"
+              type="time" required />
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1 text-slate-400">Saída</label>
+            <input id="horario_saida"
+              class="w-full bg-background-dark/50 border-primary/30 rounded-lg focus:ring-primary focus:border-primary text-slate-100 p-3"
+              type="time" required />
+          </div>
+        </div>
+        <!-- Cálculo Resultado -->
+        <div id="resultado_container"
+          class="hidden bg-primary/10 border border-primary/30 rounded-lg p-3 text-center transition-all">
+          <p id="dias_sugeridos" class="text-primary font-bold text-xs uppercase tracking-tight">--</p>
+        </div>
+        <!-- Calendar Component -->
+        <div class="pt-4">
+          <label class="block text-sm font-medium mb-3 text-slate-400 uppercase tracking-widest text-center">Selecionar
+            Dias Ativos (Padrão)</label>
+          <div class="grid grid-cols-7 gap-1 text-center text-[10px] mb-2 font-bold text-slate-500">
+            <div>DOM</div>
+            <div>SEG</div>
+            <div>TER</div>
+            <div>QUA</div>
+            <div>QUI</div>
+            <div>SEX</div>
+            <div>SAB</div>
+          </div>
+          <div id="calendario_grid" class="grid grid-cols-7 gap-1">
+            <!-- Empty slots for alignment -->
+            <div class="h-10"></div>
+            <div class="h-10"></div>
+            <div class="h-10"></div>
+            <div class="h-10"></div>
+            <div class="h-10"></div>
+            <!-- Days 1 to 30 -->
+          </div>
+        </div>
+        <button
+          class="w-full bg-primary hover:bg-primary/80 text-white font-bold py-4 rounded-xl shadow-[0_0_20px_rgba(13,89,242,0.3)] transition-all transform active:scale-95 uppercase tracking-widest mt-4"
+          type="submit">
+          Confirmar Nova Escala
+        </button>
+      </form>
+    </section>
+    <!-- Manage List Section -->
+    <section class="space-y-4">
+      <div class="flex items-center justify-between px-2">
+        <h2 class="text-sm font-bold uppercase tracking-wider text-primary flex items-center gap-2">
+          <span class="material-symbols-outlined">dataset</span>
+          Escalas Ativas
+        </h2>
+        <span id="total-escalas" class="text-[10px] text-slate-500 font-mono bg-slate-800 px-2 py-1 rounded">03</span>
+      </div>
+      <div id="lista-escalas" class="space-y-3">
+        <!-- Lista Dinâmica -->
+      </div>
+    </section>
+  </main>
+  <nav
+    class="fixed bottom-0 w-full bg-white dark:bg-background-dark border-t border-slate-200 dark:border-primary/10 px-6 py-4 z-50">
+    <div class="flex justify-between items-center max-w-md mx-auto">
+      <a class="flex flex-col items-center gap-1 text-slate-400 transition-all duration-300 hover:text-primary"
+        href="painel_admin.html">
+        <span class="material-symbols-outlined ">home</span>
+        <span class="text-[10px] font-bold uppercase tracking-tighter">INÍCIO</span>
+      </a>
+      <a class="flex flex-col items-center gap-1 text-slate-400 transition-all duration-300 hover:text-primary"
+        href="estatistica_funcionario.html">
+        <span class="material-symbols-outlined ">bar_chart</span>
+        <span class="text-[10px] font-bold uppercase tracking-tighter">ESTATÍSTICA</span>
+      </a>
+      <a class="flex flex-col items-center gap-1 text-slate-400 transition-all duration-300 hover:text-primary"
+        href="historico_anual.html">
+        <span class="material-symbols-outlined ">history</span>
+        <span class="text-[10px] font-bold uppercase tracking-tighter">HISTÓRICO</span>
+      </a>
+      <a class="flex flex-col items-center gap-1 text-slate-400 transition-all duration-300 hover:text-primary"
+        href="perfil_funcionario.html">
+        <span class="material-symbols-outlined ">person</span>
+        <span class="text-[10px] font-bold uppercase tracking-tighter">PERFIL</span>
+      </a>
+    </div>
+  </nav>
+
+  <script type="module">
+    import { supabase } from '../js/supabase-config.js';
+    import { UI } from '../js/ui-utils.js';
+
+    let diasSelecionados = [];
+
+    // Render Calendário
+    const grid = document.getElementById('calendario_grid');
+    for (let i = 1; i <= 30; i++) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.innerText = i;
+      btn.className = 'dia-btn h-10 rounded bg-primary/10 border border-primary/20 flex items-center justify-center hover:bg-primary/40 transition-all text-xs font-bold';
+      btn.onclick = () => toggleDia(btn, i);
+      grid.appendChild(btn);
+    }
+
+    function toggleDia(btn, dia) {
+      const limiteDias = parseInt(document.getElementById('dias_semana').value) || 0;
+      const offset = 5;
+      const indexSemana = Math.floor((offset + dia - 1) / 7);
+
+      // Contar quantos já tem na mesma semana
+      const diasMesmaSemana = diasSelecionados.filter(d => Math.floor((offset + d - 1) / 7) === indexSemana).length;
+
+      if (btn.classList.contains('bg-primary')) {
+        btn.classList.remove('bg-primary', 'shadow-[0_0_10px_rgba(13,89,242,0.5)]');
+        btn.classList.add('bg-primary/10');
+        diasSelecionados = diasSelecionados.filter(d => d !== dia);
+      } else {
+        if (limiteDias > 0 && diasMesmaSemana >= limiteDias) {
+          btn.classList.add('border-red-500');
+          setTimeout(() => btn.classList.remove('border-red-500'), 500);
+          return;
+        }
+        btn.classList.remove('bg-primary/10');
+        btn.classList.add('bg-primary', 'shadow-[0_0_10px_rgba(13,89,242,0.5)]');
+        diasSelecionados.push(dia);
+      }
+    }
+
+    async function loadEscalas() {
+      const container = document.getElementById('lista-escalas');
+      const countSpan = document.getElementById('total-escalas');
+
+      try {
+        const { data, error } = await supabase.from('escalas').select('*').order('nome');
+        if (error) throw error;
+
+        countSpan.innerText = String(data.length).padStart(2, '0');
+        container.innerHTML = data.map(e => `
+                <div class="bg-background-dark/40 border border-slate-800 p-4 rounded-xl flex items-center justify-between group hover:border-primary/50 transition-colors">
+                  <div class="flex items-center gap-4">
+                    <div class="size-12 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center">
+                      <span class="material-symbols-outlined text-primary">${getIconForRegime(e.tipo_regime)}</span>
+                    </div>
+                    <div>
+                      <h3 class="font-bold uppercase text-sm tracking-tight">${e.nome}</h3>
+                      <p class="text-xs text-slate-500">${e.horario_entrada} - ${e.horario_saida} • ${e.carga_horaria_semanal}h/sem</p>
+                    </div>
+                  </div>
+                  <div class="flex gap-2">
+                    <button onclick="deletarEscala('${e.id}')" class="p-2 hover:bg-red-500/20 rounded-lg text-red-500 transition-colors">
+                      <span class="material-symbols-outlined text-[20px]">delete</span>
+                    </button>
+                  </div>
+                </div>
+            `).join('');
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function getIconForRegime(regime) {
+      const icons = {
+        'Presencial': 'wb_sunny',
+        'Semipresencial': 'nightlight_round',
+        'Externo': 'emergency',
+        'Home Office': 'home'
+      };
+      return icons[regime] || 'schedule';
+    }
+
+    window.deletarEscala = async (id) => {
+      if (!confirm('Deseja excluir esta escala?')) return;
+      UI.showLoader();
+      try {
+        const { error } = await supabase.from('escalas').delete().eq('id', id);
+        if (error) throw error;
+        UI.showToast('Escala removida', 'success');
+        loadEscalas();
+      } catch (err) {
+        UI.showToast('Erro ao remover escala', 'error');
+      } finally {
+        UI.hideLoader();
+      }
+    };
+
+    document.getElementById('form-escala').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      if (diasSelecionados.length === 0) {
+        UI.showToast('Selecione os dias no calendário', 'warning');
+        return;
+      }
+
+      UI.showLoader();
+
+      const dados = {
+        nome: document.getElementById('nome_escala').value,
+        carga_horaria_semanal: parseInt(document.getElementById('carga_horaria').value),
+        dias_trabalho_semana: parseInt(document.getElementById('dias_semana').value),
+        tipo_regime: document.getElementById('tipo_regime').value,
+        horario_entrada: document.getElementById('horario_entrada').value,
+        horario_saida: document.getElementById('horario_saida').value,
+        dias_padrao: diasSelecionados
+      };
+
+      try {
+        const { error } = await supabase.from('escalas').insert([dados]);
+        if (error) throw error;
+
+        UI.showToast('Escala configurada!', 'success');
+        document.getElementById('form-escala').reset();
+        diasSelecionados = [];
+        document.querySelectorAll('.dia-btn').forEach(btn => {
+          btn.classList.remove('bg-primary', 'shadow-[0_0_10px_rgba(13,89,242,0.5)]');
+          btn.classList.add('bg-primary/10');
+        });
+        loadEscalas();
+      } catch (err) {
+        console.error(err);
+        UI.showToast('Erro ao salvar escala', 'error');
+      } finally {
+        UI.hideLoader();
+      }
+    });
+
+    loadEscalas();
+  </script>
+</body>
+</body>
+
+</html>

@@ -1,0 +1,194 @@
+<!DOCTYPE html><html class="dark" lang="pt-br"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#0d59f2",
+                        "background-light": "#f5f6f8",
+                        "background-dark": "#0a0e17",
+                        "neon-cyan": "#00f2ff",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .neon-glow {
+            box-shadow: 0 0 10px rgba(13, 89, 242, 0.3);
+        }
+        .neon-border {
+            border: 1px solid rgba(0, 242, 255, 0.2);
+        }
+        .scanline {
+            background: linear-gradient(to bottom, transparent 50%, rgba(13, 89, 242, 0.05) 50%);
+            background-size: 100% 4px;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen flex flex-col">
+<!-- Header Section -->
+<header class="sticky top-0 z-50 bg-background-dark/80 backdrop-blur-md border-b border-primary/20 px-4 py-4">
+<div class="flex items-center justify-between max-w-2xl mx-auto">
+<div class="flex items-center gap-2">
+<div class="w-2 h-8 bg-primary rounded-full shadow-[0_0_10px_#0d59f2]"></div>
+<h1 class="text-xl font-bold tracking-tighter uppercase text-slate-100" style="">Relação de Funcionários&nbsp;&nbsp;<div class="" style="">setor: Engenharia</div></h1>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-lg bg-primary/10 border border-primary/30 text-primary" style="">
+<span class="material-symbols-outlined" style="">notifications</span>
+</button>
+</div>
+</header>
+<!-- Main Content -->
+<main class="flex-1 overflow-y-auto px-4 py-6 max-w-2xl mx-auto w-full pb-24">
+<!-- Search Bar -->
+<div class="mb-8">
+<div class="relative group">
+<div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-primary" style="">search</span>
+</div>
+<input class="block w-full pl-12 pr-4 py-4 bg-primary/5 border border-primary/20 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all placeholder-slate-500 text-slate-100" placeholder="Localizar tripulante via ID ou Nome..." type="text">
+<div class="absolute inset-y-0 right-0 pr-4 flex items-center">
+<span class="text-[10px] font-bold text-primary/40 uppercase tracking-widest" style="">Scanner Ativo</span>
+</div>
+</div>
+</div>
+<!-- Employee List -->
+<div class="space-y-4">
+<!-- Employee Card 1 -->
+<div class="relative overflow-hidden p-4 bg-slate-900/50 rounded-xl neon-border group hover:bg-slate-800/60 transition-colors">
+<div class="absolute top-0 right-0 p-2 opacity-20">
+<span class="text-[40px] font-black italic select-none" style="">#88291</span>
+</div>
+<div class="flex items-center gap-4 relative z-10">
+<div class="relative">
+<div class="w-16 h-16 rounded-full border-2 border-primary p-1 bg-background-dark">
+<div class="w-full h-full rounded-full bg-cover bg-center" data-alt="Portrait of a male systems engineer" style="background-image: url(&quot;https://lh3.googleusercontent.com/aida-public/AB6AXuDS_fVn9i-F-gD7w0ME6iqwk8LtTJKbVOcrdyIPXQs3Uq5cjvdfholcKMrF-J2JepIEPvoBqQirN6R3KUzNaY5dUPY-bS97kafc69I95bXuSiKObOArlRZk9JGbFXOW_nf9YgI6DnI1E3YSWE43CC6Oxsey_T4IahsHsxM0nSzGp1NBaBMdfon8TPjaABgBoq2HEeY_cUyjJdar8h0DQDpNqq_9g-kFAlYxXxP5fUU6_Q2RoQBTVVzenSa5Mwpd4eRRb_bfCvliaaU&quot;);"></div>
+</div>
+<div class="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full border-2 border-background-dark shadow-[0_0_8px_#10b981]"></div>
+</div>
+<div class="flex-1">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="text-lg font-bold text-slate-100" style="">Arthur Morgan</h3>
+<p class="text-xs text-primary font-medium tracking-wider uppercase" style="">Engenheiro de Sistemas</p>
+</div>
+</div>
+<div class="mt-3 flex items-center gap-4"><div class="flex flex-col">
+<span class="text-[10px] text-slate-500 uppercase font-bold" style="">Matrícula</span>
+<span class="text-sm font-mono text-slate-300" style="">#88291</span>
+</div>
+<div class="h-6 w-px bg-slate-700"></div>
+<div class="flex flex-col">
+<span class="text-[10px] text-slate-500 uppercase font-bold" style="">Banco</span>
+<span class="text-sm font-mono text-emerald-400 font-bold" style="">+12h</span>
+</div>
+<div class="h-6 w-px bg-slate-700"></div>
+<div class="flex flex-col flex-1 min-w-[120px]"><span class="text-[10px] text-slate-500 uppercase font-bold mb-1" style="">Faltas no Mês</span><div class="flex items-center gap-2"><span class="text-lg font-bold text-neon-cyan font-mono" style="">0</span><div class="h-1 flex-1 bg-slate-700/50 rounded-full overflow-hidden border border-neon-cyan/20"><div class="h-full bg-neon-cyan/20 shadow-[0_0_8px_rgba(0,242,255,0.2)]" style="width: 0%"></div></div></div></div></div>
+</div>
+</div>
+<div class="scanline absolute inset-0 opacity-10 pointer-events-none"></div>
+</div>
+<!-- Employee Card 2 -->
+<div class="relative overflow-hidden p-4 bg-slate-900/50 rounded-xl neon-border group hover:bg-slate-800/60 transition-colors">
+<div class="absolute top-0 right-0 p-2 opacity-20">
+<span class="text-[40px] font-black italic select-none" style="">#99302</span>
+</div>
+<div class="flex items-center gap-4 relative z-10">
+<div class="relative">
+<div class="w-16 h-16 rounded-full border-2 border-primary p-1 bg-background-dark">
+<div class="w-full h-full rounded-full bg-cover bg-center" data-alt="Portrait of a female data analyst" style="background-image: url(&quot;https://lh3.googleusercontent.com/aida-public/AB6AXuDmdWhTTMRLSoYeVKNmmmUGEbIQG36qYds6sSYsUMc_VazPSgReYAjXHQhfz9CT0qJblbrHKqlcoEghRTMXcui9KIpg5gwuCzJVi2HGLdw434eHXzcxkQ8CwmYFwOPRPYYkb3Kqh6RDhss7hrrB_El_xHrmX0AGnJ_ki7UpY9B3ashpdWfsAth-BgNf8IAXURwc4ykpyvLXKcmarnDHNBrhBOjBmxu_ld-EjOpUJoQAlzcFKCAXPG_6wdS1NW-zYMfRQc0Ewce_v1I&quot;);"></div>
+</div>
+<div class="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full border-2 border-background-dark shadow-[0_0_8px_#10b981]"></div>
+</div>
+<div class="flex-1">
+<div>
+<h3 class="text-lg font-bold text-slate-100" style="">Elena Vance</h3>
+<p class="text-xs text-primary font-medium tracking-wider uppercase" style="">Analista de Dados</p>
+</div>
+<div class="mt-3 flex items-center gap-4"><div class="flex flex-col">
+<span class="text-[10px] text-slate-500 uppercase font-bold" style="">Matrícula</span>
+<span class="text-sm font-mono text-slate-300" style="">#99302</span>
+</div>
+<div class="h-6 w-px bg-slate-700"></div>
+<div class="flex flex-col">
+<span class="text-[10px] text-slate-500 uppercase font-bold" style="">Banco</span>
+<span class="text-sm font-mono text-rose-400 font-bold" style="">-02h</span>
+</div>
+<div class="h-6 w-px bg-slate-700"></div>
+<div class="flex flex-col flex-1 min-w-[120px]"><span class="text-[10px] text-slate-500 uppercase font-bold mb-1" style="">Faltas no Mês</span><div class="flex items-center gap-2"><span class="text-lg font-bold text-neon-cyan font-mono" style="">0</span><div class="h-1 flex-1 bg-slate-700/50 rounded-full overflow-hidden border border-neon-cyan/20"><div class="h-full bg-neon-cyan/20 shadow-[0_0_8px_rgba(0,242,255,0.2)]" style="width: 0%"></div></div></div></div></div>
+</div>
+</div>
+<div class="scanline absolute inset-0 opacity-10 pointer-events-none"></div>
+</div>
+<!-- Employee Card 3 -->
+<div class="relative overflow-hidden p-4 bg-slate-900/50 rounded-xl neon-border group hover:bg-slate-800/60 transition-colors">
+<div class="absolute top-0 right-0 p-2 opacity-20">
+<span class="text-[40px] font-black italic select-none" style="">#10294</span>
+</div>
+<div class="flex items-center gap-4 relative z-10">
+<div class="relative">
+<div class="w-16 h-16 rounded-full border-2 border-primary p-1 bg-background-dark">
+<div class="w-full h-full rounded-full bg-cover bg-center" data-alt="Portrait of a male pilot" style="background-image: url(&quot;https://lh3.googleusercontent.com/aida-public/AB6AXuCfN6mgWXZwB7-8kKhhQz1jF8_fumY5F51PdmVo0dtCk1W4WjOW2YyvL199zbgXyErBxchMcibiDbO3iswqt5215LkSQRUmv9Kxd5d7qVqCg77R_jFga1eSohE8QF3vxKxAoKU1bJJ1mndA0WqZonYaKdwJ1VIyG1gO0ygmJnV6qg179bDHU_V7rekNFUpz2mmc-_C_rLqTkKc56pXHXHhNz4UImeFJqhpDNoV7LkbALc7W_m41qURe2cx-Ocg6EH3guUZypm6zhq8&quot;);"></div>
+</div>
+<div class="absolute -bottom-1 -right-1 w-4 h-4 bg-amber-500 rounded-full border-2 border-background-dark shadow-[0_0_8px_#f59e0b]"></div>
+</div>
+<div class="flex-1">
+<div>
+<h3 class="text-lg font-bold text-slate-100" style="">James Holden</h3>
+<p class="text-xs text-primary font-medium tracking-wider uppercase" style="">Piloto de Logística</p>
+</div>
+<div class="mt-3 flex items-center gap-4"><div class="flex flex-col">
+<span class="text-[10px] text-slate-500 uppercase font-bold" style="">Matrícula</span>
+<span class="text-sm font-mono text-slate-300" style="">#10294</span>
+</div>
+<div class="h-6 w-px bg-slate-700"></div>
+<div class="flex flex-col">
+<span class="text-[10px] text-slate-500 uppercase font-bold" style="">Banco</span>
+<span class="text-sm font-mono text-slate-300 font-bold" style="">00h</span>
+</div>
+<div class="h-6 w-px bg-slate-700"></div>
+<div class="flex flex-col flex-1 min-w-[120px]"><span class="text-[10px] text-slate-500 uppercase font-bold mb-1" style="">Faltas no Mês</span><div class="flex items-center gap-2"><span class="text-lg font-bold text-neon-cyan font-mono" style="">0</span><div class="h-1 flex-1 bg-slate-700/50 rounded-full overflow-hidden border border-neon-cyan/20"><div class="h-full bg-neon-cyan/20 shadow-[0_0_8px_rgba(0,242,255,0.2)]" style="width: 0%"></div></div></div></div></div>
+</div>
+</div>
+<div class="scanline absolute inset-0 opacity-10 pointer-events-none"></div>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-primary/30 px-6 pb-6 pt-3 z-50">
+<div class="max-w-2xl mx-auto flex justify-between items-center"><a class="flex flex-col items-center gap-1 text-slate-500 hover:text-primary transition-colors" href="#" style="">
+<span class="material-symbols-outlined" style="">home</span>
+<span class="text-[10px] font-bold uppercase tracking-wider" style="">Início</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-500 hover:text-primary transition-colors" href="#" style="">
+<span class="material-symbols-outlined" style="">bar_chart</span>
+<span class="text-[10px] font-bold uppercase tracking-wider" style="">Estatística</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-primary relative" href="#" style="">
+<span class="material-symbols-outlined" style="">history</span>
+<span class="text-[10px] font-bold uppercase tracking-wider" style="">Histórico</span>
+<div class="absolute -top-1 w-8 h-0.5 bg-primary shadow-[0_0_8px_#0d59f2]"></div>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-500 hover:text-primary transition-colors" href="#" style="">
+<span class="material-symbols-outlined" style="">person</span>
+<span class="text-[10px] font-bold uppercase tracking-wider" style="">Perfil</span>
+</a></div>
+</nav>
+</body></html>

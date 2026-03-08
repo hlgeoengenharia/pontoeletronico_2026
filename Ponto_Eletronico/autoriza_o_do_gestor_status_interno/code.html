@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-br" style=""><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#0d59f2",
+                        "background-light": "#f5f6f8",
+                        "background-dark": "#0a0e17",
+                        "neon-red": "#ff3131",
+                        "neon-blue": "#00f3ff",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        .neon-border-blue { border: 1px solid rgba(0, 243, 255, 0.3); box-shadow: 0 0 15px rgba(0, 243, 255, 0.1); }
+        .neon-border-red { border: 1px solid rgba(255, 49, 49, 0.3); box-shadow: 0 0 15px rgba(255, 49, 49, 0.1); }
+        .scanline { background: linear-gradient(to bottom, transparent 50%, rgba(13, 89, 242, 0.05) 51%); background-size: 100% 4px; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen scanline">
+<div class="relative flex min-h-screen w-full flex-col max-w-md mx-auto border-x border-slate-800 shadow-2xl bg-background-dark overflow-hidden">
+<!-- Header -->
+<header class="flex items-center justify-between p-6 pt-8 border-b border-primary/20 bg-background-dark/80 backdrop-blur-md sticky top-0 z-10">
+<div class="flex items-center gap-3">
+<div class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/20 text-neon-blue border border-neon-blue/40">
+<span class="material-symbols-outlined" style="">arrow_back</span>
+</div>
+<div>
+<h1 class="text-xl font-bold tracking-tight text-slate-100 uppercase" style="">Autorização dO GESTOR</h1>
+<p class="text-[10px] tracking-[0.2em] text-neon-blue font-semibold" style="">TERMINAL DE COMANDO v4.2</p>
+</div>
+</div>
+<button class="text-slate-400 hover:text-white transition-colors" style="">
+<span class="material-symbols-outlined" style="">settings_input_component</span>
+</button>
+</header>
+<!-- Stats Grid -->
+<!-- Section Title -->
+<div class="px-6 py-2 flex items-center justify-between">
+<h3 class="text-slate-400 text-xs font-bold uppercase tracking-[0.2em]" style="">Solicitações Pendentes</h3>
+<span class="flex h-2 w-2 rounded-full bg-neon-blue animate-pulse"></span>
+</div>
+<!-- Pending Requests List -->
+<div class="flex flex-col gap-4 p-4 pb-24">
+<!-- Request Card 1 -->
+<!-- Request Card 2 -->
+<div class="flex flex-col rounded-xl bg-[#0f172a] border border-slate-800/60 p-5 shadow-xl relative w-full">
+<!-- Header: Profile & Status Badge -->
+<div class="flex justify-between items-start mb-5">
+<div class="flex gap-4">
+<!-- Profile Photo with Blue Ring -->
+<div class="relative flex-shrink-0">
+<div class="h-14 w-14 rounded-full border-2 border-primary/40 p-0.5">
+<div class="h-full w-full rounded-full bg-cover bg-center" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDJu1pCfufVJzH-0sQDIH5eYlVUbIPmX9QsMlD6cDlV3CCPv4RD5AgNOQVM05pAnnrEzUbbXHdHOgvQ7naDqwwLkAoWLsl_134AsUkZelwYKK3uzI31GhEjR1145WGj7P8HT8je6KWjxX6sAeiPLwnjIjapPlWCHixuTkgpEOXhgn2HTHw3HkkLKyd-VCkddyvYQCEbAwk0s1c5Eqo8rRYvBCiSuICuOE0Dl4U8yRRULbbV65YtZMTtGni13s17tXja3tfnzSaLbC8");'></div>
+</div>
+<div class="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-2 border-[#0f172a] bg-neon-blue"></div>
+</div>
+<!-- Info -->
+<div class="flex flex-col"><h2 class="text-slate-100 font-bold text-base" style="">Mariana Santos</h2>
+<p class="text-primary text-[11px] font-bold uppercase tracking-wider mb-0.5" style="">Agente de Campo</p><div class="mt-1"><span class="text-[10px] px-2 py-0.5 rounded bg-amber-500/10 text-amber-500 border border-amber-500/20 font-bold uppercase inline-block" style="">Aguardando</span></div>
+<div class="mt-3 flex items-center gap-4">
+<div class="flex flex-col">
+<span class="text-[10px] text-slate-500 uppercase font-bold" style="">Matrícula</span>
+<span class="text-sm font-mono text-slate-300" style="">#7829-X</span>
+</div>
+<div class="h-6 w-px bg-slate-700"></div>
+<div class="flex flex-col">
+<span class="text-[10px] text-slate-500 uppercase font-bold" style="">Banco</span>
+<span class="text-sm font-mono text-emerald-400 font-bold" style="">+08h</span>
+</div>
+<div class="h-6 w-px bg-slate-700"></div>
+<div class="flex flex-col flex-1 min-w-[80px]">
+<div class="flex justify-between items-center mb-1">
+<span class="text-[10px] text-slate-500 uppercase font-bold" style="">Faltas (mês)</span>
+<span class="text-[10px] text-neon-blue font-bold" style="">0</span>
+</div>
+<div class="h-1 w-full bg-slate-700 rounded-full overflow-hidden">
+<div class="h-full bg-neon-blue shadow-[0_0_8px_#00f3ff]" style="width: 10%"></div>
+</div>
+</div>
+</div></div>
+</div>
+</div>
+<!-- Divergence Type Label -->
+<div class="mb-3 flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-slate-400" style="">error_outline</span>
+<p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest" style="">Tipo de Divergência</p>
+</div>
+<!-- Detailed Report Box -->
+<div class="bg-black/30 rounded-lg p-3.5 mb-5 border-l-4 border-neon-red">
+<p class="text-slate-400 text-xs italic leading-relaxed" style="">
+      RELATÓRIO DETALHADO: "O sistema de autenticação biométrica falhou ao reconhecer o ID do agente."
+    </p>
+</div>
+<!-- Evidence Link -->
+<div class="mb-5">
+<button class="w-full flex items-center justify-between px-4 py-3 rounded-lg bg-slate-800/40 hover:bg-slate-800 border border-slate-700/50 hover:border-neon-blue/40 transition-all group/btn" style="">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-neon-blue text-lg" style="">attach_file</span>
+<span class="text-[11px] font-bold uppercase tracking-wider text-slate-300 group-hover/btn:text-neon-blue transition-colors italic" style="">Arquivo de Evidências</span>
+</div>
+<span class="material-symbols-outlined text-slate-500 text-sm group-hover/btn:text-neon-blue transition-colors" style="">open_in_new</span>
+</button>
+</div>
+<!-- Action Buttons -->
+<div class="grid grid-cols-3 gap-2.5">
+<button class="flex items-center justify-center gap-1.5 h-11 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-bold transition-all border border-slate-700/50" style="">
+<span class="material-symbols-outlined text-sm" style="">edit</span> EDITAR
+    </button>
+<button class="flex items-center justify-center gap-1.5 h-11 rounded-lg bg-neon-red/10 hover:bg-neon-red/20 text-neon-red text-[10px] font-bold transition-all border border-neon-red/20" style="">
+<span class="material-symbols-outlined text-sm" style="">block</span> NEGAR
+    </button>
+<button class="flex items-center justify-center gap-1.5 h-11 rounded-lg bg-primary hover:bg-primary/90 text-white text-[10px] font-bold transition-all shadow-[0_4px_12px_rgba(13,89,242,0.3)]" style="">
+<span class="material-symbols-outlined text-sm" style="">verified</span> ABONAR
+    </button>
+</div>
+</div>
+</div>
+<!-- Bottom Navigation Bar -->
+<nav class="fixed bottom-0 w-full max-w-md bg-slate-900/90 backdrop-blur-xl border-t border-slate-800 flex justify-around items-center p-3 z-20">
+<a class="flex flex-col items-center gap-1 text-slate-500 hover:text-neon-blue transition-colors" href="#" style="">
+<span class="material-symbols-outlined" style="">dashboard</span>
+<span class="text-[10px] font-bold uppercase" style="">Início</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-primary" href="#" style="">
+<span class="material-symbols-outlined font-bold" style="">bar_chart</span>
+<span class="text-[10px] font-bold uppercase" style="">Estatística</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-500 hover:text-neon-blue transition-colors" href="#" style="">
+<span class="material-symbols-outlined" style="">history</span>
+<span class="text-[10px] font-bold uppercase" style="">Histórico</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-500 hover:text-neon-blue transition-colors" href="#" style="">
+<span class="material-symbols-outlined" style="">person</span>
+<span class="text-[10px] font-bold uppercase" style="">Perfil</span>
+</a>
+</nav>
+</div>
+</body></html>

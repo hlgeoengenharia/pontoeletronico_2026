@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-br" style=""><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#0d59f2",
+                        "accent": "#eab308", // Neon Yellow accent
+                        "background-light": "#f5f6f8",
+                        "background-dark": "#0a0e17",
+                        "card-dark": "#161c2a",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        .scanline {
+            width: 100%;
+            height: 2px;
+            background: rgba(13, 89, 242, 0.1);
+            position: absolute;
+            z-index: 10;
+        }
+        .glow-blue {
+            box-shadow: 0 0 15px rgba(13, 89, 242, 0.3);
+        }
+        .glow-yellow {
+            box-shadow: 0 0 10px rgba(234, 179, 8, 0.2);
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<!-- Version: 1.0.1 --></head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col">
+<!-- Header / Mission Status -->
+<header class="border-b border-primary/20 bg-background-dark/80 backdrop-blur-md sticky top-0 z-50">
+<div class="flex items-center p-4 justify-between">
+<div class="text-primary flex size-10 shrink-0 items-center justify-center rounded-lg border border-primary/30 bg-primary/10"><span class="material-symbols-outlined">arrow_back</span></div>
+<h2 class="text-slate-100 text-lg font-bold leading-tight tracking-wider uppercase flex-1 text-center" style="">
+                ANOTAÇAÕ DIÁRIA</h2>
+<div class="flex w-10 items-center justify-end">
+<button class="relative text-accent" style="">
+<span class="material-symbols-outlined" style="">notifications</span>
+<span class="absolute top-0 right-0 block h-2 w-2 rounded-full bg-accent animate-pulse"></span>
+</button>
+</div>
+</div>
+<!-- Agent Progress Bar -->
+</header>
+<main class="flex-1 overflow-y-auto p-4 space-y-6">
+<!-- Mission Briefing / Form Section -->
+<section class="bg-card-dark border border-primary/20 rounded-xl p-5 relative overflow-hidden">
+<div class="absolute top-0 right-0 p-2 opacity-10">
+<span class="material-symbols-outlined text-6xl" style="">description</span>
+</div>
+<h3 class="text-accent text-sm font-bold tracking-widest uppercase mb-4 flex items-center gap-2" style="">
+<span class="material-symbols-outlined text-sm" style="">add_box</span> Nova ANOTAÇÃO</h3>
+<div class="space-y-4">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div class="flex flex-col gap-2">
+<label class="text-slate-400 text-xs uppercase font-bold tracking-wider" style="">Data</label>
+<div class="relative">
+<input class="w-full bg-background-dark border border-slate-700 rounded-lg py-3 px-4 text-slate-100 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" type="date"/>
+</div>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<label class="text-slate-400 text-xs uppercase font-bold tracking-wider" style="">ATIVIDADE DO DIA</label>
+<textarea class="w-full bg-background-dark border border-slate-700 rounded-lg py-3 px-4 text-slate-100 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all" placeholder="Descreva os detalhes das atividades desenvolvidas durante o dia." rows="3"></textarea>
+</div>
+<button class="w-full bg-primary hover:bg-primary/80 text-white font-bold py-4 rounded-lg uppercase tracking-[0.2em] shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2" style="">
+<span class="material-symbols-outlined" style="">send</span> Enviar</button>
+</div>
+</section>
+<!-- Previous Logs Section -->
+<section class="space-y-4 pb-20">
+<div class="flex justify-between items-center">
+<h3 class="text-slate-100 text-sm font-bold tracking-widest uppercase flex items-center gap-2" style="">
+<span class="material-symbols-outlined text-sm" style="">history</span> Histórico</h3>
+<span class="text-[10px] text-slate-500 uppercase tracking-tighter" style="">Total: 14 divergências</span>
+</div>
+<!-- Log Card 1: Pending -->
+<div class="bg-card-dark border-l-4 border-accent border-r border-t border-b border-white/5 rounded-lg p-4 space-y-3">
+<div class="flex justify-between items-start">
+<div>
+<div class="flex items-center gap-2">
+<span class="text-accent text-[10px] font-bold uppercase tracking-widest" style="">ANOTAÇÃO DIÁRIA</span>
+<span class="text-slate-500 text-[10px]" style="">• 12 Out, 2023</span>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="p-2 text-slate-400 hover:text-primary transition-colors" style="">
+<span class="material-symbols-outlined text-lg" style="">edit</span>
+</button>
+<button class="p-2 text-slate-400 hover:text-red-500 transition-colors" style="">
+<span class="material-symbols-outlined text-lg" style="">delete</span>
+</button>
+</div>
+</div>
+<p class="text-slate-400 text-xs leading-relaxed italic" style="">ANOTAÇÃO DIÁRIA: "Finalizada a integração da API de autenticação e corrigidos bugs de interface."</p>
+</div>
+<!-- Log Card 2: Approved -->
+<!-- Log Card 3: Rejected -->
+</section>
+</main>
+<!-- Bottom Navigation -->
+<nav class="fixed bottom-0 w-full bg-background-dark/90 backdrop-blur-xl border-t border-primary/20 pb-6 pt-2">
+<div class="flex justify-around items-center px-4">
+<a class="flex flex-col items-center gap-1 text-slate-500 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="text-[10px] font-medium uppercase tracking-widest">Início</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-500 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">leaderboard</span>
+<span class="text-[10px] font-medium uppercase tracking-widest">Estatística</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-primary" href="#">
+<span class="material-symbols-outlined fill-1">history</span>
+<span class="text-[10px] font-bold uppercase tracking-widest">Histórico</span>
+</a>
+<a class="flex flex-col items-center gap-1 text-slate-500 hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined">account_circle</span>
+<span class="text-[10px] font-medium uppercase tracking-widest">Perfil</span>
+</a>
+</div>
+</nav>
+</body></html>

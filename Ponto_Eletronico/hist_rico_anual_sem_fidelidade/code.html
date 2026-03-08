@@ -1,0 +1,211 @@
+<!DOCTYPE html><html class="dark" lang="pt-BR"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#0d59f2",
+                        "background-light": "#f5f6f8",
+                        "background-dark": "#0a0e17",
+                        "terminal-accent": "#00f2ff",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: "Space Grotesk", sans-serif;
+        }
+        .terminal-glow {
+            box-shadow: 0 0 15px rgba(13, 89, 242, 0.2);
+        }
+        .scanline {
+            background: linear-gradient(to bottom, transparent 50%, rgba(13, 89, 242, 0.05) 50%);
+            background-size: 100% 4px;
+        }
+    
+        .scifi-border {
+            border: 1px solid rgba(13, 89, 242, 0.3);
+            box-shadow: 0 0 15px rgba(13, 89, 242, 0.1);
+        }</style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  
+        .scifi-border {
+            border: 1px solid rgba(13, 89, 242, 0.3);
+            box-shadow: 0 0 15px rgba(13, 89, 242, 0.1);
+        }</style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col">
+<div class="relative flex h-auto min-h-screen w-full flex-col bg-background-light dark:bg-background-dark overflow-x-hidden font-display">
+<div class="flex items-center bg-slate-100/50 dark:bg-slate-900/50 backdrop-blur-md p-4 sticky top-0 z-50 border-b border-primary/20 justify-between">
+<div class="text-primary flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+<span class="material-symbols-outlined" style="">arrow_back</span>
+</div>
+<h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-tight flex-1 text-center uppercase tracking-widest" style="">Histórico Anual</h2>
+<div class="flex w-10 items-center justify-end">
+<button class="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary" style="">
+<span class="material-symbols-outlined" style="">settings</span>
+</button>
+</div>
+</div>
+<section class="p-6 flex flex-col items-center gap-6">
+<div class="relative">
+<div class="w-32 h-32 rounded-full border-4 border-primary p-1 bg-background-dark overflow-hidden">
+<img alt="Foto de perfil do funcionário" class="w-full h-full object-cover rounded-full" data-alt="Futuristic employee profile avatar portrait" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCPkb6K2muLjnruW9A8upLfiN4tM8-_P4VgOAw8S3hu_oY34QcVRlAtNCDiMHCZc7c8nYveFoEnwUOPUdabR_33Gc34piIQQjXWXedahnY1xl5nrOYONpOKoRtKFgd35uywxws9JrqOTxXTkC3DL1n2H5N4GxlpOYns74U-yq4lUHd_g4rRpzoY5kAoeL3ZXDu85UTRQsGXpUdLwNJcasiNiT8p29BncQ6RooiU0oVuAFdHXsBdlyAb1Mka6w-B2DldtyEdcQtmkT0" style="">
+</div>
+<div class="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-primary text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-tighter shadow-[0_0_10px_#0d59f2]" style="">+00:02:55</div>
+</div>
+<div class="text-center">
+<h2 class="text-2xl font-bold text-slate-900 dark:text-white" style="">Anderson Silva</h2>
+<p class="text-primary font-medium flex flex-col items-center" style="">
+<span class="flex items-center gap-1" style="color: rgb(148, 163, 184); font-size: 14px;"><span class="material-symbols-outlined text-sm" style="">shield</span>Engenheiro<br></span>
+<span class="mt-1" style="color: rgb(100, 116, 139); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, &quot;Liberation Mono&quot;, &quot;Courier New&quot;, monospace; font-size: 12px;">#B012330</span>
+</p>
+</div>
+<div class="w-full space-y-2">
+<div class="flex justify-between text-sm font-medium uppercase tracking-wider text-primary/70">
+<span class="" style="">Progresso Anual</span>
+<span class="text-slate-400" style="">85%</span>
+</div>
+<div class="w-full h-3 bg-primary/20 rounded-full overflow-hidden">
+<div class="h-full bg-primary shadow-[0_0_15px_rgba(13,89,242,0.6)]" style="width: 85%"></div>
+</div>
+<p class="text-xs text-slate-500 dark:text-slate-400 text-center uppercase tracking-tighter" style="">Relatório consolidado do ciclo atual</p>
+</div>
+</section>
+<div class="px-6 pb-2"><h3 class="text-slate-900 dark:text-slate-100 text-sm font-bold uppercase tracking-[0.2em] mb-4 flex items-center gap-2" style="">
+<span class="w-2 h-4 bg-primary rounded-sm"></span>
+                Métricas de Desempenho (2023)
+            </h3>
+<div class="grid grid-cols-3 gap-3">
+<div class="flex flex-col gap-1 rounded-xl p-4 bg-slate-100 dark:bg-slate-900/50 scifi-border">
+<span class="material-symbols-outlined text-primary text-sm" style="">schedule</span>
+<p class="text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase leading-tight" style="">Pontualidade</p>
+<p class="text-slate-900 dark:text-slate-100 text-xl font-bold font-display" style="">98.5%</p>
+<p class="text-emerald-500 text-[10px] font-bold" style="">+2.1% ↑</p>
+</div>
+<div class="flex flex-col gap-1 rounded-xl p-4 bg-slate-100 dark:bg-slate-900/50 scifi-border">
+<span class="material-symbols-outlined text-primary text-sm" style="">timelapse</span>
+<p class="text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase leading-tight" style="">Horas Totais</p>
+<p class="text-slate-900 dark:text-slate-100 text-xl font-bold font-display" style="">2.040h</p>
+<p class="text-emerald-500 text-[10px] font-bold" style="">Meta OK</p>
+</div>
+<div class="flex flex-col gap-1 rounded-xl p-4 bg-slate-100 dark:bg-slate-900/50 scifi-border border-red-500/20">
+<span class="material-symbols-outlined text-red-500 text-sm" style="">warning</span>
+<p class="text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase leading-tight" style="">Faltas</p>
+<p class="text-slate-900 dark:text-slate-100 text-xl font-bold font-display" style="">02</p>
+<p class="text-red-500 text-[10px] font-bold" style="">-10% ↓</p>
+</div>
+</div></div>
+<div class="px-6 py-6">
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-xs font-bold uppercase tracking-[0.2em] text-primary/80" style="">Cronologia de Missões</h3>
+<div class="flex gap-2">
+<div class="size-3 rounded-full bg-primary animate-pulse shadow-[0_0_5px_#0d59f2]"></div>
+<span class="text-[10px] text-slate-500 font-bold uppercase" style="">Live System</span>
+</div>
+</div>
+<div class="space-y-3">
+<div class="flex items-center justify-between bg-slate-800/30 p-4 rounded-lg border-l-4 border-primary/60 hover:bg-slate-800/50 transition-colors group">
+<div class="flex items-center gap-4">
+<div class="bg-primary/10 text-primary p-2 rounded-md font-mono font-bold text-sm" style="">OUT</div>
+<div>
+<p class="text-slate-100 font-bold text-sm tracking-wide" style="">Missão Outubro</p>
+<p class="text-slate-500 text-[11px] font-mono" style="">Status: COMPLETO (S+)</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-slate-100 font-mono font-bold" style="">168h | 98%</p>
+<p class="text-primary text-[10px] font-bold uppercase" style="">+450 XP</p>
+</div>
+</div>
+<div class="flex items-center justify-between bg-slate-800/30 p-4 rounded-lg border-l-4 border-primary/60 hover:bg-slate-800/50 transition-colors group">
+<div class="flex items-center gap-4">
+<div class="bg-primary/10 text-primary p-2 rounded-md font-mono font-bold text-sm" style="">SET</div>
+<div>
+<p class="text-slate-100 font-bold text-sm tracking-wide" style="">Missão Setembro</p>
+<p class="text-slate-500 text-[11px] font-mono" style="">Status: COMPLETO (A)</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-slate-100 font-mono font-bold" style="">172h | 95%</p>
+<p class="text-primary text-[10px] font-bold uppercase" style="">+400 XP</p>
+</div>
+</div>
+<div class="flex items-center justify-between bg-slate-800/30 p-4 rounded-lg border-l-4 border-[#0bda5e]/60 hover:bg-slate-800/50 transition-colors group">
+<div class="flex items-center gap-4">
+<div class="bg-[#0bda5e]/10 text-[#0bda5e] p-2 rounded-md font-mono font-bold text-sm" style="">AGO</div>
+<div>
+<p class="text-slate-100 font-bold text-sm tracking-wide" style="">Missão Agosto</p>
+<p class="text-slate-500 text-[11px] font-mono" style="">Status: IMPECÁVEL (SSS)</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-slate-100 font-mono font-bold" style="">160h | 100%</p>
+<p class="text-[#0bda5e] text-[10px] font-bold uppercase" style="">+600 XP</p>
+</div>
+</div>
+<div class="flex items-center justify-between bg-slate-800/10 p-4 rounded-lg border-l-4 border-slate-600/60 opacity-60">
+<div class="flex items-center gap-4">
+<div class="bg-slate-800 text-slate-500 p-2 rounded-md font-mono font-bold text-sm" style="">JUL</div>
+<div>
+<p class="text-slate-100 font-bold text-sm tracking-wide" style="">Missão Julho</p>
+<p class="text-slate-500 text-[11px] font-mono" style="">Status: ARQUIVADO</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-slate-100 font-mono font-bold" style="">176h | 92%</p>
+<p class="text-slate-500 text-[10px] font-bold uppercase" style="">SYNCED</p>
+</div>
+</div>
+</div>
+<button class="w-full mt-4 py-3 border border-primary/30 rounded-lg text-primary text-xs font-bold uppercase tracking-widest bg-primary/5 hover:bg-primary/10 transition-all" style="">
+                Ver Meses Anteriores
+            </button>
+</div>
+<div class="px-6 pb-24">
+<h3 class="text-xs font-bold uppercase tracking-[0.2em] text-primary/80 mb-4" style="">consolidado</h3>
+<div class="grid gap-4 flex justify-center">
+<div class="flex flex-col items-center gap-2">
+<div class="size-14 rounded-full bg-primary/20 flex items-center justify-center border border-primary shadow-[0_0_10px_#0d59f2] text-primary">
+<span class="material-symbols-outlined text-2xl" style="">workspace_premium</span>
+</div>
+<p class="text-[9px] text-slate-400 font-bold uppercase text-center" style="">Anual</p>
+</div>
+</div>
+</div>
+<div class="fixed bottom-0 left-0 right-0 z-50 flex border-t border-primary/20 bg-background-dark/95 backdrop-blur-xl px-4 pb-6 pt-3">
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-500 hover:text-primary transition-colors" href="#" style="">
+<span class="material-symbols-outlined" style="">home</span>
+<p class="text-[10px] font-bold uppercase tracking-wider" style="">Início</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-500 hover:text-primary transition-colors" href="#" style="">
+<span class="material-symbols-outlined" style="">bar_chart</span>
+<p class="text-[10px] font-bold uppercase tracking-wider" style="">Estatística</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-primary shadow-[0_-10px_15px_-5px_rgba(13,89,242,0.1)]" href="#" style="">
+<span class="material-symbols-outlined font-variation-fill-1" style="">history</span>
+<p class="text-[10px] font-bold uppercase tracking-wider" style="">Histórico</p>
+</a>
+<a class="flex flex-1 flex-col items-center justify-center gap-1 text-slate-500 hover:text-primary transition-colors" href="#" style="">
+<span class="material-symbols-outlined" style="">person</span>
+<p class="text-[10px] font-bold uppercase tracking-wider" style="">Perfil</p>
+</a>
+</div>
+</div>
+</body></html>

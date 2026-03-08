@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-br">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap"
+    rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+    rel="stylesheet" />
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#0d59f2",
+            "background-light": "#f5f6f8",
+            "background-dark": "#0a0e17",
+            "neon-cyan": "#00f2ff",
+          },
+          fontFamily: {
+            "display": ["Space Grotesk", "sans-serif"]
+          },
+          borderRadius: { "DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px" },
+        },
+      },
+    }
+  </script>
+  <style>
+    .neon-glow {
+      box-shadow: 0 0 10px rgba(13, 89, 242, 0.3);
+    }
+
+    .neon-border {
+      border: 1px solid rgba(0, 242, 255, 0.2);
+    }
+
+    .scanline {
+      background: linear-gradient(to bottom, transparent 50%, rgba(13, 89, 242, 0.05) 50%);
+      background-size: 100% 4px;
+    }
+  </style>
+</head>
+
+<body
+  class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen flex flex-col">
+
+  <!-- Header Section -->
+  <header class="border-b border-primary/20 bg-background-dark/80 backdrop-blur-md sticky top-0 z-50">
+    <div class="flex items-center p-4 justify-between max-w-2xl mx-auto">
+      <div onclick="history.back()"
+        class="text-primary flex size-10 shrink-0 items-center justify-center rounded-lg border border-primary/30 bg-primary/10 cursor-pointer hover:bg-primary/20 transition-all">
+        <span class="material-symbols-outlined">arrow_back</span>
+      </div>
+      <h2 class="text-slate-100 text-lg font-bold tracking-wider uppercase flex-1 text-center">RELAÇÃO DE SETORES</h2>
+      <div class="w-10"></div> <!-- Placeholder to keep title centered after removing notification icon -->
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="flex-1 overflow-y-auto px-4 py-6 max-w-2xl mx-auto w-full pb-24">
+    <!-- Search Bar -->
+    <div class="mb-8">
+      <div class="relative group">
+        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+          <span class="material-symbols-outlined text-primary">search</span>
+        </div>
+        <input id="search-input"
+          class="block w-full pl-12 pr-4 py-4 bg-primary/5 border border-primary/20 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all placeholder-slate-500 text-slate-100"
+          placeholder="Localizar setor..." type="text" />
+        <div class="absolute inset-y-0 right-0 pr-4 flex items-center">
+          <span class="text-[10px] font-bold text-primary/40 uppercase tracking-widest">Scanner Ativo</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sector List Container -->
+    <div id="sector-list" class="space-y-4">
+      <!-- Dynamic sectors will be loaded here -->
+      <div class="flex flex-col items-center justify-center py-12 text-slate-500">
+        <span class="material-symbols-outlined animate-spin mb-2">refresh</span>
+        <p class="text-xs uppercase font-bold tracking-widest">Sincronizando com a Central...</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- Bottom Navigation -->
+  <nav
+    class="fixed bottom-0 w-full bg-white dark:bg-background-dark border-t border-slate-200 dark:border-primary/10 px-6 py-4 z-50">
+    <div class="flex justify-between items-center max-w-md mx-auto">
+      <a class="flex flex-col items-center gap-1 text-slate-400 transition-all duration-300 hover:text-primary"
+        href="painel_gestor.html">
+        <span class="material-symbols-outlined">home</span>
+        <span class="text-[10px] font-bold uppercase tracking-tighter">INÍCIO</span>
+      </a>
+      <a class="flex flex-col items-center gap-1 text-slate-400 transition-all duration-300 hover:text-primary"
+        href="estatistica_funcionario.html">
+        <span class="material-symbols-outlined">bar_chart</span>
+        <span class="text-[10px] font-bold uppercase tracking-tighter">ESTATÍSTICA</span>
+      </a>
+      <a class="flex flex-col items-center gap-1 text-slate-400 transition-all duration-300 hover:text-primary"
+        href="historico_anual.html">
+        <span class="material-symbols-outlined">history</span>
+        <span class="text-[10px] font-bold uppercase tracking-tighter">HISTÓRICO</span>
+      </a>
+      <a class="flex flex-col items-center gap-1 text-slate-400 transition-all duration-300 hover:text-primary"
+        href="perfil_funcionario.html">
+        <span class="material-symbols-outlined">person</span>
+        <span class="text-[10px] font-bold uppercase tracking-tighter">PERFIL</span>
+      </a>
+    </div>
+  </nav>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script type="module">
+    import { supabase } from '../js/supabase-config.js';
+
+    let allSectors = [];
+    let allEmployees = [];
+
+    async function loadData() {
+      try {
+        const [sectorsRes, employeesRes] = await Promise.all([
+          supabase.from('setores').select('*'),
+          supabase.from('funcionarios').select('*')
+        ]);
+
+        if (sectorsRes.error) throw sectorsRes.error;
+        if (employeesRes.error) throw employeesRes.error;
+
+        allSectors = sectorsRes.data;
+        allEmployees = employeesRes.data;
+
+        renderSectors(allSectors);
+      } catch (err) {
+        console.error('Erro ao carregar dados:', err);
+      }
+    }
+
+    function renderSectors(sectors) {
+      const container = document.getElementById('sector-list');
+      container.innerHTML = '';
+
+      if (sectors.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-12 text-slate-500">
+            <p class="text-xs uppercase font-bold tracking-widest">Nenhum setor localizado pelo scanner.</p>
+          </div>
+        `;
+        return;
+      }
+
+      sectors.forEach(sector => {
+        // Find manager for this sector
+        const manager = allEmployees.find(e =>
+          e.setor_id === sector.id &&
+          (e.nivel_acesso === 'manager' || e.nivel_acesso === 'gestor')
+        );
+
+        // Count total members in this sector (including managers and admins)
+        const totalMembers = allEmployees.filter(e => e.setor_id === sector.id).length;
+        const hasManager = !!manager;
+        const statusColor = hasManager ? 'bg-emerald-500 shadow-[0_0_8px_#10b981]' : 'bg-amber-500 shadow-[0_0_8px_#f59e0b]';
+
+        let icon = 'domain';
+        const name = sector.nome.toLowerCase();
+        if (name.includes('engenharia')) icon = 'engineering';
+        else if (name.includes('dados') || name.includes('comunicação')) icon = 'analytics';
+        else if (name.includes('logística') || name.includes('operações')) icon = 'local_shipping';
+
+        const card = document.createElement('div');
+        card.className = 'relative overflow-hidden p-4 bg-slate-900/50 rounded-xl neon-border group hover:bg-slate-800/60 transition-colors cursor-pointer';
+        card.onclick = () => window.location.href = `relacao_funcionarios.html?setor=${sector.id}`;
+
+        card.innerHTML = `
+          <div class="absolute top-0 right-0 p-2 opacity-20">
+            <span class="text-[40px] font-black italic select-none">#${sector.nome.substring(0, 3).toUpperCase()}</span>
+          </div>
+          <div class="flex items-center gap-4 relative z-10">
+            <div class="relative">
+              <div class="w-16 h-16 rounded-full border-2 border-primary p-1 bg-background-dark flex items-center justify-center">
+                <span class="material-symbols-outlined text-primary text-3xl">${icon}</span>
+              </div>
+              <div class="absolute -bottom-1 -right-1 w-4 h-4 ${statusColor} rounded-full border-2 border-background-dark"></div>
+            </div>
+            <div class="flex-1">
+              <h3 class="text-lg font-bold text-slate-100">${sector.nome}</h3>
+              <p class="text-xs text-primary font-medium tracking-wider">
+                Gestor Responsável: ${manager ? manager.nome_completo : 'Não atribuído'}
+              </p>
+              <div class="mt-3 flex items-center gap-4">
+                <div class="flex flex-col">
+                  <span class="text-[10px] text-slate-500 uppercase font-bold tracking-wider">
+                    TOTAL DE TRIPULANTES: <span class="text-slate-300 font-mono text-sm ml-1">${totalMembers}</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="scanline absolute inset-0 opacity-10 pointer-events-none"></div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    document.getElementById('search-input').addEventListener('input', (e) => {
+      const term = e.target.value.toLowerCase();
+      const filtered = allSectors.filter(s =>
+        s.nome.toLowerCase().includes(term)
+      );
+      renderSectors(filtered);
+    });
+
+    loadData();
+  </script>
+</body>
+
+</html>

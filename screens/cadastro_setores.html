@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="pt-BR">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>Gestão de Setores - Admin Console</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap"
+    rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+    rel="stylesheet" />
+  <!-- Leaflet Map CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#0d59f2",
+            "background-light": "#f5f6f8",
+            "background-dark": "#101622",
+            "card-dark": "#1a2234",
+            "border-dark": "#2d3748"
+          },
+          fontFamily: {
+            "display": ["Space Grotesk"]
+          },
+          borderRadius: { "DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px" },
+        },
+      },
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+    }
+
+    .sci-fi-gradient {
+      background: linear-gradient(135deg, rgba(13, 89, 242, 0.15) 0%, rgba(16, 22, 34, 0) 100%);
+    }
+
+    .glass-panel {
+      background: rgba(26, 34, 52, 0.7);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(13, 89, 242, 0.2);
+    }
+
+    #map {
+      height: 300px;
+      width: 100%;
+      border-radius: 0.75rem;
+      z-index: 1;
+      border: 1px solid rgba(13, 89, 242, 0.3);
+    }
+
+    .leaflet-container {
+      background: #101622 !important;
+    }
+  </style>
+  <style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col">
+  <!-- Header -->
+  <header class="border-b border-primary/20 bg-background-dark/80 backdrop-blur-md sticky top-0 z-50">
+    <div class="flex items-center p-4 justify-between max-w-2xl mx-auto">
+      <div onclick="history.back()"
+        class="text-primary flex size-10 shrink-0 items-center justify-center rounded-lg border border-primary/30 bg-primary/10 cursor-pointer hover:bg-primary/20 transition-all">
+        <span class="material-symbols-outlined">arrow_back</span>
+      </div>
+      <h2 class="text-slate-100 text-lg font-bold tracking-wider uppercase flex-1 text-center">GESTÃO DE SETORES</h2>
+      <div
+        class="flex size-10 items-center justify-center rounded-lg bg-primary/10 border border-primary/30 text-primary">
+        <span class="material-symbols-outlined">settings</span>
+      </div>
+    </div>
+  </header>
+  <main class="flex-1 p-4 pb-24 space-y-8 max-w-2xl mx-auto w-full">
+    <!-- Welcome/Status Section -->
+    <section class="sci-fi-gradient rounded-xl p-6 border border-primary/20 relative overflow-hidden">
+      <div class="absolute top-0 right-0 w-32 h-32 bg-primary/10 blur-3xl rounded-full -mr-16 -mt-16"></div>
+      <h2 class="text-2xl font-bold mb-2">Comando Central</h2>
+      <p class="text-slate-400 text-sm">Configure as divisões estratégicas da base estelar.</p>
+    </section>
+    <!-- New Sector Form -->
+    <section class="space-y-4">
+      <div class="flex items-center gap-2 mb-4">
+        <span class="material-symbols-outlined text-primary">add_circle</span>
+        <h2 class="text-xl font-bold tracking-tight">Novo Setor</h2>
+      </div>
+      <div class="glass-panel p-6 rounded-xl space-y-6">
+        <form id="form-setor" class="space-y-6">
+          <div class="space-y-2">
+            <label class="text-sm font-medium text-slate-400 uppercase tracking-wider">Nome do Setor</label>
+            <input id="nome-setor"
+              class="w-full bg-background-dark/50 border border-primary/30 rounded-lg h-12 px-4 focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none placeholder:text-slate-600"
+              placeholder="Ex: Engenharia Estelar" type="text" required />
+          </div>
+          <div class="space-y-2">
+            <label class="text-sm font-medium text-slate-400 uppercase tracking-wider">Gestor Responsável</label>
+            <div class="relative">
+              <select id="gestor-select"
+                class="w-full bg-background-dark/50 border border-primary/30 rounded-lg h-12 px-4 appearance-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none"
+                required>
+                <option value="">Carregando Comandantes...</option>
+              </select>
+              <span
+                class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-primary">expand_more</span>
+            </div>
+          </div>
+          <!-- Geofence Parameters -->
+          <div class="grid grid-cols-2 gap-4">
+            <div class="space-y-2">
+              <label class="text-sm font-medium text-slate-400 uppercase tracking-wider text-[10px]">Raio de Ativação
+                (Metros)</label>
+              <input id="radius-input"
+                class="w-full bg-background-dark/50 border border-primary/30 rounded-lg h-12 px-4 focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none"
+                type="number" value="100" />
+            </div>
+            <div class="space-y-2">
+              <label class="text-sm font-medium text-slate-400 uppercase tracking-wider text-[10px]">Regime
+                Padrão</label>
+              <select id="regime-select"
+                class="w-full bg-background-dark/50 border border-primary/30 rounded-lg h-12 px-4 focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none">
+                <option value="Presencial">Presencial</option>
+                <option value="Semipresencial">Semipresencial</option>
+                <option value="Externo">Externo</option>
+                <option value="Home Office">Home Office</option>
+              </select>
+            </div>
+          </div>
+          <!-- Location Map -->
+          <div class="space-y-2">
+            <div class="flex justify-between items-center">
+              <label class="text-sm font-medium text-slate-400 uppercase tracking-wider">Localização do Setor</label>
+              <span class="text-[10px] text-primary animate-pulse uppercase">Clique no mapa para marcar</span>
+            </div>
+            <div id="map"></div>
+            <div class="grid grid-cols-2 gap-3 text-[10px] uppercase font-bold text-slate-500 font-mono">
+              <div class="bg-background-dark/50 p-2 rounded border border-white/5">LAT: <span id="lat-display"
+                  class="text-slate-100">-23.5505</span></div>
+              <div class="bg-background-dark/50 p-2 rounded border border-white/5">LONG: <span id="lng-display"
+                  class="text-slate-100">-46.6333</span></div>
+            </div>
+          </div>
+          <button type="submit" id="btn-salvar"
+            class="w-full bg-primary hover:bg-primary/80 text-white font-bold py-4 rounded-lg transition-all shadow-[0_0_15px_rgba(13,89,242,0.4)] flex items-center justify-center gap-2 uppercase tracking-widest text-sm">
+            <span class="material-symbols-outlined">rocket_launch</span>
+            Inicializar Setor
+          </button>
+        </form>
+      </div>
+    </section>
+    <!-- Sector List -->
+    <section class="space-y-4">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary">account_tree</span>
+          <h2 class="text-xl font-bold tracking-tight">Setores Ativos</h2>
+        </div>
+        <span id="total-setores"
+          class="bg-primary/20 text-primary text-xs font-bold px-2 py-1 rounded-full border border-primary/30">0
+          ATIVOS</span>
+      </div>
+      <div id="lista-setores" class="space-y-3">
+        <!-- Lista Dinâmica -->
+      </div>
+    </section>
+  </main>
+  <nav
+    class="fixed bottom-0 w-full bg-white dark:bg-background-dark border-t border-slate-200 dark:border-primary/10 px-6 py-4 z-50">
+    <div class="flex justify-between items-center max-w-md mx-auto">
+      <a class="flex flex-col items-center gap-1 text-slate-400 transition-all duration-300 hover:text-primary"
+        href="painel_admin.html">
+        <span class="material-symbols-outlined ">home</span>
+        <span class="text-[10px] font-bold uppercase tracking-tighter">INÍCIO</span>
+      </a>
+      <a class="flex flex-col items-center gap-1 text-slate-400 transition-all duration-300 hover:text-primary"
+        href="estatistica_funcionario.html">
+        <span class="material-symbols-outlined ">bar_chart</span>
+        <span class="text-[10px] font-bold uppercase tracking-tighter">ESTATÍSTICA</span>
+      </a>
+      <a class="flex flex-col items-center gap-1 text-slate-400 transition-all duration-300 hover:text-primary"
+        href="historico_anual.html">
+        <span class="material-symbols-outlined ">history</span>
+        <span class="text-[10px] font-bold uppercase tracking-tighter">HISTÓRICO</span>
+      </a>
+      <a class="flex flex-col items-center gap-1 text-slate-400 transition-all duration-300 hover:text-primary"
+        href="perfil_funcionario.html">
+        <span class="material-symbols-outlined ">person</span>
+        <span class="text-[10px] font-bold uppercase tracking-tighter">PERFIL</span>
+      </a>
+    </div>
+  </nav>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script type="module">
+    import { supabase } from '../js/supabase-config.js';
+    import { UI } from '../js/ui-utils.js';
+
+    // Mapa Leaflet
+    const map = L.map('map').setView([-23.5505, -46.6333], 15);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap'
+    }).addTo(map);
+
+    let marker, circle;
+    let selectedLat = -23.5505;
+    let selectedLng = -46.6333;
+
+    function updateMap(lat, lng, radius) {
+      if (marker) map.removeLayer(marker);
+      if (circle) map.removeLayer(circle);
+
+      selectedLat = lat;
+      selectedLng = lng;
+
+      marker = L.marker([lat, lng]).addTo(map);
+      circle = L.circle([lat, lng], {
+        color: '#0d59f2',
+        fillColor: '#0d59f2',
+        fillOpacity: 0.2,
+        radius: radius
+      }).addTo(map);
+
+      document.getElementById('lat-display').innerText = lat.toFixed(6);
+      document.getElementById('lng-display').innerText = lng.toFixed(6);
+    }
+
+    map.on('click', function (e) {
+      const radius = parseInt(document.getElementById('radius-input').value) || 100;
+      updateMap(e.latlng.lat, e.latlng.lng, radius);
+    });
+
+    document.getElementById('radius-input').oninput = function () {
+      if (marker) {
+        const latlng = marker.getLatLng();
+        updateMap(latlng.lat, latlng.lng, parseInt(this.value) || 0);
+      }
+    };
+
+    updateMap(-23.5505, -46.6333, 100);
+
+    // Lógica do Supabase
+    async function loadManagers() {
+      const select = document.getElementById('gestor-select');
+      try {
+        const { data, error } = await supabase
+          .from('funcionarios')
+          .select('id, nome_completo')
+          .in('nivel_acesso', ['comandante', 'GESTOR', 'admin']);
+
+        if (error) throw error;
+
+        select.innerHTML = '<option value="">Selecionar Comandante</option>';
+        data.forEach(m => {
+          select.innerHTML += `<option value="${m.id}">${m.nome_completo}</option>`;
+        });
+      } catch (err) {
+        console.error('Erro ao carregar gestores:', err);
+        select.innerHTML = '<option value="">Erro ao carregar</option>';
+      }
+    }
+
+    async function loadSetores() {
+      const container = document.getElementById('lista-setores');
+      const countSpan = document.getElementById('total-setores');
+      try {
+        const { data, error } = await supabase
+          .from('setores')
+          .select('*, funcionarios(nome_completo)')
+          .order('nome');
+
+        if (error) throw error;
+
+        countSpan.innerText = `${data.length} ATIVOS`;
+        container.innerHTML = data.map(s => `
+                <div class="glass-panel p-4 rounded-xl flex items-center justify-between border-l-4 border-l-primary group hover:bg-primary/5 transition-colors">
+                  <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/20">
+                      <span class="material-symbols-outlined text-primary">engineering</span>
+                    </div>
+                    <div>
+                      <h3 class="font-bold text-slate-100 uppercase tracking-wide">${s.nome}</h3>
+                      <p class="text-xs text-slate-500 text-[10px]">Gestor: ${s.funcionarios?.nome_completo || 'N/A'}</p>
+                      <p class="text-[9px] text-primary font-mono mt-1 uppercase tracking-tight">Raio: ${s.raio}m • ${s.regime || 'Presencial'}</p>
+                    </div>
+                  </div>
+                  <div class="flex gap-1">
+                    <button onclick="zoomToSetor(${s.latitude}, ${s.longitude}, ${s.raio})" class="p-2 hover:bg-slate-700 rounded-lg transition-colors text-slate-400 hover:text-neon-blue">
+                      <span class="material-symbols-outlined text-[18px]">location_searching</span>
+                    </button>
+                    <button onclick="deletarSetor('${s.id}')" class="p-2 hover:bg-red-500/20 rounded-lg transition-colors text-slate-400 hover:text-red-500">
+                      <span class="material-symbols-outlined text-[18px]">delete</span>
+                    </button>
+                  </div>
+                </div>
+            `).join('');
+      } catch (err) {
+        console.error('Erro ao carregar setores:', err);
+        container.innerHTML = '<p class="text-red-500 text-center py-4 text-xs font-bold uppercase">Erro ao carregar setores</p>';
+      }
+    }
+
+    window.zoomToSetor = (lat, lng, radius) => {
+      map.setView([lat, lng], 17);
+      updateMap(lat, lng, radius);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    window.deletarSetor = async (id) => {
+      if (!confirm('Deseja realmente deletar este setor?')) return;
+      UI.showLoader();
+      try {
+        const { error } = await supabase.from('setores').delete().eq('id', id);
+        if (error) throw error;
+        UI.showToast('Setor deletado!', 'success');
+        loadSetores();
+      } catch (err) {
+        console.error('Erro ao deletar:', err);
+        UI.showToast('Erro ao deletar setor', 'error');
+      } finally {
+        UI.hideLoader();
+      }
+    };
+
+    document.getElementById('form-setor').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      UI.showLoader();
+
+      const dados = {
+        nome: document.getElementById('nome-setor').value,
+        gestor_id: document.getElementById('gestor-select').value,
+        raio: parseInt(document.getElementById('radius-input').value),
+        regime: document.getElementById('regime-select').value,
+        latitude: selectedLat,
+        longitude: selectedLng
+      };
+
+      try {
+        const { error } = await supabase.from('setores').insert([dados]);
+        if (error) throw error;
+
+        UI.showToast('Setor inicializado!', 'success');
+        document.getElementById('form-setor').reset();
+        loadSetores();
+      } catch (err) {
+        console.error('Erro ao salvar:', err);
+        UI.showToast('Erro ao salvar setor', 'error');
+      } finally {
+        UI.hideLoader();
+      }
+    });
+
+    loadManagers();
+    loadSetores();
+  </script>
+</body>
+</body>
+
+</html>

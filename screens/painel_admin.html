@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="pt-br" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Chronosync - Administrador</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script type="module">
+        import { supabase } from '../js/supabase-config.js';
+        import { Auth } from '../js/auth.js';
+        import { UI } from '../js/ui-utils.js';
+
+        window.Auth = Auth;
+        window.UI = UI;
+        window.supabase = supabase;
+
+        let currentUser = null;
+
+        async function initAdmin() {
+            UI.showLoader();
+            try {
+                currentUser = Auth.getUser();
+                if (!currentUser || !currentUser.id) {
+                    window.location.href = 'pagina_login_01.html';
+                    return;
+                }
+
+                if (currentUser.role !== 'admin') {
+                    UI.showToast('Acesso negado: Apenas administradores.', 'error');
+                    setTimeout(() => window.location.href = 'painel_funcionario.html', 2000);
+                    return;
+                }
+
+                // Setup User Info
+                document.getElementById('display-name').innerText = (currentUser.nickname || currentUser.name || "ADMIN").toUpperCase();
+                document.getElementById('user-role-setor').innerText = `${currentUser.role.toUpperCase()} | ${currentUser.setor.toUpperCase()}`;
+                document.getElementById('user-nickname').innerText = currentUser.matricula || `#${currentUser.nickname || 'ADMIN'}`;
+
+                const levelDisplay = document.getElementById('user-level-display');
+                if (levelDisplay) levelDisplay.innerText = currentUser.role.toUpperCase();
+
+                const statusText = document.getElementById('status-text');
+                statusText.innerText = 'OFFLINE';
+                statusText.className = 'text-[11px] font-bold text-slate-500 uppercase';
+
+                // Cache bust perfil
+                const pLink = document.getElementById('nav-perfil-link');
+                if (pLink) pLink.href = `perfil_funcionario.html?id=${currentUser.id}&v=8`;
+
+                renderCalendar();
+                await loadGlobalStats();
+                await setupPunchLogic(currentUser.id);
+            } catch (err) {
+                console.error('Erro no initAdmin:', err);
+                UI.showToast('Erro ao carregar dados do usuário', 'error');
+            } finally {
+                UI.hideLoader();
+            }
+        }
+
+        function renderCalendar() {
+            const container = document.getElementById('app-calendar');
+            const now = new Date();
+            const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+            const calendarMonthTitle = document.getElementById('calendar-month');
+            if (calendarMonthTitle) calendarMonthTitle.innerText = `${monthNames[now.getMonth()]} ${now.getFullYear()}`;
+
+            const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).getDay();
+            const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+
+            if (container) {
+                container.innerHTML = '';
+                for (let i = 0; i < firstDay; i++) {
+                    container.innerHTML += '<div class="h-8"></div>';
+                }
+
+                for (let d = 1; d <= daysInMonth; d++) {
+                    const isToday = d === now.getDate();
+                    const dStr = String(d).padStart(2, '0');
+                    const mStr = String(now.getMonth() + 1).padStart(2, '0');
+                    const dateStr = `${now.getFullYear()}-${mStr}-${dStr}`;
+
+                    container.innerHTML += `
+                        <a href="resumo_dia.html?date=${dateStr}" class="h-8 flex items-center justify-center rounded-lg text-[10px] font-semibold transition-all ${isToday ? 'bg-primary text-white shadow-lg' : 'text-slate-400 hover:bg-white/5'}">
+                            ${d}
+                        </a>
+                    `;
+                }
+            }
+        }
+
+        async function setupPunchLogic(userId) {
+            const btn = document.getElementById('punchButton');
+            const today = new Date().toISOString().split('T')[0];
+
+            async function refreshTodayStats() {
+                const { data } = await supabase.from('pontos').select('*').eq('funcionario_id', userId).eq('data', today).order('data_hora', { ascending: false });
+                const isOnline = data && data.length > 0 && !data[0].hora_saida;
+
+                const statusText = document.getElementById('status-text');
+                if (statusText) {
+                    statusText.innerText = isOnline ? 'ONLINE' : 'OFFLINE';
+                    statusText.className = isOnline ? 'text-[11px] font-bold text-emerald-500 uppercase' : 'text-[11px] font-bold text-slate-500 uppercase';
+                }
+
+                if (btn) {
+                    btn.innerText = isOnline ? 'ENCERRAR PONTO' : 'REGISTRAR PONTO';
+                    btn.className = isOnline
+                        ? "w-full py-4 bg-rose-500/10 border border-rose-500/50 rounded-2xl text-rose-500 font-black text-[10px] tracking-[0.2em] shadow-lg shadow-rose-500/10 active:scale-95 transition-all"
+                        : "w-full py-4 bg-primary rounded-2xl text-white font-black text-[10px] tracking-[0.2em] shadow-lg shadow-primary/30 active:scale-95 transition-all";
+                }
+
+                if (isOnline) startTimer(data[0].data_hora); else stopTimer();
+            }
+
+            let timerInterval;
+            function startTimer(startTime) {
+                stopTimer();
+                const start = new Date(startTime).getTime();
+                timerInterval = setInterval(() => {
+                    const diff = new Date().getTime() - start;
+                    const h = Math.floor(diff / 3600000);
+                    const m = Math.floor((diff % 3600000) / 60000);
+                    const s = Math.floor((diff % 60000) / 1000);
+                    const timerEl = document.getElementById('user-timer');
+                    if (timerEl) timerEl.innerText = `+${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+                }, 1000);
+            }
+
+            function stopTimer() {
+                if (timerInterval) clearInterval(timerInterval);
+                const timerEl = document.getElementById('user-timer');
+                if (timerEl) timerEl.innerText = '+00:00:00';
+            }
+
+            if (btn) {
+                btn.onclick = async () => {
+                    UI.showLoader();
+                    try {
+                        await supabase.from('pontos').insert([{ funcionario_id: userId, data_hora: new Date().toISOString() }]);
+                        UI.showToast('Operação realizada com sucesso!', 'success');
+                        await refreshTodayStats();
+                        await loadGlobalStats();
+                    } catch (e) {
+                        UI.showToast('Erro ao registrar ponto', 'error');
+                    } finally {
+                        UI.hideLoader();
+                    }
+                };
+            }
+
+            await refreshTodayStats();
+        }
+
+        async function loadGlobalStats() {
+            const today = new Date().toISOString().split('T')[0];
+            try {
+                const [{ count: totalFunc }, { count: totalSetores }] = await Promise.all([
+                    supabase.from('funcionarios').select('*', { count: 'exact', head: true }),
+                    supabase.from('setores').select('*', { count: 'exact', head: true })
+                ]);
+
+                const statTotalEl = document.getElementById('statTotalGlobal');
+                const statSetoresEl = document.getElementById('statTotalSetores');
+                if (statTotalEl) statTotalEl.innerText = totalFunc || '0';
+                if (statSetoresEl) statSetoresEl.innerText = totalSetores || '0';
+
+                const { count: onlineCount } = await supabase
+                    .from('pontos')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('data', today)
+                    .is('hora_saida', null);
+
+                const statOnlineEl = document.getElementById('statOnlineGlobal');
+                if (statOnlineEl) statOnlineEl.innerText = onlineCount || '0';
+            } catch (err) {
+                console.error('Erro global stats:', err);
+            }
+        }
+
+        document.getElementById('logoutBtn').addEventListener('click', () => Auth.logout());
+        initAdmin();
+    </script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#F59E0B',
+                        'background-dark': '#05070A',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-background-dark font-display text-slate-100 min-h-screen flex flex-col pb-24">
+    <header
+        class="p-6 pt-8 flex flex-col items-center border-b border-primary/10 bg-background-dark/50 backdrop-blur-sm">
+        <div class="flex items-center justify-between w-full mb-6">
+            <div id="sideMenuTrigger" class="cursor-pointer size-10 flex items-center justify-start">
+                <span class="material-symbols-outlined text-slate-400">menu</span>
+            </div>
+            <h1 class="text-[10px] font-black tracking-[0.2em] text-slate-500 uppercase text-center flex-1">Protocolo
+                Central</h1>
+            <a href="autorizacoes_abono.html"
+                class="size-10 flex items-center justify-end text-slate-400 hover:text-primary transition-colors">
+                <span class="material-symbols-outlined">notifications</span>
+            </a>
+        </div>
+
+        <div class="flex flex-col items-center text-center w-full max-w-md">
+            <div class="relative mb-6">
+                <div
+                    class="w-24 h-24 rounded-full border-2 border-primary p-1 bg-background-dark shadow-[0_0_30px_rgba(13,89,242,0.15)]">
+                    <img id="user-photo" src="https://ui-avatars.com/api/?name=Admin&background=0D59F2&color=fff"
+                        class="w-full h-full rounded-full object-cover">
+                </div>
+                <div id="user-timer"
+                    class="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-primary px-4 py-1 rounded-full text-[10px] font-black text-white shadow-xl border border-white/10 whitespace-nowrap">
+                    +00:00:00
+                </div>
+            </div>
+
+            <h2 id="display-name" class="text-3xl font-black text-slate-100 tracking-tight mb-1 uppercase">ADMIN</h2>
+            <p id="user-role-setor"
+                class="text-[10px] font-bold text-amber-500 uppercase tracking-[0.2em] mb-6 opacity-80">ADMIN | CENTRAL
+                DE
+                CONTROLE</p>
+
+            <div class="grid grid-cols-3 w-full border-t border-white/5 pt-6 divide-x divide-white/5">
+                <div class="px-2">
+                    <p class="text-[8px] text-slate-500 uppercase font-black mb-1 opacity-60">Matrícula</p>
+                    <p id="user-nickname" class="text-xs font-bold text-slate-200">#ADMIN</p>
+                </div>
+                <div class="px-2">
+                    <p class="text-[8px] text-slate-500 uppercase font-black mb-1 opacity-60">Nível</p>
+                    <p id="user-level-display" class="text-xs font-bold text-amber-500 uppercase">ADMIN</p>
+                </div>
+                <div class="px-2">
+                    <p class="text-[8px] text-slate-500 uppercase font-black mb-1 opacity-60">Status</p>
+                    <p id="status-text" class="text-xs font-bold text-slate-500 uppercase">OFFLINE</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estatísticas Globais -->
+        <div class="w-full max-w-md grid grid-cols-3 gap-2 mt-8">
+            <div class="bg-primary/5 border border-primary/20 rounded-2xl p-4 text-center">
+                <p class="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Equipe</p>
+                <p id="statTotalGlobal" class="text-xl font-black text-slate-100">--</p>
+            </div>
+            <div class="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-4 text-center">
+                <p class="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Online</p>
+                <p id="statOnlineGlobal" class="text-xl font-black text-emerald-400">--</p>
+            </div>
+            <div class="bg-amber-500/5 border border-amber-500/20 rounded-2xl p-4 text-center">
+                <p class="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Setores</p>
+                <p id="statTotalSetores" class="text-xl font-black text-slate-100">--</p>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 p-6 space-y-8 overflow-y-auto">
+        <!-- Punch Section -->
+        <section class="max-w-md mx-auto">
+            <button id="punchButton"
+                class="w-full py-5 bg-primary rounded-2xl text-white font-black text-xs tracking-[0.3em] shadow-2xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all">
+                REGISTRAR PONTO
+            </button>
+        </section>
+
+        <!-- Missões Diárias -->
+        <section class="max-w-md mx-auto space-y-4">
+            <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2 px-2">
+                <span class="material-symbols-outlined text-lg">task_alt</span> MISSÕES DIÁRIAS
+            </h3>
+            <div class="grid grid-cols-2 gap-3">
+                <a href="anotacao_diaria.html"
+                    class="bg-white/5 border border-white/5 p-5 rounded-2xl flex flex-col items-center gap-3 group hover:border-primary/40 transition-all shadow-lg">
+                    <span
+                        class="material-symbols-outlined text-primary group-hover:scale-125 transition-transform text-2xl">edit_note</span>
+                    <p class="text-[10px] font-black text-slate-300 uppercase tracking-widest">Anotação</p>
+                </a>
+                <a href="justificativa.html"
+                    class="bg-white/5 border border-white/5 p-5 rounded-2xl flex flex-col items-center gap-3 group hover:border-amber-500/40 transition-all shadow-lg">
+                    <span
+                        class="material-symbols-outlined text-amber-500 group-hover:scale-125 transition-transform text-2xl">help</span>
+                    <p class="text-[10px] font-black text-slate-300 uppercase tracking-widest">Justificativa</p>
+                </a>
+            </div>
+        </section>
+
+        <!-- Calendário -->
+        <section class="max-w-md mx-auto border-t border-white/5 pt-8 space-y-4">
+            <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2 px-2">
+                <span class="material-symbols-outlined text-lg text-primary">calendar_month</span> CRONOGRAMA CENTRAL
+            </h3>
+            <div class="bg-white/5 border border-white/10 rounded-3xl p-6 shadow-inner">
+                <div class="flex justify-between items-center mb-6 px-2">
+                    <p id="calendar-month" class="text-xs font-black text-slate-100 uppercase tracking-widest">...</p>
+                    <div class="flex gap-4">
+                        <span
+                            class="material-symbols-outlined text-sm text-slate-600 cursor-pointer hover:text-primary transition-colors">chevron_left</span>
+                        <span
+                            class="material-symbols-outlined text-sm text-slate-600 cursor-pointer hover:text-primary transition-colors">chevron_right</span>
+                    </div>
+                </div>
+                <div id="app-calendar" class="grid grid-cols-7 gap-1"></div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav
+        class="fixed bottom-0 left-0 right-0 bg-background-dark/90 border-t border-white/5 py-4 z-50 flex justify-center backdrop-blur-xl">
+        <div class="flex items-center justify-around w-full max-w-md px-8">
+            <a href="painel_admin.html" class="flex flex-col items-center gap-1.5 text-primary">
+                <span class="material-symbols-outlined text-2xl font-variation-settings-fill">home</span>
+                <span class="text-[9px] font-black uppercase tracking-widest">Início</span>
+            </a>
+            <a href="estatistica_funcionario.html"
+                class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+                <span class="material-symbols-outlined text-2xl">bar_chart</span>
+                <span class="text-[9px] font-black uppercase tracking-widest">Estatística</span>
+            </a>
+            <a href="historico_anual.html"
+                class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+                <span class="material-symbols-outlined text-2xl">history</span>
+                <span class="text-[9px] font-black uppercase tracking-widest">Histórico</span>
+            </a>
+            <a id="nav-perfil-link" href="#"
+                class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+                <span class="material-symbols-outlined text-2xl">person</span>
+                <span class="text-[9px] font-black uppercase tracking-widest">Perfil</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Sidebar Menu Overlay -->
+    <div id="sidebarOverlay"
+        class="fixed inset-0 bg-black/80 z-[100] hidden opacity-0 transition-opacity duration-300 backdrop-blur-md">
+    </div>
+    <aside id="sidebarMenu"
+        class="fixed top-0 left-0 h-full w-72 bg-background-dark border-r border-white/10 z-[101] -translate-x-full transition-transform duration-300 flex flex-col shadow-2xl">
+        <div class="p-8 border-b border-white/5 flex items-center justify-between">
+            <h3 class="text-xs font-black text-primary uppercase tracking-[0.2em]">Protocolo Admin</h3>
+            <button id="closeSidebar" class="text-slate-500 hover:text-white transition-colors">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-6 space-y-3" id="sidebarNav">
+            <a href="relacao_setores.html"
+                class="flex items-center gap-4 p-4 rounded-2xl text-slate-400 font-bold text-xs uppercase hover:bg-white/5 hover:text-primary transition-all group">
+                <span class="material-symbols-outlined text-xl group-hover:scale-110 transition-transform">group</span>
+                Relação Funcionários
+            </a>
+            <a href="autorizacoes_abono.html"
+                class="flex items-center gap-4 p-4 rounded-2xl text-slate-400 font-bold text-xs uppercase hover:bg-white/5 hover:text-primary transition-all group">
+                <span
+                    class="material-symbols-outlined text-xl group-hover:scale-110 transition-transform">pending_actions</span>
+                Pendências
+            </a>
+            <a href="cadastro_setores.html"
+                class="flex items-center gap-4 p-4 rounded-2xl text-slate-400 font-bold text-xs uppercase hover:bg-white/5 hover:text-primary transition-all group">
+                <span
+                    class="material-symbols-outlined text-xl group-hover:scale-110 transition-transform">domain_add</span>
+                Cadastro Setores
+            </a>
+            <a href="cadastro_escalas.html"
+                class="flex items-center gap-4 p-4 rounded-2xl text-slate-400 font-bold text-xs uppercase hover:bg-white/5 hover:text-primary transition-all group">
+                <span
+                    class="material-symbols-outlined text-xl group-hover:scale-110 transition-transform">calendar_month</span>
+                Cadastro Escalas
+            </a>
+            <a href="cadastro_cargos.html"
+                class="flex items-center gap-4 p-4 rounded-2xl text-slate-400 font-bold text-xs uppercase hover:bg-white/5 hover:text-primary transition-all group">
+                <span class="material-symbols-outlined text-xl group-hover:scale-110 transition-transform">work</span>
+                Cadastro Cargo/Função
+            </a>
+            <a href="perfil_funcionario.html"
+                class="flex items-center gap-4 p-4 rounded-2xl text-slate-400 font-bold text-xs uppercase hover:bg-white/5 hover:text-primary transition-all group"
+                id="sidebar-cadastro-func">
+                <span
+                    class="material-symbols-outlined text-xl group-hover:scale-110 transition-transform">person_add</span>
+                Cadastro Funcionários
+            </a>
+        </div>
+        <div class="p-8 border-t border-white/5">
+            <button id="logoutBtn"
+                class="flex items-center gap-4 text-rose-500/70 hover:text-rose-500 transition-all font-black text-xs uppercase tracking-widest">
+                <span class="material-symbols-outlined text-xl">logout</span> Sair do Sistema
+            </button>
+        </div>
+    </aside>
+
+    <script>
+        const sidebar = document.getElementById('sidebarMenu');
+        const overlay = document.getElementById('sidebarOverlay');
+        document.getElementById('sideMenuTrigger').onclick = () => {
+            overlay.classList.remove('hidden');
+            setTimeout(() => { overlay.classList.add('opacity-100'); sidebar.classList.remove('-translate-x-full'); }, 10);
+        };
+        const close = () => {
+            overlay.classList.remove('opacity-100'); sidebar.classList.add('-translate-x-full');
+            setTimeout(() => overlay.classList.add('hidden'), 300);
+        };
+        document.getElementById('closeSidebar').onclick = close;
+        overlay.onclick = close;
+    </script>
+
+    <style>
+        .font-variation-settings-fill {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(13, 89, 242, 0.2);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(13, 89, 242, 0.4);
+        }
+    </style>
+</body>
+
+</html>
