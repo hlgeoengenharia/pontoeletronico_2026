@@ -115,7 +115,7 @@
                     <span class="m-badge">SISTEMA GESTOR</span>
                     <span class="m-label">Inspecionando Tripulante</span>
                 </div>
-                <div class="m-close" onclick="window.location.href='relacao_funcionarios.html'">FECHAR X</div>
+                <div class="m-close" onclick="closeInspection()">FECHAR X</div>
             </div>
             <div class="manager-tabs">
                 ${tabs.map(tab => `
@@ -127,28 +127,37 @@
             </div>
         `;
         document.body.prepend(header);
+
+        // Add the close function to the global scope so the onclick works
+        window.closeInspection = function () {
+            const role = localStorage.getItem('userRole');
+            if (role === 'admin') {
+                window.location.href = 'painel_admin.html';
+            } else if (role === 'manager' || role === 'gestor') {
+                window.location.href = 'painel_gestor.html';
+            } else {
+                window.location.href = 'painel_funcionario.html';
+            }
+        };
     }
 
     function repurposeBottomNavToManager() {
+        // NOTE: As per user request, we ARE DISABLING the global redirect logic.
+        // The manager should stay within the employee's context (Home, Stats, History, Profile)
+        // rather than being sent to global management tools.
+        console.log('[ManagerContext] Bottom Nav redirection disabled to maintain employee context.');
+
         const bottomNav = document.querySelector('nav.fixed.bottom-0');
         if (!bottomNav) return;
 
+        // Ensure links preserve the employee ID even if they don't have it yet
         const links = bottomNav.querySelectorAll('a');
-        const managerDashboard = (loggedInRole === 'admin') ? 'painel_admin.html' : 'painel_gestor.html';
-
         links.forEach(link => {
-            const span = link.querySelector('span');
-            if (!span) return;
-            const iconText = span.textContent.toLowerCase();
-
-            if (iconText.includes('home') || iconText.includes('dashboard')) {
-                link.setAttribute('href', managerDashboard);
-            } else if (iconText.includes('bar_chart') || iconText.includes('leaderboard') || iconText.includes('trending_up')) {
-                link.setAttribute('href', 'relacao_setores.html');
-            } else if (iconText.includes('history') || iconText.includes('assignment')) {
-                link.setAttribute('href', 'autorizacoes_abono.html');
-            } else if (iconText.includes('person') || iconText.includes('account')) {
-                link.setAttribute('href', managerDashboard);
+            let href = link.getAttribute('href');
+            if (href && !href.includes('id=') && employeeId) {
+                const separator = href.includes('?') ? '&' : '?';
+                const roleQuery = loggedInRole ? `&role=${loggedInRole}` : '';
+                link.setAttribute('href', `${href}${separator}id=${employeeId}${roleQuery}`);
             }
         });
     }
@@ -166,7 +175,9 @@
             'estatistica_funcionario.html',
             'historico_anual.html',
             'historico_mensal.html',
-            'perfil_funcionario.html'
+            'perfil_funcionario.html',
+            'justificativa.html',
+            'anotacao_diaria.html'
         ];
 
         document.addEventListener('click', (e) => {
