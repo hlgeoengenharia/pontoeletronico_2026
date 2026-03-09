@@ -57,6 +57,7 @@
   </style>
 
   <!-- Version: 1.0.1 -->
+  <script src="../js/manager-context.js?v=2.7"></script>
   <script type="module">
     import { Auth } from '../js/auth.js';
     import { UI } from '../js/ui-utils.js';
@@ -166,6 +167,9 @@
     import { Auth } from '../js/auth.js';
     import { UI } from '../js/ui-utils.js';
 
+    const urlParams = new URLSearchParams(window.location.search);
+    const targetUserId = urlParams.get('id') || localStorage.getItem('userId');
+
     const inputData = document.getElementById('inputData');
     const inputConteudo = document.getElementById('inputConteudo');
     const btnSalvar = document.getElementById('btnSalvar');
@@ -176,14 +180,13 @@
     inputData.value = new Date().toISOString().split('T')[0];
 
     async function loadAnotacoes() {
-      const user = Auth.getUser();
-      if (!user.id) return;
+      if (!targetUserId) return;
 
       try {
         const { data, error } = await supabase
           .from('anotacoes')
           .select('*')
-          .eq('funcionario_id', user.id)
+          .eq('funcionario_id', targetUserId)
           .order('data', { ascending: false });
 
         if (error) throw error;
@@ -226,8 +229,7 @@
     }
 
     async function salvarAnotacao() {
-      const user = Auth.getUser();
-      if (!user.id) return;
+      if (!targetUserId) return;
 
       const dataVal = inputData.value;
       const conteudoVal = inputConteudo.value.trim();
@@ -243,7 +245,7 @@
         const { error } = await supabase
           .from('anotacoes')
           .insert([{
-            funcionario_id: user.id,
+            funcionario_id: targetUserId,
             data: dataVal,
             conteudo: conteudoVal
           }]);

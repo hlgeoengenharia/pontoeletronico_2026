@@ -14,6 +14,7 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
     rel="stylesheet" />
+  <script src="../js/manager-context.js?v=2.7"></script>
   <script id="tailwind-config">
     tailwind.config = {
       darkMode: "class",
@@ -187,8 +188,8 @@
     import { UI } from '../js/ui-utils.js';
 
     async function init() {
-      const user = Auth.getUser();
       const urlParams = new URLSearchParams(window.location.search);
+      const targetId = urlParams.get('id') || localStorage.getItem('userId');
       const dataRef = urlParams.get('data') || new Date().toISOString().split('T')[0];
 
       UI.showLoader();
@@ -198,7 +199,7 @@
         const { data: pontos } = await supabase
           .from('pontos')
           .select('*')
-          .eq('funcionario_id', user.id)
+          .eq('funcionario_id', targetId)
           .gte('data_hora', `${dataRef}T00:00:00`)
           .lte('data_hora', `${dataRef}T23:59:59`)
           .order('data_hora', { ascending: true });
@@ -207,7 +208,7 @@
         const { data: anotacoes } = await supabase
           .from('anotacoes')
           .select('*')
-          .eq('funcionario_id', user.id)
+          .eq('funcionario_id', targetId)
           .eq('data', dataRef)
           .limit(1);
 
@@ -215,7 +216,7 @@
         const { data: justificativas } = await supabase
           .from('justificativas')
           .select('*')
-          .eq('funcionario_id', user.id)
+          .eq('funcionario_id', targetId)
           .eq('data_incidente', dataRef)
           .limit(1);
 

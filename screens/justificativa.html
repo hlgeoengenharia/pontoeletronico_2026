@@ -197,6 +197,9 @@
     import { Auth } from '../js/auth.js';
     import { UI } from '../js/ui-utils.js';
 
+    const urlParams = new URLSearchParams(window.location.search);
+    const targetUserId = urlParams.get('id') || localStorage.getItem('userId');
+
     Auth.checkSession();
 
     const inputData = document.getElementById('incidente_data');
@@ -237,16 +240,14 @@
       if (motivo) inputDescricao.value = motivo;
     });
 
-    // 2. Load History
     async function loadHistory() {
-      const user = Auth.getUser();
-      if (!user.id) return;
+      if (!targetUserId) return;
 
       try {
         const { data, error } = await supabase
           .from('justificativas')
           .select('*')
-          .eq('funcionario_id', user.id)
+          .eq('funcionario_id', targetUserId)
           .order('created_at', { ascending: false });
 
         if (error) throw error;
@@ -287,7 +288,6 @@
 
     // 3. Save
     async function saveJustificativa() {
-      const user = Auth.getUser();
       const dataVal = inputData.value;
       const tipoVal = selectTipo.value;
       const descVal = inputDescricao.value.trim();
@@ -302,7 +302,7 @@
         const { error } = await supabase
           .from('justificativas')
           .insert([{
-            funcionario_id: user.id,
+            funcionario_id: targetUserId,
             data_incidente: dataVal,
             tipo_divergencia: tipoVal,
             descricao: descVal,

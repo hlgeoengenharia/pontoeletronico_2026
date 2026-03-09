@@ -14,6 +14,7 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
     rel="stylesheet" />
+  <script src="../js/manager-context.js?v=2.7"></script>
   <script id="tailwind-config">
     tailwind.config = {
       darkMode: "class",
@@ -58,7 +59,8 @@
 
 </head>
 
-<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col pb-24">
+<body
+  class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col pb-24">
   <!-- Header / Mission Status -->
   <header class="border-b border-primary/20 bg-background-dark/80 backdrop-blur-md sticky top-0 z-50">
     <div class="flex items-center p-4 justify-between">
@@ -129,26 +131,31 @@
       </div>
     </section>
   </main>
-    <nav class="fixed bottom-0 w-full bg-white dark:bg-background-dark border-t border-slate-200 dark:border-primary/10 px-6 py-4 z-50">
-      <div class="flex justify-between items-center max-w-md mx-auto">
-        <a class="flex flex-col items-center gap-1 text-slate-400 transition-all duration-300 hover:text-primary" href="painel_funcionario.html">
-          <span class="material-symbols-outlined ">home</span>
-          <span class="text-[10px] font-bold uppercase tracking-tighter">INÍCIO</span>
-        </a>
-        <a class="flex flex-col items-center gap-1 text-slate-400 transition-all duration-300 hover:text-primary" href="estatistica_funcionario.html">
-          <span class="material-symbols-outlined ">bar_chart</span>
-          <span class="text-[10px] font-bold uppercase tracking-tighter">ESTATÍSTICA</span>
-        </a>
-        <a class="flex flex-col items-center gap-1 text-primary transition-all duration-300 hover:text-primary" href="historico_anual.html">
-          <span class="material-symbols-outlined fill-1">history</span>
-          <span class="text-[10px] font-bold uppercase tracking-tighter">HISTÓRICO</span>
-        </a>
-        <a class="flex flex-col items-center gap-1 text-slate-400 transition-all duration-300 hover:text-primary" href="perfil_funcionario.html">
-          <span class="material-symbols-outlined ">person</span>
-          <span class="text-[10px] font-bold uppercase tracking-tighter">PERFIL</span>
-        </a>
-      </div>
-    </nav>
+  <nav
+    class="fixed bottom-0 w-full bg-white dark:bg-background-dark border-t border-slate-200 dark:border-primary/10 px-6 py-4 z-50">
+    <div class="flex justify-between items-center max-w-md mx-auto">
+      <a class="flex flex-col items-center gap-1 text-slate-400 transition-all duration-300 hover:text-primary"
+        href="painel_funcionario.html">
+        <span class="material-symbols-outlined ">home</span>
+        <span class="text-[10px] font-bold uppercase tracking-tighter">INÍCIO</span>
+      </a>
+      <a class="flex flex-col items-center gap-1 text-slate-400 transition-all duration-300 hover:text-primary"
+        href="estatistica_funcionario.html">
+        <span class="material-symbols-outlined ">bar_chart</span>
+        <span class="text-[10px] font-bold uppercase tracking-tighter">ESTATÍSTICA</span>
+      </a>
+      <a class="flex flex-col items-center gap-1 text-primary transition-all duration-300 hover:text-primary"
+        href="historico_anual.html">
+        <span class="material-symbols-outlined fill-1">history</span>
+        <span class="text-[10px] font-bold uppercase tracking-tighter">HISTÓRICO</span>
+      </a>
+      <a class="flex flex-col items-center gap-1 text-slate-400 transition-all duration-300 hover:text-primary"
+        href="perfil_funcionario.html">
+        <span class="material-symbols-outlined ">person</span>
+        <span class="text-[10px] font-bold uppercase tracking-tighter">PERFIL</span>
+      </a>
+    </div>
+  </nav>
 </body>
 
 </html>

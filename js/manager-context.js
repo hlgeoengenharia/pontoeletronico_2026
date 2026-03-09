@@ -27,19 +27,20 @@
 
     console.log(`[ManagerContext V2.7] Session: ${loggedInRole} (ID: ${normalizedLoggedInId}), Context: ${currentContextRole} (ID: ${normalizedEmployeeId}), Mode: ${isInspecting ? 'INSPECT' : 'SELF'}`);
 
-    // Activation logic: Only activate manager UI if the logged-in user IS a manager/admin AND is inspecting someone else
-    if (isGestorSession && isInspecting) {
+    // Activation logic: 
+    // If the user is a Manager/Admin OR if we have an ID in the URL, we need to ensure context persistence.
+    if (isGestorSession) {
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
-                injectManagerHeader();
+                if (isInspecting) injectManagerHeader();
                 repurposeBottomNavToManager();
             });
         } else {
-            injectManagerHeader();
+            if (isInspecting) injectManagerHeader();
             repurposeBottomNavToManager();
         }
     } else {
-        // Self-mode: just ensure links work correctly for current user
+        // Regular employee mode (Self-mode for employees)
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', cleanupUIForSelfMode);
         } else {
@@ -142,22 +143,22 @@
     }
 
     function repurposeBottomNavToManager() {
-        // NOTE: As per user request, we ARE DISABLING the global redirect logic.
-        // The manager should stay within the employee's context (Home, Stats, History, Profile)
-        // rather than being sent to global management tools.
-        console.log('[ManagerContext] Bottom Nav redirection disabled to maintain employee context.');
+        console.log('[ManagerContext] Applying persistence to Bottom Nav.');
 
         const bottomNav = document.querySelector('nav.fixed.bottom-0');
         if (!bottomNav) return;
 
-        // Ensure links preserve the employee ID even if they don't have it yet
+        // The ID to use is either the inspected employee or the logged-in user
+        const targetId = isInspecting ? employeeId : normalizedLoggedInId;
+        if (!targetId) return;
+
         const links = bottomNav.querySelectorAll('a');
         links.forEach(link => {
             let href = link.getAttribute('href');
-            if (href && !href.includes('id=') && employeeId) {
+            if (href && !href.startsWith('http') && !href.startsWith('#') && !href.includes('id=')) {
                 const separator = href.includes('?') ? '&' : '?';
                 const roleQuery = loggedInRole ? `&role=${loggedInRole}` : '';
-                link.setAttribute('href', `${href}${separator}id=${employeeId}${roleQuery}`);
+                link.setAttribute('href', `${href}${separator}id=${targetId}${roleQuery}`);
             }
         });
     }
@@ -177,7 +178,9 @@
             'historico_mensal.html',
             'perfil_funcionario.html',
             'justificativa.html',
-            'anotacao_diaria.html'
+            'anotacao_diaria.html',
+            'resumo_dia.html',
+            'historico_abonos.html'
         ];
 
         document.addEventListener('click', (e) => {
