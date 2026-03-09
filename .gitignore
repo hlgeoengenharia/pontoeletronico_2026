@@ -2,6 +2,7 @@
 *.json
 !package.json
 !composer.json
+!vercel.json
 
 # Ambiente e Logs
 .env
