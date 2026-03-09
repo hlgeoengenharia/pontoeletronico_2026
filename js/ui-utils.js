@@ -74,6 +74,19 @@ const UI = {
     hideLoader() {
         const loader = document.getElementById('ui-loader');
         if (loader) loader.remove();
+    },
+
+    /**
+     * Atualiza os links de navegação do rodapé baseado no cargo do usuário
+     */
+    updateFooterNavigation(userRole) {
+        const role = String(userRole || '').toLowerCase();
+        const navInicios = document.querySelectorAll('#nav-inicio');
+        navInicios.forEach(navInicio => {
+            if (role === 'admin') navInicio.href = 'painel_admin.html';
+            else if (role === 'gestor' || role === 'manager') navInicio.href = 'painel_gestor.html';
+            else navInicio.href = 'painel_funcionario.html';
+        });
     }
 };
 

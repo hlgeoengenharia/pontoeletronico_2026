@@ -12,18 +12,7 @@
         rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="module" src="../js/manager-context.js?v=2.7"></script>
-    <script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: { "primary": "#0d59f2", "background-light": "#f5f6f8", "background-dark": "#101622" },
-                    fontFamily: { "display": ["Space Grotesk"] },
-                    borderRadius: { "DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px" },
-                },
-            },
-        }
-    </script>
+    <script src="../js/theme.js?v=1.0"></script>
     <title>ChronoSync - Painel do Tripulante</title>
 </head>
 
@@ -56,9 +45,16 @@
 
             <h2 id="display-name" class="text-3xl font-black text-slate-100 tracking-tight mb-1 uppercase">CARREGANDO...
             </h2>
-            <p id="display-info"
-                class="text-[10px] font-bold text-primary uppercase tracking-[0.2em] mb-6 opacity-80 italic">PROCESSANDO
-                DADOS...</p>
+            <div id="user-info-container" class="space-y-1 mb-6">
+                <p id="user-role-setor"
+                    class="text-[10px] font-bold text-primary uppercase tracking-[0.1em] opacity-80">
+                    CARGO/FUNÇÃO: CARREGANDO...
+                </p>
+                <p id="user-setor-info"
+                    class="text-[10px] font-bold text-primary uppercase tracking-[0.1em] opacity-80">
+                    SETOR: CARREGANDO...
+                </p>
+            </div>
 
             <div class="grid grid-cols-3 w-full border-t border-white/5 pt-6 divide-x divide-white/5">
                 <div class="px-2">
@@ -67,7 +63,7 @@
                 </div>
                 <div class="px-2">
                     <p class="text-[8px] text-slate-500 uppercase font-black mb-1 opacity-60">Nível</p>
-                    <p id="user-level-display" class="text-xs font-bold text-primary uppercase">RECRUTA</p>
+                    <p id="user-level-display" class="text-xs font-bold text-primary uppercase">...</p>
                 </div>
                 <div class="px-2">
                     <p class="text-[8px] text-slate-500 uppercase font-black mb-1 opacity-60">Status</p>
@@ -260,31 +256,36 @@
         renderCalendar();
     </script>
 
+    <!-- Bottom Navigation -->
     <nav
-        class="fixed bottom-0 left-0 right-0 bg-white dark:bg-background-dark border-t border-slate-200 dark:border-primary/10 py-3 z-50 flex justify-center">
-        <div class="flex items-center w-full max-w-md">
-            <a class="flex-1 flex flex-col items-center gap-1 text-primary" href="painel_funcionario.html">
-                <span class="material-symbols-outlined fill-1">home</span>
-                <span class="text-[10px] font-bold uppercase tracking-tighter">INÍCIO</span>
+        class="fixed bottom-0 left-0 right-0 bg-background-dark/90 border-t border-white/5 py-4 z-50 flex justify-center backdrop-blur-xl">
+        <div class="flex items-center justify-around w-full max-w-md px-6">
+            <a id="nav-inicio" href="painel_funcionario.html" class="flex flex-col items-center gap-1.5 text-primary">
+                <span class="material-symbols-outlined text-2xl font-variation-settings-fill">home</span>
+                <span class="text-[9px] font-black uppercase tracking-widest text-center">Início</span>
             </a>
-            <a class="flex-1 flex flex-col items-center gap-1 text-slate-400" href="estatistica_funcionario.html">
-                <span class="material-symbols-outlined">bar_chart</span>
-                <span class="text-[10px] font-bold uppercase tracking-tighter">ESTATÍSTICA</span>
+            <a href="estatistica_funcionario.html"
+                class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+                <span class="material-symbols-outlined text-2xl">bar_chart</span>
+                <span class="text-[9px] font-black uppercase tracking-widest text-center">Estatística</span>
             </a>
-            <a class="flex-1 flex flex-col items-center gap-1 text-slate-400" href="historico_anual.html">
-                <span class="material-symbols-outlined">history</span>
-                <span class="text-[10px] font-bold uppercase tracking-tighter">HISTÓRICO</span>
+            <a href="historico_anual.html"
+                class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+                <span class="material-symbols-outlined text-2xl">history</span>
+                <span class="text-[9px] font-black uppercase tracking-widest text-center">Histórico</span>
             </a>
-            <a id="nav-perfil-link" class="flex-1 flex flex-col items-center gap-1 text-slate-400"
-                href="perfil_funcionario.html">
-                <span class="material-symbols-outlined">person</span>
-                <span class="text-[10px] font-bold uppercase tracking-tighter">PERFIL</span>
+            <a id="nav-perfil-link" href="perfil_funcionario.html"
+                class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+                <span class="material-symbols-outlined text-2xl">person</span>
+                <span class="text-[9px] font-black uppercase tracking-widest text-center">Perfil</span>
             </a>
         </div>
     </nav>
 
     <script type="module">
         import { supabase } from '../js/supabase-config.js?v=5';
+        import { Auth } from '../js/auth.js';
+        import { UI } from '../js/ui-utils.js';
 
         window.addEventListener('load', async function () {
             const urlParams = new URLSearchParams(window.location.search);
@@ -300,18 +301,24 @@
                 const { data: user, error } = await supabase.from('funcionarios').select('*, setores(nome)').eq('id', targetId).single();
                 if (error) throw error;
 
-                document.getElementById('display-name').innerText = user.nome_completo.split(' ')[0].toUpperCase();
-                document.getElementById('display-info').innerHTML = `
-                Cargo/Função: ${(user.funcao || 'Tripulante').toUpperCase()}<br>
-                Setor: ${user.setores?.nome || 'Não Definido'} • Matrícula: #${user.matricula}
-            `;
+                const loggedInUser = Auth.getUser();
+
+                // Usar 'user' (resultado da query do Supabase) em vez de Auth.getUser()
+                document.getElementById('display-name').innerText = (user.nickname || user.nome_completo || "TRIPULANTE").toUpperCase();
+                document.getElementById('user-role-setor').innerText = `CARGO/FUNÇÃO: ${user.funcao?.toUpperCase() || 'TRIPULANTE'}`;
+                document.getElementById('user-setor-info').innerText = `SETOR: ${user.setores?.nome?.toUpperCase() || 'NÃO DEFINIDO'}`;
+                if (document.getElementById('user-nickname')) document.getElementById('user-nickname').innerText = user.matricula || `#---`;
+                if (document.getElementById('user-level-display')) document.getElementById('user-level-display').innerText = user.nivel_acesso || '...';
+
+                // Navegação dinâmica (baseada no papel do usuário LOGADO)
+                UI.updateFooterNavigation(loggedInUser.role);
+
                 if (user.foto_url) document.getElementById('user-photo').src = user.foto_url;
 
                 // Atualizar link de perfil
                 const profileLink = document.getElementById('nav-perfil-link');
                 if (profileLink) {
                     profileLink.href = `perfil_funcionario.html?id=${targetId}&v=5`;
-                    console.log('Link de perfil atualizado:', profileLink.href);
                     const sidebarProfile = document.getElementById('sidebar-perfil-link');
                     if (sidebarProfile) sidebarProfile.href = profileLink.href;
                 } else {

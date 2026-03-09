@@ -13,24 +13,12 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
         rel="stylesheet">
-    <script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        "primary": "#0d59f2",
-                        "background-light": "#f5f6f8",
-                        "background-dark": "#101622",
-                    },
-                    fontFamily: {
-                        "display": ["Space Grotesk"]
-                    },
-                    borderRadius: { "DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px" },
-                },
-            },
+    <script src="../js/theme.js?v=1.0"></script>
+    <style>
+        .font-variation-settings-fill {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
         }
-    </script>
+    </style>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="module" src="../js/supabase-config.js"></script>
     <title>Recrutamento de Piloto | ChronoSync</title>
@@ -43,27 +31,35 @@
     <div
         class="flex items-center bg-background-light dark:bg-background-dark p-4 pb-2 justify-between border-b border-slate-200 dark:border-primary/20">
         <div onclick="history.back()"
-            class="text-primary flex size-12 shrink-0 items-center justify-start cursor-pointer hover:opacity-70 transition-opacity">
-            <span class="material-symbols-outlined text-2xl">arrow_back</span>
+            class="text-primary flex size-10 mt-2 shrink-0 items-center justify-center rounded-lg border border-primary/30 bg-primary/10 cursor-pointer hover:bg-primary/20 transition-all">
+            <span class="material-symbols-outlined">arrow_back</span>
         </div>
         <h2
             class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-tight flex-1 text-center pr-12 uppercase tracking-widest">
             CADASTRAR FUNCIONÁRIO</h2>
     </div>
-    <!-- Progress Section -->
-    <div class="flex flex-col gap-3 p-6 bg-primary/5 border-b border-primary/10">
-        <div class="flex gap-6 justify-between items-center">
-            <p class="text-slate-700 dark:text-slate-300 text-sm font-medium leading-normal uppercase tracking-tighter">
-                Sincronização de Dados Neurais</p>
-            <p class="text-primary text-sm font-bold leading-normal">75%</p>
-        </div>
-        <div class="rounded-full bg-slate-200 dark:bg-slate-800 h-2 overflow-hidden">
-            <div class="h-full rounded-full bg-primary shadow-[0_0_10px_rgba(13,89,242,0.5)]" style="width: 75%;">
+    <!-- Profile Header Section -->
+    <section class="p-6 pt-8 flex flex-col items-center bg-background-dark/50 border-b border-primary/10">
+        <div class="relative mb-6">
+            <div
+                class="w-24 h-24 rounded-full border-2 border-primary p-1 bg-background-dark shadow-[0_0_30px_rgba(13,89,242,0.15)]">
+                <img id="user-photo-profile" src="https://ui-avatars.com/api/?name=User&background=0D59F2&color=fff"
+                    class="w-full h-full rounded-full object-cover">
             </div>
         </div>
-        <p class="text-slate-500 dark:text-slate-400 text-xs font-normal leading-normal italic">Verificando
-            integridade do núcleo temporal...</p>
-    </div>
+
+        <h3 id="display-name-profile" class="text-2xl font-black text-slate-100 tracking-tight mb-1 uppercase">
+            CARREGANDO...</h3>
+        <div id="user-info-container" class="space-y-1 text-center">
+            <p id="user-role-profile" class="text-[10px] font-bold text-primary uppercase tracking-[0.1em] opacity-80">
+                CARGO/FUNÇÃO: ...
+            </p>
+            <p id="user-setor-profile" class="text-[10px] font-bold text-primary uppercase tracking-[0.1em] opacity-80">
+                SETOR: ...
+            </p>
+        </div>
+    </section>
+
     <!-- Form Section -->
     <main class="flex-1 p-6 max-w-lg mx-auto w-full">
         <header class="mb-8 text-center">
@@ -226,12 +222,12 @@
             <div class="group space-y-3">
                 <label class="block text-xs font-bold uppercase tracking-widest text-slate-500">Nível de Acesso ao
                     Sistema</label>
-                <div
+                <div id="access-level-container"
                     class="flex gap-2 bg-slate-100 dark:bg-slate-800 p-1.5 rounded-xl border border-slate-200 dark:border-slate-800 opacity-70 pointer-events-none">
                     <div
                         class="flex-1 flex flex-col items-center justify-center py-4 px-2 rounded-lg bg-primary/10 text-primary border border-primary/50">
-                        <span class="material-symbols-outlined mb-1">shield</span>
-                        <span class="text-[10px] font-bold uppercase tracking-tighter">Recruta</span>
+                        <span id="access-level-icon" class="material-symbols-outlined mb-1">shield</span>
+                        <span id="access-level-text" class="text-[10px] font-bold uppercase tracking-tighter">...</span>
                     </div>
                 </div>
             </div>
@@ -354,8 +350,13 @@
                     }
                 }
 
-                function preencherDados(func, escalasData) {
+                async function preencherDados(func, escalasData) {
                     if (!func) return;
+
+                    const { Auth } = await import('../js/auth.js');
+                    const { UI } = await import('../js/ui-utils.js');
+                    const userData = Auth.getUser();
+                    UI.updateFooterNavigation(userData.role);
 
                     document.getElementById('nome_completo').value = func.nome_completo || '';
                     document.getElementById('nickname').value = func.nickname || func.nome_completo.split(' ')[0];
@@ -367,8 +368,28 @@
                     const headerP = document.querySelector('header p');
 
                     if (headerH2) headerH2.innerText = "PERFIL DO TRIPULANTE";
-                    if (headerH3) headerH3.innerText = (func.nome_completo || 'Tripulante').split(' ')[0].toUpperCase();
-                    if (headerP) headerP.innerText = `Gestão de dados neurais e escala de ${func.funcao || 'Tripulante'}.`;
+
+                    document.getElementById('display-name-profile').innerText = (func.nickname || func.nome_completo || 'Tripulante').toUpperCase();
+                    document.getElementById('user-role-profile').innerText = `CARGO/FUNÇÃO: ${(func.funcao || 'Tripulante').toUpperCase()}`;
+                    document.getElementById('user-setor-profile').innerText = `SETOR: ${(func.setores?.nome || 'Não Definido').toUpperCase()}`;
+                    if (func.foto_url) document.getElementById('user-photo-profile').src = func.foto_url;
+
+                    if (headerH3) headerH3.innerText = "Informações Cadastrais";
+                    if (headerP) headerP.innerText = `Atualize seus dados biométricos e de acesso.`;
+
+                    // Atualizar Nível de Acesso dinamicamente
+                    const levelText = document.getElementById('access-level-text');
+                    const levelIcon = document.getElementById('access-level-icon');
+                    if (levelText) levelText.innerText = func.nivel_acesso || 'Funcionário';
+
+                    if (levelIcon) {
+                        const icons = {
+                            'Admin': 'workspace_premium',
+                            'Gestor': 'military_tech',
+                            'Funcionário': 'shield'
+                        };
+                        levelIcon.innerText = icons[func.nivel_acesso] || 'shield';
+                    }
 
                     // Lógica de Escala
                     const detalhesEscala = document.getElementById('detalhes-escala-card');
@@ -442,29 +463,29 @@
     <div class="fixed bottom-20 right-4 pointer-events-none opacity-10">
         <span class="material-symbols-outlined text-[120px]">radar</span>
     </div>
+    <!-- Bottom Navigation -->
     <nav
-        class="fixed bottom-0 w-full bg-white dark:bg-background-dark border-t border-slate-200 dark:border-primary/10 px-6 py-4 z-50">
-        <div class="flex justify-between items-center max-w-md mx-auto">
-            <a class="flex flex-col items-center gap-1 text-slate-400 transition-all duration-300 hover:text-primary"
-                href="painel_funcionario.html">
-                <span class="material-symbols-outlined ">home</span>
-                <span class="text-[10px] font-bold uppercase tracking-tighter">INÍCIO</span>
+        class="fixed bottom-0 left-0 right-0 bg-background-dark/90 border-t border-white/5 py-4 z-50 flex justify-center backdrop-blur-xl">
+        <div class="flex items-center justify-around w-full max-w-md px-6">
+            <a id="nav-inicio" href="painel_funcionario.html"
+                class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+                <span class="material-symbols-outlined text-2xl">home</span>
+                <span class="text-[9px] font-black uppercase tracking-widest text-center">Início</span>
             </a>
-            <a class="flex flex-col items-center gap-1 text-slate-400 transition-all duration-300 hover:text-primary"
-                href="estatistica_funcionario.html">
-                <span class="material-symbols-outlined ">bar_chart</span>
-                <span class="text-[10px] font-bold uppercase tracking-tighter">ESTATÍSTICA</span>
+            <a href="estatistica_funcionario.html"
+                class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+                <span class="material-symbols-outlined text-2xl">bar_chart</span>
+                <span class="text-[9px] font-black uppercase tracking-widest text-center">Estatística</span>
             </a>
-            <a class="flex flex-col items-center gap-1 text-slate-400 transition-all duration-300 hover:text-primary"
-                href="historico_anual.html">
-                <span class="material-symbols-outlined ">history</span>
-                <span class="text-[10px] font-bold uppercase tracking-tighter">HISTÓRICO</span>
+            <a href="historico_anual.html"
+                class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+                <span class="material-symbols-outlined text-2xl">history</span>
+                <span class="text-[9px] font-black uppercase tracking-widest text-center">Histórico</span>
             </a>
-            <a id="nav-perfil"
-                class="flex flex-col items-center gap-1 text-primary transition-all duration-300 hover:text-primary"
-                href="perfil_funcionario.html">
-                <span class="material-symbols-outlined fill-1">person</span>
-                <span class="text-[10px] font-bold uppercase tracking-tighter">PERFIL</span>
+            <a id="nav-perfil-link" href="perfil_funcionario.html"
+                class="flex flex-col items-center gap-1.5 text-primary">
+                <span class="material-symbols-outlined text-2xl font-variation-settings-fill">person</span>
+                <span class="text-[9px] font-black uppercase tracking-widest text-center">Perfil</span>
             </a>
         </div>
     </nav>

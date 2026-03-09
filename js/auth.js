@@ -32,6 +32,7 @@ const Auth = {
             localStorage.setItem('userMatricula', data.matricula);
             localStorage.setItem('userSetor', data.setores?.nome || 'Não definido');
             localStorage.setItem('userSetorId', data.setor_id || '');
+            localStorage.setItem('userFuncao', data.funcao || 'Tripulante');
 
             console.log('Login bem-sucedido:', data.nome_completo);
             return { success: true, user: data };
@@ -66,12 +67,12 @@ const Auth = {
 
         // Se a rota for restrita a certos papéis
         if (allowedRoles.length > 0 && !allowedRoles.includes(userRole)) {
-            // Se for gestor tentando acessar admin, ou funcionário tentando acessar gestor
+            // Se o usuário não tiver permissão para a tela atual
             alert('Acesso negado: Nível de autorização insuficiente.');
 
-            // Redireciona para o respectivo painel
-            if (userRole === 'admin') window.location.href = 'painel_admin.html';
-            else if (userRole === 'manager' || userRole === 'gestor') window.location.href = 'painel_gestor.html';
+            // Redireciona para o respectivo painel baseado no novo padrão
+            if (userRole === 'Admin') window.location.href = 'painel_admin.html';
+            else if (userRole === 'Gestor') window.location.href = 'painel_gestor.html';
             else window.location.href = 'painel_funcionario.html';
         }
 
@@ -89,7 +90,8 @@ const Auth = {
             nickname: localStorage.getItem('userNickname'),
             matricula: localStorage.getItem('userMatricula'),
             setor: localStorage.getItem('userSetor'),
-            setorId: localStorage.getItem('userSetorId')
+            setorId: localStorage.getItem('userSetorId'),
+            funcao: localStorage.getItem('userFuncao')
         };
     }
 };

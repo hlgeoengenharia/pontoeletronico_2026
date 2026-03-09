@@ -13,24 +13,7 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
     rel="stylesheet">
-  <script id="tailwind-config">
-    tailwind.config = {
-      darkMode: "class",
-      theme: {
-        extend: {
-          colors: {
-            "primary": "#0d59f2",
-            "background-light": "#f5f6f8",
-            "background-dark": "#101622",
-          },
-          fontFamily: {
-            "display": ["Space Grotesk"]
-          },
-          borderRadius: { "DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px" },
-        },
-      },
-    }
-  </script>
+  <script src="../js/theme.js?v=1.0"></script>
   <style>
     .glow-text {
       text-shadow: 0 0 10px rgba(13, 89, 242, 0.6), 0 0 20px rgba(13, 89, 242, 0.4);
@@ -172,8 +155,8 @@
           let targetPage = 'painel_funcionario.html';
           const role = result.user.nivel_acesso;
 
-          if (role === 'admin') targetPage = 'painel_admin.html';
-          else if (role === 'manager' || role === 'gestor') targetPage = 'painel_gestor.html';
+          if (role === 'Admin') targetPage = 'painel_admin.html';
+          else if (role === 'Gestor') targetPage = 'painel_gestor.html';
 
           // Forçar redirecionamento
           const finalUrl = `${targetPage}?id=${result.user.id}&role=${role}&v=5`;

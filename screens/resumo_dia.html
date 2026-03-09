@@ -15,24 +15,7 @@
     href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
     rel="stylesheet" />
   <script src="../js/manager-context.js?v=2.7"></script>
-  <script id="tailwind-config">
-    tailwind.config = {
-      darkMode: "class",
-      theme: {
-        extend: {
-          colors: {
-            "primary": "#0d59f2",
-            "background-light": "#f5f6f8",
-            "background-dark": "#101622",
-          },
-          fontFamily: {
-            "display": ["Space Grotesk"]
-          },
-          borderRadius: { "DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px" },
-        },
-      },
-    }
-  </script>
+  <script src="../js/theme.js?v=1.0"></script>
   <style>
     body {
       font-family: 'Space Grotesk', sans-serif;
@@ -45,6 +28,10 @@
     .glass-card {
       background: rgba(16, 22, 34, 0.8);
       backdrop-filter: blur(10px);
+    }
+
+    .font-variation-settings-fill {
+      font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
     }
   </style>
 
@@ -59,7 +46,7 @@
   <header class="border-b border-primary/20 bg-background-dark/80 backdrop-blur-md sticky top-0 z-50">
     <div class="flex items-center p-4 justify-between max-w-2xl mx-auto">
       <div onclick="history.back()"
-        class="text-primary flex size-10 shrink-0 items-center justify-center rounded-lg border border-primary/30 bg-primary/10 cursor-pointer hover:bg-primary/20 transition-all">
+        class="text-primary flex size-10 mt-2 shrink-0 items-center justify-center rounded-lg border border-primary/30 bg-primary/10 cursor-pointer hover:bg-primary/20 transition-all">
         <span class="material-symbols-outlined">arrow_back</span>
       </div>
       <h2 class="text-slate-100 text-lg font-bold tracking-wider uppercase flex-1 text-center">RELATÓRIO DE MISSÃO</h2>
@@ -181,7 +168,8 @@
       </div>
     </div>
   </main>
-  <!-- Bottom Navigation -->
+
+  </main>
   <script type="module">
     import { supabase } from '../js/supabase-config.js';
     import { Auth } from '../js/auth.js';
@@ -227,6 +215,9 @@
         UI.toast('Erro ao carregar resumo.', 'error');
       } finally {
         UI.hideLoader();
+        // Navegação dinâmica
+        const user = Auth.getUser();
+        if (user) UI.updateFooterNavigation(user.role);
       }
     }
 
@@ -288,6 +279,34 @@
 
     init();
   </script>
+
+  <!-- Bottom Navigation -->
+  <nav
+    class="fixed bottom-0 left-0 right-0 bg-background-dark/90 border-t border-white/5 py-4 z-50 flex justify-center backdrop-blur-xl">
+    <div class="flex items-center justify-around w-full max-w-md px-6">
+      <a id="nav-inicio" href="painel_funcionario.html"
+        class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+        <span class="material-symbols-outlined text-2xl">home</span>
+        <span class="text-[9px] font-black uppercase tracking-widest text-center">Início</span>
+      </a>
+      <a href="estatistica_funcionario.html"
+        class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+        <span class="material-symbols-outlined text-2xl">bar_chart</span>
+        <span class="text-[9px] font-black uppercase tracking-widest text-center">Estatística</span>
+      </a>
+      <a href="historico_anual.html"
+        class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+        <span class="material-symbols-outlined text-2xl">history</span>
+        <span class="text-[9px] font-black uppercase tracking-widest text-center">Histórico</span>
+      </a>
+      <a id="nav-perfil-link" href="perfil_funcionario.html"
+        class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+        <span class="material-symbols-outlined text-2xl">person</span>
+        <span class="text-[9px] font-black uppercase tracking-widest text-center">Perfil</span>
+      </a>
+    </div>
+  </nav>
+  <script type="module" src="../js/manager-context.js?v=2.7"></script>
 </body>
 
 </html>

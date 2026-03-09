@@ -11,27 +11,22 @@
     href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
     rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script id="tailwind-config">
-    tailwind.config = {
-      darkMode: "class",
-      theme: {
-        extend: {
-          colors: { "primary": "#0d59f2", "background-dark": "#101622" },
-          fontFamily: { "display": ["Space Grotesk"] },
-        },
-      },
-    }
-  </script>
+  <script src="../js/theme.js?v=1.0"></script>
   <script src="../js/manager-context.js?v=2.7"></script>
+  <style>
+    .font-variation-settings-fill {
+      font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+  </style>
 </head>
 
 <body class="bg-background-dark text-slate-100 min-h-screen flex flex-col font-display pb-24">
   <header
     class="p-6 flex items-center justify-between border-b border-primary/20 bg-background-dark/80 backdrop-blur-md sticky top-0 z-50">
-    <div onclick="window.location.href='historico_anual.html'"
+    <a href="historico_anual.html"
       class="text-primary flex size-10 items-center justify-center rounded-lg border border-primary/30 bg-primary/10 cursor-pointer hover:bg-primary/20 transition-all">
       <span class="material-symbols-outlined">arrow_back</span>
-    </div>
+    </a>
     <h2 id="header-title" class="text-lg font-bold tracking-widest text-white uppercase flex-1 text-center">REGISTROS
     </h2>
     <div class="w-10"></div>
@@ -47,106 +42,91 @@
     </div>
   </main>
 
-  <nav
-    class="fixed bottom-0 left-0 right-0 bg-white dark:bg-background-dark border-t border-slate-200 dark:border-primary/10 py-3 z-50 flex justify-center">
-    <div class="flex items-center w-full max-w-md">
-      <a class="flex-1 flex flex-col items-center gap-1 text-slate-400" href="painel_funcionario.html">
-        <span class="material-symbols-outlined">home</span>
-        <span class="text-[10px] font-bold uppercase tracking-tighter">INÍCIO</span>
-      </a>
-      <a class="flex-1 flex flex-col items-center gap-1 text-slate-400" href="estatistica_funcionario.html">
-        <span class="material-symbols-outlined">bar_chart</span>
-        <span class="text-[10px] font-bold uppercase tracking-tighter">ESTATÍSTICA</span>
-      </a>
-      <a class="flex-1 flex flex-col items-center gap-1 text-primary" href="historico_anual.html">
-        <span class="material-symbols-outlined fill-1">history</span>
-        <span class="text-[10px] font-bold uppercase tracking-tighter">HISTÓRICO</span>
-      </a>
-      <a id="nav-perfil-link" class="flex-1 flex flex-col items-center gap-1 text-slate-400"
-        href="perfil_funcionario.html">
-        <span class="material-symbols-outlined">person</span>
-        <span class="text-[10px] font-bold uppercase tracking-tighter">PERFIL</span>
-      </a>
-    </div>
-  </nav>
+  </main>
 
   <script>
-      (function () {
-        const SUPABASE_URL = 'https://pptprelbbrcqrbjssoci.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBwdHByZWxiYnJjcXJianNzb2NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3NDgzNjksImV4cCI6MjA4ODMyNDM2OX0.votBbcGv7f9jpSSbBs0_GkgZ_Strm9IQxjl9oo0aPp8';
+    (function () {
+      const SUPABASE_URL = 'https://pptprelbbrcqrbjssoci.supabase.co';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBwdHByZWxiYnJjcXJianNzb2NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3NDgzNjksImV4cCI6MjA4ODMyNDM2OX0.votBbcGv7f9jpSSbBs0_GkgZ_Strm9IQxjl9oo0aPp8';
 
-        window.addEventListener('load', async function () {
-          const urlParams = new URLSearchParams(window.location.search);
-          const targetUserId = urlParams.get('id') || localStorage.getItem('userId');
-          const selMonth = urlParams.get('month');
-          const selYear = urlParams.get('year');
+      window.addEventListener('load', async function () {
+        const urlParams = new URLSearchParams(window.location.search);
+        const targetUserId = urlParams.get('id') || localStorage.getItem('userId');
+        const selMonth = urlParams.get('month');
+        const selYear = urlParams.get('year');
 
-          if (!targetUserId || !window.supabase) return;
+        if (!targetUserId || !window.supabase) return;
 
-          const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-          try {
-            const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-            if (selMonth !== null) {
-              document.getElementById('header-title').innerText = `${monthNames[selMonth].toUpperCase()} ${selYear}`;
-            } else {
-              document.getElementById('header-title').innerText = "HISTÓRICO COMPLETO";
-            }
+        // Navegação dinâmica
+        const { Auth } = await import('../js/auth.js');
+        const { UI } = await import('../js/ui-utils.js');
+        const userObj = Auth.getUser();
+        UI.updateFooterNavigation(userObj.role);
 
-            let query = supabase.from('pontos').select('*').eq('funcionario_id', targetUserId).order('data_hora', { ascending: false });
+        try {
+          const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+          if (selMonth !== null) {
+            document.getElementById('header-title').innerText = `${monthNames[selMonth].toUpperCase()} ${selYear}`;
+          } else {
+            document.getElementById('header-title').innerText = "HISTÓRICO COMPLETO";
+          }
 
-            if (selMonth !== null && selYear !== null) {
-              const start = `${selYear}-${(parseInt(selMonth) + 1).toString().padStart(2, '0')}-01T00:00:00`;
-              const end = `${selYear}-${(parseInt(selMonth) + 1).toString().padStart(2, '0')}-31T23:59:59`;
-              query = query.gte('data_hora', start).lte('data_hora', end);
-            }
+          let query = supabase.from('pontos').select('*').eq('funcionario_id', targetUserId).order('data_hora', { ascending: false });
 
-            const { data: pontos, error } = await query;
-            if (error) throw error;
+          if (selMonth !== null && selYear !== null) {
+            const start = `${selYear}-${(parseInt(selMonth) + 1).toString().padStart(2, '0')}-01T00:00:00`;
+            const end = `${selYear}-${(parseInt(selMonth) + 1).toString().padStart(2, '0')}-31T23:59:59`;
+            query = query.gte('data_hora', start).lte('data_hora', end);
+          }
 
-            const container = document.getElementById('logs-container');
-            container.innerHTML = '';
+          const { data: pontos, error } = await query;
+          if (error) throw error;
 
-            if (!pontos || pontos.length === 0) {
-              container.innerHTML = `
+          const container = document.getElementById('logs-container');
+          container.innerHTML = '';
+
+          if (!pontos || pontos.length === 0) {
+            container.innerHTML = `
                             <div class="text-center py-12 text-slate-600">
                                 <span class="material-symbols-outlined text-4xl mb-2 opacity-20">history_toggle_off</span>
                                 <p class="text-[10px] uppercase font-bold tracking-widest">Nenhum registro encontrado para este ciclo.</p>
                             </div>
                         `;
-              return;
-            }
+            return;
+          }
 
-            // Group by day for nicer display
-            const daily = {};
-            pontos.forEach(p => {
-              const d = p.data_hora.split('T')[0];
-              if (!daily[d]) daily[d] = [];
-              daily[d].push(p);
-            });
+          // Group by day for nicer display
+          const daily = {};
+          pontos.forEach(p => {
+            const d = p.data_hora.split('T')[0];
+            if (!daily[d]) daily[d] = [];
+            daily[d].push(p);
+          });
 
-            Object.keys(daily).sort((a, b) => new Date(b) - new Date(a)).forEach(day => {
-              const dateObj = new Date(day + 'T12:00:00');
-              const dayName = dateObj.toLocaleDateString('pt-BR', { weekday: 'long' });
-              const dayFull = dateObj.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+          Object.keys(daily).sort((a, b) => new Date(b) - new Date(a)).forEach(day => {
+            const dateObj = new Date(day + 'T12:00:00');
+            const dayName = dateObj.toLocaleDateString('pt-BR', { weekday: 'long' });
+            const dayFull = dateObj.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
 
-              const dayGroup = document.createElement('div');
-              dayGroup.className = 'space-y-2';
-              dayGroup.innerHTML = `
+            const dayGroup = document.createElement('div');
+            dayGroup.className = 'space-y-2';
+            dayGroup.innerHTML = `
                             <h4 class="text-[10px] font-black text-primary uppercase border-l-2 border-primary pl-2 mb-3 tracking-tighter">
                                 ${dayName} • ${dayFull}
                             </h4>
                         `;
 
-              daily[day].sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora)).forEach(p => {
-                const time = new Date(p.data_hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-                const type = p.tipo || 'PONTO';
-                const icon = type === 'INÍCIO' ? 'login' : type === 'FIM' ? 'logout' : 'alarm';
-                const color = type === 'INÍCIO' ? 'text-emerald-400' : type === 'FIM' ? 'text-amber-400' : 'text-primary';
+            daily[day].sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora)).forEach(p => {
+              const time = new Date(p.data_hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+              const type = p.tipo || 'PONTO';
+              const icon = type === 'INÍCIO' ? 'login' : type === 'FIM' ? 'logout' : 'alarm';
+              const color = type === 'INÍCIO' ? 'text-emerald-400' : type === 'FIM' ? 'text-amber-400' : 'text-primary';
 
-                const item = document.createElement('div');
-                item.className = 'bg-white/5 border border-white/5 p-4 rounded-xl flex items-center justify-between group hover:bg-white/10 transition-colors';
-                item.innerHTML = `
+              const item = document.createElement('div');
+              item.className = 'bg-white/5 border border-white/5 p-4 rounded-xl flex items-center justify-between group hover:bg-white/10 transition-colors';
+              item.innerHTML = `
                                 <div class="flex items-center gap-3">
                                     <span class="material-symbols-outlined ${color}">${icon}</span>
                                     <div>
@@ -158,15 +138,51 @@
                                     <p class="text-sm font-black text-white">${time}</p>
                                 </div>
                             `;
-                dayGroup.appendChild(item);
-              });
-              container.appendChild(dayGroup);
+              dayGroup.appendChild(item);
             });
+            container.appendChild(dayGroup);
+          });
 
-          } catch (err) { console.error(err); }
-        });
-      })();
+        } catch (err) { console.error(err); }
+      });
+    })();
   </script>
+
+  <!-- Bottom Navigation -->
+  <nav
+    class="fixed bottom-0 left-0 right-0 bg-background-dark/90 border-t border-white/5 py-4 z-50 flex justify-center backdrop-blur-xl">
+    <div class="flex items-center justify-around w-full max-w-md px-6">
+      <a id="nav-inicio" href="painel_funcionario.html"
+        class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+        <span class="material-symbols-outlined text-2xl">home</span>
+        <span class="text-[9px] font-black uppercase tracking-widest text-center">Início</span>
+      </a>
+      <a href="estatistica_funcionario.html"
+        class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+        <span class="material-symbols-outlined text-2xl">bar_chart</span>
+        <span class="text-[9px] font-black uppercase tracking-widest text-center">Estatística</span>
+      </a>
+      <a href="historico_anual.html" class="flex flex-col items-center gap-1.5 text-primary">
+        <span class="material-symbols-outlined text-2xl font-variation-settings-fill">history</span>
+        <span class="text-[9px] font-black uppercase tracking-widest text-center">Histórico</span>
+      </a>
+      <a id="nav-perfil-link" href="perfil_funcionario.html"
+        class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+        <span class="material-symbols-outlined text-2xl">person</span>
+        <span class="text-[9px] font-black uppercase tracking-widest text-center">Perfil</span>
+      </a>
+    </div>
+  </nav>
+
+  <script type="module">
+    import { Auth } from '../js/auth.js';
+    import { UI } from '../js/ui-utils.js';
+    window.addEventListener('load', () => {
+      const user = Auth.getUser();
+      if (user) UI.updateFooterNavigation(user.role);
+    });
+  </script>
+  <script type="module" src="../js/manager-context.js?v=2.7"></script>
 </body>
 
 </html>

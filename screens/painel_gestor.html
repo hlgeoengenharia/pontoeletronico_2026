@@ -14,40 +14,11 @@
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
         rel="stylesheet">
     <script type="module" src="../js/manager-context.js?v=2.7"></script>
-    <script id="tailwind-config">
-        tailwind.config = {
-            darkMode: "class",
-            theme: {
-                extend: {
-                    colors: {
-                        "primary": "#10B981",
-                        "background-light": "#f5f6f8",
-                        "background-dark": "#101622",
-                    },
-                    fontFamily: {
-                        "display": ["Space Grotesk"]
-                    },
-                    borderRadius: { "DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px" },
-                },
-            },
-        }
-    </script>
+    <script src="../js/theme.js?v=1.0"></script>
     <script type="module">
         import { Auth } from '../js/auth.js';
         import { UI } from '../js/ui-utils.js';
-        const user = Auth.checkSession(['manager', 'gestor', 'admin']);
-
-        if (user) {
-            window.addEventListener('DOMContentLoaded', () => {
-                const userData = Auth.getUser();
-                document.querySelector('h2.text-2xl.font-bold').innerText = userData.name.split(' ')[0].toUpperCase();
-                document.querySelector('p.text-slate-500').innerHTML = `
-                    Cargo/Função: ${userData.role.toUpperCase()}<br>
-                    Setor: ${userData.setor}<br>
-                    ID: ${userData.nickname}
-                `;
-            });
-        }
+        Auth.checkSession(['Gestor', 'Admin']);
     </script>
     <title>ChronoSync - Gestor Dashboard</title>
 
@@ -81,10 +52,16 @@
             </div>
 
             <h2 id="display-name" class="text-3xl font-black text-slate-100 tracking-tight mb-1 uppercase">GESTOR</h2>
-            <p id="user-role-setor"
-                class="text-[10px] font-bold text-primary uppercase tracking-[0.2em] mb-6 opacity-80 italic">
-                GESTOR | SETOR CENTRAL
-            </p>
+            <div id="user-info-container" class="space-y-1 mb-6">
+                <p id="user-role-setor"
+                    class="text-[10px] font-bold text-primary uppercase tracking-[0.1em] opacity-80">
+                    CARGO/FUNÇÃO: CARREGANDO...
+                </p>
+                <p id="user-setor-info"
+                    class="text-[10px] font-bold text-primary uppercase tracking-[0.1em] opacity-80">
+                    SETOR: CARREGANDO...
+                </p>
+            </div>
 
             <div class="grid grid-cols-3 w-full border-t border-white/5 pt-6 divide-x divide-white/5">
                 <div class="px-2">
@@ -106,18 +83,18 @@
         <div class="w-full max-w-md grid grid-cols-3 gap-3 mt-8">
             <div
                 class="bg-primary/5 border border-primary/20 rounded-xl p-3 text-center transition-all hover:bg-primary/10">
-                <p class="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Equipe</p>
-                <p id="statTotalEquipe" class="text-lg font-black text-slate-100">--</p>
+                <p class="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Funcionários</p>
+                <p id="statTotalGlobal" class="text-lg font-black text-slate-100">--</p>
             </div>
             <div
                 class="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-3 text-center transition-all hover:bg-emerald-500/10">
                 <p class="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Online</p>
-                <p id="statOnline" class="text-lg font-black text-emerald-400">--</p>
+                <p id="statOnlineGlobal" class="text-lg font-black text-emerald-400">--</p>
             </div>
             <div
                 class="bg-amber-500/5 border border-amber-500/20 rounded-xl p-3 text-center transition-all hover:bg-amber-500/10">
-                <p class="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Pendências</p>
-                <p id="statPendencias" class="text-lg font-black text-amber-500">--</p>
+                <p class="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Setores</p>
+                <p id="statTotalSetores" class="text-lg font-black text-slate-100">--</p>
             </div>
         </div>
     </header>
@@ -208,25 +185,28 @@
             </div>
         </section>
     </main>
+    <!-- Bottom Navigation -->
     <nav
-        class="fixed bottom-0 left-0 right-0 bg-white dark:bg-background-dark border-t border-slate-200 dark:border-primary/10 py-3 z-50 flex justify-center">
-        <div class="flex items-center w-full max-w-md">
-            <a class="flex-1 flex flex-col items-center gap-1 text-primary" href="painel_gestor.html">
-                <span class="material-symbols-outlined fill-1">home</span>
-                <span class="text-[10px] font-bold uppercase tracking-tighter">INÍCIO</span>
+        class="fixed bottom-0 left-0 right-0 bg-background-dark/90 border-t border-white/5 py-4 z-50 flex justify-center backdrop-blur-xl">
+        <div class="flex items-center justify-around w-full max-w-md px-6">
+            <a id="nav-inicio" href="painel_gestor.html" class="flex flex-col items-center gap-1.5 text-primary">
+                <span class="material-symbols-outlined text-2xl font-variation-settings-fill">home</span>
+                <span class="text-[9px] font-black uppercase tracking-widest text-center">Início</span>
             </a>
-            <a class="flex-1 flex flex-col items-center gap-1 text-slate-400" href="estatistica_funcionario.html">
-                <span class="material-symbols-outlined">bar_chart</span>
-                <span class="text-[10px] font-bold uppercase tracking-tighter">ESTATÍSTICA</span>
+            <a href="estatistica_funcionario.html"
+                class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+                <span class="material-symbols-outlined text-2xl">bar_chart</span>
+                <span class="text-[9px] font-black uppercase tracking-widest text-center">Estatística</span>
             </a>
-            <a class="flex-1 flex flex-col items-center gap-1 text-slate-400" href="historico_anual.html">
-                <span class="material-symbols-outlined">history</span>
-                <span class="text-[10px] font-bold uppercase tracking-tighter">HISTÓRICO</span>
+            <a href="historico_anual.html"
+                class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+                <span class="material-symbols-outlined text-2xl">history</span>
+                <span class="text-[9px] font-black uppercase tracking-widest text-center">Histórico</span>
             </a>
-            <a id="nav-perfil-link" class="flex-1 flex flex-col items-center gap-1 text-slate-400"
-                href="perfil_funcionario.html">
-                <span class="material-symbols-outlined">person</span>
-                <span class="text-[10px] font-bold uppercase tracking-tighter">PERFIL</span>
+            <a id="nav-perfil-link" href="#"
+                class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+                <span class="material-symbols-outlined text-2xl">person</span>
+                <span class="text-[9px] font-black uppercase tracking-widest text-center">Perfil</span>
             </a>
         </div>
     </nav>
@@ -281,8 +261,12 @@
 
             // Setup User Info
             document.getElementById('display-name').innerText = (currentUser.nickname || currentUser.name || "GESTOR").toUpperCase();
-            document.getElementById('user-role-setor').innerText = `${currentUser.role.toUpperCase()} | ${currentUser.setor.toUpperCase()}`;
+            document.getElementById('user-role-setor').innerText = `CARGO/FUNÇÃO: ${currentUser.funcao?.toUpperCase() || 'GESTOR'}`;
+            document.getElementById('user-setor-info').innerText = `SETOR: ${currentUser.setor.toUpperCase()}`;
             document.getElementById('user-nickname').innerText = currentUser.matricula || `#${currentUser.nickname || 'GESTOR'}`;
+
+            // Navegação dinâmica
+            UI.updateFooterNavigation(currentUser.role);
 
             // Ajuste do nível hierárquico
             const levelDisplay = document.getElementById('user-level-display');
@@ -297,9 +281,40 @@
             if (profileLink) profileLink.href = `perfil_funcionario.html?id=${currentUser.id}&v=5`;
 
             renderCalendar();
-            loadDashboardStats();
-            loadOnlineStaff();
+            await loadGlobalStats();
             setupPunchLogic(currentUser.id);
+        }
+
+        async function loadGlobalStats() {
+            const today = new Date().toISOString().split('T')[0];
+            try {
+                const [{ count: totalFunc }, { count: totalSetores }] = await Promise.all([
+                    supabase.from('funcionarios').select('*', { count: 'exact', head: true }),
+                    supabase.from('setores').select('*', { count: 'exact', head: true })
+                ]);
+
+                if (document.getElementById('statTotalGlobal')) document.getElementById('statTotalGlobal').innerText = totalFunc || '0';
+                if (document.getElementById('statTotalSetores')) document.getElementById('statTotalSetores').innerText = totalSetores || '0';
+
+                const { data: todayPoints } = await supabase
+                    .from('pontos')
+                    .select('funcionario_id')
+                    .gte('data_hora', `${today}T00:00:00`)
+                    .lte('data_hora', `${today}T23:59:59`);
+
+                let onlineCount = 0;
+                if (todayPoints) {
+                    const counts = {};
+                    todayPoints.forEach(p => {
+                        counts[p.funcionario_id] = (counts[p.funcionario_id] || 0) + 1;
+                    });
+                    onlineCount = Object.values(counts).filter(c => c % 2 !== 0).length;
+                }
+
+                if (document.getElementById('statOnlineGlobal')) document.getElementById('statOnlineGlobal').innerText = onlineCount || '0';
+            } catch (err) {
+                console.error('Erro global stats:', err);
+            }
         }
 
         function renderCalendar() {

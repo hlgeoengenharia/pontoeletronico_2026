@@ -10,7 +10,8 @@
 
     // Auth Session (Logged In)
     const loggedInId = localStorage.getItem('userId');
-    const loggedInRole = localStorage.getItem('userRole');
+    const loggedInRoleRaw = localStorage.getItem('userRole');
+    const loggedInRole = String(loggedInRoleRaw || '').toLowerCase();
 
     // UI State Role (Role to show/determine UI mode)
     // We normalize role display but we DON'T overwrite session storage
@@ -21,7 +22,7 @@
     const normalizedLoggedInId = String(loggedInId || '').trim();
     const normalizedEmployeeId = String(employeeId || '').trim();
 
-    const isGestorSession = (loggedInRole === 'admin' || loggedInRole === 'manager' || loggedInRole === 'gestor');
+    const isGestorSession = (loggedInRole === 'admin' || loggedInRole === 'manager' || loggedInRole === 'gestor' || loggedInRole === 'comandante');
     // Só é inspeção se houver um ID na URL e esse ID for DIFERENTE do ID logado
     const isInspecting = normalizedEmployeeId && normalizedEmployeeId !== normalizedLoggedInId;
 
@@ -72,7 +73,7 @@
                 box-shadow: 0 8px 32px rgba(0,0,0,0.8);
                 backdrop-filter: blur(10px);
             }
-            body { padding-top: 100px !important; }
+            body { padding-top: 120px !important; }
             .manager-tabs {
                 display: flex; gap: 6px; background: rgba(255, 255, 255, 0.05);
                 padding: 4px; border-radius: 12px;
@@ -95,6 +96,7 @@
                 background: #0a0e17 !important;
                 z-index: 9999 !important;
                 overflow: visible !important;
+                ${isInspecting ? 'display: none !important;' : ''}
             }
         `;
         document.head.appendChild(style);
@@ -131,11 +133,11 @@
 
         // Add the close function to the global scope so the onclick works
         window.closeInspection = function () {
-            const role = localStorage.getItem('userRole');
+            const role = String(localStorage.getItem('userRole') || '').toLowerCase();
             if (role === 'admin') {
-                window.location.href = 'painel_admin.html';
-            } else if (role === 'manager' || role === 'gestor') {
-                window.location.href = 'painel_gestor.html';
+                window.location.href = 'relacao_setores.html';
+            } else if (role === 'manager' || role === 'gestor' || role === 'comandante') {
+                window.location.href = 'relacao_funcionarios.html';
             } else {
                 window.location.href = 'painel_funcionario.html';
             }
@@ -155,10 +157,29 @@
         const links = bottomNav.querySelectorAll('a');
         links.forEach(link => {
             let href = link.getAttribute('href');
-            if (href && !href.startsWith('http') && !href.startsWith('#') && !href.includes('id=')) {
-                const separator = href.includes('?') ? '&' : '?';
-                const roleQuery = loggedInRole ? `&role=${loggedInRole}` : '';
-                link.setAttribute('href', `${href}${separator}id=${targetId}${roleQuery}`);
+            if (href && !href.startsWith('http') && !href.includes('id=')) {
+                // Se for #, tentamos inferir pelo ID do elemento
+                // ALWAYS override specific links based on logged-in role
+                if (link.id === 'nav-inicio' || (link.querySelector('span:last-child') && link.querySelector('span:last-child').textContent.trim().toUpperCase() === 'INÍCIO')) {
+                    if (loggedInRole === 'admin') href = 'painel_admin.html';
+                    else if (loggedInRole === 'manager' || loggedInRole === 'gestor') href = 'painel_gestor.html';
+                    else href = 'painel_funcionario.html';
+                } else if (href === '#') {
+                    // Fallback for other icons if still #
+                    if (link.id === 'nav-perfil-link' || link.innerText.toLowerCase().includes('perfil')) {
+                        href = 'perfil_funcionario.html';
+                    } else if (link.innerText.toLowerCase().includes('estatística')) {
+                        href = 'estatistica_funcionario.html';
+                    } else if (link.innerText.toLowerCase().includes('histórico')) {
+                        href = 'historico_anual.html';
+                    }
+                }
+
+                if (href && href !== '#') {
+                    const separator = href.includes('?') ? '&' : '?';
+                    const roleQuery = loggedInRoleRaw ? `&role=${loggedInRoleRaw}` : '';
+                    link.setAttribute('href', `${href}${separator}id=${targetId}${roleQuery}`);
+                }
             }
         });
     }
@@ -184,13 +205,13 @@
         ];
 
         document.addEventListener('click', (e) => {
-            let target = e.target.closest('a') || e.target.closest('button');
+            let target = e.target.closest('a') || e.target.closest('button') || e.target.closest('div[onclick]');
             if (!target) return;
 
             let href = '';
             if (target.tagName === 'A') {
                 href = target.getAttribute('href');
-            } else if (target.tagName === 'BUTTON') {
+            } else {
                 const onclick = target.getAttribute('onclick');
                 if (onclick && onclick.includes('window.location.href')) {
                     const match = onclick.match(/window\.location\.href\s*=\s*(['"])(.*?)\1/);
@@ -210,6 +231,7 @@
             if (isEmployeePage && !hasId && targetId) {
                 console.log(`[ManagerContext] Intercepting link to ${href}. Passing ID: ${targetId}`);
                 e.preventDefault();
+                e.stopImmediatePropagation();
                 const separator = href.includes('?') ? '&' : '?';
                 const roleQuery = loggedInRole ? `&role=${loggedInRole}` : '';
                 window.location.href = `${href}${separator}id=${targetId}${roleQuery}`;

@@ -11,25 +11,20 @@
     href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
     rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script id="tailwind-config">
-    tailwind.config = {
-      darkMode: "class",
-      theme: {
-        extend: {
-          colors: { "primary": "#0d59f2", "background-light": "#f5f6f8", "background-dark": "#101622" },
-          fontFamily: { "display": ["Space Grotesk"] },
-        },
-      },
-    }
-  </script>
+  <script src="../js/theme.js?v=1.0"></script>
   <script src="../js/manager-context.js?v=2.7"></script>
+  <style>
+    .font-variation-settings-fill {
+      font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+  </style>
 </head>
 
 <body class="bg-background-dark text-slate-100 min-h-screen flex flex-col font-display pb-24">
   <header
     class="p-6 flex items-center justify-between border-b border-primary/20 bg-background-dark/80 backdrop-blur-md sticky top-0 z-50">
     <div onclick="history.back()"
-      class="text-primary flex size-10 items-center justify-center rounded-lg border border-primary/30 bg-primary/10 cursor-pointer hover:bg-primary/20 transition-all">
+      class="text-primary flex size-10 mt-2 items-center justify-center rounded-lg border border-primary/30 bg-primary/10 cursor-pointer hover:bg-primary/20 transition-all">
       <span class="material-symbols-outlined">arrow_back</span>
     </div>
     <h2 class="text-lg font-bold tracking-widest text-white uppercase flex-1 text-center">ARQUIVO ANUAL</h2>
@@ -44,7 +39,10 @@
       </div>
       <div>
         <h3 id="user-nome" class="text-xl font-bold uppercase">CARREGANDO...</h3>
-        <p id="user-cargo" class="text-primary text-xs font-bold uppercase tracking-widest">Processando...</p>
+        <div id="user-info-container" class="space-y-1">
+          <p id="user-cargo" class="text-primary text-[10px] font-bold uppercase tracking-widest">CARGO/FUNÇÃO: ...</p>
+          <p id="user-setor-info" class="text-primary text-[10px] font-bold uppercase tracking-widest">SETOR: ...</p>
+        </div>
       </div>
     </section>
 
@@ -67,109 +65,95 @@
     </div>
   </main>
 
-  <nav
-    class="fixed bottom-0 left-0 right-0 bg-white dark:bg-background-dark border-t border-slate-200 dark:border-primary/10 py-3 z-50 flex justify-center">
-    <div class="flex items-center w-full max-w-md">
-      <a class="flex-1 flex flex-col items-center gap-1 text-slate-400" href="painel_funcionario.html">
-        <span class="material-symbols-outlined">home</span>
-        <span class="text-[10px] font-bold uppercase tracking-tighter">INÍCIO</span>
-      </a>
-      <a class="flex-1 flex flex-col items-center gap-1 text-slate-400" href="estatistica_funcionario.html">
-        <span class="material-symbols-outlined">bar_chart</span>
-        <span class="text-[10px] font-bold uppercase tracking-tighter">ESTATÍSTICA</span>
-      </a>
-      <a class="flex-1 flex flex-col items-center gap-1 text-primary" href="historico_anual.html">
-        <span class="material-symbols-outlined fill-1">history</span>
-        <span class="text-[10px] font-bold uppercase tracking-tighter">HISTÓRICO</span>
-      </a>
-      <a id="nav-perfil-link" class="flex-1 flex flex-col items-center gap-1 text-slate-400"
-        href="perfil_funcionario.html">
-        <span class="material-symbols-outlined">person</span>
-        <span class="text-[10px] font-bold uppercase tracking-tighter">PERFIL</span>
-      </a>
-    </div>
-  </nav>
+  </main>
 
   <script>
-      (function () {
-        const SUPABASE_URL = 'https://pptprelbbrcqrbjssoci.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBwdHByZWxiYnJjcXJianNzb2NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3NDgzNjksImV4cCI6MjA4ODMyNDM2OX0.votBbcGv7f9jpSSbBs0_GkgZ_Strm9IQxjl9oo0aPp8';
+    (function () {
+      const SUPABASE_URL = 'https://pptprelbbrcqrbjssoci.supabase.co';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBwdHByZWxiYnJjcXJianNzb2NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3NDgzNjksImV4cCI6MjA4ODMyNDM2OX0.votBbcGv7f9jpSSbBs0_GkgZ_Strm9IQxjl9oo0aPp8';
 
-        let curYear = new Date().getFullYear();
-        let targetUserId = null;
-        let supabase = null;
+      let curYear = new Date().getFullYear();
+      let targetUserId = null;
+      let supabase = null;
 
-        window.addEventListener('load', async function () {
-          const urlParams = new URLSearchParams(window.location.search);
-          targetUserId = urlParams.get('id') || localStorage.getItem('userId');
-          if (!targetUserId || !window.supabase) return;
+      window.addEventListener('load', async function () {
+        const urlParams = new URLSearchParams(window.location.search);
+        targetUserId = urlParams.get('id') || localStorage.getItem('userId');
+        if (!targetUserId || !window.supabase) return;
 
-          supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-          try {
-            const { data: user } = await supabase.from('funcionarios').select('*').eq('id', targetUserId).single();
-            if (user) {
-              document.getElementById('user-nome').innerText = user.nome_completo.toUpperCase();
-              document.getElementById('user-cargo').innerText = user.funcao || 'TRIPULANTE';
-              if (user.foto_url) document.getElementById('user-photo').src = user.foto_url;
-            }
+        // Navegação dinâmica
+        const { Auth } = await import('../js/auth.js');
+        const { UI } = await import('../js/ui-utils.js');
+        const userObj = Auth.getUser();
+        UI.updateFooterNavigation(userObj.role);
 
-            const { data: allPoints } = await supabase.from('pontos').select('data_hora').eq('funcionario_id', targetUserId).order('data_hora', { ascending: false });
+        try {
+          const { data: user } = await supabase.from('funcionarios').select('*, setores(nome)').eq('id', targetUserId).single();
+          if (user) {
+            document.getElementById('user-nome').innerText = user.nome_completo.toUpperCase();
+            document.getElementById('user-cargo').innerText = `CARGO/FUNÇÃO: ${(user.funcao || 'TRIPULANTE').toUpperCase()}`;
+            document.getElementById('user-setor-info').innerText = `SETOR: ${(user.setores?.nome || 'NÃO DEFINIDO').toUpperCase()}`;
+            if (user.foto_url) document.getElementById('user-photo').src = user.foto_url;
+          }
 
-            if (allPoints && allPoints.length > 0) {
-              curYear = new Date(allPoints[0].data_hora).getFullYear();
-            }
+          const { data: allPoints } = await supabase.from('pontos').select('data_hora').eq('funcionario_id', targetUserId).order('data_hora', { ascending: false });
 
-            await loadAnnualData();
-          } catch (err) { console.error(err); }
-        });
+          if (allPoints && allPoints.length > 0) {
+            curYear = new Date(allPoints[0].data_hora).getFullYear();
+          }
 
-        document.getElementById('prev-year').onclick = () => { curYear--; loadAnnualData(); };
-        document.getElementById('next-year').onclick = () => { curYear++; loadAnnualData(); };
+          await loadAnnualData();
+        } catch (err) { console.error(err); }
+      });
 
-        async function loadAnnualData() {
-          document.getElementById('current-year-display').innerText = curYear;
-          const grid = document.getElementById('months-grid');
-          grid.innerHTML = '<div class="text-center py-12 text-slate-500"><span class="material-symbols-outlined animate-spin">refresh</span></div>';
+      document.getElementById('prev-year').onclick = () => { curYear--; loadAnnualData(); };
+      document.getElementById('next-year').onclick = () => { curYear++; loadAnnualData(); };
 
-          try {
-            const start = `${curYear}-01-01T00:00:00`;
-            const end = `${curYear}-12-31T23:59:59`;
-            const { data: pontos } = await supabase.from('pontos').select('*').eq('funcionario_id', targetUserId).gte('data_hora', start).lte('data_hora', end).order('data_hora', { ascending: true });
+      async function loadAnnualData() {
+        document.getElementById('current-year-display').innerText = curYear;
+        const grid = document.getElementById('months-grid');
+        grid.innerHTML = '<div class="text-center py-12 text-slate-500"><span class="material-symbols-outlined animate-spin">refresh</span></div>';
 
-            const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-            const stats = Array(12).fill(0).map((_, i) => ({ month: i, ms: 0, days: 0 }));
+        try {
+          const start = `${curYear}-01-01T00:00:00`;
+          const end = `${curYear}-12-31T23:59:59`;
+          const { data: pontos } = await supabase.from('pontos').select('*').eq('funcionario_id', targetUserId).gte('data_hora', start).lte('data_hora', end).order('data_hora', { ascending: true });
 
-            if (pontos) {
-              const daily = {};
-              pontos.forEach(p => {
-                const d = p.data_hora.split('T')[0];
-                if (!daily[d]) daily[d] = [];
-                daily[d].push(p);
-              });
-              Object.keys(daily).forEach(day => {
-                const dt = new Date(day + 'T12:00:00');
-                const m = dt.getMonth();
-                const pts = daily[day].sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora));
-                let dayMs = 0;
-                for (let i = 0; i < pts.length - 1; i += 2) dayMs += (new Date(pts[i + 1].data_hora) - new Date(pts[i].data_hora));
-                stats[m].ms += dayMs;
-                stats[m].days++;
-              });
-            }
+          const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+          const stats = Array(12).fill(0).map((_, i) => ({ month: i, ms: 0, days: 0 }));
 
-            grid.innerHTML = '';
-            months.forEach((name, i) => {
-              const s = stats[i];
-              const h = Math.floor(s.ms / 3600000);
-              const hasData = s.days > 0;
+          if (pontos) {
+            const daily = {};
+            pontos.forEach(p => {
+              const d = p.data_hora.split('T')[0];
+              if (!daily[d]) daily[d] = [];
+              daily[d].push(p);
+            });
+            Object.keys(daily).forEach(day => {
+              const dt = new Date(day + 'T12:00:00');
+              const m = dt.getMonth();
+              const pts = daily[day].sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora));
+              let dayMs = 0;
+              for (let i = 0; i < pts.length - 1; i += 2) dayMs += (new Date(pts[i + 1].data_hora) - new Date(pts[i].data_hora));
+              stats[m].ms += dayMs;
+              stats[m].days++;
+            });
+          }
 
-              const div = document.createElement('div');
-              div.className = `p-4 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${hasData ? 'bg-primary/10 border-primary/30 hover:bg-primary/20' : 'bg-slate-900/50 border-white/5 opacity-50'}`;
-              div.onclick = () => {
-                window.location.href = `historico_mensal.html?id=${targetUserId}&month=${i}&year=${curYear}`;
-              };
-              div.innerHTML = `
+          grid.innerHTML = '';
+          months.forEach((name, i) => {
+            const s = stats[i];
+            const h = Math.floor(s.ms / 3600000);
+            const hasData = s.days > 0;
+
+            const div = document.createElement('div');
+            div.className = `p-4 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${hasData ? 'bg-primary/10 border-primary/30 hover:bg-primary/20' : 'bg-slate-900/50 border-white/5 opacity-50'}`;
+            div.onclick = () => {
+              window.location.href = `historico_mensal.html?id=${targetUserId}&month=${i}&year=${curYear}`;
+            };
+            div.innerHTML = `
                             <div>
                                 <p class="font-bold text-sm uppercase">${name}</p>
                                 <p class="text-[10px] text-slate-500 uppercase">${s.days} Missões Registradas</p>
@@ -178,12 +162,48 @@
                                 <p class="text-lg font-black ${hasData ? 'text-primary' : 'text-slate-700'}">${h}h</p>
                             </div>
                         `;
-              grid.appendChild(div);
-            });
-          } catch (e) { console.error(e); }
-        }
-      })();
+            grid.appendChild(div);
+          });
+        } catch (e) { console.error(e); }
+      }
+    })();
   </script>
+
+  <!-- Bottom Navigation -->
+  <nav
+    class="fixed bottom-0 left-0 right-0 bg-background-dark/90 border-t border-white/5 py-4 z-50 flex justify-center backdrop-blur-xl">
+    <div class="flex items-center justify-around w-full max-w-md px-6">
+      <a id="nav-inicio" href="painel_funcionario.html"
+        class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+        <span class="material-symbols-outlined text-2xl">home</span>
+        <span class="text-[9px] font-black uppercase tracking-widest text-center">Início</span>
+      </a>
+      <a href="estatistica_funcionario.html"
+        class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+        <span class="material-symbols-outlined text-2xl">bar_chart</span>
+        <span class="text-[9px] font-black uppercase tracking-widest text-center">Estatística</span>
+      </a>
+      <a href="historico_anual.html" class="flex flex-col items-center gap-1.5 text-primary">
+        <span class="material-symbols-outlined text-2xl font-variation-settings-fill">history</span>
+        <span class="text-[9px] font-black uppercase tracking-widest text-center">Histórico</span>
+      </a>
+      <a id="nav-perfil-link" href="perfil_funcionario.html"
+        class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+        <span class="material-symbols-outlined text-2xl">person</span>
+        <span class="text-[9px] font-black uppercase tracking-widest text-center">Perfil</span>
+      </a>
+    </div>
+  </nav>
+
+  <script type="module">
+    import { Auth } from '../js/auth.js';
+    import { UI } from '../js/ui-utils.js';
+    window.addEventListener('load', () => {
+      const user = Auth.getUser();
+      if (user) UI.updateFooterNavigation(user.role);
+    });
+  </script>
+  <script type="module" src="../js/manager-context.js?v=2.7"></script>
 </body>
 
 </html>

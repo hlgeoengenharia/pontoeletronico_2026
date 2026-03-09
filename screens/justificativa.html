@@ -14,26 +14,7 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
     rel="stylesheet" />
-  <script id="tailwind-config">
-    tailwind.config = {
-      darkMode: "class",
-      theme: {
-        extend: {
-          colors: {
-            "primary": "#0d59f2",
-            "accent": "#eab308", // Neon Yellow accent
-            "background-light": "#f5f6f8",
-            "background-dark": "#0a0e17",
-            "card-dark": "#161c2a",
-          },
-          fontFamily: {
-            "display": ["Space Grotesk", "sans-serif"]
-          },
-          borderRadius: { "DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px" },
-        },
-      },
-    }
-  </script>
+  <script src="../js/theme.js?v=1.0"></script>
   <style>
     body {
       font-family: 'Space Grotesk', sans-serif;
@@ -64,7 +45,7 @@
   <header class="border-b border-primary/20 bg-background-dark/80 backdrop-blur-md sticky top-0 z-50">
     <div class="flex items-center p-4 justify-between">
       <div onclick="history.back()"
-        class="text-primary flex size-10 shrink-0 items-center justify-center rounded-lg border border-primary/30 bg-primary/10 cursor-pointer hover:bg-primary/20 transition-all">
+        class="text-primary flex size-10 mt-2 shrink-0 items-center justify-center rounded-lg border border-primary/30 bg-primary/10 cursor-pointer hover:bg-primary/20 transition-all">
         <span class="material-symbols-outlined">arrow_back</span>
       </div>
       <h2 class="text-slate-100 text-lg font-bold leading-tight tracking-wider uppercase flex-1 text-center">
@@ -136,14 +117,13 @@
         <h3 class="text-slate-100 text-sm font-bold tracking-widest uppercase flex items-center gap-2">
           <span class="material-symbols-outlined text-sm">attach_file</span> Arquivos Anexados
         </h3>
-        <span id="labelTotalArquivos" class="text-[10px] text-slate-500 font-bold uppercase">0 Itens</span>
+        <span id="labelTotalJustificativas" class="text-[10px] text-slate-500 font-bold uppercase">0 Itens</span>
       </div>
       <div id="arquivosContainer" class="flex flex-col gap-3">
         <div class="text-center py-4 bg-white/5 border border-dashed border-white/10 rounded-lg opacity-40">
           <p class="text-[10px] uppercase tracking-tighter">Nenhum anexo</p>
         </div>
       </div>
-    </section>
     </section>
     <!-- Previous Logs Section -->
     <section class="space-y-4 pb-20">
@@ -168,27 +148,26 @@
   </main>
   <!-- Bottom Navigation -->
   <nav
-    class="fixed bottom-0 w-full bg-white dark:bg-background-dark border-t border-slate-200 dark:border-primary/10 px-6 py-4 z-50">
-    <div class="flex justify-between items-center max-w-md mx-auto">
-      <a class="flex flex-col items-center gap-1 text-slate-400 transition-all duration-300 hover:text-primary"
-        href="painel_funcionario.html">
-        <span class="material-symbols-outlined ">home</span>
-        <span class="text-[10px] font-bold uppercase tracking-tighter">INÍCIO</span>
+    class="fixed bottom-0 left-0 right-0 bg-background-dark/90 border-t border-white/5 py-4 z-50 flex justify-center backdrop-blur-xl">
+    <div class="flex items-center justify-around w-full max-w-md px-6">
+      <a id="nav-inicio" href="painel_funcionario.html"
+        class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+        <span class="material-symbols-outlined text-2xl">home</span>
+        <span class="text-[9px] font-black uppercase tracking-widest text-center">Início</span>
       </a>
-      <a class="flex flex-col items-center gap-1 text-slate-400 transition-all duration-300 hover:text-primary"
-        href="estatistica_funcionario.html">
-        <span class="material-symbols-outlined ">bar_chart</span>
-        <span class="text-[10px] font-bold uppercase tracking-tighter">ESTATÍSTICA</span>
+      <a href="estatistica_funcionario.html"
+        class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+        <span class="material-symbols-outlined text-2xl">bar_chart</span>
+        <span class="text-[9px] font-black uppercase tracking-widest text-center">Estatística</span>
       </a>
-      <a class="flex flex-col items-center gap-1 text-slate-400 transition-all duration-300 hover:text-primary"
-        href="historico_anual.html">
-        <span class="material-symbols-outlined ">history</span>
-        <span class="text-[10px] font-bold uppercase tracking-tighter">HISTÓRICO</span>
+      <a href="historico_anual.html"
+        class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+        <span class="material-symbols-outlined text-2xl">history</span>
+        <span class="text-[9px] font-black uppercase tracking-widest text-center">Histórico</span>
       </a>
-      <a class="flex flex-col items-center gap-1 text-slate-400 transition-all duration-300 hover:text-primary"
-        href="perfil_funcionario.html">
-        <span class="material-symbols-outlined ">person</span>
-        <span class="text-[10px] font-bold uppercase tracking-tighter">PERFIL</span>
+      <a id="nav-perfil-link" href="perfil_funcionario.html" class="flex flex-col items-center gap-1.5 text-primary">
+        <span class="material-symbols-outlined text-2xl font-variation-settings-fill">person</span>
+        <span class="text-[9px] font-black uppercase tracking-widest text-center">Perfil</span>
       </a>
     </div>
   </nav>
@@ -200,7 +179,8 @@
     const urlParams = new URLSearchParams(window.location.search);
     const targetUserId = urlParams.get('id') || localStorage.getItem('userId');
 
-    Auth.checkSession();
+    const user = Auth.checkSession();
+    if (user) UI.updateFooterNavigation(user.userRole);
 
     const inputData = document.getElementById('incidente_data');
     const selectTipo = document.getElementById('incidente_tipo');
@@ -325,6 +305,7 @@
     btnEnviar.addEventListener('click', saveJustificativa);
     loadHistory();
   </script>
+  <script type="module" src="../js/manager-context.js?v=2.7"></script>
 </body>
 
 </html>

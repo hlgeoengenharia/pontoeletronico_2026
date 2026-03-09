@@ -11,25 +11,7 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
     rel="stylesheet" />
-  <script id="tailwind-config">
-    tailwind.config = {
-      darkMode: "class",
-      theme: {
-        extend: {
-          colors: {
-            "primary": "#0d59f2",
-            "background-light": "#f5f6f8",
-            "background-dark": "#0a0e17",
-            "neon-cyan": "#00f2ff",
-          },
-          fontFamily: {
-            "display": ["Space Grotesk", "sans-serif"]
-          },
-          borderRadius: { "DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px" },
-        },
-      },
-    }
-  </script>
+  <script src="../js/theme.js?v=1.0"></script>
   <style>
     .neon-glow {
       box-shadow: 0 0 10px rgba(13, 89, 242, 0.3);
@@ -42,6 +24,10 @@
     .scanline {
       background: linear-gradient(to bottom, transparent 50%, rgba(13, 89, 242, 0.05) 50%);
       background-size: 100% 4px;
+    }
+
+    .font-variation-settings-fill {
+      font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
     }
   </style>
 </head>
@@ -88,32 +74,7 @@
     </div>
   </main>
 
-  <!-- Bottom Navigation -->
-  <nav
-    class="fixed bottom-0 w-full bg-white dark:bg-background-dark border-t border-slate-200 dark:border-primary/10 px-6 py-4 z-50">
-    <div class="flex justify-between items-center max-w-md mx-auto">
-      <a class="flex flex-col items-center gap-1 text-slate-400 transition-all duration-300 hover:text-primary"
-        href="painel_gestor.html">
-        <span class="material-symbols-outlined">home</span>
-        <span class="text-[10px] font-bold uppercase tracking-tighter">INÍCIO</span>
-      </a>
-      <a class="flex flex-col items-center gap-1 text-slate-400 transition-all duration-300 hover:text-primary"
-        href="estatistica_funcionario.html">
-        <span class="material-symbols-outlined">bar_chart</span>
-        <span class="text-[10px] font-bold uppercase tracking-tighter">ESTATÍSTICA</span>
-      </a>
-      <a class="flex flex-col items-center gap-1 text-slate-400 transition-all duration-300 hover:text-primary"
-        href="historico_anual.html">
-        <span class="material-symbols-outlined">history</span>
-        <span class="text-[10px] font-bold uppercase tracking-tighter">HISTÓRICO</span>
-      </a>
-      <a class="flex flex-col items-center gap-1 text-slate-400 transition-all duration-300 hover:text-primary"
-        href="perfil_funcionario.html">
-        <span class="material-symbols-outlined">person</span>
-        <span class="text-[10px] font-bold uppercase tracking-tighter">PERFIL</span>
-      </a>
-    </div>
-  </nav>
+  </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script type="module">
@@ -217,6 +178,43 @@
 
     loadData();
   </script>
+
+  <!-- Bottom Navigation -->
+  <nav
+    class="fixed bottom-0 left-0 right-0 bg-background-dark/90 border-t border-white/5 py-4 z-50 flex justify-center backdrop-blur-xl">
+    <div class="flex items-center justify-around w-full max-w-md px-6">
+      <a id="nav-inicio" href="painel_admin.html"
+        class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+        <span class="material-symbols-outlined text-2xl">home</span>
+        <span class="text-[9px] font-black uppercase tracking-widest text-center">Início</span>
+      </a>
+      <a href="estatistica_funcionario.html"
+        class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+        <span class="material-symbols-outlined text-2xl">bar_chart</span>
+        <span class="text-[9px] font-black uppercase tracking-widest text-center">Estatística</span>
+      </a>
+      <a href="historico_anual.html"
+        class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+        <span class="material-symbols-outlined text-2xl">history</span>
+        <span class="text-[9px] font-black uppercase tracking-widest text-center">Histórico</span>
+      </a>
+      <a id="nav-perfil-link" href="perfil_funcionario.html"
+        class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+        <span class="material-symbols-outlined text-2xl">person</span>
+        <span class="text-[9px] font-black uppercase tracking-widest text-center">Perfil</span>
+      </a>
+    </div>
+  </nav>
+
+  <script type="module">
+    import { Auth } from '../js/auth.js';
+    import { UI } from '../js/ui-utils.js';
+    window.addEventListener('load', () => {
+      const user = Auth.getUser();
+      if (user) UI.updateFooterNavigation(user.role);
+    });
+  </script>
+  <script type="module" src="../js/manager-context.js?v=2.7"></script>
 </body>
 
 </html>
