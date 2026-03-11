@@ -13,7 +13,7 @@ const Auth = {
         try {
             const { data, error } = await supabase
                 .from('funcionarios')
-                .select('*, setores(nome)')
+                .select('*, setores(nome), cargos(nome, nivel)')
                 .ilike('nickname', nickname)
                 .eq('senha', password)
                 .single();
@@ -32,7 +32,8 @@ const Auth = {
             localStorage.setItem('userMatricula', data.matricula);
             localStorage.setItem('userSetor', data.setores?.nome || 'Não definido');
             localStorage.setItem('userSetorId', data.setor_id || '');
-            localStorage.setItem('userFuncao', data.funcao || 'Tripulante');
+            localStorage.setItem('userFuncao', data.cargos?.nome || data.funcao || 'Tripulante');
+            localStorage.setItem('userCargoNivel', data.cargos?.nivel || 'N/A');
 
             console.log('Login bem-sucedido:', data.nome_completo);
             return { success: true, user: data };
@@ -91,7 +92,8 @@ const Auth = {
             matricula: localStorage.getItem('userMatricula'),
             setor: localStorage.getItem('userSetor'),
             setorId: localStorage.getItem('userSetorId'),
-            funcao: localStorage.getItem('userFuncao')
+            funcao: localStorage.getItem('userFuncao'),
+            funcaoNivel: localStorage.getItem('userCargoNivel')
         };
     }
 };

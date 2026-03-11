@@ -65,28 +65,57 @@
             class="w-full bg-background-dark/50 border-primary/30 rounded-lg focus:ring-primary focus:border-primary text-slate-100 p-3"
             placeholder="Ex: Plantão Alfa" type="text" required />
         </div>
-        <div class="grid grid-cols-3 gap-4">
+        <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm font-medium mb-1 text-slate-400 text-[10px]">Carga Semanal</label>
+            <label class="block text-sm font-medium mb-1 text-slate-400">Tipo de Escala</label>
+            <select id="tipo_escala"
+              class="w-full bg-background-dark/50 border-primary/30 rounded-lg focus:ring-primary focus:border-primary text-slate-100 p-3 outline-none">
+              <option value="semanal">Semanal (Dias Fixos)</option>
+              <option value="ciclo">Ciclo (Trabalho x Folga)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium mb-1 text-slate-400">Carga Semanal (h)</label>
             <input id="carga_horaria"
               class="w-full bg-background-dark/50 border-primary/30 rounded-lg focus:ring-primary focus:border-primary text-slate-100 p-3"
               placeholder="44" type="number" required />
           </div>
+        </div>
+
+        <!-- Campos para Ciclo (Ocultos por padrão) -->
+        <div id="ciclo_inputs"
+          class="hidden grid grid-cols-2 gap-4 p-4 border border-primary/20 bg-primary/5 rounded-lg border-dashed">
           <div>
-            <label class="block text-sm font-medium mb-1 text-slate-400 text-[10px]">Dias/Semana</label>
-            <input id="dias_semana"
-              class="w-full bg-background-dark/50 border-primary/30 rounded-lg focus:ring-primary focus:border-primary text-slate-100 p-3"
-              placeholder="5" type="number" required />
+            <label class="block text-xs font-bold text-primary uppercase mb-1">Horas de Trabalho</label>
+            <input id="trab_total" class="w-full bg-background-dark/30 border-primary/20 rounded p-2 text-sm"
+              type="number" value="12">
           </div>
           <div>
-            <label class="block text-sm font-medium mb-1 text-slate-400 text-[10px]">Tipo</label>
-            <select id="tipo_regime"
-              class="w-full bg-background-dark/50 border-primary/30 rounded-lg focus:ring-primary focus:border-primary text-slate-100 p-3 outline-none">
-              <option value="Presencial">Presencial</option>
-              <option value="Semipresencial">Semipresencial</option>
-              <option value="Externo">Externo</option>
-              <option value="Home Office">Home Office</option>
-            </select>
+            <label class="block text-xs font-bold text-primary uppercase mb-1">Horas de Folga</label>
+            <input id="folga_total" class="w-full bg-background-dark/30 border-primary/20 rounded p-2 text-sm"
+              type="number" value="36">
+          </div>
+        </div>
+
+        <!-- Campos para Semanal (Dias da Semana) -->
+        <div id="semanal_inputs" class="pt-4">
+          <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest text-center mb-3">Dias de
+            Trabalho na Semana</label>
+          <div id="dias_semana_grid" class="flex justify-between gap-1">
+            <button type="button" data-day="0"
+              class="day-toggle size-10 rounded border border-white/10 flex items-center justify-center text-[10px] font-bold">DOM</button>
+            <button type="button" data-day="1"
+              class="day-toggle size-10 rounded border border-white/10 flex items-center justify-center text-[10px] font-bold">SEG</button>
+            <button type="button" data-day="2"
+              class="day-toggle size-10 rounded border border-white/10 flex items-center justify-center text-[10px] font-bold">TER</button>
+            <button type="button" data-day="3"
+              class="day-toggle size-10 rounded border border-white/10 flex items-center justify-center text-[10px] font-bold">QUA</button>
+            <button type="button" data-day="4"
+              class="day-toggle size-10 rounded border border-white/10 flex items-center justify-center text-[10px] font-bold">QUI</button>
+            <button type="button" data-day="5"
+              class="day-toggle size-10 rounded border border-white/10 flex items-center justify-center text-[10px] font-bold">SEX</button>
+            <button type="button" data-day="6"
+              class="day-toggle size-10 rounded border border-white/10 flex items-center justify-center text-[10px] font-bold">SAB</button>
           </div>
         </div>
         <div class="grid grid-cols-2 gap-4">
@@ -108,34 +137,20 @@
           class="hidden bg-primary/10 border border-primary/30 rounded-lg p-3 text-center transition-all">
           <p id="dias_sugeridos" class="text-primary font-bold text-xs uppercase tracking-tight">--</p>
         </div>
-        <!-- Calendar Component -->
-        <div class="pt-4">
-          <label class="block text-sm font-medium mb-3 text-slate-400 uppercase tracking-widest text-center">Selecionar
-            Dias Ativos (Padrão)</label>
-          <div class="grid grid-cols-7 gap-1 text-center text-[10px] mb-2 font-bold text-slate-500">
-            <div>DOM</div>
-            <div>SEG</div>
-            <div>TER</div>
-            <div>QUA</div>
-            <div>QUI</div>
-            <div>SEX</div>
-            <div>SAB</div>
-          </div>
-          <div id="calendario_grid" class="grid grid-cols-7 gap-1">
-            <!-- Empty slots for alignment -->
-            <div class="h-10"></div>
-            <div class="h-10"></div>
-            <div class="h-10"></div>
-            <div class="h-10"></div>
-            <div class="h-10"></div>
-            <!-- Days 1 to 30 -->
-          </div>
+        <div id="grid_placeholder" class="hidden">
         </div>
-        <button
-          class="w-full bg-primary hover:bg-primary/80 text-white font-bold py-4 rounded-xl shadow-[0_0_20px_rgba(13,89,242,0.3)] transition-all transform active:scale-95 uppercase tracking-widest mt-4"
-          type="submit">
-          Confirmar Nova Escala
-        </button>
+        <div class="flex gap-2">
+          <button id="btn-submit-escala"
+            class="flex-1 bg-primary hover:bg-primary/80 text-white font-bold py-4 rounded-xl shadow-[0_0_20px_rgba(13,89,242,0.3)] transition-all transform active:scale-95 uppercase tracking-widest mt-4"
+            type="submit">
+            <span id="label-submit-escala">Confirmar Nova Escala</span>
+          </button>
+          <button id="btn-cancelar-escala"
+            class="hidden px-6 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-4 rounded-xl transition-all flex items-center justify-center gap-2 uppercase tracking-widest text-sm mt-4"
+            type="button">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
       </form>
     </section>
     <!-- Manage List Section -->
@@ -158,42 +173,36 @@
     import { supabase } from '../js/supabase-config.js';
     import { UI } from '../js/ui-utils.js';
 
-    let diasSelecionados = [];
+    let diasSemanaSelecionados = [];
 
-    // Render Calendário
-    const grid = document.getElementById('calendario_grid');
-    for (let i = 1; i <= 30; i++) {
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.innerText = i;
-      btn.className = 'dia-btn h-10 rounded bg-primary/10 border border-primary/20 flex items-center justify-center hover:bg-primary/40 transition-all text-xs font-bold';
-      btn.onclick = () => toggleDia(btn, i);
-      grid.appendChild(btn);
-    }
+    // Toggle Visibilidade
+    const tipoEscalaSel = document.getElementById('tipo_escala');
+    const cicloInputs = document.getElementById('ciclo_inputs');
+    const semanalInputs = document.getElementById('semanal_inputs');
 
-    function toggleDia(btn, dia) {
-      const limiteDias = parseInt(document.getElementById('dias_semana').value) || 0;
-      const offset = 5;
-      const indexSemana = Math.floor((offset + dia - 1) / 7);
-
-      // Contar quantos já tem na mesma semana
-      const diasMesmaSemana = diasSelecionados.filter(d => Math.floor((offset + d - 1) / 7) === indexSemana).length;
-
-      if (btn.classList.contains('bg-primary')) {
-        btn.classList.remove('bg-primary', 'shadow-[0_0_10px_rgba(13,89,242,0.5)]');
-        btn.classList.add('bg-primary/10');
-        diasSelecionados = diasSelecionados.filter(d => d !== dia);
+    tipoEscalaSel.onchange = () => {
+      if (tipoEscalaSel.value === 'ciclo') {
+        cicloInputs.classList.remove('hidden');
+        semanalInputs.classList.add('hidden');
       } else {
-        if (limiteDias > 0 && diasMesmaSemana >= limiteDias) {
-          btn.classList.add('border-red-500');
-          setTimeout(() => btn.classList.remove('border-red-500'), 500);
-          return;
-        }
-        btn.classList.remove('bg-primary/10');
-        btn.classList.add('bg-primary', 'shadow-[0_0_10px_rgba(13,89,242,0.5)]');
-        diasSelecionados.push(dia);
+        cicloInputs.classList.add('hidden');
+        semanalInputs.classList.remove('hidden');
       }
-    }
+    };
+
+    // Handler Dias da Semana
+    document.querySelectorAll('.day-toggle').forEach(btn => {
+      btn.onclick = () => {
+        const day = parseInt(btn.dataset.day);
+        if (diasSemanaSelecionados.includes(day)) {
+          diasSemanaSelecionados = diasSemanaSelecionados.filter(d => d !== day);
+          btn.classList.remove('bg-primary', 'text-white', 'border-primary');
+        } else {
+          diasSemanaSelecionados.push(day);
+          btn.classList.add('bg-primary', 'text-white', 'border-primary');
+        }
+      };
+    });
 
     async function loadEscalas() {
       const container = document.getElementById('lista-escalas');
@@ -208,44 +217,94 @@
                 <div class="bg-background-dark/40 border border-slate-800 p-4 rounded-xl flex items-center justify-between group hover:border-primary/50 transition-colors">
                   <div class="flex items-center gap-4">
                     <div class="size-12 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center">
-                      <span class="material-symbols-outlined text-primary">${getIconForRegime(e.tipo_regime)}</span>
+                      <span class="material-symbols-outlined text-primary">${e.tipo_escala === 'ciclo' ? 'sync' : 'calendar_month'}</span>
                     </div>
                     <div>
                       <h3 class="font-bold uppercase text-sm tracking-tight">${e.nome}</h3>
-                      <p class="text-xs text-slate-500">${e.horario_entrada} - ${e.horario_saida} • ${e.carga_horaria_semanal}h/sem</p>
+                      <p class="text-xs text-slate-500">
+                        ${e.tipo_escala === 'ciclo'
+            ? `Ciclo ${e.ciclo_config?.trab_total}h x ${e.ciclo_config?.folga_total}h`
+            : `Semanal • ${e.dias_padrao?.length || 0} dias`
+          } • ${e.horario_entrada} - ${e.horario_saida}
+                      </p>
                     </div>
                   </div>
-                  <div class="flex gap-2">
-                    <button onclick="deletarEscala('${e.id}')" class="p-2 hover:bg-red-500/20 rounded-lg text-red-500 transition-colors">
+                  <div class="flex gap-2 opacity-40 group-hover:opacity-100 transition-opacity">
+                    <button onclick="prepararEdicaoEscala('${e.id}', '${e.nome}', '${e.tipo_escala}', ${e.carga_horaria_semanal}, '${e.horario_entrada}', '${e.horario_saida}', ${JSON.stringify(e.dias_padrao)}, ${JSON.stringify(e.ciclo_config)})" class="p-2 hover:bg-primary/10 rounded-lg text-slate-400 hover:text-primary transition-colors">
+                      <span class="material-symbols-outlined text-[20px]">edit</span>
+                    </button>
+                    <button onclick="deletarEscala('${e.id}')" class="p-2 hover:bg-red-500/20 rounded-lg text-slate-400 hover:text-red-500 transition-colors">
                       <span class="material-symbols-outlined text-[20px]">delete</span>
                     </button>
                   </div>
                 </div>
             `).join('');
       } catch (err) {
-        console.error(err);
+        console.error('Erro ao carregar escalas:', err);
+        container.innerHTML = '<p class="text-red-500 text-center py-4">Erro ao carregar escalas</p>';
       }
     }
 
-    function getIconForRegime(regime) {
-      const icons = {
-        'Presencial': 'wb_sunny',
-        'Semipresencial': 'nightlight_round',
-        'Externo': 'emergency',
-        'Home Office': 'home'
-      };
-      return icons[regime] || 'schedule';
-    }
+    let editingEscalaId = null;
+
+    window.prepararEdicaoEscala = (id, nome, tipo, carga, entrada, saida, diasPadrao, cicloConfig) => {
+      editingEscalaId = id;
+      document.getElementById('nome_escala').value = nome;
+      document.getElementById('tipo_escala').value = tipo;
+      document.getElementById('carga_horaria').value = carga;
+      document.getElementById('horario_entrada').value = entrada;
+      document.getElementById('horario_saida').value = saida;
+
+      // Reset e Aplica Visibilidade
+      tipoEscalaSel.onchange();
+
+      if (tipo === 'semanal') {
+        diasSemanaSelecionados = diasPadrao || [];
+        document.querySelectorAll('.day-toggle').forEach(btn => {
+          const day = parseInt(btn.dataset.day);
+          if (diasSemanaSelecionados.includes(day)) {
+            btn.classList.add('bg-primary', 'text-white', 'border-primary');
+          } else {
+            btn.classList.remove('bg-primary', 'text-white', 'border-primary');
+          }
+        });
+      } else if (tipo === 'ciclo' && cicloConfig) {
+        document.getElementById('trab_total').value = cicloConfig.trab_total;
+        document.getElementById('folga_total').value = cicloConfig.folga_total;
+      }
+
+      document.getElementById('label-submit-escala').innerText = 'Atualizar Escala';
+      document.getElementById('btn-cancelar-escala').classList.remove('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    document.getElementById('btn-cancelar-escala').onclick = () => {
+      editingEscalaId = null;
+      document.getElementById('form-escala').reset();
+      diasSemanaSelecionados = [];
+      document.querySelectorAll('.day-toggle').forEach(btn => btn.classList.remove('bg-primary', 'text-white', 'border-primary'));
+      document.getElementById('label-submit-escala').innerText = 'Confirmar Nova Escala';
+      document.getElementById('btn-cancelar-escala').classList.add('hidden');
+      tipoEscalaSel.onchange();
+    };
 
     window.deletarEscala = async (id) => {
       if (!confirm('Deseja excluir esta escala?')) return;
       UI.showLoader();
       try {
         const { error } = await supabase.from('escalas').delete().eq('id', id);
-        if (error) throw error;
+        if (error) {
+          // Erro 23503: foreign_key_violation
+          if (error.code === '23503') {
+            UI.showToast('Não é possível excluir: Escala atribuída a funcionários', 'warning');
+            return;
+          }
+          throw error;
+        }
         UI.showToast('Escala removida', 'success');
         loadEscalas();
       } catch (err) {
+        console.error('Erro ao deletar:', err);
         UI.showToast('Erro ao remover escala', 'error');
       } finally {
         UI.hideLoader();
@@ -255,8 +314,9 @@
     document.getElementById('form-escala').addEventListener('submit', async (e) => {
       e.preventDefault();
 
-      if (diasSelecionados.length === 0) {
-        UI.showToast('Selecione os dias no calendário', 'warning');
+      const tipo = tipoEscalaSel.value;
+      if (tipo === 'semanal' && diasSemanaSelecionados.length === 0) {
+        UI.showToast('Selecione ao menos um dia da semana', 'warning');
         return;
       }
 
@@ -264,29 +324,34 @@
 
       const dados = {
         nome: document.getElementById('nome_escala').value,
-        carga_horaria_semanal: parseInt(document.getElementById('carga_horaria').value),
-        dias_trabalho_semana: parseInt(document.getElementById('dias_semana').value),
-        tipo_regime: document.getElementById('tipo_regime').value,
+        tipo_escala: tipo,
+        carga_horaria_semanal: parseInt(document.getElementById('carga_horaria').value) || 0,
         horario_entrada: document.getElementById('horario_entrada').value,
         horario_saida: document.getElementById('horario_saida').value,
-        dias_padrao: diasSelecionados
+        dias_trabalho_semana: tipo === 'semanal' ? diasSemanaSelecionados.length : 0,
+        dias_padrao: tipo === 'semanal' ? diasSemanaSelecionados : null,
+        ciclo_config: tipo === 'ciclo' ? {
+          trab_total: parseInt(document.getElementById('trab_total').value),
+          folga_total: parseInt(document.getElementById('folga_total').value)
+        } : null
       };
 
       try {
-        const { error } = await supabase.from('escalas').insert([dados]);
-        if (error) throw error;
+        if (editingEscalaId) {
+          const { error } = await supabase.from('escalas').update(dados).eq('id', editingEscalaId);
+          if (error) throw error;
+          UI.showToast('Escala atualizada!', 'success');
+        } else {
+          const { error } = await supabase.from('escalas').insert([dados]);
+          if (error) throw error;
+          UI.showToast('Escala configurada!', 'success');
+        }
 
-        UI.showToast('Escala configurada!', 'success');
-        document.getElementById('form-escala').reset();
-        diasSelecionados = [];
-        document.querySelectorAll('.dia-btn').forEach(btn => {
-          btn.classList.remove('bg-primary', 'shadow-[0_0_10px_rgba(13,89,242,0.5)]');
-          btn.classList.add('bg-primary/10');
-        });
+        document.getElementById('btn-cancelar-escala').click();
         loadEscalas();
       } catch (err) {
         console.error(err);
-        UI.showToast('Erro ao salvar escala', 'error');
+        UI.showToast('Erro ao processar escala', 'error');
       } finally {
         UI.hideLoader();
       }

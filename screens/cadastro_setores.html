@@ -57,24 +57,18 @@
   <!-- Header -->
   <header class="border-b border-primary/20 bg-background-dark/80 backdrop-blur-md sticky top-0 z-50">
     <div class="flex items-center p-4 justify-between max-w-2xl mx-auto">
-      <div onclick="history.back()"
+      <div id="btn-voltar" onclick="window.location.href='painel_admin.html'"
         class="text-primary flex size-10 shrink-0 items-center justify-center rounded-lg border border-primary/30 bg-primary/10 cursor-pointer hover:bg-primary/20 transition-all">
         <span class="material-symbols-outlined">arrow_back</span>
       </div>
       <h2 class="text-slate-100 text-lg font-bold tracking-wider uppercase flex-1 text-center">GESTÃO DE SETORES</h2>
       <div
-        class="flex size-10 items-center justify-center rounded-lg bg-primary/10 border border-primary/30 text-primary">
-        <span class="material-symbols-outlined">settings</span>
+        class="flex size-10 items-center justify-center rounded-lg bg-primary/10 border border-primary/30 text-primary opacity-20">
+        <span class="material-symbols-outlined">account_tree</span>
       </div>
     </div>
   </header>
   <main class="flex-1 p-4 pb-24 space-y-8 max-w-2xl mx-auto w-full">
-    <!-- Welcome/Status Section -->
-    <section class="sci-fi-gradient rounded-xl p-6 border border-primary/20 relative overflow-hidden">
-      <div class="absolute top-0 right-0 w-32 h-32 bg-primary/10 blur-3xl rounded-full -mr-16 -mt-16"></div>
-      <h2 class="text-2xl font-bold mb-2">Comando Central</h2>
-      <p class="text-slate-400 text-sm">Configure as divisões estratégicas da base estelar.</p>
-    </section>
     <!-- New Sector Form -->
     <section class="space-y-4">
       <div class="flex items-center gap-2 mb-4">
@@ -91,35 +85,26 @@
           </div>
           <div class="space-y-2">
             <label class="text-sm font-medium text-slate-400 uppercase tracking-wider">Gestor Responsável</label>
-            <div class="relative">
-              <select id="gestor-select"
-                class="w-full bg-background-dark/50 border border-primary/30 rounded-lg h-12 px-4 appearance-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none"
-                required>
-                <option value="">Carregando Comandantes...</option>
-              </select>
+            <div class="relative group">
+              <input id="gestor-search"
+                class="w-full bg-background-dark/50 border border-primary/30 rounded-lg h-12 px-4 focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none placeholder:text-slate-600"
+                placeholder="Pesquisar funcionário..." type="text" autocomplete="off" />
+              <input type="hidden" id="gestor-id" required />
+              <div id="gestor-results"
+                class="absolute z-[100] w-full mt-1 bg-background-dark border border-primary/20 rounded-lg shadow-2xl max-h-60 overflow-y-auto hidden">
+              </div>
               <span
-                class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-primary">expand_more</span>
+                class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-primary opacity-40">search</span>
             </div>
           </div>
           <!-- Geofence Parameters -->
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-1">
             <div class="space-y-2">
               <label class="text-sm font-medium text-slate-400 uppercase tracking-wider text-[10px]">Raio de Ativação
                 (Metros)</label>
               <input id="radius-input"
                 class="w-full bg-background-dark/50 border border-primary/30 rounded-lg h-12 px-4 focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none"
                 type="number" value="100" />
-            </div>
-            <div class="space-y-2">
-              <label class="text-sm font-medium text-slate-400 uppercase tracking-wider text-[10px]">Regime
-                Padrão</label>
-              <select id="regime-select"
-                class="w-full bg-background-dark/50 border border-primary/30 rounded-lg h-12 px-4 focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none">
-                <option value="Presencial">Presencial</option>
-                <option value="Semipresencial">Semipresencial</option>
-                <option value="Externo">Externo</option>
-                <option value="Home Office">Home Office</option>
-              </select>
             </div>
           </div>
           <!-- Location Map -->
@@ -136,11 +121,18 @@
                   class="text-slate-100">-46.6333</span></div>
             </div>
           </div>
-          <button type="submit" id="btn-salvar"
-            class="w-full bg-primary hover:bg-primary/80 text-white font-bold py-4 rounded-lg transition-all shadow-[0_0_15px_rgba(13,89,242,0.4)] flex items-center justify-center gap-2 uppercase tracking-widest text-sm">
-            <span class="material-symbols-outlined">rocket_launch</span>
-            Inicializar Setor
-          </button>
+          <div class="flex gap-2">
+            <button type="submit" id="btn-salvar"
+              class="flex-1 bg-primary hover:bg-primary/80 text-white font-bold py-4 rounded-lg transition-all shadow-[0_0_15px_rgba(13,89,242,0.4)] flex items-center justify-center gap-2 uppercase tracking-widest text-sm text-[10px]">
+              <span class="material-symbols-outlined">rocket_launch</span>
+              <span id="label-btn-setor">Inicializar Setor</span>
+            </button>
+            <button id="btn-cancelar-setor"
+              class="hidden px-6 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-4 rounded-lg transition-all flex items-center justify-center gap-2 uppercase tracking-widest text-sm"
+              type="button">
+              <span class="material-symbols-outlined">close</span>
+            </button>
+          </div>
         </form>
       </div>
     </section>
@@ -155,7 +147,7 @@
           class="bg-primary/20 text-primary text-xs font-bold px-2 py-1 rounded-full border border-primary/30">0
           ATIVOS</span>
       </div>
-      <div id="lista-setores" class="space-y-3">
+      <div id="lista-setores" class="space-y-3 pb-8">
         <!-- Lista Dinâmica -->
       </div>
     </section>
@@ -182,8 +174,8 @@
       </a>
       <a id="nav-perfil-link" href="perfil_funcionario.html"
         class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
-        <span class="material-symbols-outlined text-2xl font-variation-settings-fill">settings</span>
-        <span class="text-[9px] font-black uppercase tracking-widest text-center">Config</span>
+        <span class="material-symbols-outlined text-2xl">person</span>
+        <span class="text-[9px] font-black uppercase tracking-widest text-center">Perfil</span>
       </a>
     </div>
   </nav>
@@ -196,9 +188,15 @@
     import { UI } from '../js/ui-utils.js';
 
     // Mapa Leaflet
-    const map = L.map('map').setView([-23.5505, -46.6333], 15);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap'
+    // Mapa Leaflet - Padrão Satélite Híbrido
+    const map = L.map('map', {
+      maxZoom: 20
+    }).setView([-23.5505, -46.6333], 15);
+
+    // Camada Híbrida (Satélite + Ruas)
+    L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+      subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+      attribution: '© Google Maps'
     }).addTo(map);
 
     let marker, circle;
@@ -238,26 +236,76 @@
 
     updateMap(-23.5505, -46.6333, 100);
 
-    // Lógica do Supabase
-    async function loadManagers() {
-      const select = document.getElementById('gestor-select');
+    // Geolocalização Inicial
+    function initUserLocation() {
+      if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition((position) => {
+          const { latitude, longitude } = position.coords;
+          map.setView([latitude, longitude], 17);
+          updateMap(latitude, longitude, parseInt(document.getElementById('radius-input').value) || 100);
+        }, (error) => {
+          console.warn("Geolocalização negada ou falhou:", error.message);
+          UI.showToast("Localização não detectada. Use o mapa.", "info");
+        });
+      }
+    }
+
+    // Lógica do Supabase - Busca de Gestores
+    let allFuncionarios = [];
+
+    async function preloadFuncionarios() {
       try {
         const { data, error } = await supabase
           .from('funcionarios')
-          .select('id, nome_completo')
-          .in('nivel_acesso', ['comandante', 'GESTOR', 'admin']);
-
+          .select('id, nome_completo, nickname')
+          .order('nome_completo');
         if (error) throw error;
-
-        select.innerHTML = '<option value="">Selecionar Comandante</option>';
-        data.forEach(m => {
-          select.innerHTML += `<option value="${m.id}">${m.nome_completo}</option>`;
-        });
+        allFuncionarios = data;
       } catch (err) {
-        console.error('Erro ao carregar gestores:', err);
-        select.innerHTML = '<option value="">Erro ao carregar</option>';
+        console.error('Erro ao pré-carregar funcionários:', err);
       }
     }
+
+    const searchInput = document.getElementById('gestor-search');
+    const resultsDiv = document.getElementById('gestor-results');
+    const gestorIdInput = document.getElementById('gestor-id');
+
+    searchInput.addEventListener('input', (e) => {
+      const term = e.target.value.toLowerCase();
+      if (!term) {
+        resultsDiv.classList.add('hidden');
+        return;
+      }
+
+      const filtered = allFuncionarios.filter(f =>
+        f.nome_completo.toLowerCase().includes(term) ||
+        (f.nickname && f.nickname.toLowerCase().includes(term))
+      ).slice(0, 10);
+
+      if (filtered.length > 0) {
+        resultsDiv.innerHTML = filtered.map(f => `
+          <div class="px-4 py-3 hover:bg-primary/20 cursor-pointer border-b border-white/5 last:border-0 transition-colors"
+            onclick="selectGestor('${f.id}', '${f.nome_completo}')">
+            <p class="text-[11px] font-bold text-slate-100">${f.nome_completo}</p>
+            <p class="text-[9px] text-primary uppercase opacity-60">${f.nickname || 'N/A'}</p>
+          </div>
+        `).join('');
+        resultsDiv.classList.remove('hidden');
+      } else {
+        resultsDiv.classList.add('hidden');
+      }
+    });
+
+    window.selectGestor = (id, nome) => {
+      gestorIdInput.value = id;
+      searchInput.value = nome;
+      resultsDiv.classList.add('hidden');
+    };
+
+    // Fechar resultados ao clicar fora
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.group')) resultsDiv.classList.add('hidden');
+    });
 
     async function loadSetores() {
       const container = document.getElementById('lista-setores');
@@ -265,7 +313,7 @@
       try {
         const { data, error } = await supabase
           .from('setores')
-          .select('*, funcionarios(nome_completo)')
+          .select('*, gestor:funcionarios!gestor_id(nome_completo)')
           .order('nome');
 
         if (error) throw error;
@@ -278,14 +326,17 @@
                       <span class="material-symbols-outlined text-primary">engineering</span>
                     </div>
                     <div>
-                      <h3 class="font-bold text-slate-100 uppercase tracking-wide">${s.nome}</h3>
-                      <p class="text-xs text-slate-500 text-[10px]">Gestor: ${s.funcionarios?.nome_completo || 'N/A'}</p>
-                      <p class="text-[9px] text-primary font-mono mt-1 uppercase tracking-tight">Raio: ${s.raio}m • ${s.regime || 'Presencial'}</p>
+                      <h3 class="font-bold text-slate-100 uppercase tracking-wide text-xs">${s.nome}</h3>
+                      <p class="text-xs text-slate-500 text-[10px]">Gestor: ${s.gestor?.nome_completo || 'N/A'}</p>
+                      <p class="text-[9px] text-primary font-mono mt-1 uppercase tracking-tight">Raio: ${s.raio}m</p>
                     </div>
                   </div>
-                  <div class="flex gap-1">
-                    <button onclick="zoomToSetor(${s.latitude}, ${s.longitude}, ${s.raio})" class="p-2 hover:bg-slate-700 rounded-lg transition-colors text-slate-400 hover:text-neon-blue">
+                  <div class="flex gap-1 opacity-40 group-hover:opacity-100 transition-opacity">
+                    <button onclick="zoomToSetor(${s.latitude}, ${s.longitude}, ${s.raio})" class="p-2 hover:bg-slate-700/50 rounded-lg transition-colors text-slate-400 hover:text-white">
                       <span class="material-symbols-outlined text-[18px]">location_searching</span>
+                    </button>
+                    <button onclick="prepararEdicaoSetor('${s.id}', '${s.nome}', '${s.gestor_id}', '${s.gestor?.nome_completo || ''}', ${s.raio}, ${s.latitude}, ${s.longitude})" class="p-2 hover:bg-primary/10 rounded-lg transition-colors text-slate-400 hover:text-primary">
+                      <span class="material-symbols-outlined text-[18px]">edit</span>
                     </button>
                     <button onclick="deletarSetor('${s.id}')" class="p-2 hover:bg-red-500/20 rounded-lg transition-colors text-slate-400 hover:text-red-500">
                       <span class="material-symbols-outlined text-[18px]">delete</span>
@@ -298,6 +349,32 @@
         container.innerHTML = '<p class="text-red-500 text-center py-4 text-xs font-bold uppercase">Erro ao carregar setores</p>';
       }
     }
+
+    let editingSetorId = null;
+
+    window.prepararEdicaoSetor = (id, nome, gestorId, gestorNome, raio, lat, lng) => {
+      editingSetorId = id;
+      document.getElementById('nome-setor').value = nome;
+      document.getElementById('gestor-id').value = gestorId;
+      document.getElementById('gestor-search').value = gestorNome;
+      document.getElementById('radius-input').value = raio;
+
+      updateMap(lat, lng, raio);
+      map.setView([lat, lng], 17);
+
+      document.getElementById('label-btn-setor').innerText = 'Atualizar Setor';
+      document.getElementById('btn-cancelar-setor').classList.remove('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    document.getElementById('btn-cancelar-setor').onclick = () => {
+      editingSetorId = null;
+      document.getElementById('form-setor').reset();
+      document.getElementById('gestor-id').value = '';
+      document.getElementById('label-btn-setor').innerText = 'Inicializar Setor';
+      document.getElementById('btn-cancelar-setor').classList.add('hidden');
+      initUserLocation();
+    };
 
     window.zoomToSetor = (lat, lng, radius) => {
       map.setView([lat, lng], 17);
@@ -323,34 +400,47 @@
 
     document.getElementById('form-setor').addEventListener('submit', async (e) => {
       e.preventDefault();
+
+      const gestorId = gestorIdInput.value;
+      if (!gestorId) {
+        UI.showToast('Selecione um gestor válido na lista', 'error');
+        return;
+      }
+
       UI.showLoader();
 
       const dados = {
         nome: document.getElementById('nome-setor').value,
-        gestor_id: document.getElementById('gestor-select').value,
+        gestor_id: gestorId,
         raio: parseInt(document.getElementById('radius-input').value),
-        regime: document.getElementById('regime-select').value,
         latitude: selectedLat,
         longitude: selectedLng
       };
 
       try {
-        const { error } = await supabase.from('setores').insert([dados]);
-        if (error) throw error;
+        if (editingSetorId) {
+          const { error } = await supabase.from('setores').update(dados).eq('id', editingSetorId);
+          if (error) throw error;
+          UI.showToast('Setor atualizado!', 'success');
+        } else {
+          const { error } = await supabase.from('setores').insert([dados]);
+          if (error) throw error;
+          UI.showToast('Setor inicializado!', 'success');
+        }
 
-        UI.showToast('Setor inicializado!', 'success');
-        document.getElementById('form-setor').reset();
+        document.getElementById('btn-cancelar-setor').click();
         loadSetores();
       } catch (err) {
         console.error('Erro ao salvar:', err);
-        UI.showToast('Erro ao salvar setor', 'error');
+        UI.showToast('Erro ao processar setor', 'error');
       } finally {
         UI.hideLoader();
       }
     });
 
-    loadManagers();
+    preloadFuncionarios();
     loadSetores();
+    initUserLocation();
 
     // Navegação dinâmica
     (async () => {

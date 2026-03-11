@@ -37,7 +37,8 @@
                 }
 
                 document.getElementById('display-name').innerText = (currentUser.nickname || currentUser.name || "ADMIN").toUpperCase();
-                document.getElementById('user-role-setor').innerText = `CARGO/FUNÇÃO: ${currentUser.funcao?.toUpperCase() || 'ADMIN'}`;
+                const nivelStr = currentUser.funcaoNivel ? ` (${currentUser.funcaoNivel})` : '';
+                document.getElementById('user-role-setor').innerText = `CARGO/FUNÇÃO: ${currentUser.funcao?.toUpperCase() || 'ADMIN'}${nivelStr}`;
                 document.getElementById('user-setor-info').innerText = `SETOR: ${currentUser.setor.toUpperCase()}`;
 
                 if (document.getElementById('user-nickname')) document.getElementById('user-nickname').innerText = currentUser.matricula || `#${currentUser.nickname || 'ADMIN'}`;
@@ -123,10 +124,15 @@
                 }
 
                 if (btn) {
-                    btn.innerText = isOnline ? 'ENCERRAR PONTO' : 'REGISTRAR PONTO';
+                    btn.innerHTML = isOnline
+                        ? `<span class="material-symbols-outlined text-4xl mb-2 text-rose-500">power_settings_new</span>
+                           <span class="text-sm font-black text-rose-500 leading-tight tracking-wider uppercase">ENCERRAR<br>PONTO</span>`
+                        : `<span class="material-symbols-outlined text-4xl mb-2 text-white">power_settings_new</span>
+                           <span class="text-sm font-black text-white leading-tight tracking-wider uppercase">REGISTRAR<br>PONTO</span>`;
+
                     btn.className = isOnline
-                        ? "w-full py-4 bg-rose-500/10 border border-rose-500/50 rounded-2xl text-rose-500 font-black text-[10px] tracking-[0.2em] shadow-lg shadow-rose-500/10 active:scale-95 transition-all"
-                        : "w-full py-4 bg-primary rounded-2xl text-white font-black text-[10px] tracking-[0.2em] shadow-lg shadow-primary/30 active:scale-95 transition-all";
+                        ? "relative group w-48 h-48 rounded-full bg-rose-500/10 border-4 border-rose-500/30 flex flex-col items-center justify-center text-center p-6 shadow-xl shadow-rose-500/10 hover:scale-105 active:scale-95 transition-all"
+                        : "relative group w-48 h-48 rounded-full bg-amber-500 border-4 border-amber-500/30 flex flex-col items-center justify-center text-center p-6 shadow-xl shadow-amber-500/20 hover:scale-105 active:scale-95 transition-all";
                 }
 
                 if (isOnline) startTimer(data[0].data_hora); else stopTimer();
@@ -207,8 +213,36 @@
             }
         }
 
+        async function updateNotificationBadge() {
+            try {
+                const { count, error } = await supabase
+                    .from('justificativas')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('status', 'pendente');
+
+                if (error) throw error;
+
+                const badge = document.getElementById('notifBadge');
+                const bell = document.getElementById('notifBell');
+
+                if (count > 0) {
+                    badge.innerText = count > 99 ? '99+' : count;
+                    badge.classList.remove('hidden');
+                    bell.classList.add('text-amber-500');
+                    bell.classList.remove('text-slate-400');
+                } else {
+                    badge.classList.add('hidden');
+                    bell.classList.remove('text-amber-500');
+                    bell.classList.add('text-slate-400');
+                }
+            } catch (err) {
+                console.error('Erro ao buscar notificações:', err);
+            }
+        }
+
         document.getElementById('logoutBtn').addEventListener('click', () => Auth.logout());
         initAdmin();
+        updateNotificationBadge();
     </script>
 
     <script src="../js/theme.js?v=1.0"></script>
@@ -223,9 +257,11 @@
             </div>
             <h1 class="text-[10px] font-black tracking-[0.2em] text-slate-500 uppercase text-center flex-1">Protocolo
                 Central</h1>
-            <a href="autorizacoes_abono.html"
-                class="size-10 flex items-center justify-end text-slate-400 hover:text-primary transition-colors">
-                <span class="material-symbols-outlined">notifications</span>
+            <a href="autorizacoes_abono.html" id="notifLink"
+                class="size-10 flex items-center justify-end text-slate-400 hover:text-primary transition-colors relative">
+                <span id="notifBell" class="material-symbols-outlined">notifications</span>
+                <span id="notifBadge"
+                    class="absolute top-1 -right-1 hidden flex items-center justify-center bg-amber-500 text-white text-[8px] font-black h-4 w-4 rounded-full border border-background-dark shadow-lg">0</span>
             </a>
         </div>
 
@@ -289,10 +325,12 @@
 
     <main class="flex-1 p-6 space-y-8 overflow-y-auto">
         <!-- Punch Section -->
-        <section class="max-w-md mx-auto">
+        <section class="w-full max-w-md flex justify-center mx-auto mb-8 mt-2">
             <button id="punchButton"
-                class="w-full py-5 bg-primary rounded-2xl text-white font-black text-xs tracking-[0.3em] shadow-2xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all">
-                REGISTRAR PONTO
+                class="relative group w-48 h-48 rounded-full bg-amber-500 flex flex-col items-center justify-center text-center p-6 shadow-xl border-4 border-amber-500/30 hover:scale-105 transition-all">
+                <span class="material-symbols-outlined text-4xl mb-2 text-white">power_settings_new</span>
+                <span
+                    class="text-sm font-black text-white leading-tight tracking-wider uppercase">REGISTRAR<br>PONTO</span>
             </button>
         </section>
 

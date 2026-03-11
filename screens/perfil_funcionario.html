@@ -30,7 +30,7 @@
     <!-- Header / Navigation -->
     <div
         class="flex items-center bg-background-light dark:bg-background-dark p-4 pb-2 justify-between border-b border-slate-200 dark:border-primary/20">
-        <div onclick="history.back()"
+        <div id="btn-voltar"
             class="text-primary flex size-10 mt-2 shrink-0 items-center justify-center rounded-lg border border-primary/30 bg-primary/10 cursor-pointer hover:bg-primary/20 transition-all">
             <span class="material-symbols-outlined">arrow_back</span>
         </div>
@@ -68,7 +68,7 @@
             <p class="text-slate-600 dark:text-slate-400 text-base font-normal">Insira suas credenciais
                 biométricas para acessar a rede de rastreamento temporal.</p>
         </header>
-        <form class="space-y-6">
+        <form id="profile-form" class="space-y-6">
             <!-- Nome Completo -->
             <div class="group">
                 <label class="block text-xs font-bold uppercase tracking-widest text-primary mb-3">Nome Completo</label>
@@ -219,15 +219,31 @@
             </div>
 
             <!-- Nível de Acesso (Somente Leitura para o Funcionário) -->
-            <div class="group space-y-3">
-                <label class="block text-xs font-bold uppercase tracking-widest text-slate-500">Nível de Acesso ao
-                    Sistema</label>
-                <div id="access-level-container"
-                    class="flex gap-2 bg-slate-100 dark:bg-slate-800 p-1.5 rounded-xl border border-slate-200 dark:border-slate-800 opacity-70 pointer-events-none">
-                    <div
-                        class="flex-1 flex flex-col items-center justify-center py-4 px-2 rounded-lg bg-primary/10 text-primary border border-primary/50">
-                        <span id="access-level-icon" class="material-symbols-outlined mb-1">shield</span>
-                        <span id="access-level-text" class="text-[10px] font-bold uppercase tracking-tighter">...</span>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="group space-y-3">
+                    <label class="block text-xs font-bold uppercase tracking-widest text-slate-500">Nível de
+                        Acesso</label>
+                    <div id="access-level-container"
+                        class="flex gap-2 bg-slate-100 dark:bg-slate-800 p-1.5 rounded-xl border border-slate-200 dark:border-slate-800 opacity-70 pointer-events-none">
+                        <div
+                            class="flex-1 flex flex-col items-center justify-center py-4 px-2 rounded-lg bg-primary/10 text-primary border border-primary/50">
+                            <span id="access-level-icon" class="material-symbols-outlined mb-1">shield</span>
+                            <span id="access-level-text"
+                                class="text-[10px] font-bold uppercase tracking-tighter">...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Frequência de Confirmação -->
+                <div class="group">
+                    <label class="block text-xs font-bold uppercase tracking-widest text-primary mb-3">Frequência de
+                        Confirmação (Dias)</label>
+                    <div class="relative">
+                        <span
+                            class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">update</span>
+                        <input id="frequencia_confirmacao"
+                            class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg py-3 pl-10 pr-4 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                            placeholder="30" type="number" min="1">
                     </div>
                 </div>
             </div>
@@ -237,9 +253,9 @@
             <div class="grid grid-cols-2 gap-4">
                 <div class="group">
                     <label class="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">Função</label>
-                    <div
+                    <div id="user-funcao-field"
                         class="w-full bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-lg py-3 px-4 text-sm text-slate-500 cursor-not-allowed">
-                        Piloto Temporal
+                        Carregando...
                     </div>
                 </div>
                 <div class="group">
@@ -288,8 +304,31 @@
                     </div>
 
                     <div>
-                        <p class="text-[10px] text-slate-500 uppercase font-bold mb-2 text-center">Dias de Trabalho
-                            (Novembro)</p>
+                        <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-3">
+                            <p class="text-[10px] text-slate-500 uppercase font-bold">Planejamento de Plantões</p>
+                            <div class="flex gap-2">
+                                <select id="cal-month"
+                                    class="bg-background-dark border border-primary/20 text-[10px] rounded px-2 py-1 outline-none text-slate-300">
+                                    <option value="0">Janeiro</option>
+                                    <option value="1">Fevereiro</option>
+                                    <option value="2">Março</option>
+                                    <option value="3">Abril</option>
+                                    <option value="4">Maio</option>
+                                    <option value="5">Junho</option>
+                                    <option value="6">Julho</option>
+                                    <option value="7">Agosto</option>
+                                    <option value="8">Setembro</option>
+                                    <option value="9">Outubro</option>
+                                    <option value="10">Novembro</option>
+                                    <option value="11">Dezembro</option>
+                                </select>
+                                <select id="cal-year"
+                                    class="bg-background-dark border border-primary/20 text-[10px] rounded px-2 py-1 outline-none text-slate-300">
+                                    <option value="2025">2025</option>
+                                    <option value="2026">2026</option>
+                                </select>
+                            </div>
+                        </div>
                         <div class="grid grid-cols-7 gap-1 text-center text-[10px] mb-1 opacity-50">
                             <div>D</div>
                             <div>S</div>
@@ -308,9 +347,20 @@
 
             <script type="module">
                 import { supabase } from '../js/supabase-config.js?v=2';
+                import { ScalesEngine } from '../js/scales-engine.js';
+                import { Auth } from '../js/auth.js';
+                import { UI } from '../js/ui-utils.js';
+
+                // Configurar retorno imediato
+                document.getElementById('btn-voltar').onclick = () => UI.voltarInicio();
+
+                let globalFunc = null;
+                let globalEscala = null;
+                let globalEscalasConfirmadas = [];
+                let currentMonth = new Date().getMonth();
+                let currentYear = new Date().getFullYear();
 
                 async function initProfile() {
-                    let escalasData = {};
                     const urlParams = new URLSearchParams(window.location.search);
                     let funcionarioId = urlParams.get('id') || localStorage.getItem('userId');
 
@@ -319,127 +369,260 @@
                         return;
                     }
 
+                    // Configurar seletores
+                    const monthSel = document.getElementById('cal-month');
+                    const yearSel = document.getElementById('cal-year');
+                    monthSel.value = currentMonth;
+                    yearSel.value = currentYear;
+
+                    monthSel.onchange = (e) => { currentMonth = parseInt(e.target.value); refreshCalendar(); };
+                    yearSel.onchange = (e) => { currentYear = parseInt(e.target.value); refreshCalendar(); };
+
                     try {
-                        // 1. Carregar Escalas para referência
-                        const { data: escalas, error: errEscalas } = await supabase.from('escalas').select('*');
-                        if (errEscalas) throw errEscalas;
-
-                        escalas.forEach(e => {
-                            escalasData[e.id] = {
-                                nome: e.nome,
-                                carga: e.carga_horaria_semanal,
-                                tipo: "Presencial",
-                                entrada: e.horario_entrada,
-                                saida: e.horario_saida,
-                                dias: e.dias_padrao
-                            };
-                        });
-
-                        // 2. Carregar o funcionário
-                        const { data: func, error: errFunc } = await supabase
+                        const { data: func, error } = await supabase
                             .from('funcionarios')
-                            .select('*, setores(nome)')
+                            .select('*, setores!setor_id(nome), cargos(nome, nivel)')
                             .eq('id', funcionarioId)
                             .single();
 
-                        if (errFunc) throw errFunc;
+                        if (error) throw error;
+                        globalFunc = func;
 
-                        preencherDados(func, escalasData);
+                        // Carregar Escala Base (Se houver)
+                        if (func.escala_id) {
+                            const { data: esc } = await supabase.from('escalas').select('*').eq('id', func.escala_id).single();
+                            globalEscala = esc;
+                        }
+
+                        // Carregar Plantões Confirmados do Mês
+                        await loadConfirmedShifts();
+
+                        preencherDados(func);
                     } catch (error) {
                         console.error('Erro ao carregar perfil:', error);
                     }
                 }
 
-                async function preencherDados(func, escalasData) {
-                    if (!func) return;
+                async function loadConfirmedShifts() {
+                    const firstDay = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-01`;
+                    const lastDay = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${new Date(currentYear, currentMonth + 1, 0).getDate()}`;
 
-                    const { Auth } = await import('../js/auth.js');
-                    const { UI } = await import('../js/ui-utils.js');
+                    const { data } = await supabase
+                        .from('plantoes_confirmados')
+                        .select('*')
+                        .eq('funcionario_id', globalFunc.id)
+                        .gte('data', firstDay)
+                        .lte('data', lastDay);
+
+                    globalEscalasConfirmadas = data || [];
+                }
+
+                function preencherDados(func) {
                     const userData = Auth.getUser();
                     UI.updateFooterNavigation(userData.role);
 
                     document.getElementById('nome_completo').value = func.nome_completo || '';
-                    document.getElementById('nickname').value = func.nickname || func.nome_completo.split(' ')[0];
+                    document.getElementById('nickname').value = func.nickname || '';
                     document.getElementById('campo-matricula').value = func.matricula || '';
-
-                    // Mudar título e cabeçalho
-                    const headerH2 = document.querySelector('h2');
-                    const headerH3 = document.querySelector('h3');
-                    const headerP = document.querySelector('header p');
-
-                    if (headerH2) headerH2.innerText = "PERFIL DO TRIPULANTE";
+                    document.getElementById('frequencia_confirmacao').value = func.frequencia_confirmacao_dias || 30;
 
                     document.getElementById('display-name-profile').innerText = (func.nickname || func.nome_completo || 'Tripulante').toUpperCase();
-                    document.getElementById('user-role-profile').innerText = `CARGO/FUNÇÃO: ${(func.funcao || 'Tripulante').toUpperCase()}`;
+                    document.getElementById('user-role-profile').innerText = `CARGO/FUNÇÃO: ${(func.cargos?.nome || func.funcao || 'Tripulante').toUpperCase()} (${func.cargos?.nivel || 'N/A'})`;
+                    document.getElementById('user-funcao-field').innerText = func.cargos?.nome || func.funcao || 'Não Definido';
                     document.getElementById('user-setor-profile').innerText = `SETOR: ${(func.setores?.nome || 'Não Definido').toUpperCase()}`;
                     if (func.foto_url) document.getElementById('user-photo-profile').src = func.foto_url;
 
-                    if (headerH3) headerH3.innerText = "Informações Cadastrais";
-                    if (headerP) headerP.innerText = `Atualize seus dados biométricos e de acesso.`;
-
-                    // Atualizar Nível de Acesso dinamicamente
                     const levelText = document.getElementById('access-level-text');
                     const levelIcon = document.getElementById('access-level-icon');
                     if (levelText) levelText.innerText = func.nivel_acesso || 'Funcionário';
-
                     if (levelIcon) {
-                        const icons = {
-                            'Admin': 'workspace_premium',
-                            'Gestor': 'military_tech',
-                            'Funcionário': 'shield'
-                        };
+                        const icons = { 'Admin': 'workspace_premium', 'Gestor': 'military_tech', 'Funcionário': 'shield' };
                         levelIcon.innerText = icons[func.nivel_acesso] || 'shield';
                     }
 
-                    // Lógica de Escala
-                    const detalhesEscala = document.getElementById('detalhes-escala-card');
-                    if (detalhesEscala) {
-                        detalhesEscala.classList.remove('hidden');
-                        detalhesEscala.style.display = 'block'; // Forçar exibição
-                    }
-
-                    if (func.personalizacao_escala) {
-                        const p = func.personalizacao_escala;
-                        document.getElementById('detalhe-nome').innerText = "Escala Personalizada";
-                        document.getElementById('detalhe-tipo').innerText = "Ajuste Individual";
-                        document.getElementById('detalhe-carga').innerText = p.carga_horaria_semanal + 'h/sem';
-                        document.getElementById('detalhe-turno').innerText = `${p.horario_entrada} às ${p.horario_saida}`;
-                        renderizarMiniCalendario(p.dias_selecionados || []);
-                    } else if (func.escala_id) {
-                        const config = escalasData[func.escala_id];
-                        if (config) {
-                            document.getElementById('detalhe-nome').innerText = config.nome;
-                            document.getElementById('detalhe-tipo').innerText = config.tipo;
-                            document.getElementById('detalhe-carga').innerText = config.carga + 'h/sem';
-                            document.getElementById('detalhe-turno').innerText = `${config.entrada} às ${config.saida}`;
-                            renderizarMiniCalendario(config.dias || []);
-                        }
-                    }
+                    refreshCalendar();
                 }
 
-                function renderizarMiniCalendario(diasTrabalho) {
+                async function refreshCalendar() {
+                    await loadConfirmedShifts();
+
+                    const detalhesEscala = document.getElementById('detalhes-escala-card');
+                    if (!globalEscala && globalEscalasConfirmadas.length === 0) {
+                        detalhesEscala.classList.add('hidden');
+                        return;
+                    }
+                    detalhesEscala.classList.remove('hidden');
+
+                    if (globalEscala) {
+                        document.getElementById('detalhe-nome').innerText = globalEscala.nome;
+                        document.getElementById('detalhe-tipo').innerText = globalEscala.tipo_escala === 'semanal' ? 'Regime Semanal' : 'Regime de Ciclo';
+                        document.getElementById('detalhe-carga').innerText = globalEscala.carga_horaria_semanal + 'h/sem';
+                        document.getElementById('detalhe-turno').innerText = `${globalEscala.horario_entrada} às ${globalEscala.horario_saida}`;
+                    } else {
+                        document.getElementById('detalhe-nome').innerText = "Escala Manual";
+                        document.getElementById('detalhe-tipo').innerText = "Sem Template Base";
+                    }
+
+                    renderInteractiveCalendar();
+                }
+
+                function renderInteractiveCalendar() {
                     const grid = document.getElementById('mini-calendario');
                     if (!grid) return;
 
                     grid.innerHTML = '';
-                    const offset = 5;
-                    for (let i = 0; i < offset; i++) {
+                    const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+                    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+                    // Projeção Base
+                    const baseProjection = globalEscala ? ScalesEngine.projectBaseDays(
+                        globalEscala,
+                        globalFunc.data_inicio_vigencia || '2024-01-01',
+                        currentMonth,
+                        currentYear
+                    ) : [];
+
+                    // Padding inicial
+                    for (let i = 0; i < firstDay; i++) {
                         const empty = document.createElement('div');
-                        empty.className = 'h-6';
+                        empty.className = 'h-8';
                         grid.appendChild(empty);
                     }
-                    for (let i = 1; i <= 30; i++) {
+
+                    for (let d = 1; d <= daysInMonth; d++) {
+                        const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                        const isBase = baseProjection.includes(dateStr);
+                        const confirmed = globalEscalasConfirmadas.find(c => c.data === dateStr);
+
                         const day = document.createElement('div');
-                        const isTrabalho = diasTrabalho.includes(i);
-                        day.className = `h-6 rounded flex items-center justify-center text-[10px] border transition-all ${isTrabalho
-                            ? 'bg-primary text-white border-primary shadow-[0_0_8px_rgba(13,89,242,0.4)] font-bold'
-                            : 'bg-slate-100 dark:bg-slate-800/50 border-transparent opacity-30'
-                            }`;
-                        day.innerText = i;
+                        day.className = `h-8 rounded-lg flex items-center justify-center text-[10px] border transition-all cursor-pointer select-none`;
+
+                        // Lógica de cores
+                        if (confirmed) {
+                            if (confirmed.tipo === 'extra') {
+                                day.classList.add('bg-emerald-500', 'text-white', 'border-emerald-400', 'shadow-lg');
+                            } else if (confirmed.tipo === 'removido') {
+                                day.classList.add('bg-slate-800', 'text-slate-600', 'border-slate-700', 'opacity-30');
+                            } else if (confirmed.tipo === 'normal') {
+                                day.classList.add('bg-primary', 'text-white', 'border-primary', 'shadow-md');
+                            }
+                        } else if (isBase) {
+                            day.classList.add('bg-primary/20', 'text-primary', 'border-primary/40');
+                        } else {
+                            day.classList.add('bg-slate-100', 'dark:bg-slate-800/50', 'border-transparent', 'opacity-30');
+                        }
+
+                        day.innerText = d;
+                        day.onclick = () => toggleShift(dateStr, isBase, confirmed);
                         grid.appendChild(day);
+                    }
+
+                    updateSummary(baseProjection.length);
+                }
+
+                async function toggleShift(date, isBase, confirmed) {
+                    UI.showLoader();
+                    try {
+                        if (confirmed) {
+                            // Se já existe, remove
+                            const { error } = await supabase.from('plantoes_confirmados').delete().eq('id', confirmed.id);
+                            if (error) throw error;
+                        } else {
+                            const tipo = isBase ? 'removido' : 'extra';
+                            const { error } = await supabase.from('plantoes_confirmados').insert({
+                                funcionario_id: globalFunc.id,
+                                data: date,
+                                tipo: tipo
+                            });
+                            if (error) throw error;
+                        }
+
+                        // Atualizar data da última confirmação no perfil do funcionário
+                        await supabase.from('funcionarios')
+                            .update({ ultima_confirmacao_escala: new Date().toISOString() })
+                            .eq('id', globalFunc.id);
+
+                        await refreshCalendar();
+                    } catch (e) {
+                        UI.showToast('Erro ao atualizar plantão', 'error');
+                    } finally {
+                        UI.hideLoader();
                     }
                 }
 
+                function updateSummary(baseCount) {
+                    let totalDays = baseCount;
+                    globalEscalasConfirmadas.forEach(c => {
+                        if (c.tipo === 'extra') totalDays++;
+                        if (c.tipo === 'removido') totalDays--;
+                    });
+
+                    const weeklyHours = globalEscala?.carga_horaria_semanal || 44;
+                    const dailyHours = weeklyHours / 5; // Simplified base
+                    const totalMonthlyHours = totalDays * dailyHours;
+                    const LIMIT_HOURS = 220;
+                    const isOvertime = totalMonthlyHours > LIMIT_HOURS;
+
+                    const grid = document.getElementById('mini-calendario');
+                    let summaryDiv = document.getElementById('scale-summary');
+                    if (!summaryDiv) {
+                        summaryDiv = document.createElement('div');
+                        summaryDiv.id = 'scale-summary';
+                        summaryDiv.className = 'mt-6 p-5 bg-background-dark/40 rounded-2xl border border-white/5 space-y-4';
+                        grid.parentNode.appendChild(summaryDiv);
+                    }
+
+                    summaryDiv.innerHTML = `
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-[8px] text-slate-500 uppercase font-bold tracking-widest">Jornada Diária</p>
+                                <p class="text-lg font-black text-primary">${ScalesEngine.formatDecimalHours(dailyHours)}</p>
+                            </div>
+                            <div>
+                                <p class="text-[8px] text-slate-500 uppercase font-bold tracking-widest">Total Mensal</p>
+                                <p class="text-lg font-black ${isOvertime ? 'text-rose-500' : 'text-emerald-500'}">
+                                    ${ScalesEngine.formatDecimalHours(totalMonthlyHours)}
+                                </p>
+                            </div>
+                        </div>
+                        ${isOvertime ? `
+                            <div class="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl flex items-center gap-3 animate-pulse">
+                                <span class="material-symbols-outlined text-rose-500 text-sm">warning</span>
+                                <p class="text-[10px] font-bold text-rose-500 uppercase tracking-tighter">
+                                    Limite de ${LIMIT_HOURS}h excedido. Verifique a legislação.
+                                </p>
+                            </div>
+                        ` : ''}
+                    `;
+                }
+
+                async function handleUpdateProfile(e) {
+                    e.preventDefault();
+                    UI.showLoader();
+
+                    try {
+                        const updates = {
+                            id: globalFunc.id,
+                            nickname: document.getElementById('nickname').value,
+                            frequencia_confirmacao_dias: parseInt(document.getElementById('frequencia_confirmacao').value) || 30,
+                            updated_at: new Date().toISOString()
+                        };
+
+                        const { error } = await supabase
+                            .from('funcionarios')
+                            .upsert(updates);
+
+                        if (error) throw error;
+                        UI.showToast('Perfil atualizado com sucesso!', 'success');
+                    } catch (error) {
+                        console.error('Erro ao salvar perfil:', error);
+                        UI.showToast('Erro ao salvar alterações', 'error');
+                    } finally {
+                        UI.hideLoader();
+                    }
+                }
+
+                document.getElementById('profile-form').onsubmit = handleUpdateProfile;
                 document.addEventListener('DOMContentLoaded', initProfile);
             </script>
 

@@ -23,10 +23,10 @@
 <body class="bg-background-dark text-slate-100 min-h-screen flex flex-col font-display pb-24">
   <header
     class="p-6 flex items-center justify-between border-b border-primary/20 bg-background-dark/80 backdrop-blur-md sticky top-0 z-50">
-    <a href="historico_anual.html"
+    <div id="btn-voltar"
       class="text-primary flex size-10 items-center justify-center rounded-lg border border-primary/30 bg-primary/10 cursor-pointer hover:bg-primary/20 transition-all">
       <span class="material-symbols-outlined">arrow_back</span>
-    </a>
+    </div>
     <h2 id="header-title" class="text-lg font-bold tracking-widest text-white uppercase flex-1 text-center">REGISTROS
     </h2>
     <div class="w-10"></div>
@@ -64,6 +64,9 @@
         const { UI } = await import('../js/ui-utils.js');
         const userObj = Auth.getUser();
         UI.updateFooterNavigation(userObj.role);
+        document.getElementById('btn-voltar').onclick = () => {
+          window.location.href = `historico_anual.html?id=${targetUserId}`;
+        };
 
         try {
           const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];

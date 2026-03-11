@@ -38,7 +38,7 @@
   <!-- Header Section -->
   <header class="border-b border-primary/20 bg-background-dark/80 backdrop-blur-md sticky top-0 z-50">
     <div class="flex items-center p-4 justify-between max-w-2xl mx-auto">
-      <div onclick="history.back()"
+      <div id="btn-voltar"
         class="text-primary flex size-10 shrink-0 items-center justify-center rounded-lg border border-primary/30 bg-primary/10 cursor-pointer hover:bg-primary/20 transition-all">
         <span class="material-symbols-outlined">arrow_back</span>
       </div>
@@ -82,6 +82,11 @@
 
     let allSectors = [];
     let allEmployees = [];
+
+    // Configurar retorno explícito
+    document.getElementById('btn-voltar').onclick = () => {
+      window.location.href = 'painel_admin.html';
+    };
 
     async function loadData() {
       try {

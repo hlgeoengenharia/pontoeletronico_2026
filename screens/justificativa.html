@@ -37,6 +37,11 @@
     }
   </style>
 
+  <script type="module">
+    import { Auth } from '../js/auth.js';
+    import { UI } from '../js/ui-utils.js';
+    Auth.checkSession();
+  </script>
 </head>
 
 <body
@@ -44,18 +49,13 @@
   <!-- Header / Mission Status -->
   <header class="border-b border-primary/20 bg-background-dark/80 backdrop-blur-md sticky top-0 z-50">
     <div class="flex items-center p-4 justify-between">
-      <div onclick="history.back()"
+      <div id="btn-voltar"
         class="text-primary flex size-10 mt-2 shrink-0 items-center justify-center rounded-lg border border-primary/30 bg-primary/10 cursor-pointer hover:bg-primary/20 transition-all">
         <span class="material-symbols-outlined">arrow_back</span>
       </div>
       <h2 class="text-slate-100 text-lg font-bold leading-tight tracking-wider uppercase flex-1 text-center">
         JUSTIFICATIVA</h2>
-      <div class="flex w-10 items-center justify-end">
-        <button class="relative text-accent">
-          <span class="material-symbols-outlined">notifications</span>
-          <span class="absolute top-0 right-0 block h-2 w-2 rounded-full bg-accent animate-pulse"></span>
-        </button>
-      </div>
+      <div class="w-10"></div>
     </div>
     <!-- Agent Progress Bar -->
   </header>
@@ -70,13 +70,8 @@
       </h3>
       <div class="space-y-4">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="flex flex-col gap-2">
-            <label class="text-slate-400 text-xs uppercase font-bold tracking-wider">Data do Incidente</label>
-            <div class="relative">
-              <input id="incidente_data"
-                class="w-full bg-background-dark border border-slate-700 rounded-lg py-3 px-4 text-slate-100 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
-                type="date" />
-            </div>
+          <div class="hidden">
+            <input id="incidente_data" type="date" />
           </div>
           <div class="flex flex-col gap-2">
             <label class="text-slate-400 text-xs uppercase font-bold tracking-wider">Tipo de Divergência</label>
@@ -84,13 +79,17 @@
               class="w-full bg-background-dark border border-slate-700 rounded-lg py-3 px-4 text-slate-100 focus:border-primary focus:ring-1 focus:ring-primary outline-none appearance-none transition-all">
               <option>Esquecimento de Registro</option>
               <option>Viagem a Trabalho</option>
+              <option>Atividade Externa</option>
+              <option>Visita Técnica</option>
+              <option>Motivo de Saúde</option>
               <option>Problemas Técnicos</option>
               <option>Outros</option>
             </select>
           </div>
         </div>
         <div class="flex flex-col gap-2">
-          <label class="text-slate-400 text-xs uppercase font-bold tracking-wider">JUSTIFICATIVA</label>
+          <label id="labelJustificativa"
+            class="text-slate-400 text-xs uppercase font-bold tracking-wider">JUSTIFICATIVA</label>
           <textarea id="incidente_descricao"
             class="w-full bg-background-dark border border-slate-700 rounded-lg py-3 px-4 text-slate-100 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
             placeholder='"O sistema de autenticação biométrica falhou ao reconhecer o ID do agente.'
@@ -98,10 +97,11 @@
         </div>
         <div class="flex flex-col gap-2">
           <label class="text-slate-400 text-xs uppercase font-bold tracking-wider">ANEXAR EVIDÊNCIA (FOTO/PDF)</label>
-          <button
+          <input type="file" id="incidente_evidencia" class="hidden" accept="image/*,.pdf" />
+          <button id="btnAnexar" type="button"
             class="w-full flex items-center justify-center gap-3 bg-background-dark border border-dashed border-primary/40 hover:border-primary text-slate-400 hover:text-primary py-4 rounded-lg transition-all transform active:scale-[0.98] group overflow-hidden relative">
             <span class="material-symbols-outlined">add_a_photo</span>
-            <span class="uppercase tracking-widest text-[10px] font-bold">Anexar Documento</span>
+            <span id="txtAnexar" class="uppercase tracking-widest text-[10px] font-bold">Anexar Documento</span>
           </button>
           <p class="text-[8px] text-slate-500 uppercase tracking-widest text-center mt-1">PDF, JPG, PNG • MÁX 10MB</p>
         </div>
@@ -111,34 +111,18 @@
       </div>
     </section>
 
-    <!-- Documents Identified Section (Migrated from arquivo_evidencias) -->
-    <section class="space-y-4">
-      <div class="flex items-center justify-between px-1">
-        <h3 class="text-slate-100 text-sm font-bold tracking-widest uppercase flex items-center gap-2">
-          <span class="material-symbols-outlined text-sm">attach_file</span> Arquivos Anexados
-        </h3>
-        <span id="labelTotalJustificativas" class="text-[10px] text-slate-500 font-bold uppercase">0 Itens</span>
-      </div>
-      <div id="arquivosContainer" class="flex flex-col gap-3">
-        <div class="text-center py-4 bg-white/5 border border-dashed border-white/10 rounded-lg opacity-40">
-          <p class="text-[10px] uppercase tracking-tighter">Nenhum anexo</p>
-        </div>
-      </div>
-    </section>
     <!-- Previous Logs Section -->
     <section class="space-y-4 pb-20">
       <div class="flex justify-between items-center">
         <h3 class="text-slate-100 text-sm font-bold tracking-widest uppercase flex items-center gap-2">
           <span class="material-symbols-outlined text-sm">history</span> Histórico
         </h3>
-        <a href="historico_abonos.html"
-          class="text-[10px] text-primary hover:text-white font-black uppercase tracking-widest flex items-center gap-1 transition-colors">
-          Ver Status de Abonos
-          <span class="material-symbols-outlined text-xs">open_in_new</span>
-        </a>
+        <span id="labelTotalJustificativas" class="text-[10px] text-slate-500 uppercase tracking-tighter">Total: 0
+          registros</span>
       </div>
 
-      <div id="historicoJustificativas" class="space-y-4">
+      <div id="historicoJustificativas"
+        class="space-y-4 max-h-[500px] overflow-y-auto pr-2 scrollbar-hide hover:scrollbar-default transition-all">
         <!-- Logs dynamically injected here -->
       </div>
     </section>
@@ -180,14 +164,41 @@
     const targetUserId = urlParams.get('id') || localStorage.getItem('userId');
 
     const user = Auth.checkSession();
-    if (user) UI.updateFooterNavigation(user.userRole);
+    if (user) {
+      UI.updateFooterNavigation(user.userRole);
+      const btnVoltar = document.getElementById('btn-voltar');
+      if (btnVoltar) btnVoltar.onclick = () => UI.voltarInicio();
+    }
 
     const inputData = document.getElementById('incidente_data');
     const selectTipo = document.getElementById('incidente_tipo');
     const inputDescricao = document.getElementById('incidente_descricao');
+    const inputFile = document.getElementById('incidente_evidencia');
+    const btnAnexar = document.getElementById('btnAnexar');
+    const txtAnexar = document.getElementById('txtAnexar');
     const btnEnviar = document.querySelector('button.bg-primary');
     const historicoCont = document.getElementById('historicoJustificativas');
     const totalLabel = document.getElementById('labelTotalJustificativas');
+
+    let editingId = null;
+    let currentFile = null;
+
+    btnAnexar.addEventListener('click', () => inputFile.click());
+
+    inputFile.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        if (file.size > 10 * 1024 * 1024) {
+          UI.toast('Arquivo muito grande (Máx 10MB)', 'error');
+          inputFile.value = '';
+          return;
+        }
+        currentFile = file;
+        txtAnexar.innerText = `Arquivo: ${file.name}`;
+        btnAnexar.classList.remove('border-primary/40');
+        btnAnexar.classList.add('border-emerald-500', 'text-emerald-500');
+      }
+    });
 
     // 1. Process URL Parameters
     window.addEventListener('load', function () {
@@ -195,9 +206,14 @@
       const tipo = urlParams.get('tipo');
       const motivo = urlParams.get('motivo');
       const data = urlParams.get('data');
+      const now = new Date();
+      const todayISO = now.toISOString().split('T')[0];
+      const todayBR = now.toLocaleDateString('pt-BR');
 
       if (data) inputData.value = data;
-      else inputData.value = new Date().toISOString().split('T')[0];
+      else inputData.value = todayISO;
+
+      document.getElementById('labelJustificativa').innerText = `JUSTIFICATIVA (${todayBR})`;
 
       if (tipo) {
         // Check if option exists, otherwise add it
@@ -228,7 +244,7 @@
           .from('justificativas')
           .select('*')
           .eq('funcionario_id', targetUserId)
-          .order('created_at', { ascending: false });
+          .order('data_incidente', { ascending: false });
 
         if (error) throw error;
 
@@ -243,22 +259,72 @@
           return;
         }
 
-        historicoCont.innerHTML = data.map(item => {
-          const statusColor = item.status === 'aprovada' ? 'bg-green-500' : (item.status === 'rejeitada' ? 'bg-red-500' : 'bg-accent');
+        // Agrupar por data
+        const grouped = data.reduce((acc, item) => {
+          const date = item.data_incidente;
+          if (!acc[date]) acc[date] = [];
+          acc[date].push(item);
+          return acc;
+        }, {});
+
+        historicoCont.innerHTML = Object.keys(grouped).map(date => {
+          const items = grouped[date];
+          const dateFormatted = new Date(date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+
           return `
-                <div class="bg-card-dark border-l-4 border-accent border-r border-t border-b border-white/5 rounded-lg p-4 space-y-3">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <div class="flex items-center gap-2">
-                                <span class="text-accent text-[10px] font-bold uppercase tracking-widest">${item.tipo_divergencia}</span>
-                                <span class="text-slate-500 text-[10px]">• ${new Date(item.data_incidente).toLocaleDateString('pt-BR')}</span>
-                                <span class="${statusColor} text-[8px] text-black font-black px-2 py-0.5 rounded-full uppercase ml-2">${item.status}</span>
-                            </div>
-                        </div>
-                    </div>
-                    <p class="text-slate-400 text-xs leading-relaxed italic">"${item.descricao}"</p>
+            <div class="bg-card-dark border border-white/5 rounded-xl overflow-hidden shadow-lg">
+                <div class="bg-primary/10 px-4 py-2 border-b border-white/5">
+                    <span class="text-primary text-[10px] font-black uppercase tracking-[0.2em]">${dateFormatted}</span>
                 </div>
-                `;
+                <div class="p-4 space-y-4">
+                    ${items.map(item => {
+            const statusMap = {
+              'pendente': 'bg-amber-500/10 text-amber-500 border-amber-500/20',
+              'aprovada': 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
+              'rejeitada': 'bg-rose-500/10 text-rose-500 border-rose-500/20',
+              'aprovado': 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20', // Suporte a ambas as variações
+              'rejeitado': 'bg-rose-500/10 text-rose-500 border-rose-500/20'
+            };
+            const statusClasses = statusMap[item.status.toLowerCase()] || 'bg-slate-500/10 text-slate-500 border-slate-500/20';
+            return `
+                            <div class="space-y-2 border-b border-white/5 pb-3 last:border-0 last:pb-0">
+                                <div class="flex justify-between items-center text-[9px] font-bold uppercase tracking-widest">
+                                    <span class="text-accent">${item.tipo_divergencia}</span>
+                                    <span class="${statusClasses} px-2 py-0.5 rounded-full border border-current font-bold">${item.status}</span>
+                                </div>
+                                <div class="flex justify-between items-start group">
+                                    <p class="text-slate-400 text-xs italic leading-relaxed flex-1">"${item.descricao}"</p>
+                                    <div class="flex gap-1 ml-2 transition-opacity">
+                                        <button onclick="window.editarJustificativa('${item.id}', '${item.data_incidente}', '${item.tipo_divergencia}', \`${item.descricao.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)" class="p-1.5 text-slate-400 hover:text-primary transition-colors">
+                                            <span class="material-symbols-outlined text-sm">edit</span>
+                                        </button>
+                                        <button onclick="window.excluirJustificativa('${item.id}')" class="p-1.5 text-slate-400 hover:text-rose-500 transition-colors">
+                                            <span class="material-symbols-outlined text-sm">delete</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+          }).join('')}
+                    
+                    <!-- Anexos do Dia (Integrado) -->
+                    <div class="pt-2 flex flex-wrap gap-2">
+                         ${items.some(it => it.evidencia_url) ?
+              items.filter(it => it.evidencia_url).map(it => `
+                                <a href="${it.evidencia_url}" target="_blank" class="flex items-center gap-1.5 px-2 py-1 bg-primary/10 rounded-md border border-primary/20 hover:bg-primary/20 transition-all">
+                                    <span class="material-symbols-outlined text-[10px]">attach_file</span>
+                                    <span class="text-[8px] font-bold uppercase">Ver Evidência</span>
+                                </a>
+                            `).join('') : `
+                             <div class="flex items-center gap-1.5 px-2 py-1 bg-white/5 rounded-md border border-white/5 opacity-50">
+                                <span class="material-symbols-outlined text-[10px]">attach_file</span>
+                                <span class="text-[8px] font-bold uppercase">Sem anexos vinculados</span>
+                             </div>
+                         `}
+                    </div>
+                </div>
+            </div>
+          `;
         }).join('');
 
       } catch (err) {
@@ -279,20 +345,68 @@
 
       UI.showLoader();
       try {
-        const { error } = await supabase
-          .from('justificativas')
-          .insert([{
-            funcionario_id: targetUserId,
+        let evidenciaUrl = null;
+        if (currentFile) {
+          const fileExt = currentFile.name.split('.').pop();
+          const fileName = `${targetUserId}/${Date.now()}.${fileExt}`;
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('evidencias')
+            .upload(fileName, currentFile);
+
+          if (uploadError) {
+            console.error('Erro detalhado no upload:', uploadError);
+            throw new Error(`Erro no upload: ${uploadError.message || 'Verifique as políticas de Storage (RLS)'}`);
+          }
+
+          // Obter URL pública
+          const { data: { publicUrl } } = supabase.storage
+            .from('evidencias')
+            .getPublicUrl(fileName);
+
+          evidenciaUrl = publicUrl;
+        }
+
+        if (editingId) {
+          // UPDATE
+          const updateData = {
             data_incidente: dataVal,
             tipo_divergencia: tipoVal,
-            descricao: descVal,
-            status: 'pendente'
-          }]);
+            descricao: descVal
+          };
+          if (evidenciaUrl) updateData.evidencia_url = evidenciaUrl;
 
-        if (error) throw error;
+          const { error } = await supabase
+            .from('justificativas')
+            .update(updateData)
+            .eq('id', editingId);
 
-        UI.toast('Justificativa enviada com sucesso!', 'success');
+          if (error) throw error;
+          UI.toast('Justificativa atualizada!', 'success');
+        } else {
+          // INSERT
+          const { error } = await supabase
+            .from('justificativas')
+            .insert([{
+              funcionario_id: targetUserId,
+              data_incidente: dataVal,
+              tipo_divergencia: tipoVal,
+              descricao: descVal,
+              evidencia_url: evidenciaUrl,
+              status: 'pendente'
+            }]);
+
+          if (error) throw error;
+          UI.toast('Justificativa enviada com sucesso!', 'success');
+        }
+
         inputDescricao.value = '';
+        inputFile.value = '';
+        currentFile = null;
+        txtAnexar.innerText = 'Anexar Documento';
+        btnAnexar.classList.remove('border-emerald-500', 'text-emerald-500');
+        btnAnexar.classList.add('border-primary/40', 'text-slate-400');
+        editingId = null;
+        btnEnviar.innerHTML = '<span class="material-symbols-outlined">send</span> Enviar Justificativa';
         loadHistory();
       } catch (err) {
         console.error(err);
@@ -301,6 +415,60 @@
         UI.hideLoader();
       }
     }
+
+    window.editarJustificativa = (id, data, tipo, descricao) => {
+      editingId = id;
+      inputData.value = data;
+      selectTipo.value = tipo;
+      inputDescricao.value = descricao;
+      btnEnviar.innerHTML = '<span class="material-symbols-outlined">save</span> Atualizar Justificativa';
+      inputDescricao.focus();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    window.excluirJustificativa = async (id) => {
+      if (!confirm('Deseja excluir esta justificativa?')) return;
+
+      UI.showLoader();
+      try {
+        // 1. Buscar se existe anexo para deletar do storage
+        const { data: item, error: fetchError } = await supabase
+          .from('justificativas')
+          .select('evidencia_url')
+          .eq('id', id)
+          .single();
+
+        if (fetchError) throw fetchError;
+
+        if (item && item.evidencia_url) {
+          // Extrair o path relativo (tudo após o nome do bucket)
+          // Ex: https://.../storage/v1/object/public/evidencias/userID/file.png -> userID/file.png
+          const match = item.evidencia_url.match(/\/evidencias\/(.+)$/);
+          const path = match ? match[1] : null;
+
+          if (path) {
+            const { error: storageError } = await supabase.storage.from('evidencias').remove([path]);
+            if (storageError) console.error('Erro ao deletar arquivo do storage:', storageError);
+          }
+        }
+
+        // 2. Deletar registro do banco
+        const { error } = await supabase
+          .from('justificativas')
+          .delete()
+          .eq('id', id);
+
+        if (error) throw error;
+
+        UI.toast('Justificativa excluída!', 'success');
+        loadHistory();
+      } catch (err) {
+        console.error(err);
+        UI.toast('Erro ao excluir.', 'error');
+      } finally {
+        UI.hideLoader();
+      }
+    };
 
     btnEnviar.addEventListener('click', saveJustificativa);
     loadHistory();

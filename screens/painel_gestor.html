@@ -35,7 +35,12 @@
             </div>
             <h1 id="headerTitle" class="text-[10px] font-black tracking-[0.2em] text-slate-500 uppercase">Protocolo
                 Gestor</h1>
-            <span class="material-symbols-outlined text-slate-400">settings</span>
+            <a href="autorizacoes_abono.html" id="notifLink"
+                class="size-10 flex items-center justify-end text-slate-400 hover:text-primary transition-colors relative">
+                <span id="notifBell" class="material-symbols-outlined">notifications</span>
+                <span id="notifBadge"
+                    class="absolute top-1 -right-1 hidden flex items-center justify-center bg-amber-500 text-white text-[8px] font-black h-4 w-4 rounded-full border border-background-dark shadow-lg">0</span>
+            </a>
         </div>
 
         <div class="flex flex-col items-center text-center w-full max-w-md">
@@ -261,7 +266,8 @@
 
             // Setup User Info
             document.getElementById('display-name').innerText = (currentUser.nickname || currentUser.name || "GESTOR").toUpperCase();
-            document.getElementById('user-role-setor').innerText = `CARGO/FUNÇÃO: ${currentUser.funcao?.toUpperCase() || 'GESTOR'}`;
+            const nivelStr = currentUser.funcaoNivel ? ` (${currentUser.funcaoNivel})` : '';
+            document.getElementById('user-role-setor').innerText = `CARGO/FUNÇÃO: ${currentUser.funcao?.toUpperCase() || 'GESTOR'}${nivelStr}`;
             document.getElementById('user-setor-info').innerText = `SETOR: ${currentUser.setor.toUpperCase()}`;
             document.getElementById('user-nickname').innerText = currentUser.matricula || `#${currentUser.nickname || 'GESTOR'}`;
 
@@ -283,6 +289,37 @@
             renderCalendar();
             await loadGlobalStats();
             setupPunchLogic(currentUser.id);
+            updateNotificationBadge();
+        }
+
+        async function updateNotificationBadge() {
+            if (!currentUser || !currentUser.setorId) return;
+            try {
+                // Para o gestor, filtramos as pendências pelo setor dele
+                const { count, error } = await supabase
+                    .from('justificativas')
+                    .select('*, funcionarios!inner(setor_id)', { count: 'exact', head: true })
+                    .eq('status', 'pendente')
+                    .eq('funcionarios.setor_id', currentUser.setorId);
+
+                if (error) throw error;
+
+                const badge = document.getElementById('notifBadge');
+                const bell = document.getElementById('notifBell');
+
+                if (count > 0) {
+                    badge.innerText = count > 99 ? '99+' : count;
+                    badge.classList.remove('hidden');
+                    bell.classList.add('text-amber-500');
+                    bell.classList.remove('text-slate-400');
+                } else {
+                    badge.classList.add('hidden');
+                    bell.classList.remove('text-amber-500');
+                    bell.classList.add('text-slate-400');
+                }
+            } catch (err) {
+                console.error('Erro ao buscar notificações:', err);
+            }
         }
 
         async function loadGlobalStats() {

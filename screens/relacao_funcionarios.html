@@ -107,7 +107,7 @@
           // 1. Buscar Funcionários (com ou sem filtro de setor)
           let query = supabase
             .from('funcionarios')
-            .select('*, setores(nome)')
+            .select('*, setores!setor_id(nome), cargos(nome, nivel)')
             .order('nome_completo');
 
           if (setorId) {
@@ -195,7 +195,7 @@
                 <div class="flex-1">
                   <div>
                     <h3 class="text-lg font-bold text-slate-100">${func.nome_completo}</h3>
-                    <p class="text-xs text-primary font-medium tracking-wider uppercase">${func.funcao || 'N/A'} | ${func.setores?.nome || 'N/A'}</p>
+                    <p class="text-xs text-primary font-medium tracking-wider uppercase">${func.cargos?.nome || func.funcao || 'N/A'} | ${func.setores?.nome || 'N/A'}</p>
                   </div>
                   <div class="mt-3 flex items-center gap-4">
                     <div class="flex flex-col">
@@ -224,6 +224,10 @@
       // Busca em tempo real
       document.querySelector('input[placeholder*="Localizar"]').addEventListener('input', (e) => {
         const termo = e.target.value.toLowerCase();
+        const filtrados = todosFuncionarios.filter(f =>
+          f.nome_completo.toLowerCase().includes(termo) ||
+          f.matricula.toLowerCase().includes(termo)
+        );
         renderizarLista(filtrados);
       });
 

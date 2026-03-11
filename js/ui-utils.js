@@ -9,6 +9,10 @@ const UI = {
      * @param {string} message Mensagem a ser exibida
      * @param {string} type Tipo: 'success', 'error', 'warning', 'info'
      */
+    toast(message, type = 'info') {
+        this.showToast(message, type);
+    },
+
     showToast(message, type = 'info') {
         const existingToast = document.querySelector('.custom-toast');
         if (existingToast) existingToast.remove();
@@ -81,12 +85,46 @@ const UI = {
      */
     updateFooterNavigation(userRole) {
         const role = String(userRole || '').toLowerCase();
+        const urlParams = new URLSearchParams(window.location.search);
+        const employeeId = urlParams.get('id');
+        const roleParam = urlParams.get('role');
+
         const navInicios = document.querySelectorAll('#nav-inicio');
         navInicios.forEach(navInicio => {
-            if (role === 'admin') navInicio.href = 'painel_admin.html';
-            else if (role === 'gestor' || role === 'manager') navInicio.href = 'painel_gestor.html';
-            else navInicio.href = 'painel_funcionario.html';
+            let href = '';
+            if (role === 'admin') href = 'painel_admin.html';
+            else if (role === 'gestor' || role === 'manager') href = 'painel_gestor.html';
+            else href = 'painel_funcionario.html';
+
+            // Preserve context if in inspection mode
+            if (employeeId) {
+                const separator = href.includes('?') ? '&' : '?';
+                const roleQuery = roleParam ? `&role=${roleParam}` : '';
+                href = `${href}${separator}id=${employeeId}${roleQuery}`;
+            }
+            navInicio.href = href;
         });
+    },
+
+    /**
+     * Redireciona para o painel inicial baseado no cargo
+     */
+    voltarInicio() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const employeeId = urlParams.get('id');
+        const roleParam = urlParams.get('role');
+        const role = String(localStorage.getItem('userRole') || '').toLowerCase();
+
+        // Se estamos inspecionando e clicar em voltar, volta para o PAINEL do funcionário
+        if (employeeId && (role === 'admin' || role === 'manager' || role === 'gestor')) {
+            const roleQuery = roleParam ? `&role=${roleParam}` : '';
+            window.location.href = `painel_funcionario.html?id=${employeeId}${roleQuery}`;
+            return;
+        }
+
+        if (role === 'admin') window.location.href = 'painel_admin.html';
+        else if (role === 'gestor' || role === 'manager') window.location.href = 'painel_gestor.html';
+        else window.location.href = 'painel_funcionario.html';
     }
 };
 

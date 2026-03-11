@@ -45,15 +45,16 @@
 <body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen pb-24">
   <header class="border-b border-primary/20 bg-background-dark/80 backdrop-blur-md sticky top-0 z-50">
     <div class="flex items-center p-4 justify-between max-w-2xl mx-auto">
-      <div onclick="history.back()"
+      <div id="btn-voltar"
         class="text-primary flex size-10 mt-2 shrink-0 items-center justify-center rounded-lg border border-primary/30 bg-primary/10 cursor-pointer hover:bg-primary/20 transition-all">
         <span class="material-symbols-outlined">arrow_back</span>
       </div>
-      <h2 class="text-slate-100 text-lg font-bold tracking-wider uppercase flex-1 text-center">RELATÓRIO DE MISSÃO</h2>
-      <div
-        class="flex size-10 items-center justify-center rounded-lg bg-primary/10 border border-primary/30 text-primary">
-        <span class="material-symbols-outlined">share</span>
+      <div class="flex-1 text-center">
+        <h2 class="text-slate-100 text-lg font-bold tracking-wider uppercase">RELATÓRIO DE MISSÃO</h2>
+        <p id="dataRelatorio" class="text-[10px] text-primary font-bold uppercase tracking-[0.2em] opacity-80 mt-0.5">
+          ---</p>
       </div>
+      <div class="size-10"></div>
     </div>
   </header>
 
@@ -103,69 +104,10 @@
         </div>
       </div>
     </div>
-    <!-- Section: Daily Note -->
-    <div class="space-y-3">
-      <div class="flex items-center gap-2 px-1">
-        <span class="material-symbols-outlined text-primary text-xl">edit_note</span>
-        <h4 class="text-sm font-bold uppercase tracking-wider dark:text-slate-300">Anotação Diária</h4>
-      </div>
-      <div id="containerAnotacao"
-        class="p-4 rounded-xl bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 min-h-[80px] flex items-center justify-center">
-        <p class="text-sm text-slate-500 italic">Nenhuma anotação registrada para este dia.</p>
-      </div>
+    <!-- Section: Daily Notes & Justifications (Dynamic Cards) -->
+    <div id="containerResumoCards" class="space-y-4">
+      <!-- Cards serão injetados aqui -->
     </div>
-
-    <!-- Section: Justification -->
-    <div class="space-y-3">
-      <div class="flex items-center gap-2 px-1">
-        <span class="material-symbols-outlined text-primary text-xl">gavel</span>
-        <h4 class="text-sm font-bold uppercase tracking-wider dark:text-slate-300">Justificativa</h4>
-      </div>
-      <div id="containerJustificativa"
-        class="p-4 rounded-xl bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 min-h-[80px] flex items-center justify-center">
-        <p class="text-sm text-slate-500 italic">Nenhuma justificativa enviada.</p>
-      </div>
-    </div>
-
-    <!-- Section: Attached Files (Evidence) -->
-    <div class="space-y-3">
-      <div class="flex items-center gap-2 px-1">
-        <span class="material-symbols-outlined text-primary text-xl">folder_open</span>
-        <h4 class="text-sm font-bold uppercase tracking-wider dark:text-slate-300">Arquivos Anexados</h4>
-      </div>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <div
-          class="flex items-center p-3 rounded-lg bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700">
-          <span class="material-symbols-outlined text-primary mr-3">description</span>
-          <div class="overflow-hidden">
-            <p class="text-xs font-bold truncate">relatorio_v3.pdf</p>
-            <p class="text-[10px] text-slate-500 uppercase">2.4 MB</p>
-          </div>
-        </div>
-        <div
-          class="flex items-center p-3 rounded-lg bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-700">
-          <span class="material-symbols-outlined text-primary mr-3">image</span>
-          <div class="overflow-hidden">
-            <p class="text-xs font-bold truncate">screenshot_01.png</p>
-            <p class="text-[10px] text-slate-500 uppercase">1.1 MB</p>
-          </div>
-        </div>
-      </div>
-    </div>
-    <!-- Section: Bonus Status -->
-    <div class="pt-4 border-t border-slate-300 dark:border-slate-800">
-      <div class="flex items-center justify-between p-4 rounded-xl bg-primary/5 border border-primary/20">
-        <div class="flex items-center gap-4">
-          <div class="size-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
-            <span class="material-symbols-outlined text-3xl">military_tech</span>
-          </div>
-          <div>
-            <p class="text-xs font-bold text-slate-500 uppercase">Status de Abono</p>
-            <p class="text-primary font-bold">Missão Aprovada pelo Comando</p>
-          </div>
-        </div>
-        <span class="material-symbols-outlined text-primary">verified</span>
-      </div>
     </div>
   </main>
 
@@ -178,7 +120,7 @@
     async function init() {
       const urlParams = new URLSearchParams(window.location.search);
       const targetId = urlParams.get('id') || localStorage.getItem('userId');
-      const dataRef = urlParams.get('data') || new Date().toISOString().split('T')[0];
+      const dataRef = urlParams.get('date') || new Date().toISOString().split('T')[0];
 
       UI.showLoader();
 
@@ -208,6 +150,17 @@
           .eq('data_incidente', dataRef)
           .limit(1);
 
+        const currentUser = Auth.getUser();
+        if (currentUser) {
+          UI.updateFooterNavigation(currentUser.role);
+          const btnVoltar = document.getElementById('btn-voltar');
+          if (btnVoltar) btnVoltar.onclick = () => UI.voltarInicio();
+        }
+
+        // 4. Update Header Date
+        const dateObj = new Date(dataRef + 'T12:00:00'); // Use noon to avoid TZ shift
+        document.getElementById('dataRelatorio').innerText = dateObj.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' }).toUpperCase();
+
         renderResumo(pontos, anotacoes[0], justificativas[0]);
 
       } catch (err) {
@@ -222,7 +175,75 @@
     }
 
     function renderResumo(pontos, anotacao, justificativa) {
-      // Status e Sincronização
+      // 1. Render Hero Stats
+      renderHeroStats(pontos);
+
+      const container = document.getElementById('containerResumoCards');
+      container.innerHTML = '';
+
+      if (!anotacao && !justificativa) {
+        container.innerHTML = `
+          <div class="p-8 text-center bg-slate-800/20 rounded-xl border border-dashed border-white/5">
+            <p class="text-sm text-slate-500 italic">Nenhum registro extra (anotação ou justificativa) para este dia.</p>
+          </div>
+        `;
+        return;
+      }
+
+      // 2. Render Anotação Card
+      if (anotacao) {
+        container.innerHTML += `
+          <div class="rounded-xl bg-background-dark/40 border border-white/5 overflow-hidden">
+            <div class="bg-white/5 px-4 py-2 border-b border-white/5">
+              <h5 class="text-[10px] font-bold uppercase tracking-widest text-primary">ANOTAÇÃO DIÁRIA</h5>
+            </div>
+            <div class="p-4">
+              <p class="text-sm text-slate-300 leading-relaxed italic">"${anotacao.conteudo}"</p>
+            </div>
+          </div>
+        `;
+      }
+
+      // 3. Render Justificativa Card
+      if (justificativa) {
+        const statusMap = {
+          'pendente': 'bg-amber-500/10 text-amber-500 border-amber-500/20',
+          'aprovada': 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
+          'rejeitada': 'bg-rose-500/10 text-rose-500 border-rose-500/20',
+          'aprovado': 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
+          'rejeitado': 'bg-rose-500/10 text-rose-500 border-rose-500/20'
+        };
+        const statusClasses = statusMap[justificativa.status.toLowerCase()] || 'bg-slate-500/10 text-slate-500 border-slate-500/20';
+
+        container.innerHTML += `
+          <div class="rounded-xl bg-background-dark/40 border border-white/5 overflow-hidden">
+            <div class="bg-white/5 px-4 py-2 border-b border-white/5 flex justify-between items-center">
+              <h5 class="text-[10px] font-bold uppercase tracking-widest text-primary">JUSTIFICATIVA</h5>
+              <span class="px-2 py-0.5 rounded-full border border-current font-bold text-[8px] uppercase ${statusClasses}">${justificativa.status}</span>
+            </div>
+            <div class="p-4 space-y-3">
+              <div>
+                <p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Tipo de Divergência</p>
+                <p class="text-xs font-bold text-slate-200">${justificativa.tipo_divergencia}</p>
+              </div>
+              <div>
+                <p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Descrição</p>
+                <p class="text-xs italic text-slate-400">"${justificativa.descricao}"</p>
+              </div>
+              ${justificativa.evidencia_url ? `
+                <a href="${justificativa.evidencia_url}" target="_blank" 
+                   class="inline-flex items-center gap-2 px-3 py-1.5 bg-background-dark border border-primary/20 rounded-lg text-primary hover:bg-primary/10 transition-all transform active:scale-95 group">
+                  <span class="material-symbols-outlined text-sm">attach_file</span>
+                  <span class="text-[10px] font-bold uppercase tracking-widest">Ver Evidência</span>
+                </a>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    function renderHeroStats(pontos) {
       const statusEl = document.getElementById('resumoStatus');
       const syncEl = document.getElementById('resumoSync');
 
@@ -230,7 +251,6 @@
         statusEl.innerText = pontos.length % 2 === 0 ? 'Sessão Finalizada' : 'Sessão em Aberto';
         syncEl.classList.remove('hidden');
 
-        // Início e Fim
         const inicio = new Date(pontos[0].data_hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
         document.getElementById('resumoInicio').innerText = inicio;
 
@@ -239,7 +259,6 @@
           document.getElementById('resumoFim').innerText = fim;
         }
 
-        // Cálculo do Total (Simplificado: apenas entre primeiro e último)
         let totalMs = 0;
         for (let i = 0; i < pontos.length - 1; i += 2) {
           const entrada = new Date(pontos[i].data_hora);
@@ -251,29 +270,11 @@
         const minutes = Math.floor((totalMs % 3600000) / 60000);
         document.getElementById('resumoTotal').innerText = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}h`;
 
-        // Progresso (Meta 8h)
         const perc = Math.min(Math.round((totalMs / (8 * 3600000)) * 100), 100);
         document.getElementById('progressoMeta').innerText = `${perc}%`;
         document.getElementById('barraProgresso').style.width = `${perc}%`;
       } else {
         statusEl.innerText = 'Sem Atividade';
-      }
-
-      // Anotação
-      if (anotacao) {
-        document.getElementById('containerAnotacao').innerHTML = `<p class="text-sm text-slate-300 leading-relaxed">${anotacao.conteudo}</p>`;
-        document.getElementById('containerAnotacao').classList.remove('justify-center');
-      }
-
-      // Justificativa
-      if (justificativa) {
-        document.getElementById('containerJustificativa').innerHTML = `
-                <div>
-                   <p class="text-xs font-bold text-accent mb-1 uppercase">${justificativa.tipo_divergencia} • ${justificativa.status}</p>
-                   <p class="text-sm italic text-slate-400 leading-relaxed">"${justificativa.descricao}"</p>
-                </div>
-            `;
-        document.getElementById('containerJustificativa').classList.remove('justify-center');
       }
     }
 

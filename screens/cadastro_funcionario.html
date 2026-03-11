@@ -210,14 +210,17 @@
             <!-- Função e Setor -->
             <div class="grid grid-cols-2 gap-4">
                 <div class="group">
-                    <label class="block text-xs font-bold uppercase tracking-widest text-primary mb-3">Função</label>
+                    <div class="flex items-center justify-between mb-3">
+                        <label class="block text-xs font-bold uppercase tracking-widest text-primary">Cargo</label>
+                        <a href="cadastro_cargos.html"
+                            class="text-[10px] text-primary/60 hover:text-primary transition-colors flex items-center gap-1 uppercase font-bold">
+                            <span class="material-symbols-outlined text-xs">add_circle</span>
+                            Novo
+                        </a>
+                    </div>
                     <select id="funcao-select"
                         class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg py-3 px-4 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all appearance-none text-sm">
                         <option value="">Selecionar...</option>
-                        <option value="Piloto Temporal">Piloto Temporal</option>
-                        <option value="Engenheiro de Sistemas">Engenheiro de Sistemas</option>
-                        <option value="Analista de Dados">Analista de Dados</option>
-                        <option value="Piloto de Logística">Piloto de Logística</option>
                     </select>
                 </div>
                 <div class="group">
@@ -379,8 +382,8 @@
                 cargoSelect.innerHTML = '<option value="">Selecionar Cargo...</option>';
                 cargos.forEach(c => {
                     const opt = document.createElement('option');
-                    opt.value = c.nome;
-                    opt.textContent = c.nome;
+                    opt.value = c.id;
+                    opt.textContent = `${c.nome} (${c.nivel})`;
                     cargoSelect.appendChild(opt);
                 });
 
@@ -561,7 +564,8 @@
                     email: document.getElementById('email').value,
                     telefone: document.getElementById('whatsapp').value,
                     matricula: document.getElementById('matricula').value,
-                    funcao: document.getElementById('funcao-select').value,
+                    cargo_id: document.getElementById('funcao-select').value || null,
+                    funcao: document.getElementById('funcao-select').options[document.getElementById('funcao-select').selectedIndex].text.split(' (')[0],
                     setor_id: document.getElementById('setor-select').value || null,
                     escala_id: document.getElementById('escala-select').value || null,
                     nivel_acesso: e.target.querySelector('input[name="access_level"]:checked')?.value || 'Funcionário',

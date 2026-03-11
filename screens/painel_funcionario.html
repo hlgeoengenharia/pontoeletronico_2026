@@ -286,6 +286,7 @@
         import { supabase } from '../js/supabase-config.js?v=5';
         import { Auth } from '../js/auth.js';
         import { UI } from '../js/ui-utils.js';
+        import { NotificationsEngine } from '../js/notifications-engine.js';
 
         window.addEventListener('load', async function () {
             const urlParams = new URLSearchParams(window.location.search);
@@ -298,22 +299,29 @@
             }
 
             try {
-                const { data: user, error } = await supabase.from('funcionarios').select('*, setores(nome)').eq('id', targetId).single();
+                const { data: user, error } = await supabase.from('funcionarios').select('*, setores!setor_id(nome), cargos(nome, nivel)').eq('id', targetId).single();
                 if (error) throw error;
 
                 const loggedInUser = Auth.getUser();
 
                 // Usar 'user' (resultado da query do Supabase) em vez de Auth.getUser()
                 document.getElementById('display-name').innerText = (user.nickname || user.nome_completo || "TRIPULANTE").toUpperCase();
-                document.getElementById('user-role-setor').innerText = `CARGO/FUNÇÃO: ${user.funcao?.toUpperCase() || 'TRIPULANTE'}`;
+                document.getElementById('user-role-setor').innerText = `CARGO/FUNÇÃO: ${user.cargos?.nome?.toUpperCase() || user.funcao?.toUpperCase() || 'TRIPULANTE'}`;
                 document.getElementById('user-setor-info').innerText = `SETOR: ${user.setores?.nome?.toUpperCase() || 'NÃO DEFINIDO'}`;
                 if (document.getElementById('user-nickname')) document.getElementById('user-nickname').innerText = user.matricula || `#---`;
-                if (document.getElementById('user-level-display')) document.getElementById('user-level-display').innerText = user.nivel_acesso || '...';
+                if (document.getElementById('user-level-display')) {
+                    const levelCargo = user.cargos?.nivel ? ` [${user.cargos.nivel}]` : '';
+                    document.getElementById('user-level-display').innerText = (user.nivel_acesso + levelCargo) || '...';
+                }
 
                 // Navegação dinâmica (baseada no papel do usuário LOGADO)
                 UI.updateFooterNavigation(loggedInUser.role);
 
                 if (user.foto_url) document.getElementById('user-photo').src = user.foto_url;
+
+                // Alertas de Escala
+                const alerts = await NotificationsEngine.checkScaleAlerts(user);
+                NotificationsEngine.renderAlerts(document.querySelector('main'), alerts);
 
                 // Atualizar link de perfil
                 const profileLink = document.getElementById('nav-perfil-link');
