@@ -13,7 +13,7 @@ const Auth = {
         try {
             const { data, error } = await supabase
                 .from('funcionarios')
-                .select('*, setores(nome), cargos(nome, nivel)')
+                .select('*, setores!setor_id(nome), cargos(nome, nivel)')
                 .ilike('nickname', nickname)
                 .eq('senha', password)
                 .single();
