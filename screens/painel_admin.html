@@ -501,41 +501,10 @@
             </button>
         </div>
         <div class="flex-1 overflow-y-auto p-6 space-y-3" id="sidebarNav">
-            <a href="relacao_setores.html"
-                class="flex items-center gap-4 p-4 rounded-2xl text-slate-400 font-bold text-xs uppercase hover:bg-white/5 hover:text-primary transition-all group">
-                <span class="material-symbols-outlined text-xl group-hover:scale-110 transition-transform">group</span>
-                Relação Funcionários
-            </a>
-            <a href="autorizacoes_abono.html"
-                class="flex items-center gap-4 p-4 rounded-2xl text-slate-400 font-bold text-xs uppercase hover:bg-white/5 hover:text-primary transition-all group">
-                <span
-                    class="material-symbols-outlined text-xl group-hover:scale-110 transition-transform">pending_actions</span>
-                Pendências
-            </a>
-            <a href="cadastro_setores.html"
-                class="flex items-center gap-4 p-4 rounded-2xl text-slate-400 font-bold text-xs uppercase hover:bg-white/5 hover:text-primary transition-all group">
-                <span
-                    class="material-symbols-outlined text-xl group-hover:scale-110 transition-transform">domain_add</span>
-                Cadastro Setores
-            </a>
-            <a href="cadastro_escalas.html"
-                class="flex items-center gap-4 p-4 rounded-2xl text-slate-400 font-bold text-xs uppercase hover:bg-white/5 hover:text-primary transition-all group">
-                <span
-                    class="material-symbols-outlined text-xl group-hover:scale-110 transition-transform">calendar_month</span>
-                Cadastro Escalas
-            </a>
-            <a href="cadastro_cargos.html"
-                class="flex items-center gap-4 p-4 rounded-2xl text-slate-400 font-bold text-xs uppercase hover:bg-white/5 hover:text-primary transition-all group">
-                <span class="material-symbols-outlined text-xl group-hover:scale-110 transition-transform">work</span>
-                Cadastro Cargo/Função
-            </a>
-            <a href="cadastro_funcionario.html"
-                class="flex items-center gap-4 p-4 rounded-2xl text-slate-400 font-bold text-xs uppercase hover:bg-white/5 hover:text-primary transition-all group"
-                id="sidebar-cadastro-func">
-                <span
-                    class="material-symbols-outlined text-xl group-hover:scale-110 transition-transform">person_add</span>
-                Cadastro Funcionários
-            </a>
+            <!-- Menu dinâmico via manager-context.js / UI.initSidebar -->
+            <div class="flex items-center justify-center p-8 opacity-20">
+                <span class="material-symbols-outlined animate-spin text-primary">sync</span>
+            </div>
         </div>
         <div class="p-8 border-t border-white/5">
             <button id="logoutBtn"

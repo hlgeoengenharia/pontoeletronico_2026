@@ -236,34 +236,16 @@
     <aside id="sidebarMenu"
         class="fixed top-0 left-0 h-full w-72 bg-background-dark border-r border-white/10 z-[101] -translate-x-full transition-transform duration-300 flex flex-col shadow-2xl">
         <div class="p-8 border-b border-white/5 flex items-center justify-between">
-            <h3 class="text-xs font-black text-primary uppercase tracking-[0.2em]">Protocolo Central</h3>
+            <h2 id="sidebar-header-title" class="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Protocolo Sistema</h2>
             <button id="closeSidebar" class="text-slate-500 hover:text-white transition-colors">
                 <span class="material-symbols-outlined">close</span>
             </button>
         </div>
         <div class="flex-1 overflow-y-auto p-6 space-y-3" id="sidebarNav">
-            <a href="painel_funcionario.html"
-                class="flex items-center gap-4 p-4 rounded-2xl text-slate-400 font-bold text-xs uppercase hover:bg-white/5 hover:text-primary transition-all group">
-                <span class="material-symbols-outlined text-xl group-hover:scale-110 transition-transform">home</span>
-                Início
-            </a>
-            <a href="estatistica_funcionario.html"
-                class="flex items-center gap-4 p-4 rounded-2xl text-slate-400 font-bold text-xs uppercase hover:bg-white/5 hover:text-primary transition-all group">
-                <span
-                    class="material-symbols-outlined text-xl group-hover:scale-110 transition-transform">bar_chart</span>
-                Estatística
-            </a>
-            <a href="historico_anual.html"
-                class="flex items-center gap-4 p-4 rounded-2xl text-slate-400 font-bold text-xs uppercase hover:bg-white/5 hover:text-primary transition-all group">
-                <span
-                    class="material-symbols-outlined text-xl group-hover:scale-110 transition-transform">history</span>
-                Histórico
-            </a>
-            <a id="sidebar-perfil-link" href="#"
-                class="flex items-center gap-4 p-4 rounded-2xl text-slate-400 font-bold text-xs uppercase hover:bg-white/5 hover:text-primary transition-all group">
-                <span class="material-symbols-outlined text-xl group-hover:scale-110 transition-transform">person</span>
-                Perfil
-            </a>
+            <!-- Menu dinâmico via manager-context.js / UI.initSidebar -->
+            <div class="flex items-center justify-center p-8 opacity-20">
+                <span class="material-symbols-outlined animate-spin text-primary">sync</span>
+            </div>
         </div>
         <div class="p-8 border-t border-white/5">
             <button id="logoutBtn"
@@ -636,6 +618,9 @@
                 UI.hideLoader();
             }
         }
+
+        // Adicionar funcionalidade de logout
+        document.getElementById('logoutBtn').addEventListener('click', () => Auth.logout());
     </script>
 </body>
 

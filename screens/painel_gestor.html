@@ -217,22 +217,10 @@
             <button id="closeSidebar" class="material-symbols-outlined text-slate-400 hover:text-primary">close</button>
         </div>
         <div class="flex-1 overflow-y-auto p-4 space-y-2" id="sidebarNav">
-            <!-- Items de navegação para o Gestor -->
-            <a href="painel_gestor.html"
-                class="flex items-center gap-4 p-3 rounded-lg hover:bg-primary/10 text-slate-600 dark:text-slate-300 hover:text-primary transition-all group">
-                <span class="material-symbols-outlined text-slate-400 group-hover:text-primary">home</span>
-                <span class="text-sm font-bold uppercase tracking-tight">Início</span>
-            </a>
-            <a href="relacao_funcionarios.html"
-                class="flex items-center gap-4 p-3 rounded-lg hover:bg-primary/10 text-slate-600 dark:text-slate-300 hover:text-primary transition-all group">
-                <span class="material-symbols-outlined text-slate-400 group-hover:text-primary">group</span>
-                <span class="text-sm font-bold uppercase tracking-tight">Funcionários</span>
-            </a>
-            <a href="autorizacoes_abono.html"
-                class="flex items-center gap-4 p-3 rounded-lg hover:bg-primary/10 text-slate-600 dark:text-slate-300 hover:text-primary transition-all group">
-                <span class="material-symbols-outlined text-slate-400 group-hover:text-primary">pending_actions</span>
-                <span class="text-sm font-bold uppercase tracking-tight">Pendências</span>
-            </a>
+            <!-- Menu dinâmico via manager-context.js / UI.initSidebar -->
+            <div class="flex items-center justify-center p-8 opacity-20">
+                <span class="material-symbols-outlined animate-spin">sync</span>
+            </div>
         </div>
         <div class="p-6 border-t border-slate-200 dark:border-primary/10">
             <button id="logoutBtn"

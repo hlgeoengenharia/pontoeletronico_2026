@@ -21,7 +21,7 @@
     <!-- Header / Navigation -->
     <div
         class="flex items-center bg-background-light dark:bg-background-dark p-4 pb-2 justify-between border-b border-slate-200 dark:border-primary/20">
-        <div onclick="history.back()"
+        <div onclick="window.location.href='painel_admin.html'"
             class="text-primary flex size-12 shrink-0 items-center justify-start cursor-pointer hover:opacity-70 transition-opacity">
             <span class="material-symbols-outlined text-2xl">arrow_back</span>
         </div>
@@ -32,10 +32,8 @@
 
     <!-- Main Content -->
     <main class="flex-1 p-6 max-w-lg mx-auto w-full">
-        </header>
-
         <!-- Controle de Edição (Modo de Segurança) -->
-        <div id="edit-control-container" class="hidden mb-6 animate-in fade-in slide-in-from-top-4 duration-500">
+        <div id="edit-control-container" class="mb-6 animate-in fade-in slide-in-from-top-4 duration-500">
             <div class="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 flex items-center justify-between gap-4 neon-border-amber">
                 <div class="flex items-center gap-3">
                     <div class="size-10 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-500">
@@ -55,7 +53,7 @@
 
         <!-- Seção de Busca Rápida -->
         <div class="mb-10 bg-slate-900/40 border border-primary/20 rounded-2xl p-4 neon-border-sm">
-            <label class="block text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 mb-3 ml-1">Pesquisar para Editar</label>
+            <label class="block text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 mb-3 ml-1">Pesquisar Funcionário Cadastrado</label>
             <div class="relative">
                 <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-primary/40">search</span>
                 <input type="text" id="quick-search-input" 
@@ -194,6 +192,66 @@
             </div>
 
             <hr class="border-primary/10 my-8">
+
+            <!-- Formação e Competências -->
+            <div class="space-y-6 bg-primary/5 p-4 rounded-2xl border border-primary/10">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="material-symbols-outlined text-primary text-sm">school</span>
+                    <h3 class="text-xs font-black uppercase tracking-widest text-primary/80">Formação e Competências</h3>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="group">
+                        <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Nível de Escolaridade</label>
+                        <select id="nivel_escolaridade"
+                            class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg py-3 px-4 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all text-sm">
+                            <option value="Fundamental">Fundamental</option>
+                            <option value="Médio">Médio</option>
+                            <option value="Técnico">Técnico</option>
+                            <option value="Superior">Superior</option>
+                            <option value="Pós-Graduação">Pós-Graduação</option>
+                        </select>
+                    </div>
+                    <div class="group">
+                        <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 flex justify-between items-center">
+                            Graduação Principal
+                            <a href="cadastro_especialidades.html?from=cadastro_funcionario" class="text-[8px] text-primary hover:underline font-black">+ NOVO</a>
+                        </label>
+                        <select id="graduacao_principal_select"
+                            class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg py-3 px-4 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all text-sm">
+                            <option value="">Selecionar...</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Especialidade (Buscador Inline) -->
+                <div class="group relative">
+                    <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2 flex justify-between items-center">
+                        Especialidade Técnica / Foco
+                        <a href="cadastro_especialidades.html?from=cadastro_funcionario" class="text-[8px] text-primary hover:underline font-black">+ NOVO</a>
+                    </label>
+                    <div class="relative">
+                        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-primary/40">psychology</span>
+                        <input type="text" id="busca-especialidade-input" 
+                            class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg py-3 pl-10 pr-4 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all text-sm"
+                            placeholder="Buscar no catálogo..." autocomplete="off">
+                        <input type="hidden" id="especialidade_id">
+                    </div>
+                    
+                    <!-- Resultados Busca Especialidade -->
+                    <div id="resultados-especialidade" class="hidden absolute left-0 right-0 mt-1 bg-slate-900 border border-primary/20 rounded-xl shadow-2xl max-h-48 overflow-y-auto z-50 divide-y divide-white/5">
+                        <!-- Injetado via JS -->
+                    </div>
+
+                    <!-- Badge da Especialidade Selecionada -->
+                    <div id="badge-especialidade" class="hidden mt-2 flex items-center justify-between p-2 bg-primary/10 border border-primary/20 rounded-lg">
+                        <span id="nome-especialidade-selecionada" class="text-[10px] font-bold text-primary uppercase"></span>
+                        <button type="button" id="btn-remover-especialidade" class="text-primary hover:text-white">
+                            <span class="material-symbols-outlined text-xs">close</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
 
             <!-- Matrícula -->
             <div class="group">
@@ -359,18 +417,23 @@
         </form>
     </main>
 
-    </main>
-
     <script type="module">
         import { supabase } from '../js/supabase-config.js';
         import { UI } from '../js/ui-utils.js';
 
         let escalasData = {};
+        let especialidadesCatalogo = [];
+        let cargosData = [];
         let modoPersonalizado = false;
         let diasSelecionadosPers = [];
         let diasPorSemanaPers = {};
         let selectedAvatarFile = null;
         let isEditMode = false;
+
+        // Forçar estado inicial trancado no carregamento
+        window.addEventListener('DOMContentLoaded', () => {
+            setFormLocked(true);
+        });
 
         // Controle de Travamento do Formulário (Modo de Segurança)
         function setFormLocked(locked) {
@@ -410,23 +473,42 @@
 
             // Atualizar o botão de desbloqueio
             const unlockBtn = document.getElementById('btn-unlock-edit');
+            const btnRemoverEsp = document.getElementById('btn-remover-especialidade');
+            const buscaEsp = document.getElementById('busca-especialidade-input');
+
+            if (btnRemoverEsp) btnRemoverEsp.disabled = locked;
+            if (buscaEsp) {
+                buscaEsp.disabled = locked;
+                if (locked) buscaEsp.classList.add('opacity-50', 'cursor-not-allowed');
+                else buscaEsp.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+
+
             if (!locked) {
-                unlockBtn.innerHTML = 'Bloquear Edição';
-                unlockBtn.classList.replace('bg-amber-500', 'bg-slate-700');
-                unlockBtn.classList.replace('hover:bg-amber-600', 'hover:bg-slate-800');
+                unlockBtn.innerHTML = 'Fechar Edição';
+                unlockBtn.classList.remove('bg-amber-500', 'hover:bg-amber-600');
+                unlockBtn.classList.add('bg-slate-700', 'hover:bg-slate-800');
                 editControl.querySelector('p.text-xs').innerText = 'Acesso liberado para alterações';
                 editControl.querySelector('span.material-symbols-outlined').innerText = 'lock_open';
             } else {
                 unlockBtn.innerHTML = 'Ativar Edição';
-                unlockBtn.classList.replace('bg-slate-700', 'bg-amber-500');
-                unlockBtn.classList.replace('hover:bg-slate-800', 'hover:bg-amber-600');
+                unlockBtn.classList.remove('bg-slate-700', 'hover:bg-slate-800');
+                unlockBtn.classList.add('bg-amber-500', 'hover:bg-amber-600');
                 editControl.querySelector('p.text-xs').innerText = 'Cadastro congelado para visualização';
                 editControl.querySelector('span.material-symbols-outlined').innerText = 'lock';
             }
         }
 
-        document.getElementById('btn-unlock-edit').addEventListener('click', () => {
+        document.getElementById('btn-unlock-edit').addEventListener('click', (e) => {
+            e.preventDefault();
             const isCurrentlyLocked = document.getElementById('nome_completo').disabled;
+            
+            // Se estiver ABERTO (false) e quiser trancar, pede confirmação
+            if (!isCurrentlyLocked) {
+                const prosseguir = confirm("Deseja encerrar a edição. Os dados não serão salvos caso encerre a edição");
+                if (!prosseguir) return;
+            }
+            
             setFormLocked(!isCurrentlyLocked);
         });
 
@@ -479,6 +561,15 @@
                          document.getElementById('setor-select').value = emp.setor_id || '';
                          document.getElementById('funcao-select').value = emp.cargo_id || '';
                          document.getElementById('escala-select').value = emp.escala_id || '';
+                         
+                         // Novos Campos
+                         document.getElementById('nivel_escolaridade').value = emp.nivel_escolaridade || 'Médio';
+                         document.getElementById('graduacao_principal_select').value = emp.graduacao_principal || '';
+                         if (emp.especialidade_id) {
+                             const esp = especialidadesCatalogo.find(e => e.id === emp.especialidade_id);
+                             if (esp) selecionarEspecialidade(esp);
+                         }
+
                          if (emp.escala_id) atualizarDetalhesEscala();
                          
                          if (emp.personalizacao_escala) {
@@ -520,11 +611,11 @@
                 } else {
                     // Resetar formulário se carregar sem ID (Novo Cadastro)
                     isEditMode = false;
-                    document.getElementById('edit-control-container').classList.add('hidden');
+                    document.getElementById('edit-control-container').classList.remove('hidden'); // Sempre visível
                     document.getElementById('cadastro-form').reset();
                     document.querySelector('h2').innerText = 'GESTÃO DE FUNCIONÁRIO';
                     document.querySelector('button[type="submit"] span.uppercase').innerText = 'SALVAR CADASTRO';
-                    setFormLocked(false);
+                    setFormLocked(true); // Começa travado mesmo em novo cadastro
                     const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
                     window.history.pushState({path:newUrl},'',newUrl);
                 }
@@ -587,6 +678,22 @@
                     opt.textContent = e.nome;
                     escalaSelect.appendChild(opt);
                 });
+
+                // Carregar Especialidades para o Catálogo e Datalist
+                const { data: especialidades, error: errorEsp } = await supabase.from('especialidades').select('*').order('nome');
+                if (!errorEsp) {
+                    especialidadesCatalogo = especialidades;
+                    const graduacoes = [...new Set(especialidades.map(e => e.nome_graduacao_principal).filter(Boolean))];
+                    const gradSelect = document.getElementById('graduacao_principal_select');
+                    graduacoes.forEach(g => {
+                        const opt = document.createElement('option');
+                        opt.value = g;
+                        opt.textContent = g;
+                        gradSelect.appendChild(opt);
+                    });
+                }
+
+                cargosData = cargos;
 
                 // Carregar dados específicos se for edição
                 await carregarDadosTripulante();
@@ -713,6 +820,73 @@
         document.getElementById('escala-select').addEventListener('change', atualizarDetalhesEscala);
         document.getElementById('btn-personalizar').addEventListener('click', alternarPersonalizacao);
 
+        // Lógica de Busca de Especialidade
+        document.getElementById('busca-especialidade-input').addEventListener('input', (e) => {
+            if (e.target.disabled) return;
+            const termo = e.target.value.toLowerCase().trim();
+            const resultadosDiv = document.getElementById('resultados-especialidade');
+            
+            if (!termo) {
+                resultadosDiv.classList.add('hidden');
+                return;
+            }
+
+            const filtradas = especialidadesCatalogo.filter(esp => 
+                esp.nome.toLowerCase().includes(termo) || (esp.codigo && esp.codigo.toLowerCase().includes(termo))
+            );
+
+            if (filtradas.length > 0) {
+                resultadosDiv.innerHTML = filtradas.map(esp => `
+                    <div class="item-especialidade p-3 hover:bg-primary/10 cursor-pointer transition-colors" data-id="${esp.id}">
+                        <p class="text-[11px] font-bold uppercase text-slate-200">${esp.nome}</p>
+                        <p class="text-[8px] text-primary/60 uppercase font-black">${esp.codigo || ''} • ${esp.nome_graduacao_principal || ''}</p>
+                    </div>
+                `).join('');
+                resultadosDiv.classList.remove('hidden');
+
+                // Adicionar clicks
+                resultadosDiv.querySelectorAll('.item-especialidade').forEach(div => {
+                    div.onclick = () => {
+                        const id = div.getAttribute('data-id');
+                        const esp = especialidadesCatalogo.find(x => x.id === id);
+                        selecionarEspecialidade(esp);
+                    };
+                });
+            } else {
+                resultadosDiv.innerHTML = '<p class="p-3 text-[10px] text-slate-500 italic">Nenhuma especialidade encontrada</p>';
+                resultadosDiv.classList.remove('hidden');
+            }
+        });
+
+        function selecionarEspecialidade(esp) {
+            document.getElementById('especialidade_id').value = esp.id;
+            document.getElementById('busca-especialidade-input').value = '';
+            document.getElementById('resultados-especialidade').classList.add('hidden');
+            
+            const badge = document.getElementById('badge-especialidade');
+            const nomeSpan = document.getElementById('nome-especialidade-selecionada');
+            nomeSpan.innerText = `${esp.codigo ? esp.codigo + ' | ' : ''}${esp.nome}`;
+            badge.classList.remove('hidden');
+            document.getElementById('busca-especialidade-input').classList.add('hidden');
+        }
+
+        document.getElementById('btn-remover-especialidade').onclick = () => {
+            if (document.getElementById('busca-especialidade-input').disabled) return;
+            document.getElementById('especialidade_id').value = '';
+            document.getElementById('badge-especialidade').classList.add('hidden');
+            document.getElementById('busca-especialidade-input').classList.remove('hidden');
+            document.getElementById('busca-especialidade-input').focus();
+        };
+
+        // Fechar resultados ao clicar fora
+        document.addEventListener('click', (e) => {
+            const res = document.getElementById('resultados-especialidade');
+            const input = document.getElementById('busca-especialidade-input');
+            if (res && !res.contains(e.target) && !input.contains(e.target)) {
+                res.classList.add('hidden');
+            }
+        });
+
         // Submit Final
         document.getElementById('cadastro-form').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -743,6 +917,42 @@
                 const rawCpf = document.getElementById('cpf').value;
                 const senhaPadrao = rawCpf.replace(/\D/g, ''); // Extrai apenas os números
 
+                // 2. Validação de Competências
+                const cargoId = document.getElementById('funcao-select').value;
+                const cargoSel = cargosData.find(c => c.id === cargoId);
+                const nivelEscolaridade = document.getElementById('nivel_escolaridade').value;
+                const especialidadeId = document.getElementById('especialidade_id').value;
+                const graduacaoPrincipal = document.getElementById('graduacao_principal_select').value;
+
+                if (cargoSel) {
+                    let mensagemAviso = "";
+                    const niveis = ["Fundamental", "Médio", "Técnico", "Superior", "Pós-Graduação"];
+                    const pesoFunc = niveis.indexOf(nivelEscolaridade);
+                    const pesoCargo = niveis.indexOf(cargoSel.nivel);
+
+                    // Regra: Nível Médio precisa de no mínimo Médio
+                    if (cargoSel.nivel === "Médio" && pesoFunc < 1) {
+                        mensagemAviso = "O cargo exige escolaridade de Nível Médio, mas o funcionário possui apenas Nível Fundamental.";
+                    }
+                    // Regra: Nível Superior precisa no mínimo de uma especialidade
+                    else if (cargoSel.nivel === "Superior" && !especialidadeId) {
+                        mensagemAviso = "O cargo é de Nível Superior, mas o funcionário não possui nenhuma Especialidade técnica selecionada.";
+                    }
+                    // Regra: Especialidade/Graduação compatível (Opcional, mas recomendado pelo prompt: "selecionáveis para que sejam compatíveis")
+                    // Se houver cargo com graduação específica e o funcionário tem outra
+                    else if (cargoSel.graduacao_principal && graduacaoPrincipal && cargoSel.graduacao_principal !== graduacaoPrincipal) {
+                        mensagemAviso = `O cargo exige graduação em ${cargoSel.graduacao_principal}, mas o funcionário possui graduação em ${graduacaoPrincipal}.`;
+                    }
+
+                    if (mensagemAviso) {
+                        const prosseguir = confirm(`${mensagemAviso}\n\nDeseja realmente atribuir esse cargo a este funcionário?`);
+                        if (!prosseguir) {
+                            UI.hideLoader();
+                            return;
+                        }
+                    }
+                }
+
                 // 2. Montar Dados
                 const dadosFuncionario = {
                     nome_completo: document.getElementById('nome_completo').value,
@@ -751,11 +961,14 @@
                     data_nascimento: document.getElementById('data_nasc').value,
                     sexo: e.target.querySelector('input[name="gender"]:checked')?.value || null,
                     matricula: document.getElementById('matricula').value,
-                    cargo_id: document.getElementById('funcao-select').value || null,
+                    cargo_id: cargoId || null,
                     funcao: document.getElementById('funcao-select').options[document.getElementById('funcao-select').selectedIndex].text.split(' (')[0],
                     setor_id: document.getElementById('setor-select').value || null,
                     escala_id: document.getElementById('escala-select').value || null,
                     nivel_acesso: e.target.querySelector('input[name="access_level"]:checked')?.value || 'Funcionário',
+                    nivel_escolaridade: nivelEscolaridade,
+                    graduacao_principal: graduacaoPrincipal,
+                    especialidade_id: especialidadeId || null,
                     personalizacao_escala: modoPersonalizado ? {
                         carga_horaria_semanal: parseInt(document.getElementById('pers-carga').value),
                         dias_trabalho_semana: parseInt(document.getElementById('pers-dias-semana').value),

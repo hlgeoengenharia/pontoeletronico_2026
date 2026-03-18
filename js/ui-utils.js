@@ -125,7 +125,90 @@ const UI = {
         if (role === 'admin') window.location.href = 'painel_admin.html';
         else if (role === 'gestor' || role === 'manager') window.location.href = 'painel_gestor.html';
         else window.location.href = 'painel_funcionario.html';
+    },
+
+    /**
+     * Inicializa o menu lateral baseado no cargo do usuário
+     * @param {string} userRole Cargo do usuário
+     */
+    initSidebar(userRole) {
+        const role = String(userRole || '').toLowerCase();
+        console.log(`[UI.initSidebar] Inicializando menu para: ${role}`);
+        const sidebarNav = document.getElementById('sidebarNav');
+        if (!sidebarNav) {
+            console.warn('[UI.initSidebar] Elemento #sidebarNav não encontrado.');
+            return;
+        }
+
+        // Recuperar contexto para manter inspeção se houver
+        const urlParams = new URLSearchParams(window.location.search);
+        const employeeId = urlParams.get('id');
+        const roleParam = urlParams.get('role');
+        const contextQuery = employeeId ? `?id=${employeeId}${roleParam ? `&role=${roleParam}` : ''}` : '';
+
+        let menuHtml = '';
+
+        // Definir itens por papel
+        const items = [];
+
+        // Itens Básicos (Comuns a todos no menu lateral se logados)
+        if (role === 'admin') {
+            items.push({ href: 'painel_admin.html', icon: 'dashboard', label: 'Painel Admin' });
+            items.push({ href: 'relacao_setores.html', icon: 'group', label: 'Relação Funcionários' });
+            items.push({ href: 'autorizacoes_abono.html', icon: 'pending_actions', label: 'Pendências' });
+            items.push({ href: 'cadastro_setores.html', icon: 'domain_add', label: 'Cadastro Setores' });
+            items.push({ href: 'cadastro_escalas.html', icon: 'calendar_month', label: 'Cadastro Escalas' });
+            items.push({ href: 'cadastro_cargos.html', icon: 'work', label: 'Cadastro Cargo/Função' });
+            items.push({ href: 'cadastro_especialidades.html', icon: 'psychology', label: 'Gestão Especialidades' });
+            items.push({ href: 'cadastro_funcionario.html', icon: 'person_add', label: 'Cadastro Funcionários' });
+        } else if (role === 'manager' || role === 'gestor' || role === 'comandante') {
+            items.push({ href: 'painel_gestor.html', icon: 'dashboard', label: 'Início (Gestor)' });
+            items.push({ href: 'relacao_funcionarios.html', icon: 'group', label: 'Funcionários' });
+            items.push({ href: 'autorizacoes_abono.html', icon: 'pending_actions', label: 'Pendências' });
+            items.push({ href: 'perfil_funcionario.html', icon: 'person', label: 'Meu Perfil' });
+        } else {
+            // Funcionário comum
+            items.push({ href: 'painel_funcionario.html', icon: 'home', label: 'Início' });
+            items.push({ href: 'perfil_funcionario.html', icon: 'person', label: 'Meu Perfil' });
+            items.push({ href: 'historico_anual.html', icon: 'history', label: 'Meu Histórico' });
+        }
+
+        menuHtml = items.map(item => `
+            <a href="${item.href}${item.href === 'perfil_funcionario.html' && !employeeId ? '' : contextQuery}" 
+               class="flex items-center gap-4 p-3 rounded-lg hover:bg-primary/10 text-slate-600 dark:text-slate-300 hover:text-primary transition-all group">
+                <span class="material-symbols-outlined text-slate-400 group-hover:text-primary">${item.icon}</span>
+                <span class="text-sm font-bold uppercase tracking-tight">${item.label}</span>
+            </a>
+        `).join('');
+
+        sidebarNav.innerHTML = menuHtml;
+
+        // Adicionar listener de logout se houver botão
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn && !logoutBtn.dataset.listenerAdded) {
+            logoutBtn.addEventListener('click', async () => {
+                const { Auth } = await import('./auth.js');
+                Auth.logout();
+            });
+            logoutBtn.dataset.listenerAdded = 'true';
+        }
     }
 };
 
 export { UI };
+window.UI = UI;
+
+// Auto-inicialização para evitar travamento de menu
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        const role = localStorage.getItem('userRole');
+        if (role && document.getElementById('sidebarNav')) {
+            UI.initSidebar(role);
+        }
+    });
+} else {
+    const role = localStorage.getItem('userRole');
+    if (role && document.getElementById('sidebarNav')) {
+        UI.initSidebar(role);
+    }
+}

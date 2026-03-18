@@ -1,8 +1,3 @@
-/**
- * Manager Context Navigation System (V2.5)
- * Standardizes Role preservation and Fixes Bottom Nav confusion.
- */
-
 (function () {
     const urlParams = new URLSearchParams(window.location.search);
     const employeeId = urlParams.get('id');
@@ -25,25 +20,36 @@
     const isGestorSession = (loggedInRole === 'admin' || loggedInRole === 'manager' || loggedInRole === 'gestor' || loggedInRole === 'comandante');
     // Só é inspeção se houver um ID na URL e esse ID for DIFERENTE do ID logado
     const isInspecting = normalizedEmployeeId && normalizedEmployeeId !== normalizedLoggedInId;
+    console.log(`[ManagerContext V2.8] Inicializado. Session: ${loggedInRole}, Mode: ${isInspecting ? 'INSPECT' : 'SELF'}`);
 
-    console.log(`[ManagerContext V2.7] Session: ${loggedInRole} (ID: ${normalizedLoggedInId}), Context: ${currentContextRole} (ID: ${normalizedEmployeeId}), Mode: ${isInspecting ? 'INSPECT' : 'SELF'}`);
-
-    // Activation logic: 
-    // If the user is a Manager/Admin OR if we have an ID in the URL, we need to ensure context persistence.
+    // Activation logic (UI Context Header & Bottom Nav Repurpose)
     if (isGestorSession) {
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
+                console.log('[ManagerContext] DOMContentLoaded - Gestor Session. Initializing UI elements.');
                 if (isInspecting) injectManagerHeader();
                 repurposeBottomNavToManager();
             });
         } else {
+            console.log('[ManagerContext] Document ready - Gestor Session. Initializing UI elements.');
             if (isInspecting) injectManagerHeader();
             repurposeBottomNavToManager();
         }
+    } else if (isInspecting) {
+        // Fallback para inspeção mesmo sem ser gestor session (raro)
+        console.log('[ManagerContext] Inspecting without Gestor Session. Injecting Manager Header.');
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', injectManagerHeader);
+        } else {
+            injectManagerHeader();
+        }
     } else {
         // Regular employee mode (Self-mode for employees)
+        console.log('[ManagerContext] Self-mode for employee. Cleaning up UI.');
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', cleanupUIForSelfMode);
+            document.addEventListener('DOMContentLoaded', () => {
+                cleanupUIForSelfMode();
+            });
         } else {
             cleanupUIForSelfMode();
         }

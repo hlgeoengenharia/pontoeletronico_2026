@@ -39,10 +39,10 @@
   class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen flex flex-col">
   <header class="border-b border-primary/20 bg-background-dark/80 backdrop-blur-md sticky top-0 z-50">
     <div class="flex items-center p-4 justify-between max-w-2xl mx-auto">
-      <div id="btn-voltar"
-        class="text-primary flex size-10 shrink-0 items-center justify-center rounded-lg border border-primary/30 bg-primary/10 cursor-pointer hover:bg-primary/20 transition-all">
-        <span class="material-symbols-outlined">arrow_back</span>
-      </div>
+        <div onclick="window.location.href='painel_admin.html'"
+            class="text-primary flex size-12 shrink-0 items-center justify-start cursor-pointer hover:opacity-70 transition-opacity">
+            <span class="material-symbols-outlined text-2xl">arrow_back</span>
+        </div>
       <h2 class="text-slate-100 text-lg font-bold tracking-wider uppercase flex-1 text-center">GESTÃO DE CARGOS</h2>
       <div
         class="flex size-10 items-center justify-center rounded-lg bg-primary/10 border border-primary/30 text-primary">
@@ -74,7 +74,7 @@
               placeholder="Descreva as principais responsabilidades deste cargo..."></textarea>
           </div>
           <div class="space-y-2">
-            <label class="text-xs font-semibold uppercase tracking-tighter opacity-60 ml-1">Nível de Acesso Recomendado</label>
+            <label class="text-xs font-semibold uppercase tracking-tighter opacity-60 ml-1">Nível de Escolaridade Exigido</label>
             <select id="nivel-cargo"
               class="w-full bg-slate-100 dark:bg-background-dark/50 border-slate-200 dark:border-slate-border rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-slate-100">
               <option value="Fundamental">Nível Fundamental</option>
@@ -98,6 +98,9 @@
           <div class="space-y-4">
             <label class="text-xs font-semibold uppercase tracking-tighter opacity-60 ml-1 flex items-center gap-2">
               <span class="material-symbols-outlined text-[14px]">psychology</span> Especialidades Requeridas
+              <a href="cadastro_especialidades.html?from=cadastro_cargos" class="ml-auto text-[9px] text-primary hover:underline flex items-center gap-1 uppercase font-black">
+                <span class="material-symbols-outlined text-[12px]">settings</span> Configurar Catálogo
+              </a>
             </label>
             
             <div class="relative group">
