@@ -107,7 +107,7 @@
           // 1. Buscar Funcionários (com ou sem filtro de setor)
           let query = supabase
             .from('funcionarios')
-            .select('*, setores!setor_id(nome), cargos(nome, nivel)')
+            .select('*, setores!setor_id(nome), cargos(nome, nivel), perfis_tripulantes(foto_url)')
             .order('nome_completo');
 
           if (setorId) {
@@ -155,6 +155,7 @@
 
       function renderizarLista(lista) {
         const container = document.getElementById('lista-funcionarios');
+        const userData = Auth.getUser() || { role: '' };
         container.innerHTML = '';
 
         if (lista.length === 0) {
@@ -176,14 +177,18 @@
           card.className = "relative overflow-hidden p-4 bg-slate-900/50 rounded-xl neon-border group hover:bg-slate-800/60 transition-colors cursor-pointer animate-in fade-in slide-in-from-bottom-2 duration-300";
 
           card.innerHTML = `
-              <div class="absolute top-0 right-0 p-2 opacity-10">
-                <span class="text-[32px] font-black italic select-none">#${func.matricula.slice(-5)}</span>
+              <div class="absolute top-0 right-0 p-2 flex items-center gap-2">
+                <span class="text-[32px] font-black italic select-none opacity-10">#${func.matricula.slice(-5)}</span>
               </div>
               <div class="flex items-center gap-4 relative z-10">
                 <div class="relative">
                   <div class="w-16 h-16 rounded-full border-2 border-primary/30 p-1 group-hover:border-primary transition-colors">
-                    <div class="w-full h-full rounded-full bg-slate-800 flex items-center justify-center">
-                      <span class="material-symbols-outlined text-primary text-3xl">person</span>
+                    <div class="w-full h-full rounded-full bg-slate-800 flex items-center justify-center overflow-hidden">
+                      ${func.perfis_tripulantes?.[0]?.foto_url ? `
+                        <img src="${func.perfis_tripulantes[0].foto_url}" class="w-full h-full object-cover">
+                      ` : `
+                        <span class="material-symbols-outlined text-primary text-3xl">person</span>
+                      `}
                     </div>
                   </div>
                   ${func.isOnline ? `

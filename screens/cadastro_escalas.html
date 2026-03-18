@@ -65,7 +65,7 @@
             class="w-full bg-background-dark/50 border-primary/30 rounded-lg focus:ring-primary focus:border-primary text-slate-100 p-3"
             placeholder="Ex: Plantão Alfa" type="text" required />
         </div>
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label class="block text-sm font-medium mb-1 text-slate-400">Tipo de Escala</label>
             <select id="tipo_escala"
@@ -75,11 +75,30 @@
             </select>
           </div>
           <div>
-            <label class="block text-sm font-medium mb-1 text-slate-400">Carga Semanal (h)</label>
-            <input id="carga_horaria"
-              class="w-full bg-background-dark/50 border-primary/30 rounded-lg focus:ring-primary focus:border-primary text-slate-100 p-3"
-              placeholder="44" type="number" required />
+            <label class="block text-sm font-medium mb-1 text-slate-400">Tipo de Repetição</label>
+            <select id="tipo_repeticao"
+              class="w-full bg-background-dark/50 border-primary/30 rounded-lg focus:ring-primary focus:border-primary text-slate-100 p-3 outline-none">
+              <option value="alternada">Alternada (Par/Ímpar)</option>
+              <option value="fixa">Fixa (Mesmos dias constantes)</option>
+            </select>
           </div>
+          <div>
+            <label class="block text-sm font-medium mb-1 text-slate-400">Regime de Trabalho</label>
+            <select id="regime_trabalho"
+              class="w-full bg-background-dark/50 border-primary/30 rounded-lg focus:ring-primary focus:border-primary text-slate-100 p-3 outline-none">
+              <option value="Presencial">Presencial</option>
+              <option value="Teletrabalho">Teletrabalho / Home Office</option>
+              <option value="Híbrido">Híbrido</option>
+              <option value="Externo">Externo</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium mb-1 text-slate-400">Carga Semanal (h)</label>
+          <input id="carga_horaria"
+            class="w-full bg-background-dark/50 border-primary/30 rounded-lg focus:ring-primary focus:border-primary text-slate-100 p-3"
+            placeholder="44" type="number" required />
         </div>
 
         <!-- Campos para Ciclo (Ocultos por padrão) -->
@@ -118,6 +137,28 @@
               class="day-toggle size-10 rounded border border-white/10 flex items-center justify-center text-[10px] font-bold">SAB</button>
           </div>
         </div>
+        <!-- Dias Híbridos (Ocultos por padrão) -->
+        <div id="hibrido_inputs" class="hidden pt-4 pb-2 border-t border-white/5">
+          <label class="block text-xs font-bold text-primary uppercase tracking-widest text-center mb-3">Dias Obrigatoriamente Presenciais</label>
+          <div class="flex justify-between gap-1">
+            <button type="button" data-hday="0"
+              class="hday-toggle size-10 rounded border border-white/10 flex items-center justify-center text-[10px] font-bold">DOM</button>
+            <button type="button" data-hday="1"
+              class="hday-toggle size-10 rounded border border-white/10 flex items-center justify-center text-[10px] font-bold">SEG</button>
+            <button type="button" data-hday="2"
+              class="hday-toggle size-10 rounded border border-white/10 flex items-center justify-center text-[10px] font-bold">TER</button>
+            <button type="button" data-hday="3"
+              class="hday-toggle size-10 rounded border border-white/10 flex items-center justify-center text-[10px] font-bold">QUA</button>
+            <button type="button" data-hday="4"
+              class="hday-toggle size-10 rounded border border-white/10 flex items-center justify-center text-[10px] font-bold">QUI</button>
+            <button type="button" data-hday="5"
+              class="hday-toggle size-10 rounded border border-white/10 flex items-center justify-center text-[10px] font-bold">SEX</button>
+            <button type="button" data-hday="6"
+              class="hday-toggle size-10 rounded border border-white/10 flex items-center justify-center text-[10px] font-bold">SAB</button>
+          </div>
+          <p class="text-xs text-slate-400 mt-2 text-center">Nos demais dias, o sistema assume automaticamente modo Home Office.</p>
+        </div>
+
         <div class="grid grid-cols-2 gap-4">
           <div>
             <label class="block text-sm font-medium mb-1 text-slate-400">Entrada</label>
@@ -130,6 +171,135 @@
             <input id="horario_saida"
               class="w-full bg-background-dark/50 border-primary/30 rounded-lg focus:ring-primary focus:border-primary text-slate-100 p-3"
               type="time" required />
+          </div>
+        </div>
+
+        <!-- Tolerância e Geofencing original -->
+        <div class="grid grid-cols-3 gap-3 p-4 bg-slate-800/20 border border-white/5 rounded-xl">
+          <div>
+            <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Tol. Entrada (min)</label>
+            <input id="tol_entrada"
+              class="w-full bg-background-dark/30 border-white/10 rounded p-2 text-sm text-primary font-bold"
+              type="number" value="15">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Tol. Saída (min)</label>
+            <input id="tol_saida"
+              class="w-full bg-background-dark/30 border-white/10 rounded p-2 text-sm text-primary font-bold"
+              type="number" value="15">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Raio GPS (m)</label>
+            <input id="raio_gps"
+              class="w-full bg-background-dark/30 border-white/10 rounded p-2 text-sm text-primary font-bold"
+              type="number" value="100">
+          </div>
+        </div>
+
+        <!-- Regras de Monitoramento -->
+        <div class="space-y-4 p-4 bg-slate-800/20 border border-white/5 rounded-xl">
+          <h3 class="text-xs font-bold text-primary uppercase tracking-widest flex items-center gap-2">
+            <span class="material-symbols-outlined text-sm">rule</span>
+            Regras de Monitoramento
+          </h3>
+          
+          <div class="grid grid-cols-1 gap-4">
+            <!-- GPS -->
+            <div class="p-3 bg-background-dark/30 rounded-lg space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-200">Restringir por GPS</span>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input id="rule_gps" type="checkbox" checked class="sr-only peer">
+                  <div class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                </label>
+              </div>
+              <p class="text-xs text-slate-400 leading-relaxed font-medium">
+                <strong class="text-primary/70">ATIVADO:</strong> O sistema bloqueia o registro simples fora do raio estipulado, exigindo que o funcionário escreva uma justificativa obrigatória.<br>
+                <strong class="text-slate-500 font-bold">DESATIVADO:</strong> Permite registros em qualquer local sem necessidade de explicações adicionais.
+              </p>
+            </div>
+
+            <!-- Aprovação -->
+            <div class="p-3 bg-background-dark/30 rounded-lg space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-200">Aprovação de Exceção</span>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input id="rule_approval" type="checkbox" checked class="sr-only peer">
+                  <div class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                </label>
+              </div>
+              <p class="text-xs text-slate-400 leading-relaxed font-medium">
+                <strong class="text-primary/70">ATIVADO:</strong> Marcações feitas fora do raio ou fora do horário padrão não são validadas automaticamente, gerando uma pendência no painel do gestor para auditoria.<br>
+                <strong class="text-slate-500 font-bold">DESATIVADO:</strong> Todos os registros são aceitos como normais no banco de horas sem revisão manual.
+              </p>
+            </div>
+
+            <!-- Esquecimento -->
+            <div class="p-3 bg-background-dark/30 rounded-lg space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-200">Punir Esquecimento</span>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input id="rule_forget" type="checkbox" checked class="sr-only peer">
+                  <div class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                </label>
+              </div>
+              <p class="text-xs text-slate-400 leading-relaxed font-medium">
+                <strong class="text-primary/70">ATIVADO:</strong> Caso o funcionário faça o Check-in mas esqueça o Check-out, o sistema encerra o dia automaticamente contabilizando apenas 50% da jornada prevista.<br>
+                <strong class="text-slate-500 font-bold">DESATIVADO:</strong> O sistema aguarda o registro manual ou marca o dia como inconsistente para correção posterior.
+              </p>
+            </div>
+
+            <!-- Horas Extras -->
+            <div class="group p-3 bg-background-dark/30 rounded-lg space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-200">Gestão de Horas Extras</span>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input id="rule_extra_hours" type="checkbox" class="sr-only peer">
+                  <div class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                </label>
+              </div>
+              <p class="text-xs text-slate-400 leading-relaxed font-medium">
+                <strong class="text-primary/70">ATIVADO:</strong> Permite que o colaborador solicite prorrogação de jornada via aplicativo. Você deve definir o limite máximo permitido abaixo.<br>
+                <strong class="text-slate-500 font-bold">DESATIVADO:</strong> O sistema não oferece opção de extensão, tratando qualquer tempo excedente como saldo comum ou extra não autorizada.
+              </p>
+              <div id="extra_hours_limit_container" class="hidden mt-2 pl-2 border-l border-primary/20 flex items-center justify-between">
+                <span class="text-xs text-slate-400 uppercase font-bold tracking-tight">Limite Máximo (Minutos)</span>
+                <input id="limit_extra_hours" type="number" value="120" class="w-20 bg-background-dark/50 border-primary/30 rounded p-1 text-xs text-primary font-bold">
+              </div>
+            </div>
+
+            <!-- Rastreio -->
+            <div class="p-3 bg-background-dark/30 rounded-lg space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-200">Rastreio Horário (Externos)</span>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input id="rule_tracking" type="checkbox" class="sr-only peer">
+                  <div class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                </label>
+              </div>
+              <p class="text-xs text-slate-400 leading-relaxed font-medium">
+                <strong class="text-primary/70">ATIVADO:</strong> Para funcionários em regime 'Externo', o aplicativo capturará a localização GPS a cada 60 minutos durante o expediente para fins de log de rota.<br>
+                <strong class="text-slate-500 font-bold">DESATIVADO:</strong> A localização só é capturada no momento exato das batidas de ponto.
+              </p>
+            </div>
+
+            <!-- Intervalo de Almoço -->
+            <div class="p-3 bg-background-dark/30 rounded-lg space-y-2 border border-primary/10">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="material-symbols-outlined text-sm text-primary">restaurant</span>
+                  <span class="text-xs font-bold text-slate-200">Intervalo de Almoço</span>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input id="rule_lunch" type="checkbox" checked class="sr-only peer">
+                  <div class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                </label>
+              </div>
+              <p class="text-xs text-slate-400 leading-relaxed font-medium">
+                <strong class="text-primary/70">ATIVADO:</strong> O sistema deduzirá automaticamente 1 hora de intervalo da carga horária diária. O espelho de ponto exibirá campos para Entrada/Saída 1 e 2.<br>
+                <strong class="text-slate-500 font-bold">DESATIVADO:</strong> Jornada ininterrupta. As horas são calculadas direto da entrada à saída, e o espelho de ponto mostra apenas um turno.
+              </p>
+            </div>
           </div>
         </div>
         <!-- Cálculo Resultado -->
@@ -177,10 +347,15 @@
 
     // Toggle Visibilidade
     const tipoEscalaSel = document.getElementById('tipo_escala');
+    const regimeTrabalhoSel = document.getElementById('regime_trabalho');
     const cicloInputs = document.getElementById('ciclo_inputs');
     const semanalInputs = document.getElementById('semanal_inputs');
+    const hibridoInputs = document.getElementById('hibrido_inputs');
+    const extraHoursToggle = document.getElementById('rule_extra_hours');
+    const extraHoursLimitContainer = document.getElementById('extra_hours_limit_container');
 
-    tipoEscalaSel.onchange = () => {
+    const updateVisibility = () => {
+      // Tipo de Escala
       if (tipoEscalaSel.value === 'ciclo') {
         cicloInputs.classList.remove('hidden');
         semanalInputs.classList.add('hidden');
@@ -188,7 +363,27 @@
         cicloInputs.classList.add('hidden');
         semanalInputs.classList.remove('hidden');
       }
+
+      // Regime Híbrido
+      if (regimeTrabalhoSel.value === 'Híbrido') {
+        hibridoInputs.classList.remove('hidden');
+      } else {
+        hibridoInputs.classList.add('hidden');
+      }
     };
+
+    tipoEscalaSel.onchange = updateVisibility;
+    regimeTrabalhoSel.onchange = updateVisibility;
+
+    extraHoursToggle.onchange = () => {
+      if (extraHoursToggle.checked) {
+        extraHoursLimitContainer.classList.remove('hidden');
+      } else {
+        extraHoursLimitContainer.classList.add('hidden');
+      }
+    };
+
+    let diasHibridosSelecionados = [];
 
     // Handler Dias da Semana
     document.querySelectorAll('.day-toggle').forEach(btn => {
@@ -199,6 +394,20 @@
           btn.classList.remove('bg-primary', 'text-white', 'border-primary');
         } else {
           diasSemanaSelecionados.push(day);
+          btn.classList.add('bg-primary', 'text-white', 'border-primary');
+        }
+      };
+    });
+
+    // Handler Dias Híbridos
+    document.querySelectorAll('.hday-toggle').forEach(btn => {
+      btn.onclick = () => {
+        const day = parseInt(btn.dataset.hday);
+        if (diasHibridosSelecionados.includes(day)) {
+          diasHibridosSelecionados = diasHibridosSelecionados.filter(d => d !== day);
+          btn.classList.remove('bg-primary', 'text-white', 'border-primary');
+        } else {
+          diasHibridosSelecionados.push(day);
           btn.classList.add('bg-primary', 'text-white', 'border-primary');
         }
       };
@@ -223,14 +432,14 @@
                       <h3 class="font-bold uppercase text-sm tracking-tight">${e.nome}</h3>
                       <p class="text-xs text-slate-500">
                         ${e.tipo_escala === 'ciclo'
-            ? `Ciclo ${e.ciclo_config?.trab_total}h x ${e.ciclo_config?.folga_total}h`
+            ? `Ciclo ${e.ciclo_config?.trab_total}h x ${e.ciclo_config?.folga_total}h • ${e.tipo_repeticao === 'fixa' ? 'Fixa' : 'Alternada'}`
             : `Semanal • ${e.dias_padrao?.length || 0} dias`
           } • ${e.horario_entrada} - ${e.horario_saida}
                       </p>
                     </div>
                   </div>
                   <div class="flex gap-2 opacity-40 group-hover:opacity-100 transition-opacity">
-                    <button onclick="prepararEdicaoEscala('${e.id}', '${e.nome}', '${e.tipo_escala}', ${e.carga_horaria_semanal}, '${e.horario_entrada}', '${e.horario_saida}', ${JSON.stringify(e.dias_padrao)}, ${JSON.stringify(e.ciclo_config)})" class="p-2 hover:bg-primary/10 rounded-lg text-slate-400 hover:text-primary transition-colors">
+                    <button onclick='prepararEdicaoEscala(${JSON.stringify(e)})' class="p-2 hover:bg-primary/10 rounded-lg text-slate-400 hover:text-primary transition-colors">
                       <span class="material-symbols-outlined text-[20px]">edit</span>
                     </button>
                     <button onclick="deletarEscala('${e.id}')" class="p-2 hover:bg-red-500/20 rounded-lg text-slate-400 hover:text-red-500 transition-colors">
@@ -247,19 +456,47 @@
 
     let editingEscalaId = null;
 
-    window.prepararEdicaoEscala = (id, nome, tipo, carga, entrada, saida, diasPadrao, cicloConfig) => {
-      editingEscalaId = id;
-      document.getElementById('nome_escala').value = nome;
-      document.getElementById('tipo_escala').value = tipo;
-      document.getElementById('carga_horaria').value = carga;
-      document.getElementById('horario_entrada').value = entrada;
-      document.getElementById('horario_saida').value = saida;
+    window.prepararEdicaoEscala = (escala) => {
+      editingEscalaId = escala.id;
+      document.getElementById('nome_escala').value = escala.nome;
+      document.getElementById('tipo_escala').value = escala.tipo_escala;
+      document.getElementById('tipo_repeticao').value = escala.tipo_repeticao || 'alternada';
+      document.getElementById('carga_horaria').value = escala.carga_horaria_semanal;
+      document.getElementById('horario_entrada').value = escala.horario_entrada;
+      document.getElementById('horario_saida').value = escala.horario_saida;
+      document.getElementById('tol_entrada').value = escala.tolerancia_entrada_minutos || 15;
+      document.getElementById('tol_saida').value = escala.tolerancia_saida_minutos || 15;
+      document.getElementById('raio_gps').value = escala.raio_geofence_metros || 100;
+
+      document.getElementById('regime_trabalho').value = escala.regime || 'Presencial';
+      
+      // Regras (Toggles)
+      document.getElementById('rule_gps').checked = escala.restrito_gps !== false;
+      document.getElementById('rule_approval').checked = escala.aprovacao_excecao !== false;
+      document.getElementById('rule_forget').checked = escala.punicao_esquecimento !== false;
+      document.getElementById('rule_extra_hours').checked = escala.gestao_horas_extras === true;
+      document.getElementById('limit_extra_hours').value = escala.limite_horas_extras || 0;
+      document.getElementById('rule_tracking').checked = escala.rastreio_horario === true;
+      document.getElementById('rule_lunch').checked = escala.possui_almoco !== false;
 
       // Reset e Aplica Visibilidade
-      tipoEscalaSel.onchange();
+      updateVisibility();
+      extraHoursToggle.onchange();
 
-      if (tipo === 'semanal') {
-        diasSemanaSelecionados = diasPadrao || [];
+      if (escala.regime === 'Híbrido') {
+        diasHibridosSelecionados = escala.dias_presenciais_json || [];
+        document.querySelectorAll('.hday-toggle').forEach(btn => {
+          const day = parseInt(btn.dataset.hday);
+          if (diasHibridosSelecionados.includes(day)) {
+            btn.classList.add('bg-primary', 'text-white', 'border-primary');
+          } else {
+            btn.classList.remove('bg-primary', 'text-white', 'border-primary');
+          }
+        });
+      }
+
+      if (escala.tipo_escala === 'semanal') {
+        diasSemanaSelecionados = escala.dias_padrao || [];
         document.querySelectorAll('.day-toggle').forEach(btn => {
           const day = parseInt(btn.dataset.day);
           if (diasSemanaSelecionados.includes(day)) {
@@ -268,9 +505,9 @@
             btn.classList.remove('bg-primary', 'text-white', 'border-primary');
           }
         });
-      } else if (tipo === 'ciclo' && cicloConfig) {
-        document.getElementById('trab_total').value = cicloConfig.trab_total;
-        document.getElementById('folga_total').value = cicloConfig.folga_total;
+      } else if (escala.tipo_escala === 'ciclo' && escala.ciclo_config) {
+        document.getElementById('trab_total').value = escala.ciclo_config.trab_total;
+        document.getElementById('folga_total').value = escala.ciclo_config.folga_total;
       }
 
       document.getElementById('label-submit-escala').innerText = 'Atualizar Escala';
@@ -282,10 +519,13 @@
       editingEscalaId = null;
       document.getElementById('form-escala').reset();
       diasSemanaSelecionados = [];
-      document.querySelectorAll('.day-toggle').forEach(btn => btn.classList.remove('bg-primary', 'text-white', 'border-primary'));
+      diasHibridosSelecionados = [];
+      document.querySelectorAll('.day-toggle, .hday-toggle').forEach(btn => btn.classList.remove('bg-primary', 'text-white', 'border-primary'));
+      document.getElementById('rule_lunch').checked = true;
       document.getElementById('label-submit-escala').innerText = 'Confirmar Nova Escala';
       document.getElementById('btn-cancelar-escala').classList.add('hidden');
-      tipoEscalaSel.onchange();
+      updateVisibility();
+      extraHoursToggle.onchange();
     };
 
     window.deletarEscala = async (id) => {
@@ -328,12 +568,25 @@
         carga_horaria_semanal: parseInt(document.getElementById('carga_horaria').value) || 0,
         horario_entrada: document.getElementById('horario_entrada').value,
         horario_saida: document.getElementById('horario_saida').value,
+        tolerancia_entrada_minutos: parseInt(document.getElementById('tol_entrada').value) || 0,
+        tolerancia_saida_minutos: parseInt(document.getElementById('tol_saida').value) || 0,
+        raio_geofence_metros: parseInt(document.getElementById('raio_gps').value) || 0,
         dias_trabalho_semana: tipo === 'semanal' ? diasSemanaSelecionados.length : 0,
         dias_padrao: tipo === 'semanal' ? diasSemanaSelecionados : null,
         ciclo_config: tipo === 'ciclo' ? {
           trab_total: parseInt(document.getElementById('trab_total').value),
           folga_total: parseInt(document.getElementById('folga_total').value)
-        } : null
+        } : null,
+        regime: document.getElementById('regime_trabalho').value,
+        dias_presenciais_json: document.getElementById('regime_trabalho').value === 'Híbrido' ? diasHibridosSelecionados : [],
+        restrito_gps: document.getElementById('rule_gps').checked,
+        aprovacao_excecao: document.getElementById('rule_approval').checked,
+        punicao_esquecimento: document.getElementById('rule_forget').checked,
+        gestao_horas_extras: document.getElementById('rule_extra_hours').checked,
+        limite_horas_extras: parseInt(document.getElementById('limit_extra_hours').value) || 0,
+        rastreio_horario: document.getElementById('rule_tracking').checked,
+        possui_almoco: document.getElementById('rule_lunch').checked,
+        tipo_repeticao: document.getElementById('tipo_repeticao').value
       };
 
       try {

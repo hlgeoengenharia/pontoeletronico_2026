@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html class="dark" lang="pt-br">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script src="../js/theme.js?v=1.0"></script>
+    <title>Validação de GPS - ChronoSync</title>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen">
+    <div
+        class="relative flex min-h-screen w-full flex-col max-w-md mx-auto border-x border-slate-800 shadow-2xl bg-background-dark overflow-hidden">
+        <!-- Header -->
+        <header class="border-b border-primary/20 bg-background-dark/80 backdrop-blur-md sticky top-0 z-50">
+            <div class="flex items-center p-4 justify-between max-w-2xl mx-auto">
+                <div onclick="history.back()"
+                    class="text-primary flex size-10 shrink-0 items-center justify-center rounded-lg border border-primary/30 bg-primary/10 cursor-pointer hover:bg-primary/20 transition-all">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                </div>
+                <h2 class="text-slate-100 text-lg font-bold tracking-wider uppercase flex-1 text-center">VALIDAÇÃO DE
+                    GPS</h2>
+                <div
+                    class="flex size-10 items-center justify-center rounded-lg bg-orange-500/10 border border-orange-500/30 text-orange-500">
+                    <span class="material-symbols-outlined">location_on</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Section Title -->
+        <div class="px-6 py-4 flex items-center justify-between">
+            <h3 class="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">Batidas Fora do Raio</h3>
+            <span id="pendency-count"
+                class="text-[10px] font-bold bg-orange-500 text-white px-2 py-0.5 rounded-full">0</span>
+        </div>
+
+        <!-- Pending Requests List -->
+        <div id="lista-pendencias" class="flex flex-col gap-4 p-4 pb-32">
+            <!-- Container Dinâmico -->
+        </div>
+    </div>
+
+    <!-- Modal de Detalhes/Mapa -->
+    <div id="modalMapa"
+        class="fixed inset-0 bg-black/95 z-[100] hidden items-center justify-center p-6 backdrop-blur-xl">
+        <div class="bg-background-dark border border-primary/20 rounded-3xl p-6 w-full max-w-md space-y-6 shadow-2xl">
+            <div class="flex justify-between items-start">
+                <div>
+                    <h3 id="modalNome" class="text-lg font-black text-slate-100 uppercase italic">Nome do Funcionário
+                    </h3>
+                    <p id="modalCargo" class="text-[10px] text-primary font-bold uppercase tracking-widest">Cargo /
+                        Setor</p>
+                </div>
+                <button onclick="fecharModalMapa()" class="text-slate-500 hover:text-white transition-all">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+            </div>
+
+            <div class="aspect-square w-full bg-slate-800 rounded-2xl overflow-hidden relative border border-white/5">
+                <!-- Placeholder para Mapa (Seria Google Maps ou Leaflet) -->
+                <div class="absolute inset-0 flex items-center justify-center flex-col gap-2">
+                    <span class="material-symbols-outlined text-4xl text-slate-600">map</span>
+                    <p class="text-[8px] text-slate-600 uppercase font-black">Visualização Espacial Indisponível</p>
+                </div>
+                <!-- Demonstração de Pino -->
+                <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
+                    <span
+                        class="material-symbols-outlined text-orange-500 text-4xl drop-shadow-[0_0_10px_rgba(249,115,22,0.5)]">location_on</span>
+                    <p class="text-[8px] font-bold text-orange-500 uppercase mt-1">Local Real</p>
+                </div>
+                <div class="absolute top-1/4 left-1/4 flex flex-col items-center">
+                    <span class="material-symbols-outlined text-primary text-4xl opacity-40">home_pin</span>
+                    <p class="text-[8px] font-bold text-primary uppercase mt-1 opacity-40">Setor</p>
+                </div>
+            </div>
+
+            <div class="bg-primary/5 border border-primary/20 p-4 rounded-2xl">
+                <p class="text-[8px] font-black text-slate-500 uppercase mb-2">Justificativa:</p>
+                <p id="modalJustificativa" class="text-xs text-slate-200 italic leading-relaxed">"Carregando..."</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <button id="btnRejeitar"
+                    class="py-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-500 text-xs font-black uppercase hover:bg-rose-500/20 transition-all">Rejeitar</button>
+                <button id="btnAprovar"
+                    class="py-4 rounded-2xl bg-primary text-white text-xs font-black uppercase shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all">Validar
+                    Ponto</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { supabase } from '../js/supabase-config.js';
+        import { Auth } from '../js/auth.js';
+        import { UI } from '../js/ui-utils.js';
+
+        const user = Auth.getUser();
+
+        async function loadPendencias() {
+            const container = document.getElementById('lista-pendencias');
+            const countLabel = document.getElementById('pendency-count');
+
+            try {
+                let query = supabase
+                    .from('pontos')
+                    .select('*, funcionarios!inner(*, setores(nome))')
+                    .eq('status_validacao', 'pendente')
+                    .order('data_hora', { ascending: false });
+
+                if (user.role === 'Gestor' && user.setorId) {
+                    query = query.eq('funcionarios.setor_id', user.setorId);
+                }
+
+                const { data, error } = await query;
+                if (error) throw error;
+
+                countLabel.innerText = data.length;
+
+                if (!data || data.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center py-20 opacity-30 border-2 border-dashed border-white/5 rounded-2xl">
+                            <span class="material-symbols-outlined text-6xl mb-4">verified_user</span>
+                            <p class="uppercase tracking-widest font-black text-xs">Sem pendências de localização</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = data.map(p => `
+                    <div class="bg-background-dark/40 border border-slate-800 p-5 rounded-2xl space-y-4 hover:border-orange-500/30 transition-all group">
+                        <div class="flex items-center gap-4">
+                            <div class="size-12 rounded-full border-2 border-orange-500/50 p-0.5">
+                                <img src="https://ui-avatars.com/api/?name=${p.funcionarios.nome_completo}&background=f97316&color=fff" class="w-full h-full rounded-full object-cover">
+                            </div>
+                            <div class="flex-1">
+                                <h4 class="text-sm font-black text-slate-100 uppercase tracking-tight">${p.funcionarios.nome_completo}</h4>
+                                <p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest">${p.funcionarios.setores?.nome || 'SETOR N/D'}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm font-black text-orange-500">${new Date(p.data_hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
+                                <p class="text-[8px] text-slate-600 font-bold uppercase">${new Date(p.data_hora).toLocaleDateString('pt-BR')}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-orange-500/5 border-l-2 border-orange-500 p-3 rounded-r-lg">
+                            <p class="text-[10px] text-orange-500/70 font-black uppercase mb-1">Motivo / Justificativa:</p>
+                            <p class="text-xs text-slate-300 italic truncate italic">"${p.justificativa_usuario || 'Não informada'}"</p>
+                        </div>
+
+                        <button onclick='abrirModalMapa(${JSON.stringify(p)})' class="w-full py-3 rounded-xl bg-white/5 border border-white/10 text-[10px] font-black uppercase text-slate-400 group-hover:bg-primary group-hover:text-white group-hover:border-transparent transition-all">Ver Detalhes no Mapa</button>
+                    </div>
+                `).join('');
+
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = '<p class="text-rose-500 text-center text-xs font-black uppercase py-20">Falha ao carregar conexões</p>';
+            }
+        }
+
+        window.abrirModalMapa = (p) => {
+            const modal = document.getElementById('modalMapa');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            document.getElementById('modalNome').innerText = p.funcionarios.nome_completo;
+            document.getElementById('modalCargo').innerText = `${p.funcionarios.funcao || 'N/A'} | ${p.funcionarios.setores?.nome || 'N/D'}`;
+            document.getElementById('modalJustificativa').innerText = `"${p.justificativa_usuario || 'Sem justificativa informada.'}"`;
+
+            document.getElementById('btnAprovar').onclick = () => processar(p.id, 'aprovado');
+            document.getElementById('btnRejeitar').onclick = () => processar(p.id, 'rejeitado');
+        };
+
+        window.fecharModalMapa = () => {
+            const modal = document.getElementById('modalMapa');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        };
+
+        async function processar(id, status) {
+            UI.showLoader();
+            try {
+                const { error } = await supabase.from('pontos').update({ status_validacao: status }).eq('id', id);
+                if (error) throw error;
+
+                UI.showToast(`Registro ${status} com sucesso`, 'success');
+                fecharModalMapa();
+                loadPendencias();
+            } catch (err) {
+                UI.showToast('Erro ao processar validação', 'error');
+            } finally {
+                UI.hideLoader();
+            }
+        }
+
+        loadPendencias();
+    </script>
+</body>
+
+</html>

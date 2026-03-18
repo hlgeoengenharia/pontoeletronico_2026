@@ -2,194 +2,294 @@
 <html class="dark" lang="pt-BR">
 
 <head>
-  <meta charset="utf-8">
-  <meta content="width=device-width, initial-scale=1.0" name="viewport">
-  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap"
-    rel="stylesheet">
-  <link
-    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
-    rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="../js/theme.js?v=1.0"></script>
-  <script src="../js/manager-context.js?v=2.7"></script>
-  <style>
-    .font-variation-settings-fill {
-      font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-    }
-  </style>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/theme.js?v=1.0"></script>
+    <script src="../js/manager-context.js?v=2.7"></script>
+    <title>ChronoSync - Estatísticas de Desempenho</title>
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; color: black !important; padding-bottom: 0 !important; }
+            main { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
+            .stats-grid { display: grid !important; grid-template-columns: repeat(3, 1fr) !important; gap: 1rem !important; }
+            .bg-background-dark, .bg-\[\#0f172a\] { background: #f8fafc !important; border: 1px solid #e2e8f0 !important; }
+            .text-slate-100, .text-slate-300 { color: #0f172a !important; }
+        }
+    </style>
 </head>
 
-<body class="bg-background-dark text-slate-100 min-h-screen flex flex-col font-display pb-24">
-  <header
-    class="p-6 flex items-center justify-between border-b border-primary/20 bg-background-dark/80 backdrop-blur-md sticky top-0 z-50">
-    <div id="btn-voltar"
-      class="text-primary flex size-10 mt-2 items-center justify-center rounded-lg border border-primary/30 bg-primary/10 cursor-pointer hover:bg-primary/20 transition-all">
-      <span class="material-symbols-outlined">arrow_back</span>
-    </div>
-    <h2 class="text-lg font-bold tracking-widest text-white uppercase flex-1 text-center">ESTATÍSTICAS</h2>
-    <div class="w-10"></div>
-  </header>
-
-  <main class="flex-1 p-6 max-w-2xl mx-auto w-full">
-    <section class="mb-8 flex flex-col items-center gap-4 text-center">
-      <div class="w-24 h-24 rounded-full border-2 border-primary p-1 bg-slate-800">
-        <img id="user-photo" src="https://ui-avatars.com/api/?name=User&background=0D59F2&color=fff"
-          class="w-full h-full rounded-full object-cover">
-      </div>
-      <div>
-        <h3 id="user-nome" class="text-xl font-bold uppercase">CARREGANDO...</h3>
-        <div id="user-info-container" class="space-y-1">
-          <p id="user-cargo" class="text-primary text-[10px] font-bold uppercase tracking-widest">CARGO/FUNÇÃO: ...</p>
-          <p id="user-setor-info" class="text-primary text-[10px] font-bold uppercase tracking-widest">SETOR: ...</p>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen pb-24 font-['Space_Grotesk']">
+    <header class="p-6 border-b border-primary/20 bg-background-dark/80 backdrop-blur-md sticky top-0 z-50">
+        <div class="flex items-center justify-between max-w-4xl mx-auto w-full">
+            <div id="btn-voltar" onclick="history.back()"
+                class="no-print text-primary flex size-10 items-center justify-center rounded-lg border border-primary/30 bg-primary/10 cursor-pointer hover:bg-primary/20 transition-all">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </div>
+            <h2 class="text-white text-lg font-black tracking-widest uppercase italic flex-1 text-center">Estatísticas</h2>
+            <button onclick="window.print()" class="no-print text-slate-400 hover:text-white transition-all">
+                <span class="material-symbols-outlined italic">picture_as_pdf</span>
+            </button>
         </div>
-      </div>
-    </section>
+    </header>
 
-    <div class="grid grid-cols-2 gap-4 mb-8">
-      <div class="bg-primary/5 border border-primary/20 p-4 rounded-2xl text-center">
-        <p id="label-mes" class="text-[10px] font-bold text-slate-500 uppercase mb-1">MÊS DE REFERÊNCIA</p>
-        <h4 id="horas-mes" class="text-2xl font-black text-primary">0:00</h4>
-        <p class="text-[9px] text-slate-400 uppercase mt-1">Horas Acumuladas</p>
-      </div>
-      <div class="bg-white/5 border border-white/10 p-4 rounded-2xl text-center">
-        <p id="label-ano" class="text-[10px] font-bold text-slate-500 uppercase mb-1">ACUMULADO ANO</p>
-        <h4 id="horas-ano" class="text-2xl font-black text-white">0:00</h4>
-        <p class="text-[9px] text-slate-400 uppercase mt-1">Total Registrado</p>
-      </div>
-    </div>
+    <main class="max-w-2xl mx-auto p-6 md:p-8 space-y-8">
+        <!-- Perfil Resumido (Padrão historico_anual) -->
+        <section class="flex flex-col items-center gap-4 text-center">
+            <div class="w-24 h-24 rounded-full border-2 border-primary p-1 bg-slate-800 shadow-xl shadow-primary/10">
+                <img id="user-photo" src="https://ui-avatars.com/api/?name=User&background=0D59F2&color=fff" class="w-full h-full rounded-full object-cover">
+            </div>
+            <div>
+                <h3 id="userNome" class="text-xl font-black text-slate-100 uppercase italic leading-tight">CARREGANDO...</h3>
+                <div class="space-y-1 mt-1">
+                    <p id="userCargo" class="text-primary text-[10px] font-black uppercase tracking-widest">CARGO/FUNÇÃO: ---</p>
+                    <p id="userSetor" class="text-primary text-[10px] font-black uppercase tracking-widest leading-none">SETOR: ---</p>
+                </div>
+            </div>
+        </section>
 
-    <section class="space-y-6">
-      <div class="flex items-center justify-between">
-        <h4 class="text-xs font-bold uppercase tracking-widest text-slate-400">Desempenho da Jornada</h4>
-        <span class="text-[10px] bg-primary/20 text-primary px-2 py-1 rounded-full font-bold">META: 160H</span>
-      </div>
-      <div class="space-y-4">
-        <div class="space-y-2">
-          <div class="flex justify-between text-[11px] font-bold">
-            <span class="text-slate-400">PROGRESSO MENSAL</span>
-            <span id="progresso-percent">0%</span>
-          </div>
-          <div class="h-4 bg-white/5 rounded-full overflow-hidden p-1 border border-white/5">
-            <div id="progresso-bar"
-              class="h-full bg-primary rounded-full transition-all duration-1000 shadow-[0_0_10px_#0d59f2]"
-              style="width: 0%"></div>
-          </div>
+        <!-- Seletor de Ano (Padrão historico_anual) -->
+        <div class="no-print flex items-center justify-between bg-primary/5 p-4 rounded-3xl border border-primary/20 shadow-lg">
+            <button id="prev-year" class="p-2 hover:text-primary transition-all transform active:scale-90 flex items-center justify-center">
+                <span class="material-symbols-outlined !text-4xl text-primary font-black">chevron_left</span>
+            </button>
+            <h3 id="current-year-display" class="text-2xl font-black text-white italic tracking-widest">----</h3>
+            <button id="next-year" class="p-2 hover:text-primary transition-all transform active:scale-90 flex items-center justify-center">
+                <span class="material-symbols-outlined !text-4xl text-primary font-black">chevron_right</span>
+            </button>
         </div>
-      </div>
-    </section>
-  </main>
 
-  <!-- Bottom Navigation -->
-  <!-- Bottom Navigation -->
-  <nav
-    class="fixed bottom-0 left-0 right-0 bg-background-dark/90 border-t border-white/5 py-4 z-50 flex justify-center backdrop-blur-xl">
-    <div class="flex items-center justify-around w-full max-w-md px-6">
-      <a id="nav-inicio" href="painel_funcionario.html"
-        class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
-        <span class="material-symbols-outlined text-2xl">home</span>
-        <span class="text-[9px] font-black uppercase tracking-widest text-center">Início</span>
-      </a>
-      <a href="estatistica_funcionario.html" class="flex flex-col items-center gap-1.5 text-primary">
-        <span class="material-symbols-outlined text-2xl font-variation-settings-fill">bar_chart</span>
-        <span class="text-[9px] font-black uppercase tracking-widest text-center">Estatística</span>
-      </a>
-      <a href="historico_anual.html"
-        class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
-        <span class="material-symbols-outlined text-2xl">history</span>
-        <span class="text-[9px] font-black uppercase tracking-widest text-center">Histórico</span>
-      </a>
-      <a id="nav-perfil-link" href="perfil_funcionario.html"
-        class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
-        <span class="material-symbols-outlined text-2xl">person</span>
-        <span class="text-[9px] font-black uppercase tracking-widest text-center">Perfil</span>
-      </a>
-    </div>
-  </nav>
+        <!-- Tabela de Evolução Mensal -->
+        <section class="space-y-4">
+            <h4 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] italic">Evolução Mensal</h4>
+            <div class="overflow-hidden bg-[#0f172a] border border-white/5 rounded-3xl shadow-2xl">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="bg-white/5 border-b border-white/5">
+                                <th class="p-4 text-[9px] font-black uppercase text-slate-500 tracking-widest">Mês</th>
+                                <th class="p-4 text-[9px] font-black uppercase text-slate-500 tracking-widest">Carga Acum.</th>
+                                <th class="p-4 text-[9px] font-black uppercase text-slate-500 tracking-widest text-center">Faltas</th>
+                                <th class="p-4 text-[9px] font-black uppercase text-slate-500 tracking-widest text-center">Freq. %</th>
+                                <th class="p-4 text-[9px] font-black uppercase text-slate-500 tracking-widest text-right">Saldo</th>
+                            </tr>
+                        </thead>
+                        <tbody id="evolucaoBody" class="divide-y divide-white/10">
+                            <!-- Gerado dinamicamente -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
 
-  <script>
-    (function () {
-      const SUPABASE_URL = 'https://pptprelbbrcqrbjssoci.supabase.co';
-      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBwdHByZWxiYnJjcXJianNzb2NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3NDgzNjksImV4cCI6MjA4ODMyNDM2OX0.votBbcGv7f9jpSSbBs0_GkgZ_Strm9IQxjl9oo0aPp8';
+        <!-- Seção Anual (Consolidado ao final) -->
+        <section class="space-y-4 bg-primary/5 p-6 rounded-3xl border border-primary/10">
+            <div class="flex items-center justify-between mb-2">
+                <h4 class="text-[10px] font-black text-primary uppercase tracking-[0.2em] italic">Consolidado Anual</h4>
+                <p id="labelAnoAtual" class="text-[9px] font-bold text-slate-500 uppercase">---</p>
+            </div>
+            <div id="statsAno" class="stats-grid grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Cards Anuais -->
+                <div class="bg-white/5 border border-white/10 p-5 rounded-2xl border-l-4 border-l-slate-400">
+                    <p class="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Horas no Ano</p>
+                    <p id="anoCarga" class="text-2xl font-black text-white italic">00:00</p>
+                </div>
+                <div class="bg-white/5 border border-white/10 p-5 rounded-2xl border-l-4 border-l-rose-500">
+                    <p class="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Faltas no Ano</p>
+                    <p id="anoFaltas" class="text-2xl font-black text-rose-400 italic">0</p>
+                </div>
+                <div class="bg-white/5 border border-white/10 p-5 rounded-2xl border-l-4 border-l-emerald-500">
+                    <p class="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Média Frequência</p>
+                    <p id="anoFreq" class="text-2xl font-black text-emerald-400 italic">0%</p>
+                </div>
+            </div>
+        </section>
+    </main>
 
-      window.addEventListener('load', async function () {
-        const urlParams = new URLSearchParams(window.location.search);
-        const targetUserId = urlParams.get('id') || localStorage.getItem('userId');
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    <nav class="fixed bottom-0 left-0 right-0 no-print bg-background-dark/90 border-t border-white/5 py-4 z-50 flex justify-center backdrop-blur-xl">
+        <div class="flex items-center justify-around w-full max-w-md px-6">
+            <a href="painel_funcionario.html" class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors hover:scale-110">
+                <span class="material-symbols-outlined text-2xl">home</span>
+                <span class="text-[9px] font-black uppercase tracking-widest">Início</span>
+            </a>
+            <a href="estatistica_funcionario.html" class="flex flex-col items-center gap-1.5 text-primary scale-110">
+                <span class="material-symbols-outlined text-2xl font-variation-settings-fill">bar_chart</span>
+                <span class="text-[9px] font-black uppercase tracking-widest">Estatística</span>
+            </a>
+            <a href="historico_anual.html" class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors hover:scale-110">
+                <span class="material-symbols-outlined text-2xl">history</span>
+                <span class="text-[9px] font-black uppercase tracking-widest">Histórico</span>
+            </a>
+            <a href="perfil_funcionario.html" class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors hover:scale-110">
+                <span class="material-symbols-outlined text-2xl">person</span>
+                <span class="text-[9px] font-black uppercase tracking-widest">Perfil</span>
+            </a>
+        </div>
+    </nav>
 
-        // Navegação dinâmica
-        const { Auth } = await import('../js/auth.js');
-        const { UI } = await import('../js/ui-utils.js');
-        const currentUser = Auth.getUser();
-        UI.updateFooterNavigation(currentUser.role);
-        document.getElementById('btn-voltar').onclick = () => UI.voltarInicio();
+    <script type="module">
+        import { supabase } from '../js/supabase-config.js';
+        import { Auth } from '../js/auth.js';
+        import { UI } from '../js/ui-utils.js';
+        import { ScalesEngine } from '../js/scales-engine.js';
 
-        try {
-          const { data: user } = await supabase.from('funcionarios').select('*, setores!setor_id(nome)').eq('id', targetUserId).single();
-          if (user) {
-            document.getElementById('user-nome').innerText = user.nome_completo.toUpperCase();
-            document.getElementById('user-cargo').innerText = `CARGO/FUNÇÃO: ${(user.funcao || 'TRIPULANTE').toUpperCase()}`;
-            document.getElementById('user-setor-info').innerText = `SETOR: ${(user.setores?.nome || 'NÃO DEFINIDO').toUpperCase()}`;
-            if (user.foto_url) document.getElementById('user-photo').src = user.foto_url;
-          }
+        const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+        let currentUserData = null;
+        let curYear = new Date().getFullYear();
 
-          const { data: allPoints } = await supabase.from('pontos').select('data_hora').eq('funcionario_id', targetUserId).order('data_hora', { ascending: false });
+        async function init() {
+            UI.showLoader();
+            const urlParams = new URLSearchParams(window.location.search);
+            const targetId = urlParams.get('id') || localStorage.getItem('userId');
 
-          let refYear = new Date().getFullYear();
-          let refMonth = new Date().getMonth();
+            document.getElementById('prev-year').onclick = () => { curYear--; loadStats(); };
+            document.getElementById('next-year').onclick = () => { curYear++; loadStats(); };
 
-          if (allPoints && allPoints.length > 0) {
-            const lastDate = new Date(allPoints[0].data_hora);
-            refYear = lastDate.getFullYear();
-            refMonth = lastDate.getMonth();
-          }
+            try {
+                const { data: func, error } = await supabase
+                    .from('funcionarios')
+                    .select('*, escalas(*), setores!setor_id(nome)')
+                    .eq('id', targetId)
+                    .single();
+                
+                if (error) throw error;
+                currentUserData = func;
 
-          const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-          document.getElementById('label-mes').innerText = `MÊS DE REFERÊNCIA: ${monthNames[refMonth].toUpperCase()} ${refYear}`;
-          document.getElementById('label-ano').innerText = `ACUMULADO ANO: ${refYear}`;
+                document.getElementById('userNome').innerText = func.nome_completo.toUpperCase();
+                document.getElementById('userCargo').innerText = `CARGO/FUNÇÃO: ${(func.funcao || 'TRIPULANTE').toUpperCase()}`;
+                document.getElementById('userSetor').innerText = `SETOR: ${(func.setores?.nome || 'N/A').toUpperCase()}`;
+                if (func.foto_url) document.getElementById('user-photo').src = func.foto_url;
 
-          const startYear = `${refYear}-01-01T00:00:00`;
-          const endYear = `${refYear}-12-31T23:59:59`;
-          const { data: pontosAno } = await supabase.from('pontos').select('*').eq('funcionario_id', targetUserId).gte('data_hora', startYear).lte('data_hora', endYear).order('data_hora', { ascending: true });
+                await loadStats();
+            } catch (err) {
+                console.error(err);
+                UI.showToast('Erro ao carregar dados.', 'error');
+            } finally {
+                UI.hideLoader();
+            }
+        }
 
-          let msMes = 0;
-          let msAno = 0;
+        window.loadStats = async function() {
+            const year = curYear;
+            const targetId = currentUserData.id;
+            const now = new Date();
+            
+            document.getElementById('current-year-display').innerText = year;
+            document.getElementById('labelAnoAtual').innerText = `REF: ${year}`;
 
-          if (pontosAno) {
-            const daily = {};
-            pontosAno.forEach(p => {
-              const d = p.data_hora.split('T')[0];
-              if (!daily[d]) daily[d] = [];
-              daily[d].push(p);
-            });
+            const startYear = `${year}-01-01T00:00:00`;
+            const endYear = `${year}-12-31T23:59:59`;
 
-            Object.keys(daily).forEach(day => {
-              const dt = new Date(day + 'T12:00:00');
-              const pts = daily[day].sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora));
-              let dayMs = 0;
-              for (let i = 0; i < pts.length - 1; i += 2) dayMs += (new Date(pts[i + 1].data_hora) - new Date(pts[i].data_hora));
+            const { data: pontosAno } = await supabase
+                .from('pontos')
+                .select('*')
+                .eq('funcionario_id', targetId)
+                .gte('data_hora', startYear)
+                .lte('data_hora', endYear)
+                .order('data_hora', { ascending: true });
 
-              msAno += dayMs;
-              if (dt.getMonth() === refMonth) msMes += dayMs;
-            });
-          }
+            const monthlyData = [];
+            let totalYearMins = 0;
+            let totalYearFaltas = 0;
+            let totalYearPlanned = 0;
+            let totalYearPresent = 0;
 
-          const hMes = Math.floor(msMes / 3600000);
-          const mMes = Math.floor((msMes % 3600000) / 60000);
-          const hAno = Math.floor(msAno / 3600000);
-          const mAno = Math.floor((msAno % 3600000) / 60000);
+            for (let m = 0; m < 12; m++) {
+                if (year === now.getFullYear() && m > now.getMonth()) break;
 
-          document.getElementById('horas-mes').innerText = `${hMes}:${mMes.toString().padStart(2, '0')}`;
-          document.getElementById('horas-ano').innerText = `${hAno}:${mAno.toString().padStart(2, '0')}`;
+                const monthPoints = (pontosAno || []).filter(p => p.data_hora.startsWith(`${year}-${(m+1).toString().padStart(2, '0')}`));
+                const plannedDays = ScalesEngine.projectBaseDays(currentUserData.escalas, currentUserData.escalas.vigencia_inicio, m, year);
+                
+                let workedMins = 0;
+                monthPoints.forEach((p, i) => {
+                    if (i % 2 === 0 && monthPoints[i+1]) {
+                        workedMins += (new Date(monthPoints[i+1].data_hora) - new Date(p.data_hora)) / 60000;
+                    }
+                });
 
-          const perc = Math.min(100, Math.floor((hMes / 160) * 100));
-          document.getElementById('progresso-percent').innerText = `${perc}%`;
-          document.getElementById('progresso-bar').style.width = `${perc}%`;
+                const dailyPlanned = ScalesEngine.calculateDailyWorkMinutes(currentUserData.escalas);
+                
+                // Nós apenas consideramos como "falta" os dias planejados que já encerraram o expediente
+                const finishedPlannedDays = plannedDays.filter(dStr => ScalesEngine.isDayFinished(dStr, currentUserData.escalas));
+                const monthPlanned = finishedPlannedDays.length * dailyPlanned;
+                
+                // Meses futuros não terão finishedPlannedDays.length, logo faltas = 0
+                const monthFaltas = finishedPlannedDays.filter(dStr => !monthPoints.some(p => p.data_hora.startsWith(dStr))).length;
+                const monthPresent = finishedPlannedDays.length - monthFaltas;
+                const freq = plannedDays.length > 0 ? Math.round((monthPresent / plannedDays.length) * 100) : 0;
+                const saldo = workedMins - monthPlanned;
 
-        } catch (err) { console.error(err); }
-      });
-    })();
-  </script>
+                monthlyData.push({ month: m, workedMins, faltas: monthFaltas, freq, saldo, planned: monthPlanned });
+
+                totalYearMins += workedMins;
+                totalYearFaltas += monthFaltas;
+                totalYearPlanned += monthPlanned;
+                totalYearPresent += monthPresent;
+            }
+
+            // Anual Cards Update
+            document.getElementById('anoCarga').innerText = formatMinutes(totalYearMins);
+            document.getElementById('anoFaltas').innerText = totalYearFaltas;
+            
+            const totalPlannedDays = monthlyData.reduce((acc, curr) => acc + (curr.planned / ScalesEngine.calculateDailyWorkMinutes(currentUserData.escalas)), 0);
+            const totalPresentDays = totalPlannedDays - totalYearFaltas;
+            const finalYearFreq = totalPlannedDays > 0 ? Math.round((totalPresentDays / totalPlannedDays) * 100) : 0;
+            document.getElementById('anoFreq').innerText = `${finalYearFreq}%`;
+
+            renderEvolucao(monthlyData);
+        }
+
+        function renderEvolucao(data) {
+            const body = document.getElementById('evolucaoBody');
+            body.innerHTML = data.reverse().map((d) => `
+                <tr class="hover:bg-white/[0.05] transition-all border-b border-white/5 last:border-0 cursor-pointer group" onclick="goToMonth(${d.month})">
+                    <td class="p-4">
+                        <p class="text-[11px] font-black text-slate-100 uppercase group-hover:text-primary transition-colors">${monthNames[d.month]}</p>
+                    </td>
+                    <td class="p-4">
+                        <p class="text-[11px] font-bold text-slate-300 tracking-tighter">${formatMinutes(d.workedMins)}</p>
+                    </td>
+                    <td class="p-4 text-center">
+                        <p class="text-[11px] font-black ${d.faltas > 0 ? 'text-rose-400' : 'text-slate-500'}">${d.faltas}</p>
+                    </td>
+                    <td class="p-4 text-center">
+                        <div class="inline-flex items-center gap-2">
+                             <p class="text-[10px] font-black text-emerald-400/80">${d.freq}%</p>
+                        </div>
+                    </td>
+                    <td class="p-4 text-right">
+                        <p class="text-[11px] font-black italic ${d.saldo >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${formatBalance(d.saldo)}</p>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        window.goToMonth = function(month) {
+            const year = curYear;
+            window.location.href = `historico_mensal.html?id=${currentUserData.id}&m=${month}&y=${year}`;
+        }
+
+        function formatMinutes(mins) {
+            const h = Math.floor(mins / 60);
+            const m = Math.round(mins % 60);
+            return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+        }
+
+        function formatBalance(mins) {
+            const h = Math.floor(Math.abs(mins) / 60);
+            const m = Math.round(Math.abs(mins) % 60);
+            return `${mins < 0 ? '-' : '+'}${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+        }
+
+        init();
+    </script>
 </body>
 
 </html>

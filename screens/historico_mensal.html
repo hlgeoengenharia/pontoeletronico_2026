@@ -2,190 +2,427 @@
 <html class="dark" lang="pt-BR">
 
 <head>
-  <meta charset="utf-8">
-  <meta content="width=device-width, initial-scale=1.0" name="viewport">
-  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap"
-    rel="stylesheet" />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
-    rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="../js/theme.js?v=1.0"></script>
-  <script src="../js/manager-context.js?v=2.7"></script>
-  <style>
-    .font-variation-settings-fill {
-      font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-    }
-  </style>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/theme.js?v=1.0"></script>
+    <script src="../js/manager-context.js?v=2.7"></script>
+    <title>ChronoSync - Espelho de Ponto</title>
+    <style>
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            body {
+                background: white !important;
+                color: black !important;
+                padding-bottom: 0 !important;
+            }
+            main {
+                max-width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            .stats-grid {
+                display: grid !important;
+                grid-template-columns: repeat(3, 1fr) !important;
+                gap: 1rem !important;
+            }
+            header {
+                border-bottom: 2px solid #eee !important;
+            }
+            #espelhoBody tr {
+                page-break-inside: avoid !important;
+            }
+            .bg-background-dark, .bg-\[\#0f172a\] {
+                background: #f8fafc !important;
+                border: 1px solid #e2e8f0 !important;
+            }
+            .text-slate-100, .text-slate-300 {
+                color: #0f172a !important;
+            }
+        }
+    </style>
 </head>
 
-<body class="bg-background-dark text-slate-100 min-h-screen flex flex-col font-display pb-24">
-  <header
-    class="p-6 flex items-center justify-between border-b border-primary/20 bg-background-dark/80 backdrop-blur-md sticky top-0 z-50">
-    <div id="btn-voltar"
-      class="text-primary flex size-10 items-center justify-center rounded-lg border border-primary/30 bg-primary/10 cursor-pointer hover:bg-primary/20 transition-all">
-      <span class="material-symbols-outlined">arrow_back</span>
-    </div>
-    <h2 id="header-title" class="text-lg font-bold tracking-widest text-white uppercase flex-1 text-center">REGISTROS
-    </h2>
-    <div class="w-10"></div>
-  </header>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen pb-24">
+    <header class="border-b border-primary/20 bg-background-dark/80 backdrop-blur-md sticky top-0 z-50 px-4">
+        <div class="flex items-center p-4 justify-between max-w-4xl mx-auto">
+            <div id="btn-voltar" onclick="history.back()"
+                class="no-print text-primary flex size-10 shrink-0 items-center justify-center rounded-lg border border-primary/30 bg-primary/10 cursor-pointer hover:bg-primary/20 transition-all">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </div>
+            <div class="text-center flex flex-col items-center">
+                <h2 class="text-slate-100 text-lg font-black tracking-widest uppercase italic">Espelho de Ponto</h2>
+                <div class="flex items-center justify-center gap-4 mt-1">
+                    <button onclick="navigateMonth(-1)" class="no-print text-slate-500 hover:text-primary transition-all flex items-center justify-center bg-white/5 hover:bg-white/10 active:scale-95 rounded-xl w-10 h-10">
+                        <span class="material-symbols-outlined text-xl">chevron_left</span>
+                    </button>
+                    <p id="periodoHeader" class="text-[10px] text-primary font-bold uppercase tracking-[0.2em] m-0">CARREGANDO...</p>
+                    <button onclick="navigateMonth(1)" class="no-print text-slate-500 hover:text-primary transition-all flex items-center justify-center bg-white/5 hover:bg-white/10 active:scale-95 rounded-xl w-10 h-10">
+                        <span class="material-symbols-outlined text-xl">chevron_right</span>
+                    </button>
+                </div>
+            </div>
+            <button onclick="window.print()" class="no-print text-slate-400 hover:text-white transition-all">
+                <span class="material-symbols-outlined">picture_as_pdf</span>
+            </button>
+        </div>
+    </header>
 
-  <main class="flex-1 p-6 max-w-2xl mx-auto w-full">
-    <div id="logs-container" class="space-y-4">
-      <!-- Registros Dinâmicos -->
-      <div class="flex flex-col items-center justify-center py-12 text-slate-500">
-        <span class="material-symbols-outlined animate-spin mb-2">refresh</span>
-        <p class="text-xs uppercase font-bold tracking-widest">Sincronizando registros...</p>
-      </div>
-    </div>
-  </main>
+    <main class="max-w-4xl mx-auto p-4 md:p-8 space-y-8">
+        <!-- Informações do Usuário -->
+        <section class="flex flex-col items-center gap-4 text-center">
+            <div class="relative">
+                <div class="w-24 h-24 rounded-full border-2 border-primary p-1 bg-slate-800 shadow-xl shadow-primary/10">
+                    <img id="user-photo" src="https://ui-avatars.com/api/?name=User&background=0D59F2&color=fff"
+                        class="w-full h-full rounded-full object-cover">
+                </div>
+                <div id="user-badge" class="absolute -bottom-1 -right-1 bg-primary p-1.5 rounded-full border-2 border-background-dark shadow-xl">
+                    <span class="material-symbols-outlined text-white text-xs font-variation-settings-fill">verified_user</span>
+                </div>
+            </div>
+            <div>
+                <h3 id="funcNome" class="text-xl font-black text-slate-100 uppercase italic leading-tight">CARREGANDO...</h3>
+                <div class="space-y-1 mt-1">
+                    <p id="funcMatricula" class="text-primary text-[10px] font-black uppercase tracking-widest">Matrícula: #---</p>
+                    <p id="funcSetor" class="text-primary text-[10px] font-black uppercase tracking-widest leading-none">Setor: ---</p>
+                </div>
+            </div>
+        </section>
 
-  </main>
+        <!-- Estatísticas Básicas do Mês -->
+        <div class="stats-grid grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-primary/5 border border-primary/10 p-5 rounded-3xl group transition-all border-l-4 border-l-primary">
+                <div class="flex items-center gap-3 mb-2">
+                    <span class="material-symbols-outlined text-primary text-xl">schedule</span>
+                    <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Carga Acumulada</p>
+                </div>
+                <p id="totalTrabalhado" class="text-3xl font-black text-slate-100 italic">00:00</p>
+                <p class="text-[8px] text-slate-600 font-bold uppercase mt-1">Total de horas no mês</p>
+            </div>
+            <div class="bg-rose-500/5 border border-rose-500/10 p-5 rounded-3xl group transition-all border-l-4 border-l-rose-500">
+                <div class="flex items-center gap-3 mb-2">
+                    <span class="material-symbols-outlined text-rose-500 text-xl">event_busy</span>
+                    <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Total de Faltas</p>
+                </div>
+                <p id="totalFaltas" class="text-3xl font-black text-rose-400 italic">0</p>
+                <p class="text-[8px] text-slate-600 font-bold uppercase mt-1">Dias úteis sem registro</p>
+            </div>
+            <div class="bg-emerald-500/5 border border-emerald-500/10 p-5 rounded-3xl group transition-all border-l-4 border-l-emerald-500">
+                <div class="flex items-center gap-3 mb-2">
+                    <span class="material-symbols-outlined text-emerald-500 text-xl">query_stats</span>
+                    <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Frequência</p>
+                </div>
+                <p id="percentualFrequencia" class="text-3xl font-black text-emerald-400 italic">0%</p>
+                <p class="text-[8px] text-slate-600 font-bold uppercase mt-1">Aproveitamento mensal</p>
+            </div>
+        </div>
 
-  <script>
-    (function () {
-      const SUPABASE_URL = 'https://pptprelbbrcqrbjssoci.supabase.co';
-      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBwdHByZWxiYnJjcXJianNzb2NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3NDgzNjksImV4cCI6MjA4ODMyNDM2OX0.votBbcGv7f9jpSSbBs0_GkgZ_Strm9IQxjl9oo0aPp8';
+        <!-- Tabela do Espelho -->
+        <div class="overflow-hidden bg-[#0f172a] border border-white/5 rounded-3xl shadow-xl">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="bg-white/5 border-b border-white/5">
+                            <th class="p-4 text-[10px] font-black uppercase text-slate-500 tracking-widest">Data</th>
+                            <th class="p-4 text-[10px] font-black uppercase text-slate-500 tracking-widest">Entrada</th>
+                            <th class="p-4 text-[10px] font-black uppercase text-slate-500 tracking-widest">Saída</th>
+                            <th class="p-4 text-[10px] font-black uppercase text-slate-500 tracking-widest">Saldo</th>
+                            <th class="p-4 text-[10px] font-black uppercase text-slate-500 tracking-widest text-center">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="espelhoBody" class="divide-y divide-white/10">
+                        <!-- Linhas Geradas Dinamicamente -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
-      window.addEventListener('load', async function () {
-        const urlParams = new URLSearchParams(window.location.search);
-        const targetUserId = urlParams.get('id') || localStorage.getItem('userId');
-        const selMonth = urlParams.get('month');
-        const selYear = urlParams.get('year');
+        <!-- Footer Stats Adicionais -->
+        <div class="flex flex-col md:flex-row justify-between items-center gap-6 pt-4">
+            <div class="flex gap-8">
+                <div class="text-center md:text-left">
+                    <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Total Esperado</p>
+                    <p id="totalEsperado" class="text-xl font-black text-slate-300 italic">00:00</p>
+                </div>
+                <div class="text-center md:text-left">
+                    <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Saldo Final</p>
+                    <p id="totalSaldo" class="text-xl font-black text-emerald-400 italic">00:00</p>
+                </div>
+            </div>
+            <div class="no-print flex gap-2">
+                <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[8px] font-bold text-emerald-500 uppercase">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Presente
+                </div>
+                <div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-rose-500/10 border border-rose-500/20 text-[8px] font-bold text-rose-500 uppercase">
+                    <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Ausente
+                </div>
+            </div>
+        </div>
+    </main>
 
-        if (!targetUserId || !window.supabase) return;
+    <script type="module">
+        import { supabase } from '../js/supabase-config.js';
+        import { Auth } from '../js/auth.js';
+        import { UI } from '../js/ui-utils.js';
+        import { ScalesEngine } from '../js/scales-engine.js';
 
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+        let targetId, month, year;
 
-        // Navegação dinâmica
-        const { Auth } = await import('../js/auth.js');
-        const { UI } = await import('../js/ui-utils.js');
-        const userObj = Auth.getUser();
-        UI.updateFooterNavigation(userObj.role);
-        document.getElementById('btn-voltar').onclick = () => {
-          window.location.href = `historico_anual.html?id=${targetUserId}`;
+        async function init() {
+            const urlParams = new URLSearchParams(window.location.search);
+            targetId = urlParams.get('id') || localStorage.getItem('userId');
+            let m = urlParams.get('month') || urlParams.get('m');
+            let y = urlParams.get('year') || urlParams.get('y');
+
+            const now = new Date();
+            month = m !== null ? parseInt(m) : now.getMonth();
+            year = y !== null ? parseInt(y) : now.getFullYear();
+
+            await loadData();
+        }
+
+        async function loadData() {
+            document.getElementById('periodoHeader').innerText = `${monthNames[month].toUpperCase()} / ${year}`;
+            UI.showLoader();
+
+            try {
+                const { data: func, error: errFunc } = await supabase
+                    .from('funcionarios')
+                    .select('*, escalas(*), setores!setor_id(nome)')
+                    .eq('id', targetId)
+                    .single();
+                
+                if (errFunc) throw errFunc;
+
+                document.getElementById('funcNome').innerText = func.nome_completo.toUpperCase();
+                document.getElementById('funcMatricula').innerText = `Matrícula: #${func.matricula || '---'}`;
+                document.getElementById('funcSetor').innerText = `Setor: ${func.setores?.nome || 'N/A'}`;
+                if (func.foto_url) document.getElementById('user-photo').src = func.foto_url;
+
+                // Ajuste de fuso horário local para busca: início e fim do mês
+                const startMonth = new Date(year, month, 1, 0, 0, 0).toISOString();
+                const endMonth = new Date(year, month + 1, 0, 23, 59, 59).toISOString();
+
+                const [ptsRes, anotRes, justRes] = await Promise.all([
+                    supabase.from('pontos').select('*').eq('funcionario_id', targetId).gte('data_hora', startMonth).lte('data_hora', endMonth).order('data_hora', { ascending: true }),
+                    supabase.from('anotacoes').select('*').eq('funcionario_id', targetId).gte('data', startMonth.split('T')[0]).lte('data', endMonth.split('T')[0]),
+                    supabase.from('justificativas').select('*').eq('funcionario_id', targetId).gte('data_incidente', startMonth.split('T')[0]).lte('data_incidente', endMonth.split('T')[0])
+                ]);
+
+                if (ptsRes.error) throw ptsRes.error;
+
+                renderEspelho(ptsRes.data, anotRes.data || [], justRes.data || [], func.escalas, month, year);
+
+            } catch (err) {
+                console.error(err);
+                UI.showToast('Erro ao carregar histórico.', 'error');
+            } finally {
+                UI.hideLoader();
+            }
+        }
+
+        window.navigateMonth = async (delta) => {
+            month += delta;
+            if (month < 0) {
+                month = 11;
+                year--;
+            } else if (month > 11) {
+                month = 0;
+                year++;
+            }
+
+            // Atualiza URL sem recarregar
+            const url = new URL(window.location);
+            url.searchParams.set('month', month);
+            url.searchParams.set('year', year);
+            window.history.pushState({}, '', url);
+
+            await loadData();
         };
 
-        try {
-          const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-          if (selMonth !== null) {
-            document.getElementById('header-title').innerText = `${monthNames[selMonth].toUpperCase()} ${selYear}`;
-          } else {
-            document.getElementById('header-title').innerText = "HISTÓRICO COMPLETO";
-          }
+        function renderEspelho(pontos, anotacoes, justificativas, escala, month, year) {
+            const body = document.getElementById('espelhoBody');
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            
+            // Segurança: Se não há escala, retornamos lista vazia
+            const plannedDays = (escala) 
+                ? ScalesEngine.projectBaseDays(escala, escala.vigencia_inicio, month, year)
+                : [];
 
-          let query = supabase.from('pontos').select('*').eq('funcionario_id', targetUserId).order('data_hora', { ascending: false });
+            let totalWorkedMinutes = 0;
+            let totalPlannedMinutes = 0;
+            let daysPresent = 0;
+            let daysBusinessTotal = plannedDays.length;
 
-          if (selMonth !== null && selYear !== null) {
-            const start = `${selYear}-${(parseInt(selMonth) + 1).toString().padStart(2, '0')}-01T00:00:00`;
-            const end = `${selYear}-${(parseInt(selMonth) + 1).toString().padStart(2, '0')}-31T23:59:59`;
-            query = query.gte('data_hora', start).lte('data_hora', end);
-          }
+            let html = '';
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dateHeader = new Date(year, month, d);
+                const dateStr = `${dateHeader.getFullYear()}-${String(dateHeader.getMonth() + 1).padStart(2, '0')}-${String(dateHeader.getDate()).padStart(2, '0')}`;
+                const dayPoints = pontos.filter(p => p.data_hora.startsWith(dateStr));
+                const dayAnotacao = anotacoes.find(a => a.data === dateStr);
+                const dayJustificativas = justificativas.filter(j => j.data_incidente === dateStr);
 
-          const { data: pontos, error } = await query;
-          if (error) throw error;
+                const dayWorkedMinutes = calculateWorkedMinutes(dayPoints);
+                const isPlanned = plannedDays.includes(dateStr);
+                const isFinished = ScalesEngine.isDayFinished(dateStr, escala);
+                
+                // Só cobra os minutos planejados se o dia for planejado e (teve ponto ou o expediente já acabou)
+                // Caso contrário (dia futuro/hoje cedo), a cobrança é 0 para não negativar precocemente.
+                const shouldCharge = isPlanned && (dayPoints.length > 0 || isFinished);
+                const dailyPlannedMinutes = shouldCharge ? ScalesEngine.calculateDailyWorkMinutes(escala) : 0;
 
-          const container = document.getElementById('logs-container');
-          container.innerHTML = '';
+                totalWorkedMinutes += dayWorkedMinutes;
+                totalPlannedMinutes += dailyPlannedMinutes;
 
-          if (!pontos || pontos.length === 0) {
-            container.innerHTML = `
-                            <div class="text-center py-12 text-slate-600">
-                                <span class="material-symbols-outlined text-4xl mb-2 opacity-20">history_toggle_off</span>
-                                <p class="text-[10px] uppercase font-bold tracking-widest">Nenhum registro encontrado para este ciclo.</p>
+                // Falta: dia planejado, já encerrou, nenhum registro
+                const isMissing = isPlanned && isFinished && dayPoints.length === 0;
+                if (!isMissing && dayPoints.length > 0) daysPresent++;
+
+                const balance = dayWorkedMinutes - dailyPlannedMinutes;
+                let balanceClass = 'text-slate-500';
+                if (balance > 0) balanceClass = 'text-emerald-400';
+                else if (balance < 0 && shouldCharge) balanceClass = 'text-rose-400';
+
+                // Status UI
+                let statusHtml = '';
+                if (!isPlanned) {
+                    statusHtml = '<span class="text-[9px] text-slate-700 font-black uppercase tracking-widest">Folga</span>';
+                } else if (dayPoints.length > 0) {
+                    statusHtml = '<span class="px-2 py-1 rounded bg-emerald-500/10 text-emerald-500 text-[9px] font-black uppercase border border-emerald-500/20">Presente</span>';
+                } else if (isMissing) {
+                    statusHtml = '<span class="px-2 py-1 rounded bg-rose-500/10 text-rose-500 text-[9px] font-black uppercase border border-rose-500/20">Ausente</span>';
+                } else {
+                    statusHtml = '<span class="text-[9px] text-slate-500 font-black uppercase tracking-widest">Aguardando</span>';
+                }
+
+                const hasDetails = dayAnotacao || dayJustificativas.length > 0;
+                
+                // Zebra toggling - matching requested behavior: internal unified tone alternating by day
+                const rowBgClass = d % 2 === 0 ? 'bg-white/[0.04]' : 'bg-transparent';
+
+                html += `
+                    <tr class="${rowBgClass} transition-colors relative group">
+                        <td class="p-4 align-top w-16">
+                            <div class="flex flex-col items-center">
+                                <p class="text-sm font-black text-slate-100">${d.toString().padStart(2, '0')}</p>
+                                <p class="text-[9px] font-bold text-slate-500 uppercase">${dateHeader.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '')}</p>
                             </div>
-                        `;
-            return;
-          }
+                            <!-- Connector -->
+                            ${hasDetails ? '<div class="absolute bottom-0 left-[2.4rem] top-12 w-[2px] bg-primary/20 rounded-full z-0 h-full"></div>' : ''}
+                        </td>
+                        <td class="p-4 align-top text-xs font-bold text-slate-300">
+                             <div class="flex flex-col gap-1">
+                                <span>${formatTime(dayPoints[0])}</span>
+                                ${dayPoints.length > 2 ? `<span class="text-[10px] text-slate-600">${formatTime(dayPoints[2])}</span>` : ''}
+                             </div>
+                        </td>
+                        <td class="p-4 align-top text-xs font-bold text-slate-300">
+                             <div class="flex flex-col gap-1">
+                                <span>${formatTime(dayPoints[dayPoints.length - 1])}</span>
+                                ${dayPoints.length > 2 ? `<span class="text-[10px] text-slate-600">${formatTime(dayPoints[1])}</span>` : ''}
+                             </div>
+                        </td>
+                        <td class="p-4 align-top text-xs font-black italic ${balanceClass}">${formatBalance(balance)}</td>
+                        <td class="p-4 align-top text-center">${statusHtml}</td>
+                    </tr>
+                `;
 
-          // Group by day for nicer display
-          const daily = {};
-          pontos.forEach(p => {
-            const d = p.data_hora.split('T')[0];
-            if (!daily[d]) daily[d] = [];
-            daily[d].push(p);
-          });
-
-          Object.keys(daily).sort((a, b) => new Date(b) - new Date(a)).forEach(day => {
-            const dateObj = new Date(day + 'T12:00:00');
-            const dayName = dateObj.toLocaleDateString('pt-BR', { weekday: 'long' });
-            const dayFull = dateObj.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-
-            const dayGroup = document.createElement('div');
-            dayGroup.className = 'space-y-2';
-            dayGroup.innerHTML = `
-                            <h4 class="text-[10px] font-black text-primary uppercase border-l-2 border-primary pl-2 mb-3 tracking-tighter">
-                                ${dayName} • ${dayFull}
-                            </h4>
-                        `;
-
-            daily[day].sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora)).forEach(p => {
-              const time = new Date(p.data_hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-              const type = p.tipo || 'PONTO';
-              const icon = type === 'INÍCIO' ? 'login' : type === 'FIM' ? 'logout' : 'alarm';
-              const color = type === 'INÍCIO' ? 'text-emerald-400' : type === 'FIM' ? 'text-amber-400' : 'text-primary';
-
-              const item = document.createElement('div');
-              item.className = 'bg-white/5 border border-white/5 p-4 rounded-xl flex items-center justify-between group hover:bg-white/10 transition-colors';
-              item.innerHTML = `
-                                <div class="flex items-center gap-3">
-                                    <span class="material-symbols-outlined ${color}">${icon}</span>
-                                    <div>
-                                        <p class="text-xs font-bold uppercase tracking-tight">${type}</p>
-                                        <p class="text-[10px] text-slate-500">${p.localizacao || 'Não informada'}</p>
+                if (hasDetails) {
+                    html += `
+                        <tr class="${rowBgClass} border-b-0">
+                            <td class="relative">
+                                <div class="absolute top-0 left-[2.4rem] bottom-4 w-[2px] bg-primary/20 rounded-full"></div>
+                            </td>
+                            <td colspan="4" class="py-4 pr-4 pl-0 space-y-4">
+                                ${dayAnotacao ? `
+                                    <div class="bg-primary/10 border border-primary/20 rounded-2xl p-4 ml-2">
+                                        <div class="flex items-center gap-2 mb-2">
+                                            <span class="material-symbols-outlined text-primary text-xs">edit_note</span>
+                                            <p class="text-[8px] font-black text-primary uppercase tracking-[0.2em]">Anotação do Dia</p>
+                                        </div>
+                                        <p class="text-[11px] text-slate-200 leading-relaxed italic">"${dayAnotacao.conteudo}"</p>
                                     </div>
-                                </div>
-                                <div class="text-right">
-                                    <p class="text-sm font-black text-white">${time}</p>
-                                </div>
-                            `;
-              dayGroup.appendChild(item);
-            });
-            container.appendChild(dayGroup);
-          });
+                                ` : ''}
+                                ${dayJustificativas.length > 0 ? `
+                                    <div class="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 ml-2">
+                                        <div class="flex items-center gap-2 mb-3">
+                                            <span class="material-symbols-outlined text-amber-500 text-xs">warning</span>
+                                            <p class="text-[8px] font-black text-amber-500 uppercase tracking-[0.2em]">Justificativas e Ocorrências</p>
+                                        </div>
+                                        <div class="space-y-3">
+                                            ${dayJustificativas.map(j => `
+                                                <div class="border-l border-white/10 pl-3">
+                                                    <div class="flex items-center justify-between gap-4">
+                                                        <p class="text-[10px] font-black text-slate-100 uppercase">${j.tipo_divergencia}</p>
+                                                        <span class="px-2 py-0.5 rounded text-[8px] font-black uppercase ${j.status === 'aprovado' ? 'bg-emerald-500/20 text-emerald-400' : j.status === 'rejeitado' ? 'bg-rose-500/20 text-rose-400' : 'bg-amber-500/20 text-amber-400'}">
+                                                            ${j.status}
+                                                        </span>
+                                                    </div>
+                                                    <p class="text-[10px] text-slate-400 mt-1 italic whitespace-pre-wrap">${j.descricao}</p>
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                ` : ''}
+                            </td>
+                        </tr>
+                    `;
+                }
+            }
 
-        } catch (err) { console.error(err); }
-      });
-    })();
-  </script>
+            body.innerHTML = html;
 
-  <!-- Bottom Navigation -->
-  <nav
-    class="fixed bottom-0 left-0 right-0 bg-background-dark/90 border-t border-white/5 py-4 z-50 flex justify-center backdrop-blur-xl">
-    <div class="flex items-center justify-around w-full max-w-md px-6">
-      <a id="nav-inicio" href="painel_funcionario.html"
-        class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
-        <span class="material-symbols-outlined text-2xl">home</span>
-        <span class="text-[9px] font-black uppercase tracking-widest text-center">Início</span>
-      </a>
-      <a href="estatistica_funcionario.html"
-        class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
-        <span class="material-symbols-outlined text-2xl">bar_chart</span>
-        <span class="text-[9px] font-black uppercase tracking-widest text-center">Estatística</span>
-      </a>
-      <a href="historico_anual.html" class="flex flex-col items-center gap-1.5 text-primary">
-        <span class="material-symbols-outlined text-2xl font-variation-settings-fill">history</span>
-        <span class="text-[9px] font-black uppercase tracking-widest text-center">Histórico</span>
-      </a>
-      <a id="nav-perfil-link" href="perfil_funcionario.html"
-        class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
-        <span class="material-symbols-outlined text-2xl">person</span>
-        <span class="text-[9px] font-black uppercase tracking-widest text-center">Perfil</span>
-      </a>
-    </div>
-  </nav>
+            document.getElementById('totalTrabalhado').innerText = formatMinutes(totalWorkedMinutes);
+            document.getElementById('totalEsperado').innerText = formatMinutes(totalPlannedMinutes);
+            
+            const totalFaltas = plannedDays.filter(dStr => !pontos.some(p => p.data_hora.startsWith(dStr))).length;
+            document.getElementById('totalFaltas').innerText = totalFaltas;
 
-  <script type="module">
-    import { Auth } from '../js/auth.js';
-    import { UI } from '../js/ui-utils.js';
-    window.addEventListener('load', () => {
-      const user = Auth.getUser();
-      if (user) UI.updateFooterNavigation(user.role);
-    });
-  </script>
-  <script type="module" src="../js/manager-context.js?v=2.7"></script>
+            const freq = daysBusinessTotal > 0 ? Math.round((daysPresent / daysBusinessTotal) * 100) : 0;
+            document.getElementById('percentualFrequencia').innerText = `${freq}%`;
+
+            const totalBalance = totalWorkedMinutes - totalPlannedMinutes;
+            const balanceLabel = document.getElementById('totalSaldo');
+            balanceLabel.innerText = formatBalance(totalBalance);
+            balanceLabel.className = `text-xl font-black italic ${totalBalance >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+        }
+
+        function calculateWorkedMinutes(points) {
+            let mins = 0;
+            for (let i = 0; i < points.length; i += 2) {
+                if (points[i + 1]) mins += (new Date(points[i + 1].data_hora) - new Date(points[i].data_hora)) / 60000;
+            }
+            return mins;
+        }
+
+        function formatTime(point) {
+            if (!point) return '--:--';
+            return new Date(point.data_hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function formatBalance(mins) {
+            const h = Math.floor(Math.abs(mins) / 60);
+            const m = Math.round(Math.abs(mins) % 60);
+            return `${mins < 0 ? '-' : '+'}${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+        }
+
+        function formatMinutes(mins) {
+            const h = Math.floor(mins / 60);
+            const m = Math.round(mins % 60);
+            return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+        }
+
+        init();
+    </script>
 </body>
 
 </html>

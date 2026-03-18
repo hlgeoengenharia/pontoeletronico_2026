@@ -53,9 +53,12 @@
                 statusText.innerText = 'OFFLINE';
                 statusText.className = 'text-[11px] font-bold text-slate-500 uppercase';
 
-                // Cache bust perfil
+                // Cache bust perfil e espelho
                 const pLink = document.getElementById('nav-perfil-link');
                 if (pLink) pLink.href = `perfil_funcionario.html?id=${currentUser.id}&v=8`;
+
+                const sEspelho = document.getElementById('sidebar-espelho');
+                if (sEspelho) sEspelho.href = `historico_mensal.html?id=${currentUser.id}`;
 
                 renderCalendar();
                 await loadGlobalStats();
@@ -133,6 +136,45 @@
                     btn.className = isOnline
                         ? "relative group w-48 h-48 rounded-full bg-rose-500/10 border-4 border-rose-500/30 flex flex-col items-center justify-center text-center p-6 shadow-xl shadow-rose-500/10 hover:scale-105 active:scale-95 transition-all"
                         : "relative group w-48 h-48 rounded-full bg-amber-500 border-4 border-amber-500/30 flex flex-col items-center justify-center text-center p-6 shadow-xl shadow-amber-500/20 hover:scale-105 active:scale-95 transition-all";
+                }
+
+                // Atualizando as Sessões Atuais
+                if (data && data.length > 0) {
+                    const statsInicio = document.getElementById('stats-inicio');
+                    if (statsInicio) statsInicio.innerText = new Date(data[data.length - 1].data_hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+                    const statsFim = document.getElementById('stats-fim');
+                    if (statsFim) {
+                        if (data.length >= 2 && !isOnline) {
+                            statsFim.innerText = new Date(data[0].data_hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                        } else if (data.length >= 3 && isOnline) {
+                            statsFim.innerText = new Date(data[1].data_hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                        } else {
+                            statsFim.innerText = '--:--';
+                        }
+                    }
+
+                    // Calculate total duration for today
+                    let totalMs = 0;
+                    for (let i = data.length - 1; i >= 0; i -= 2) {
+                        const inTime = new Date(data[i].data_hora).getTime();
+                        const outTime = (i - 1 >= 0) ? new Date(data[i - 1].data_hora).getTime() : new Date().getTime();
+                        totalMs += (outTime - inTime);
+                    }
+                    
+                    const totalHours = Math.floor(totalMs / 3600000);
+                    const totalMins = Math.floor((totalMs % 3600000) / 60000);
+                    const statsTotal = document.getElementById('stats-total');
+                    if (statsTotal) {
+                        statsTotal.innerText = `${String(totalHours).padStart(2, '0')}:${String(totalMins).padStart(2, '0')}`;
+                    }
+                } else {
+                    const statsInicio = document.getElementById('stats-inicio');
+                    if (statsInicio) statsInicio.innerText = '--:--';
+                    const statsFim = document.getElementById('stats-fim');
+                    if (statsFim) statsFim.innerText = '--:--';
+                    const statsTotal = document.getElementById('stats-total');
+                    if (statsTotal) statsTotal.innerText = '00:00';
                 }
 
                 if (isOnline) startTimer(data[0].data_hora); else stopTimer();
@@ -215,18 +257,20 @@
 
         async function updateNotificationBadge() {
             try {
-                const { count, error } = await supabase
+                const { count: countAbono } = await supabase
                     .from('justificativas')
                     .select('*', { count: 'exact', head: true })
                     .eq('status', 'pendente');
 
-                if (error) throw error;
+                const { count: countGps } = await supabase
+                    .from('pontos')
+                const totalPendencias = (countAbono || 0) + (countGps || 0);
 
                 const badge = document.getElementById('notifBadge');
                 const bell = document.getElementById('notifBell');
 
-                if (count > 0) {
-                    badge.innerText = count > 99 ? '99+' : count;
+                if (totalPendencias > 0) {
+                    badge.innerText = totalPendencias > 99 ? '99+' : totalPendencias;
                     badge.classList.remove('hidden');
                     bell.classList.add('text-amber-500');
                     bell.classList.remove('text-slate-400');
@@ -235,6 +279,22 @@
                     bell.classList.remove('text-amber-500');
                     bell.classList.add('text-slate-400');
                 }
+
+                // Checar ocorrências pendentes no Diário (Geral para Admin)
+                const { count: countDiario, error: errCount } = await supabase
+                    .from('diario_logs')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('status_pendencia', 'pendente');
+                
+                if (!errCount && countDiario > 0) {
+                    const badgeDiario = document.getElementById('badge-diario');
+                    if (badgeDiario) {
+                        badgeDiario.innerText = countDiario > 99 ? '99+' : countDiario;
+                        badgeDiario.classList.remove('hidden');
+                        badgeDiario.classList.add('animate-bounce');
+                    }
+                }
+
             } catch (err) {
                 console.error('Erro ao buscar notificações:', err);
             }
@@ -325,7 +385,7 @@
 
     <main class="flex-1 p-6 space-y-8 overflow-y-auto">
         <!-- Punch Section -->
-        <section class="w-full max-w-md flex justify-center mx-auto mb-8 mt-2">
+        <section class="w-full max-w-md flex justify-center mx-auto mb-4 mt-2">
             <button id="punchButton"
                 class="relative group w-48 h-48 rounded-full bg-amber-500 flex flex-col items-center justify-center text-center p-6 shadow-xl border-4 border-amber-500/30 hover:scale-105 transition-all">
                 <span class="material-symbols-outlined text-4xl mb-2 text-white">power_settings_new</span>
@@ -334,23 +394,50 @@
             </button>
         </section>
 
+        <!-- Session Stats -->
+        <div class="w-full max-w-md bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-6 backdrop-blur-sm mx-auto shadow-inner">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                    <span class="material-symbols-outlined text-lg text-primary">timer</span> MINHA SESSÃO
+                </h3>
+            </div>
+            <div class="grid grid-cols-3 gap-4">
+                <div class="text-center">
+                    <p class="text-[9px] text-slate-500 uppercase font-bold mb-1">Início</p>
+                    <p id="stats-inicio" class="text-xs font-bold">--:--</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-[9px] text-slate-500 uppercase font-bold mb-1">Fim</p>
+                    <p id="stats-fim" class="text-xs font-bold text-slate-400">--:--</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-[9px] text-slate-500 uppercase font-bold mb-1">Duração</p>
+                    <p id="stats-total" class="text-xs font-bold text-primary">00:00</p>
+                </div>
+            </div>
+        </div>
+
         <!-- Missões Diárias -->
         <section class="max-w-md mx-auto space-y-4">
             <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2 px-2">
                 <span class="material-symbols-outlined text-lg">task_alt</span> MISSÕES DIÁRIAS
             </h3>
-            <div class="grid grid-cols-2 gap-3">
-                <a href="anotacao_diaria.html"
-                    class="bg-white/5 border border-white/5 p-5 rounded-2xl flex flex-col items-center gap-3 group hover:border-primary/40 transition-all shadow-lg">
-                    <span
-                        class="material-symbols-outlined text-primary group-hover:scale-125 transition-transform text-2xl">edit_note</span>
-                    <p class="text-[10px] font-black text-slate-300 uppercase tracking-widest">Anotação</p>
-                </a>
-                <a href="justificativa.html"
-                    class="bg-white/5 border border-white/5 p-5 rounded-2xl flex flex-col items-center gap-3 group hover:border-amber-500/40 transition-all shadow-lg">
-                    <span
-                        class="material-symbols-outlined text-amber-500 group-hover:scale-125 transition-transform text-2xl">help</span>
-                    <p class="text-[10px] font-black text-slate-300 uppercase tracking-widest">Justificativa</p>
+            <div class="grid grid-cols-1">
+                <a href="diario_funcionario.html"
+                    class="bg-white/5 border border-primary/20 p-6 rounded-2xl flex items-center justify-between group hover:border-primary/40 hover:bg-primary/5 transition-all shadow-lg relative">
+                    <div class="flex items-center gap-4">
+                        <div class="size-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                            <span class="material-symbols-outlined text-primary text-3xl">local_library</span>
+                        </div>
+                        <div>
+                            <p class="text-[13px] font-black text-slate-100 uppercase tracking-widest leading-tight">Diário de Bordo</p>
+                            <p class="text-[10px] text-slate-400 font-bold uppercase mt-0.5">Relate atividades ou envie justificativas</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div id="badge-diario" class="bg-rose-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-lg shadow-rose-500/30 hidden">0</div>
+                        <span class="material-symbols-outlined text-slate-600 group-hover:text-primary transition-colors">chevron_right</span>
+                    </div>
                 </a>
             </div>
         </section>
@@ -442,7 +529,7 @@
                 <span class="material-symbols-outlined text-xl group-hover:scale-110 transition-transform">work</span>
                 Cadastro Cargo/Função
             </a>
-            <a href="perfil_funcionario.html"
+            <a href="cadastro_funcionario.html"
                 class="flex items-center gap-4 p-4 rounded-2xl text-slate-400 font-bold text-xs uppercase hover:bg-white/5 hover:text-primary transition-all group"
                 id="sidebar-cadastro-func">
                 <span

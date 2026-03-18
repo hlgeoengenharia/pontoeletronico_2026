@@ -49,7 +49,7 @@
           class="text-primary flex size-10 shrink-0 items-center justify-center rounded-lg border border-primary/30 bg-primary/10 cursor-pointer hover:bg-primary/20 transition-all">
           <span class="material-symbols-outlined">arrow_back</span>
         </div>
-        <h2 class="text-slate-100 text-lg font-bold tracking-wider uppercase flex-1 text-center">AUTORIZAÇÃO DO GESTOR
+        <h2 class="text-slate-100 text-lg font-bold tracking-wider uppercase flex-1 text-center">PENDÊNCIAS DE ANÁLISE
         </h2>
         <div
           class="flex size-10 items-center justify-center rounded-lg bg-primary/10 border border-primary/30 text-primary">
@@ -80,36 +80,55 @@
         container.innerHTML = `<div class="text-center py-20 opacity-50"><span class="material-symbols-outlined animate-spin text-4xl text-primary">sync</span></div>`;
 
         try {
-          // Buscar justificativas pendentes dos funcionários do setor do gestor
-          // Nota: Tabelas: justificativas (funcionario_id, data_incidente, tipo_divergencia, descricao, status)
-          // Status no banco é 'pendente' (não 'pending')
-          let query = supabase
+          // 1. Buscar Justificativas Pendentes
+          let queryJust = supabase
             .from('justificativas')
             .select('*, funcionarios!inner(nome_completo, matricula, setor_id, funcao)')
             .eq('status', 'pendente');
 
-          // Se for gestor, filtra pelo setor dele. Se for admin, vê tudo.
+          // 2. Buscar Pontos com GPS Pendente
+          let queryGps = supabase
+            .from('pontos')
+            .select('*, funcionarios!inner(nome_completo, matricula, setor_id, funcao)')
+            .eq('status_validacao', 'pendente');
+
           if (user.role === 'gestor' || user.role === 'manager') {
             if (user.setorId) {
-              query = query.eq('funcionarios.setor_id', user.setorId);
+              queryJust = queryJust.eq('funcionarios.setor_id', user.setorId);
+              queryGps = queryGps.eq('funcionarios.setor_id', user.setorId);
             }
           }
 
-          const { data, error } = await query;
+          const [{ data: dataJust, error: errJust }, { data: dataGps, error: errGps }] = await Promise.all([
+            queryJust,
+            queryGps
+          ]);
 
-          if (error) throw error;
+          if (errJust) throw errJust;
+          if (errGps) throw errGps;
 
-          if (!data || data.length === 0) {
+          // Normalizar e Unificar
+          const allPendencies = [
+            ...(dataJust || []).map(j => ({ ...j, itemType: 'ABONO' })),
+            ...(dataGps || []).map(g => ({ ...g, itemType: 'GPS', data_incidente: g.data_hora, tipo_divergencia: 'Divergência de GPS', descricao: g.justificativa_usuario }))
+          ].sort((a, b) => new Date(b.data_incidente || b.created_at) - new Date(a.data_incidente || a.created_at));
+
+          if (allPendencies.length === 0) {
             container.innerHTML = `
-                        <div class="text-center py-20 opacity-30 border-2 border-dashed border-white/5 rounded-2xl">
-                            <span class="material-symbols-outlined text-6xl mb-4">check_circle</span>
-                            <p class="uppercase tracking-widest font-bold">Nenhuma pendência encontrada</p>
-                        </div>
-                    `;
+                <div class="text-center py-20 opacity-30 border-2 border-dashed border-white/5 rounded-2xl">
+                    <span class="material-symbols-outlined text-6xl mb-4">check_circle</span>
+                    <p class="uppercase tracking-widest font-bold">Nenhuma pendência encontrada</p>
+                </div>
+            `;
             return;
           }
 
-          container.innerHTML = data.map(j => `
+          container.innerHTML = allPendencies.map(item => {
+            const isGps = item.itemType === 'GPS';
+            const badgeClass = isGps ? 'bg-orange-500/10 text-orange-500 border-orange-500/20' : 'bg-amber-500/10 text-amber-500 border-amber-500/20';
+            const icon = isGps ? 'location_on' : 'description';
+            
+            return `
                     <div class="flex flex-col rounded-xl bg-[#0f172a] border border-slate-800/60 p-5 shadow-xl relative w-full animate-in fade-in slide-in-from-bottom-4">
                         <div class="flex justify-between items-start mb-5">
                             <div class="flex gap-4">
@@ -119,12 +138,15 @@
                                             <span class="material-symbols-outlined text-primary text-2xl">person</span>
                                         </div>
                                     </div>
+                                    <div class="absolute -bottom-1 -right-1 bg-background-dark rounded-full p-0.5">
+                                        <span class="material-symbols-outlined text-[12px] ${isGps ? 'text-orange-500' : 'text-amber-500'}">${icon}</span>
+                                    </div>
                                 </div>
                                 <div class="flex flex-col">
-                                    <h2 class="text-slate-100 font-bold text-base">${j.funcionarios.nome_completo}</h2>
-                                    <p class="text-primary text-[11px] font-bold uppercase tracking-wider mb-0.5">${j.funcionarios.funcao || 'N/A'}</p>
+                                    <h2 class="text-slate-100 font-bold text-base">${item.funcionarios.nome_completo}</h2>
+                                    <p class="text-primary text-[11px] font-bold uppercase tracking-wider mb-0.5">${item.funcionarios.funcao || 'N/A'}</p>
                                     <div class="mt-1">
-                                        <span class="text-[10px] px-2 py-0.5 rounded bg-amber-500/10 text-amber-500 border border-amber-500/20 font-bold uppercase inline-block">Aguardando</span>
+                                        <span class="text-[10px] px-2 py-0.5 rounded ${badgeClass} border font-bold uppercase inline-block">${isGps ? 'GPS PENDENTE' : 'ABONO PENDENTE'}</span>
                                     </div>
                                 </div>
                             </div>
@@ -132,44 +154,52 @@
 
                         <div class="mb-3 flex items-center gap-1.5">
                             <span class="material-symbols-outlined text-[16px] text-slate-400">calendar_month</span>
-                            <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">${new Date(j.data_incidente).toLocaleDateString('pt-BR')}</p>
+                            <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">
+                                ${new Date(item.data_incidente).toLocaleDateString('pt-BR')} 
+                                ${isGps ? ' - ' + new Date(item.data_incidente).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : ''}
+                            </p>
                         </div>
 
-                        <div class="bg-black/30 rounded-lg p-3.5 mb-5 border-l-4 border-amber-500 font-medium">
-                            <p class="text-slate-200 text-xs leading-relaxed">Motivo: ${j.tipo_divergencia.toUpperCase()}</p>
-                            <p class="text-slate-400 text-[10px] mt-2 italic leading-relaxed">${j.descricao || 'Sem descrição detalhada.'}</p>
+                        <div class="bg-black/30 rounded-lg p-3.5 mb-5 border-l-4 ${isGps ? 'border-orange-500' : 'border-amber-500'} font-medium">
+                            <p class="text-slate-200 text-xs leading-relaxed">MOTIVO: ${item.tipo_divergencia.toUpperCase()}</p>
+                            <p class="text-slate-400 text-[10px] mt-2 italic leading-relaxed">${item.descricao || (isGps ? 'Batida realizada fora do raio permitido.' : 'Sem descrição detalhada.')}</p>
                         </div>
 
                         <div class="grid grid-cols-2 gap-2.5">
-                            <button onclick="processarAbono('${j.id}', 'rejeitado')"
+                            <button onclick="processarPendencia('${item.id}', 'rejeitado', '${item.itemType}')"
                                 class="flex items-center justify-center gap-1.5 h-11 rounded-lg bg-neon-red/10 hover:bg-neon-red/20 text-neon-red text-[10px] font-bold transition-all border border-neon-red/20">
                                 <span class="material-symbols-outlined text-sm">block</span> REJEITAR
                             </button>
-                            <button onclick="processarAbono('${j.id}', 'aprovado')"
+                            <button onclick="processarPendencia('${item.id}', 'aprovado', '${item.itemType}')"
                                 class="flex items-center justify-center gap-1.5 h-11 rounded-lg bg-primary hover:bg-primary/90 text-white text-[10px] font-bold transition-all shadow-[0_4px_12px_rgba(13,89,242,0.3)]">
-                                <span class="material-symbols-outlined text-sm">verified</span> ABONAR
+                                <span class="material-symbols-outlined text-sm">verified</span> ${isGps ? 'VALIDAR GPS' : 'ABONAR'}
                             </button>
                         </div>
                     </div>
-                `).join('');
+                `;
+          }).join('');
 
         } catch (err) {
-          console.error('Erro ao carregar justificativas:', err);
+          console.error('Erro ao carregar pendências:', err);
           container.innerHTML = `<p class="text-red-500 text-center py-10 text-xs uppercase font-bold">Erro ao acessar base de dados</p>`;
         }
       }
 
-      window.processarAbono = async (id, status) => {
+      window.processarPendencia = async (id, status, type) => {
         UI.showLoader();
         try {
-          const { error } = await supabase
-            .from('justificativas')
-            .update({ status: status })
-            .eq('id', id);
+          let error;
+          if (type === 'ABONO') {
+            const result = await supabase.from('justificativas').update({ status: status }).eq('id', id);
+            error = result.error;
+          } else {
+            const result = await supabase.from('pontos').update({ status_validacao: status }).eq('id', id);
+            error = result.error;
+          }
 
           if (error) throw error;
 
-          UI.showToast(status === 'aprovado' ? 'Solicitação aprovada!' : 'Solicitação rejeitada!', 'success');
+          UI.showToast(status === 'aprovado' ? 'Operação concluída!' : 'Solicitação rejeitada!', 'success');
           loadJustificativas();
         } catch (err) {
           console.error('Erro ao processar:', err);

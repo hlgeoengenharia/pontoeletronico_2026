@@ -4,6 +4,7 @@
  */
 
 import { supabase } from './supabase-config.js';
+import { ScalesEngine } from './scales-engine.js';
 
 const NotificationsEngine = {
     /**
@@ -19,11 +20,8 @@ const NotificationsEngine = {
         const diffToEnd = monthEnd.getTime() - now.getTime();
         const hoursToEnd = diffToEnd / (1000 * 60 * 60);
 
-        // 1. Alerta 48h para Fim do Mês
+        // 1. Alerta 48h para Fim do Mês -> Gera Pendência para o Gestor/Admin
         if (hoursToEnd <= 48 && hoursToEnd > 0) {
-            // Verificar se o próximo mês já tem plantões (instância manual ou regra template)
-            // Para simplificar, verificamos se o usuário já visitou o calendário do mês seguinte
-            // Mas a regra diz: "Confirmar mensal manual".
             const nextMonth = now.getMonth() + 1;
             const year = nextMonth > 11 ? now.getFullYear() + 1 : now.getFullYear();
             const monthStr = String((nextMonth % 12) + 1).padStart(2, '0');
@@ -35,16 +33,28 @@ const NotificationsEngine = {
                 .gte('data', `${year}-${monthStr}-01`);
 
             if (count === 0) {
-                alerts.push({
-                    type: 'warning',
-                    title: 'ESCALA PENDENTE',
-                    message: `Faltam menos de 48h para o fim do mês. Planeje sua escala de ${monthStr}/${year}!`,
-                    icon: 'event_busy'
-                });
+                // Em vez de alertar o funcionário, geramos uma pendência para o gestor aprovar/fazer
+                const { count: pendCount } = await supabase
+                    .from('justificativas')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('funcionario_id', func.id)
+                    .eq('tipo_divergencia', 'Escala Pendente')
+                    .eq('status', 'pendente')
+                    .eq('data_incidente', `${year}-${monthStr}-01`);
+                
+                if (pendCount === 0) {
+                    await supabase.from('justificativas').insert([{
+                        funcionario_id: func.id,
+                        data_incidente: `${year}-${monthStr}-01`,
+                        tipo_divergencia: 'Escala Pendente',
+                        descricao: `O mês ${monthStr}/${year} vai iniciar em menos de 48h e não há registro de programação de escala/plantões para este funcionário.`,
+                        status: 'pendente'
+                    }]);
+                }
             }
         }
 
-        // 2. Alerta por Frequência
+        // 2. Alerta por Frequência (Mantido para o funcionário ver como banner)
         if (func.ultima_confirmacao_escala) {
             const lastConfirm = new Date(func.ultima_confirmacao_escala);
             const freqDays = func.frequencia_confirmacao_dias || 30;
@@ -61,6 +71,83 @@ const NotificationsEngine = {
         }
 
         return alerts;
+    },
+
+    /**
+     * Verifica dias de trabalho encerrados nos últimos 15 dias que não possuem ponto registrado.
+     * Gera uma justificativa "pendente" automaticamente se não existir.
+     * @param {Object} func Dados do funcionário completo (incluindo escalas)
+     */
+    async checkMissingPunches(func) {
+        if (!func || !func.escalas) return;
+
+        const now = new Date();
+        const startCheck = new Date();
+        startCheck.setDate(now.getDate() - 15); // Look back 15 days
+        
+        // Start from startCheck or from escala.vigencia_inicio (whichever is later)
+        const vigenciaInicio = new Date(func.escalas.vigencia_inicio + 'T00:00:00');
+        let checkDate = startCheck > vigenciaInicio ? startCheck : vigenciaInicio;
+
+        // Collect all target dates to check
+        const targetDates = [];
+        while (checkDate <= now) {
+            const y = checkDate.getFullYear();
+            const m = checkDate.getMonth();
+            const d = checkDate.getDate();
+            const dateStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+            
+            // Generate planned days for this specific month if not generated
+            // Check if dateStr is in planned days and is finished
+            const plannedDays = ScalesEngine.projectBaseDays(func.escalas, func.escalas.vigencia_inicio, m, y);
+            
+            if (plannedDays.includes(dateStr) && ScalesEngine.isDayFinished(dateStr, func.escalas)) {
+                targetDates.push(dateStr);
+            }
+            // Add 1 day
+            checkDate.setDate(checkDate.getDate() + 1);
+        }
+
+        if (targetDates.length === 0) return;
+
+        // Batch queries
+        const minDate = targetDates[0];
+        const maxDate = targetDates[targetDates.length - 1];
+
+        const { data: pontos } = await supabase
+            .from('pontos')
+            .select('data_hora')
+            .eq('funcionario_id', func.id)
+            .gte('data_hora', `${minDate}T00:00:00`)
+            .lte('data_hora', `${maxDate}T23:59:59`);
+
+        const { data: justificativas } = await supabase
+            .from('justificativas')
+            .select('data_incidente')
+            .eq('funcionario_id', func.id)
+            .in('data_incidente', targetDates);
+
+        const execOptions = [];
+
+        for (const dateStr of targetDates) {
+            const hasPonto = pontos && pontos.some(p => p.data_hora.startsWith(dateStr));
+            const hasJustificativa = justificativas && justificativas.some(j => j.data_incidente === dateStr);
+
+            if (!hasPonto && !hasJustificativa) {
+                // Auto-create pendency
+                execOptions.push({
+                    funcionario_id: func.id,
+                    data_incidente: dateStr,
+                    tipo_divergencia: 'Esquecimento de Registro',
+                    descricao: 'Sistema identificou ausência de batida de ponto neste dia de escala informada. Por favor, regularize preenchendo o motivo real (ex: problema técnico, batida retroativa em papel, etc).',
+                    status: 'pendente'
+                });
+            }
+        }
+
+        if (execOptions.length > 0) {
+            await supabase.from('justificativas').insert(execOptions);
+        }
     },
 
     /**

@@ -1,313 +1,326 @@
 <!DOCTYPE html>
-
 <html class="dark" lang="pt-BR">
 
 <head>
-  <meta charset="utf-8" />
-  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap"
-    rel="stylesheet" />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
-    rel="stylesheet" />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
-    rel="stylesheet" />
-  <script src="../js/manager-context.js?v=2.7"></script>
-  <script src="../js/theme.js?v=1.0"></script>
-  <style>
-    body {
-      font-family: 'Space Grotesk', sans-serif;
-    }
-
-    .neon-border {
-      box-shadow: 0 0 10px rgba(13, 89, 242, 0.3);
-    }
-
-    .glass-card {
-      background: rgba(16, 22, 34, 0.8);
-      backdrop-filter: blur(10px);
-    }
-
-    .font-variation-settings-fill {
-      font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-    }
-  </style>
-
-  <script type="module">
-    import { Auth } from '../js/auth.js';
-    import { UI } from '../js/ui-utils.js';
-    Auth.checkSession();
-  </script>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../js/theme.js?v=1.0"></script>
+    <script src="../js/manager-context.js?v=2.7"></script>
+    <title>ChronoSync - Resumo do Dia</title>
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; color: black !important; padding-bottom: 0 !important; }
+            main { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
+            .stats-grid { display: grid !important; grid-template-columns: repeat(4, 1fr) !important; gap: 0.5rem !important; }
+            .bg-background-dark, .bg-\[\#0f172a\] { background: #f8fafc !important; border: 1px solid #e2e8f0 !important; }
+            .text-slate-100, .text-slate-300 { color: #0f172a !important; }
+        }
+    </style>
 </head>
 
-<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen pb-24">
-  <header class="border-b border-primary/20 bg-background-dark/80 backdrop-blur-md sticky top-0 z-50">
-    <div class="flex items-center p-4 justify-between max-w-2xl mx-auto">
-      <div id="btn-voltar"
-        class="text-primary flex size-10 mt-2 shrink-0 items-center justify-center rounded-lg border border-primary/30 bg-primary/10 cursor-pointer hover:bg-primary/20 transition-all">
-        <span class="material-symbols-outlined">arrow_back</span>
-      </div>
-      <div class="flex-1 text-center">
-        <h2 class="text-slate-100 text-lg font-bold tracking-wider uppercase">RELATÓRIO DE MISSÃO</h2>
-        <p id="dataRelatorio" class="text-[10px] text-primary font-bold uppercase tracking-[0.2em] opacity-80 mt-0.5">
-          ---</p>
-      </div>
-      <div class="size-10"></div>
-    </div>
-  </header>
-
-  <main class="max-w-2xl mx-auto p-4 space-y-6">
-    <!-- Hero Summary Card -->
-    <div id="resumoHero"
-      class="relative overflow-hidden rounded-xl bg-slate-200 dark:bg-slate-800/50 border border-primary/30 p-6 neon-border">
-      <div class="absolute top-0 right-0 p-4 opacity-10">
-        <span class="material-symbols-outlined text-8xl">verified_user</span>
-      </div>
-      <div class="relative z-10">
-        <div class="flex justify-between items-start mb-6">
-          <div>
-            <p class="text-primary text-xs font-bold uppercase tracking-widest mb-1">Status Operacional</p>
-            <h3 id="resumoStatus" class="text-2xl font-bold dark:text-white">Carregando...</h3>
-          </div>
-          <div id="resumoSync"
-            class="hidden bg-green-500/20 text-green-500 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 border border-green-500/30">
-            <span class="material-symbols-outlined text-sm">check_circle</span> SINCRONIZADO
-          </div>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen pb-24 font-['Space_Grotesk']">
+    <header class="border-b border-primary/20 bg-background-dark/80 backdrop-blur-md sticky top-0 z-50 px-4">
+        <div class="flex items-center p-4 justify-between max-w-2xl mx-auto">
+            <div id="btn-voltar"
+                class="no-print text-primary flex size-10 shrink-0 items-center justify-center rounded-lg border border-primary/30 bg-primary/10 cursor-pointer hover:bg-primary/20 transition-all">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </div>
+            <div class="text-center flex flex-col items-center">
+                <h2 class="text-slate-100 text-lg font-black tracking-widest uppercase italic">Resumo do Dia</h2>
+                <div class="flex items-center justify-center gap-4 mt-1">
+                    <button onclick="navigateDay(-1)" class="no-print text-slate-500 hover:text-primary transition-all flex items-center justify-center bg-white/5 hover:bg-white/10 active:scale-95 rounded-xl w-12 h-12">
+                        <span class="material-symbols-outlined text-2xl">chevron_left</span>
+                    </button>
+                    <p id="dataHeader" class="text-[10px] text-primary font-bold uppercase tracking-[0.2em] m-0">CARREGANDO...</p>
+                    <button onclick="navigateDay(1)" class="no-print text-slate-500 hover:text-primary transition-all flex items-center justify-center bg-white/5 hover:bg-white/10 active:scale-95 rounded-xl w-12 h-12">
+                        <span class="material-symbols-outlined text-2xl">chevron_right</span>
+                    </button>
+                </div>
+            </div>
+            <button onclick="window.print()" class="no-print text-slate-400 hover:text-white transition-all">
+                <span class="material-symbols-outlined">picture_as_pdf</span>
+            </button>
         </div>
-        <div class="grid grid-cols-3 gap-4 mb-6">
-          <div
-            class="bg-background-light dark:bg-background-dark/60 p-3 rounded-lg border border-primary/10 text-center">
-            <p class="text-slate-500 dark:text-slate-400 text-[10px] uppercase font-bold">Início</p>
-            <p id="resumoInicio" class="text-lg font-bold dark:text-white">--:--</p>
-          </div>
-          <div
-            class="bg-background-light dark:bg-background-dark/60 p-3 rounded-lg border border-primary/10 text-center">
-            <p class="text-slate-500 dark:text-slate-400 text-[10px] uppercase font-bold">Fim</p>
-            <p id="resumoFim" class="text-lg font-bold dark:text-white">--:--</p>
-          </div>
-          <div class="bg-primary/20 p-3 rounded-lg border border-primary/40 text-center">
-            <p class="text-primary text-[10px] uppercase font-bold">Total</p>
-            <p id="resumoTotal" class="text-lg font-bold text-primary">00:00h</p>
-          </div>
+    </header>
+
+    <main class="max-w-2xl mx-auto p-4 md:p-8 space-y-8">
+        <!-- Informações do Usuário -->
+        <div class="bg-[#0f172a] border border-white/5 rounded-3xl p-6 flex flex-col md:flex-row justify-between gap-6 shadow-2xl">
+            <div class="flex items-center gap-6">
+                <div class="relative">
+                    <div class="w-16 h-16 rounded-2xl border-2 border-primary/30 p-1 bg-background-dark overflow-hidden">
+                        <img id="user-photo" src="https://ui-avatars.com/api/?name=User&background=0D59F2&color=fff"
+                            class="w-full h-full rounded-xl object-cover">
+                    </div>
+                </div>
+                <div>
+                    <h3 id="funcNome" class="text-xl font-black text-slate-100 uppercase italic leading-tight">CARREGANDO...</h3>
+                    <p id="funcSetor" class="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-1">SETOR: ---</p>
+                </div>
+            </div>
         </div>
-        <div class="space-y-2">
-          <div class="flex justify-between text-xs font-medium">
-            <span id="labelMeta" class="text-slate-500 uppercase">Progresso da Meta Diária</span>
-            <span id="progressoMeta" class="text-primary">0%</span>
-          </div>
-          <div class="w-full bg-slate-300 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
-            <div id="barraProgresso"
-              class="bg-primary h-full w-[0%] shadow-[0_0_8px_#0d59f2] transition-all duration-1000"></div>
-          </div>
+
+        <!-- Estatísticas do Dia -->
+        <div class="stats-grid grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="bg-white/5 border border-white/10 p-5 rounded-3xl border-l-4 border-l-slate-400 flex flex-col justify-center">
+                <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1 leading-tight">Horário</p>
+                <p id="horarioPrevisto" class="text-lg font-black text-slate-300 italic leading-none mt-1">--:-- / --:--</p>
+            </div>
+            <div class="bg-primary/5 border border-primary/10 p-5 rounded-3xl border-l-4 border-l-primary flex flex-col justify-center">
+                <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1 leading-tight">Trabalhado</p>
+                <p id="totalTrabalhado" class="text-2xl font-black text-slate-100 italic leading-none mt-1">00:00</p>
+            </div>
+            <div class="bg-white/5 border border-white/10 p-5 rounded-3xl border-l-4 border-l-slate-400 flex flex-col justify-center">
+                <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1 leading-tight">Previsto</p>
+                <p id="totalEsperado" class="text-2xl font-black text-slate-300 italic leading-none mt-1">00:00</p>
+            </div>
+            <div id="saldoCard" class="bg-emerald-500/5 border border-emerald-500/10 p-5 rounded-3xl border-l-4 border-l-emerald-500 flex flex-col justify-center">
+                <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1 leading-tight">Saldo</p>
+                <p id="totalSaldo" class="text-2xl font-black text-emerald-400 italic leading-none mt-1">00:00</p>
+            </div>
         </div>
-      </div>
-    </div>
-    <!-- Section: Daily Notes & Justifications (Dynamic Cards) -->
-    <div id="containerResumoCards" class="space-y-4">
-      <!-- Cards serão injetados aqui -->
-    </div>
-    </div>
-  </main>
 
-  </main>
-  <script type="module">
-    import { supabase } from '../js/supabase-config.js';
-    import { Auth } from '../js/auth.js';
-    import { UI } from '../js/ui-utils.js';
+        <!-- Detalhamento de Batidas -->
+        <div class="bg-[#0f172a] border border-white/5 rounded-3xl overflow-hidden shadow-xl">
+            <div class="bg-white/5 px-6 py-4 border-b border-white/5">
+                <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Registros de Ponto</h4>
+            </div>
+            <div id="batidasContainer" class="p-6 space-y-4">
+                <!-- Batidas serão injetadas aqui -->
+            </div>
+        </div>
 
-    async function init() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const targetId = urlParams.get('id') || localStorage.getItem('userId');
-      const dataRef = urlParams.get('date') || new Date().toISOString().split('T')[0];
+        <!-- Observações e Justificativas -->
+        <div id="containerObservacoes" class="space-y-4">
+            <!-- Cards de Anotações e Justificativas -->
+        </div>
+    </main>
 
-      UI.showLoader();
+    <script type="module">
+        import { supabase } from '../js/supabase-config.js';
+        import { Auth } from '../js/auth.js';
+        import { UI } from '../js/ui-utils.js';
+        import { ScalesEngine } from '../js/scales-engine.js';
 
-      try {
-        // 1. Fetch Pontos
-        const { data: pontos } = await supabase
-          .from('pontos')
-          .select('*')
-          .eq('funcionario_id', targetId)
-          .gte('data_hora', `${dataRef}T00:00:00`)
-          .lte('data_hora', `${dataRef}T23:59:59`)
-          .order('data_hora', { ascending: true });
+        async function init() {
+            const btnVoltar = document.getElementById('btn-voltar');
+            if (btnVoltar) btnVoltar.onclick = () => UI.voltarInicio();
 
-        // 2. Fetch Anotacao
-        const { data: anotacoes } = await supabase
-          .from('anotacoes')
-          .select('*')
-          .eq('funcionario_id', targetId)
-          .eq('data', dataRef)
-          .limit(1);
+            const urlParams = new URLSearchParams(window.location.search);
+            const targetId = urlParams.get('id') || localStorage.getItem('userId');
+            const dataRef = urlParams.get('date') || new Date().toISOString().split('T')[0];
 
-        // 3. Fetch Justificativa
-        const { data: justificativas } = await supabase
-          .from('justificativas')
-          .select('*')
-          .eq('funcionario_id', targetId)
-          .eq('data_incidente', dataRef)
-          .limit(1);
+            document.getElementById('dataHeader').innerText = new Date(dataRef + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' }).toUpperCase();
+            
+            UI.showLoader();
 
-        const currentUser = Auth.getUser();
-        if (currentUser) {
-          UI.updateFooterNavigation(currentUser.role);
-          const btnVoltar = document.getElementById('btn-voltar');
-          if (btnVoltar) btnVoltar.onclick = () => UI.voltarInicio();
+            try {
+                const { data: func, error: errFunc } = await supabase
+                    .from('funcionarios')
+                    .select('*, escalas(*), setores!setor_id(nome)')
+                    .eq('id', targetId)
+                    .single();
+                
+                if (errFunc) throw errFunc;
+
+                document.getElementById('funcNome').innerText = func.nome_completo.toUpperCase();
+                document.getElementById('funcSetor').innerText = `SETOR: ${func.setores?.nome || 'N/A'}`;
+                if (func.foto_url) document.getElementById('user-photo').src = func.foto_url;
+
+                const [ptsRes, anotRes, justRes] = await Promise.all([
+                    supabase.from('pontos').select('*').eq('funcionario_id', targetId).gte('data_hora', `${dataRef}T00:00:00`).lte('data_hora', `${dataRef}T23:59:59`).order('data_hora', { ascending: true }),
+                    supabase.from('anotacoes').select('*').eq('funcionario_id', targetId).eq('data', dataRef),
+                    supabase.from('justificativas').select('*').eq('funcionario_id', targetId).eq('data_incidente', dataRef)
+                ]);
+
+                renderResumo(ptsRes.data, anotRes.data, justRes.data, func.escalas, dataRef);
+
+            } catch (err) {
+                console.error(err);
+                UI.showToast('Erro ao carregar resumo.', 'error');
+            } finally {
+                UI.hideLoader();
+            }
         }
 
-        // 4. Update Header Date
-        const dateObj = new Date(dataRef + 'T12:00:00'); // Use noon to avoid TZ shift
-        document.getElementById('dataRelatorio').innerText = dateObj.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' }).toUpperCase();
+        function renderResumo(pontos, anotacoes, justificativas, escala, dataRef) {
+            // 1. Cálculos de Tempo
+            const workedMins = calculateWorkedMinutes(pontos);
+            const plannedMins = ScalesEngine.calculateDailyWorkMinutes(escala);
+            const balance = workedMins - plannedMins;
 
-        renderResumo(pontos, anotacoes[0], justificativas[0]);
+            document.getElementById('totalTrabalhado').innerText = formatMinutes(workedMins);
+            document.getElementById('totalEsperado').innerText = formatMinutes(plannedMins);
+            
+            const horarioEl = document.getElementById('horarioPrevisto');
+            if (pontos && pontos.length > 0) {
+                const primeiroPonto = new Date(pontos[0].data_hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                const ultimoPonto = pontos.length > 1 ? new Date(pontos[pontos.length - 1].data_hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '--:--';
+                horarioEl.innerText = `${primeiroPonto} / ${ultimoPonto}`;
+            } else {
+                horarioEl.innerText = '--:-- / --:--';
+            }
+            
+            const saldoEl = document.getElementById('totalSaldo');
+            saldoEl.innerText = formatBalance(balance);
+            document.getElementById('saldoCard').className = `bg-${balance >= 0 ? 'emerald' : 'rose'}-500/5 border border-${balance >= 0 ? 'emerald' : 'rose'}-500/10 p-5 rounded-3xl border-l-4 border-l-${balance >= 0 ? 'emerald' : 'rose'}-500`;
+            saldoEl.className = `text-2xl font-black italic text-${balance >= 0 ? 'emerald' : 'rose'}-400`;
 
-      } catch (err) {
-        console.error(err);
-        UI.toast('Erro ao carregar resumo.', 'error');
-      } finally {
-        UI.hideLoader();
-        // Navegação dinâmica
-        const user = Auth.getUser();
-        if (user) UI.updateFooterNavigation(user.role);
-      }
-    }
+            // 2. Render Batidas (Visual do Espelho de Ponto)
+            const batidasCont = document.getElementById('batidasContainer');
+            if (pontos.length === 0) {
+                batidasCont.innerHTML = '<p class="text-sm text-slate-500 italic text-center py-4">Nenhum registro de ponto encontrado.</p>';
+            } else {
+                batidasCont.innerHTML = `
+                    <div class="grid grid-cols-2 gap-6">
+                        <div class="space-y-4">
+                            ${pontos.filter((_, i) => i % 2 === 0).map((p, i) => `
+                                <div class="flex items-center gap-4">
+                                    <div class="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
+                                        <span class="material-symbols-outlined text-emerald-500 text-sm">login</span>
+                                    </div>
+                                    <div>
+                                        <p class="text-[8px] font-black text-slate-500 uppercase tracking-tighter">Entrada ${i + 1}</p>
+                                        <p class="text-sm font-black text-slate-200">${formatTime(p)}</p>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="space-y-4">
+                            ${pontos.filter((_, i) => i % 2 !== 0).map((p, i) => `
+                                <div class="flex items-center gap-4">
+                                    <div class="w-8 h-8 rounded-lg bg-rose-500/10 flex items-center justify-center border border-rose-500/20">
+                                        <span class="material-symbols-outlined text-rose-500 text-sm">logout</span>
+                                    </div>
+                                    <div>
+                                        <p class="text-[8px] font-black text-slate-500 uppercase tracking-tighter">Saída ${i + 1}</p>
+                                        <p class="text-sm font-black text-slate-200">${formatTime(p)}</p>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
 
-    function renderResumo(pontos, anotacao, justificativa) {
-      // 1. Render Hero Stats
-      renderHeroStats(pontos);
+            // 3. Render Observações (Padrão Espelho de Ponto)
+            const obsCont = document.getElementById('containerObservacoes');
+            obsCont.innerHTML = '';
 
-      const container = document.getElementById('containerResumoCards');
-      container.innerHTML = '';
+            if (anotacoes.length > 0) {
+                anotacoes.forEach(anot => {
+                    obsCont.innerHTML += `
+                        <div class="bg-primary/10 border border-primary/20 rounded-3xl p-6 relative overflow-hidden">
+                            <div class="flex items-center gap-3 mb-3">
+                                <span class="material-symbols-outlined text-primary text-xl">edit_note</span>
+                                <p class="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Anotação do Dia</p>
+                            </div>
+                            <p class="text-sm text-slate-200 leading-relaxed italic">"${anot.conteudo}"</p>
+                        </div>
+                    `;
+                });
+            }
 
-      if (!anotacao && !justificativa) {
-        container.innerHTML = `
-          <div class="p-8 text-center bg-slate-800/20 rounded-xl border border-dashed border-white/5">
-            <p class="text-sm text-slate-500 italic">Nenhum registro extra (anotação ou justificativa) para este dia.</p>
-          </div>
-        `;
-        return;
-      }
+            if (justificativas.length > 0) {
+                justificativas.forEach(just => {
+                    const statusClass = just.status === 'aprovado' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 
+                                      just.status === 'rejeitado' ? 'bg-rose-500/20 text-rose-400 border-rose-500/30' : 
+                                      'bg-amber-500/20 text-amber-400 border-amber-500/30';
+                    
+                    obsCont.innerHTML += `
+                        <div class="bg-amber-500/10 border border-amber-500/20 rounded-3xl p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center gap-3">
+                                    <span class="material-symbols-outlined text-amber-500 text-xl">warning</span>
+                                    <p class="text-[10px] font-black text-amber-500 uppercase tracking-[0.2em]">Justificativa</p>
+                                </div>
+                                <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase border ${statusClass}">
+                                    ${just.status}
+                                </span>
+                            </div>
+                            <div class="space-y-4">
+                                <div class="border-l border-white/10 pl-4">
+                                    <p class="text-[9px] font-black text-slate-500 uppercase mb-1">Divergência</p>
+                                    <p class="text-xs font-black text-slate-100 uppercase">${just.tipo_divergencia}</p>
+                                </div>
+                                <div class="border-l border-white/10 pl-4">
+                                    <p class="text-[9px] font-black text-slate-500 uppercase mb-1">Motivo/Descrição</p>
+                                    <p class="text-sm text-slate-400 italic">"${just.descricao}"</p>
+                                </div>
+                                ${just.evidencia_url ? `
+                                    <a href="${just.evidencia_url}" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all">
+                                        <span class="material-symbols-outlined text-sm">attach_file</span>
+                                        <span class="text-[9px] font-black uppercase tracking-widest text-slate-300">Ver Evidência</span>
+                                    </a>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                });
+            }
 
-      // 2. Render Anotação Card
-      if (anotacao) {
-        container.innerHTML += `
-          <div class="rounded-xl bg-background-dark/40 border border-white/5 overflow-hidden">
-            <div class="bg-white/5 px-4 py-2 border-b border-white/5">
-              <h5 class="text-[10px] font-bold uppercase tracking-widest text-primary">ANOTAÇÃO DIÁRIA</h5>
-            </div>
-            <div class="p-4">
-              <p class="text-sm text-slate-300 leading-relaxed italic">"${anotacao.conteudo}"</p>
-            </div>
-          </div>
-        `;
-      }
+            if (anotacoes.length === 0 && justificativas.length === 0) {
+                obsCont.innerHTML = `
+                    <div class="border border-dashed border-white/10 rounded-3xl p-8 text-center bg-white/[0.02]">
+                        <p class="text-xs text-slate-600 font-bold uppercase tracking-widest italic">Nenhuma observação extra registrada.</p>
+                    </div>
+                `;
+            }
+        }
 
-      // 3. Render Justificativa Card
-      if (justificativa) {
-        const statusMap = {
-          'pendente': 'bg-amber-500/10 text-amber-500 border-amber-500/20',
-          'aprovada': 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
-          'rejeitada': 'bg-rose-500/10 text-rose-500 border-rose-500/20',
-          'aprovado': 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
-          'rejeitado': 'bg-rose-500/10 text-rose-500 border-rose-500/20'
+        function calculateWorkedMinutes(points) {
+            let mins = 0;
+            for (let i = 0; i < points.length; i += 2) {
+                if (points[i + 1]) mins += (new Date(points[i + 1].data_hora) - new Date(points[i].data_hora)) / 60000;
+            }
+            return mins;
+        }
+
+        function formatTime(point) {
+            if (!point) return '--:--';
+            return new Date(point.data_hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function formatBalance(mins) {
+            const h = Math.floor(Math.abs(mins) / 60);
+            const m = Math.round(Math.abs(mins) % 60);
+            return `${mins < 0 ? '-' : '+'}${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+        }
+
+        function formatMinutes(mins) {
+            const h = Math.floor(mins / 60);
+            const m = Math.round(mins % 60);
+            return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+        }
+        
+        window.navigateDay = function(offset) {
+            const urlParams = new URLSearchParams(window.location.search);
+            const targetId = urlParams.get('id');
+            const currentDateStr = urlParams.get('date') || new Date().toISOString().split('T')[0];
+            
+            const dateObj = new Date(currentDateStr + 'T12:00:00');
+            dateObj.setDate(dateObj.getDate() + offset);
+            
+            const newDateStr = dateObj.toISOString().split('T')[0];
+            
+            urlParams.set('date', newDateStr);
+            if (targetId) {
+                urlParams.set('id', targetId);
+            }
+            
+            window.location.href = `resumo_dia.html?${urlParams.toString()}`;
         };
-        const statusClasses = statusMap[justificativa.status.toLowerCase()] || 'bg-slate-500/10 text-slate-500 border-slate-500/20';
 
-        container.innerHTML += `
-          <div class="rounded-xl bg-background-dark/40 border border-white/5 overflow-hidden">
-            <div class="bg-white/5 px-4 py-2 border-b border-white/5 flex justify-between items-center">
-              <h5 class="text-[10px] font-bold uppercase tracking-widest text-primary">JUSTIFICATIVA</h5>
-              <span class="px-2 py-0.5 rounded-full border border-current font-bold text-[8px] uppercase ${statusClasses}">${justificativa.status}</span>
-            </div>
-            <div class="p-4 space-y-3">
-              <div>
-                <p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Tipo de Divergência</p>
-                <p class="text-xs font-bold text-slate-200">${justificativa.tipo_divergencia}</p>
-              </div>
-              <div>
-                <p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Descrição</p>
-                <p class="text-xs italic text-slate-400">"${justificativa.descricao}"</p>
-              </div>
-              ${justificativa.evidencia_url ? `
-                <a href="${justificativa.evidencia_url}" target="_blank" 
-                   class="inline-flex items-center gap-2 px-3 py-1.5 bg-background-dark border border-primary/20 rounded-lg text-primary hover:bg-primary/10 transition-all transform active:scale-95 group">
-                  <span class="material-symbols-outlined text-sm">attach_file</span>
-                  <span class="text-[10px] font-bold uppercase tracking-widest">Ver Evidência</span>
-                </a>
-              ` : ''}
-            </div>
-          </div>
-        `;
-      }
-    }
-
-    function renderHeroStats(pontos) {
-      const statusEl = document.getElementById('resumoStatus');
-      const syncEl = document.getElementById('resumoSync');
-
-      if (pontos && pontos.length > 0) {
-        statusEl.innerText = pontos.length % 2 === 0 ? 'Sessão Finalizada' : 'Sessão em Aberto';
-        syncEl.classList.remove('hidden');
-
-        const inicio = new Date(pontos[0].data_hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-        document.getElementById('resumoInicio').innerText = inicio;
-
-        if (pontos.length > 1) {
-          const fim = new Date(pontos[pontos.length - 1].data_hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-          document.getElementById('resumoFim').innerText = fim;
-        }
-
-        let totalMs = 0;
-        for (let i = 0; i < pontos.length - 1; i += 2) {
-          const entrada = new Date(pontos[i].data_hora);
-          const saida = pontos[i + 1] ? new Date(pontos[i + 1].data_hora) : new Date();
-          totalMs += (saida - entrada);
-        }
-
-        const hours = Math.floor(totalMs / 3600000);
-        const minutes = Math.floor((totalMs % 3600000) / 60000);
-        document.getElementById('resumoTotal').innerText = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}h`;
-
-        const perc = Math.min(Math.round((totalMs / (8 * 3600000)) * 100), 100);
-        document.getElementById('progressoMeta').innerText = `${perc}%`;
-        document.getElementById('barraProgresso').style.width = `${perc}%`;
-      } else {
-        statusEl.innerText = 'Sem Atividade';
-      }
-    }
-
-    init();
-  </script>
-
-  <!-- Bottom Navigation -->
-  <nav
-    class="fixed bottom-0 left-0 right-0 bg-background-dark/90 border-t border-white/5 py-4 z-50 flex justify-center backdrop-blur-xl">
-    <div class="flex items-center justify-around w-full max-w-md px-6">
-      <a id="nav-inicio" href="painel_funcionario.html"
-        class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
-        <span class="material-symbols-outlined text-2xl">home</span>
-        <span class="text-[9px] font-black uppercase tracking-widest text-center">Início</span>
-      </a>
-      <a href="estatistica_funcionario.html"
-        class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
-        <span class="material-symbols-outlined text-2xl">bar_chart</span>
-        <span class="text-[9px] font-black uppercase tracking-widest text-center">Estatística</span>
-      </a>
-      <a href="historico_anual.html"
-        class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
-        <span class="material-symbols-outlined text-2xl">history</span>
-        <span class="text-[9px] font-black uppercase tracking-widest text-center">Histórico</span>
-      </a>
-      <a id="nav-perfil-link" href="perfil_funcionario.html"
-        class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
-        <span class="material-symbols-outlined text-2xl">person</span>
-        <span class="text-[9px] font-black uppercase tracking-widest text-center">Perfil</span>
-      </a>
-    </div>
-  </nav>
-  <script type="module" src="../js/manager-context.js?v=2.7"></script>
+        init();
+    </script>
 </body>
 
 </html>

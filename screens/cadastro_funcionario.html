@@ -32,12 +32,42 @@
 
     <!-- Main Content -->
     <main class="flex-1 p-6 max-w-lg mx-auto w-full">
-        <header class="mb-8 text-center">
-            <h3 class="text-slate-900 dark:text-slate-100 tracking-tight text-3xl font-bold leading-tight pb-2">
-                Painel Administrativo</h3>
-            <p class="text-slate-600 dark:text-slate-400 text-base font-normal">Controle total de registros e permissões
-                de acesso ao cockpit.</p>
         </header>
+
+        <!-- Controle de Edição (Modo de Segurança) -->
+        <div id="edit-control-container" class="hidden mb-6 animate-in fade-in slide-in-from-top-4 duration-500">
+            <div class="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 flex items-center justify-between gap-4 neon-border-amber">
+                <div class="flex items-center gap-3">
+                    <div class="size-10 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-500">
+                        <span class="material-symbols-outlined">lock</span>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-black uppercase tracking-widest text-amber-500/80">Modo de Segurança</p>
+                        <p class="text-xs font-bold text-slate-300">Cadastro congelado para visualização</p>
+                    </div>
+                </div>
+                <button type="button" id="btn-unlock-edit"
+                        class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-[0_0_15px_rgba(245,158,11,0.3)]">
+                    Ativar Edição
+                </button>
+            </div>
+        </div>
+
+        <!-- Seção de Busca Rápida -->
+        <div class="mb-10 bg-slate-900/40 border border-primary/20 rounded-2xl p-4 neon-border-sm">
+            <label class="block text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 mb-3 ml-1">Pesquisar para Editar</label>
+            <div class="relative">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-primary/40">search</span>
+                <input type="text" id="quick-search-input" 
+                       class="w-full bg-slate-900/60 border border-white/5 rounded-xl py-3 pl-10 pr-4 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all text-sm"
+                       placeholder="Nome, CPF ou Matrícula...">
+            </div>
+            
+            <!-- Resultados da Busca -->
+            <div id="quick-search-results" class="hidden mt-4 space-y-2 max-h-60 overflow-y-auto custom-scrollbar">
+                <!-- Injetado via JS -->
+            </div>
+        </div>
 
         <form id="cadastro-form" class="space-y-8 pb-32">
             <!-- Upload de Foto -->
@@ -340,6 +370,65 @@
         let diasSelecionadosPers = [];
         let diasPorSemanaPers = {};
         let selectedAvatarFile = null;
+        let isEditMode = false;
+
+        // Controle de Travamento do Formulário (Modo de Segurança)
+        function setFormLocked(locked) {
+            const form = document.getElementById('cadastro-form');
+            const inputs = form.querySelectorAll('input, select, textarea');
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const editControl = document.getElementById('edit-control-container');
+            const avatarOverlay = document.querySelector('.group.cursor-pointer');
+            const personalizeBtn = document.getElementById('btn-personalizar');
+
+            inputs.forEach(input => {
+                input.disabled = locked;
+                // Estilo visual para campos travados
+                if (locked) {
+                    input.classList.add('opacity-60', 'cursor-not-allowed', 'bg-slate-100/50', 'dark:bg-slate-800/50');
+                } else {
+                    input.classList.remove('opacity-60', 'cursor-not-allowed', 'bg-slate-100/50', 'dark:bg-slate-800/50');
+                }
+            });
+
+            if (personalizeBtn) {
+                personalizeBtn.disabled = locked;
+                if (locked) personalizeBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                else personalizeBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+
+            if (submitBtn) {
+                if (locked) submitBtn.classList.add('hidden');
+                else submitBtn.classList.remove('hidden');
+            }
+
+            // Desativar clique no avatar se travado
+            if (avatarOverlay) {
+                if (locked) avatarOverlay.style.pointerEvents = 'none';
+                else avatarOverlay.style.pointerEvents = 'auto';
+            }
+
+            // Atualizar o botão de desbloqueio
+            const unlockBtn = document.getElementById('btn-unlock-edit');
+            if (!locked) {
+                unlockBtn.innerHTML = 'Bloquear Edição';
+                unlockBtn.classList.replace('bg-amber-500', 'bg-slate-700');
+                unlockBtn.classList.replace('hover:bg-amber-600', 'hover:bg-slate-800');
+                editControl.querySelector('p.text-xs').innerText = 'Acesso liberado para alterações';
+                editControl.querySelector('span.material-symbols-outlined').innerText = 'lock_open';
+            } else {
+                unlockBtn.innerHTML = 'Ativar Edição';
+                unlockBtn.classList.replace('bg-slate-700', 'bg-amber-500');
+                unlockBtn.classList.replace('hover:bg-slate-800', 'hover:bg-amber-600');
+                editControl.querySelector('p.text-xs').innerText = 'Cadastro congelado para visualização';
+                editControl.querySelector('span.material-symbols-outlined').innerText = 'lock';
+            }
+        }
+
+        document.getElementById('btn-unlock-edit').addEventListener('click', () => {
+            const isCurrentlyLocked = document.getElementById('nome_completo').disabled;
+            setFormLocked(!isCurrentlyLocked);
+        });
 
         // Preview da Imagem
         document.getElementById('avatar-input').addEventListener('change', (e) => {
@@ -357,6 +446,96 @@
                 reader.readAsDataURL(file);
             }
         });
+
+        async function carregarDadosTripulante(id = null) {
+            UI.showLoader();
+            try {
+                // Se não houver id passado, tenta pegar da URL (carregamento inicial da página)
+                const urlParams = new URLSearchParams(window.location.search);
+                const editId = id || urlParams.get('id');
+
+                if (editId) {
+                    isEditMode = true;
+                    document.getElementById('edit-control-container').classList.remove('hidden');
+                    document.querySelector('h2').innerText = 'EDITAR TRIPULANTE';
+                    document.querySelector('button[type="submit"] span.uppercase').innerText = 'SALVAR ALTERAÇÕES';
+                    
+                    const { data: emp, error: errEmp } = await supabase.from('funcionarios').select('*, perfis_tripulantes(*)').eq('id', editId).single();
+                    if (errEmp) throw errEmp;
+                    if (emp) {
+                         document.getElementById('nome_completo').value = emp.nome_completo || '';
+                         document.getElementById('cpf').value = emp.cpf || '';
+                         document.getElementById('rg').value = emp.rg || '';
+                         document.getElementById('data_nasc').value = emp.data_nascimento || '';
+                         if (emp.sexo) {
+                             const genderInput = document.querySelector(`input[name="gender"][value="${emp.sexo}"]`);
+                             if (genderInput) genderInput.checked = true;
+                         }
+                         document.getElementById('matricula').value = emp.matricula || '';
+                         if (emp.nivel_acesso) {
+                             const accessInput = document.querySelector(`input[name="access_level"][value="${emp.nivel_acesso}"]`);
+                             if (accessInput) accessInput.checked = true;
+                         }
+                         document.getElementById('setor-select').value = emp.setor_id || '';
+                         document.getElementById('funcao-select').value = emp.cargo_id || '';
+                         document.getElementById('escala-select').value = emp.escala_id || '';
+                         if (emp.escala_id) atualizarDetalhesEscala();
+                         
+                         if (emp.personalizacao_escala) {
+                             modoPersonalizado = true;
+                             document.getElementById('view-escala-padrao').classList.add('hidden');
+                             document.getElementById('edit-escala-personalizada').classList.remove('hidden');
+                             document.getElementById('aviso-personalizacao').classList.remove('hidden');
+                             
+                             document.getElementById('pers-carga').value = emp.personalizacao_escala.carga_horaria_semanal || '';
+                             document.getElementById('pers-dias-semana').value = emp.personalizacao_escala.dias_trabalho_semana || '';
+                             document.getElementById('pers-entrada').value = emp.personalizacao_escala.horario_entrada || '';
+                             document.getElementById('pers-saida').value = emp.personalizacao_escala.horario_saida || '';
+                             diasSelecionadosPers = emp.personalizacao_escala.dias_selecionados || [];
+                             recalcularSemanasPers();
+                             renderizarMiniCalendario(diasSelecionadosPers);
+                         }
+
+                         if (emp.perfis_tripulantes && emp.perfis_tripulantes.length > 0) {
+                             const perfil = emp.perfis_tripulantes[0];
+                             document.getElementById('nickname').value = perfil.nickname || '';
+                             document.getElementById('email').value = perfil.email || '';
+                             document.getElementById('whatsapp').value = perfil.telefone || '';
+                             if (perfil.foto_url) {
+                                  document.getElementById('avatar-preview').src = perfil.foto_url;
+                                  document.getElementById('avatar-preview').classList.remove('hidden');
+                                  document.getElementById('avatar-placeholder').classList.add('hidden');
+                             }
+                         }
+                         
+                         // Ativar Modo Visualização por padrão em edições
+                         setFormLocked(true);
+                         
+                         // Guardar o ID de edição na URL sem recarregar (opcional, para manter consistência)
+                         if (id) {
+                            const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?id=' + id;
+                            window.history.pushState({path:newUrl},'',newUrl);
+                         }
+                    }
+                } else {
+                    // Resetar formulário se carregar sem ID (Novo Cadastro)
+                    isEditMode = false;
+                    document.getElementById('edit-control-container').classList.add('hidden');
+                    document.getElementById('cadastro-form').reset();
+                    document.querySelector('h2').innerText = 'GESTÃO DE FUNCIONÁRIO';
+                    document.querySelector('button[type="submit"] span.uppercase').innerText = 'SALVAR CADASTRO';
+                    setFormLocked(false);
+                    const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+                    window.history.pushState({path:newUrl},'',newUrl);
+                }
+
+            } catch (err) {
+                console.error('Erro ao carregar dados:', err);
+                UI.showToast('Erro ao carregar dados do tripulante', 'error');
+            } finally {
+                UI.hideLoader();
+            }
+        }
 
         async function carregarDadosIniciais() {
             UI.showLoader();
@@ -408,9 +587,13 @@
                     opt.textContent = e.nome;
                     escalaSelect.appendChild(opt);
                 });
+
+                // Carregar dados específicos se for edição
+                await carregarDadosTripulante();
+
             } catch (err) {
-                console.error('Erro ao carregar dados:', err);
-                UI.showToast('Erro ao carregar dados básicos', 'error');
+                console.error('Erro ao carregar dados iniciais:', err);
+                UI.showToast('Erro ao carregar configurações básicas', 'error');
             } finally {
                 UI.hideLoader();
             }
@@ -439,7 +622,8 @@
         }
 
         function toggleDiaPersonalizado(dia, btn) {
-            if (!modoPersonalizado) return;
+            const isCurrentlyLocked = document.getElementById('nome_completo').disabled;
+            if (!modoPersonalizado || isCurrentlyLocked) return;
             const limiteDias = parseInt(document.getElementById('pers-dias-semana').value) || 0;
             const offset = 5;
             const indexSemana = Math.floor((offset + dia - 1) / 7);
@@ -487,6 +671,9 @@
         }
 
         function alternarPersonalizacao() {
+            const isCurrentlyLocked = document.getElementById('nome_completo').disabled;
+            if (isCurrentlyLocked) return;
+
             modoPersonalizado = !modoPersonalizado;
             const viewPadrao = document.getElementById('view-escala-padrao');
             const editPers = document.getElementById('edit-escala-personalizada');
@@ -553,23 +740,22 @@
                     avatarUrl = publicUrl;
                 }
 
+                const rawCpf = document.getElementById('cpf').value;
+                const senhaPadrao = rawCpf.replace(/\D/g, ''); // Extrai apenas os números
+
                 // 2. Montar Dados
-                const dados = {
+                const dadosFuncionario = {
                     nome_completo: document.getElementById('nome_completo').value,
-                    nickname: document.getElementById('nickname').value,
-                    cpf: document.getElementById('cpf').value,
+                    cpf: rawCpf,
                     rg: document.getElementById('rg').value,
                     data_nascimento: document.getElementById('data_nasc').value,
                     sexo: e.target.querySelector('input[name="gender"]:checked')?.value || null,
-                    email: document.getElementById('email').value,
-                    telefone: document.getElementById('whatsapp').value,
                     matricula: document.getElementById('matricula').value,
                     cargo_id: document.getElementById('funcao-select').value || null,
                     funcao: document.getElementById('funcao-select').options[document.getElementById('funcao-select').selectedIndex].text.split(' (')[0],
                     setor_id: document.getElementById('setor-select').value || null,
                     escala_id: document.getElementById('escala-select').value || null,
                     nivel_acesso: e.target.querySelector('input[name="access_level"]:checked')?.value || 'Funcionário',
-                    foto_url: avatarUrl,
                     personalizacao_escala: modoPersonalizado ? {
                         carga_horaria_semanal: parseInt(document.getElementById('pers-carga').value),
                         dias_trabalho_semana: parseInt(document.getElementById('pers-dias-semana').value),
@@ -579,22 +765,116 @@
                     } : null
                 };
 
-                // 3. Inserir no Banco
-                const { error } = await supabase.from('funcionarios').insert([dados]);
-                if (error) throw error;
+                const dadosPerfil = {
+                    nickname: document.getElementById('nickname').value,
+                    senha: senhaPadrao,
+                    email: document.getElementById('email').value,
+                    telefone: document.getElementById('whatsapp').value,
+                    foto_url: avatarUrl
+                };
 
-                UI.showToast('Tripulante registrado com sucesso!', 'success');
+                // 3. Inserir ou Atualizar no Banco
+                const urlParams = new URLSearchParams(window.location.search);
+                const editId = urlParams.get('id');
+
+                if (editId) {
+                    // Update Mode
+                    delete dadosPerfil.senha; // Não sobrepor a senha do usuário em edições comuns
+                    
+                    const { error: funcError } = await supabase.from('funcionarios').update(dadosFuncionario).eq('id', editId);
+                    if (funcError) throw funcError;
+
+                    const { error: perfilError } = await supabase.from('perfis_tripulantes').update(dadosPerfil).eq('funcionario_id', editId);
+                    if (perfilError) throw perfilError;
+
+                    UI.showToast('Tripulante atualizado com sucesso!', 'success');
+                } else {
+                    // Insert Mode
+                    const { data: funcData, error: funcError } = await supabase.from('funcionarios').insert([dadosFuncionario]).select().single();
+                    if (funcError) throw funcError;
+
+                    dadosPerfil.funcionario_id = funcData.id;
+                    const { error: perfilError } = await supabase.from('perfis_tripulantes').insert([dadosPerfil]);
+                    if (perfilError) {
+                        console.error('Erro ao salvar perfil, dados de RH salvos isoladamente:', perfilError);
+                        throw perfilError;
+                    }
+
+                    UI.showToast('Tripulante registrado com sucesso!', 'success');
+                }
                 setTimeout(() => window.location.href = 'relacao_funcionarios.html', 1500);
 
             } catch (err) {
                 console.error('Erro no cadastro:', err);
-                UI.showToast('Erro ao registrar tripulante', 'error');
+                UI.showToast('Erro ao processar tripulante', 'error');
             } finally {
                 UI.hideLoader();
             }
         });
 
+        // Lógica de Busca Rápida para Edição
+        function initQuickSearch() {
+            const searchInput = document.getElementById('quick-search-input');
+            const resultsContainer = document.getElementById('quick-search-results');
+            let debounceTimer;
+
+            searchInput.addEventListener('input', (e) => {
+                clearTimeout(debounceTimer);
+                const query = e.target.value.trim();
+
+                if (query.length < 2) {
+                    resultsContainer.classList.add('hidden');
+                    return;
+                }
+
+                debounceTimer = setTimeout(async () => {
+                    try {
+                        const { data, error } = await supabase
+                            .from('funcionarios')
+                            .select('id, nome_completo, matricula, cpf, cargo_id, cargos(nome)')
+                            .or(`nome_completo.ilike.%${query}%,matricula.ilike.%${query}%,cpf.ilike.%${query}%`)
+                            .limit(5);
+
+                        if (error) throw error;
+
+                        if (data && data.length > 0) {
+                            resultsContainer.innerHTML = '';
+                            data.forEach(func => {
+                                const item = document.createElement('div');
+                                item.className = "flex items-center justify-between p-3 bg-white/5 border border-white/5 rounded-xl hover:bg-white/10 transition-all group cursor-pointer";
+                                item.onclick = () => {
+                                    carregarDadosTripulante(func.id);
+                                    resultsContainer.classList.add('hidden');
+                                };
+                                item.innerHTML = `
+                                    <div class="flex flex-col">
+                                        <span class="text-sm font-bold text-slate-100 group-hover:text-primary transition-colors">${func.nome_completo}</span>
+                                        <span class="text-[10px] text-slate-500 uppercase font-black tracking-widest">${func.cargos?.nome || 'N/A'} | #${func.matricula}</span>
+                                    </div>
+                                `;
+                                resultsContainer.appendChild(item);
+                            });
+                            resultsContainer.classList.remove('hidden');
+                        } else {
+                            resultsContainer.innerHTML = '<p class="text-[10px] text-slate-500 text-center py-2 uppercase font-bold tracking-widest">Nenhum resultado</p>';
+                            resultsContainer.classList.remove('hidden');
+                        }
+                    } catch (err) {
+                        console.error('Erro na busca rápida:', err);
+                    }
+                }, 400);
+            });
+
+            // Fechar ao clicar fora
+            document.addEventListener('click', (e) => {
+                if (!searchInput.contains(e.target) && !resultsContainer.contains(e.target)) {
+                    resultsContainer.classList.add('hidden');
+                }
+            });
+        }
+
         carregarDadosIniciais();
+        initQuickSearch();
     </script>
 
     <!-- Bottom Navigation -->

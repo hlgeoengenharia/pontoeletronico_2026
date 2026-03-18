@@ -44,32 +44,28 @@
   </script>
 </head>
 
-<body
-  class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex flex-col pb-24">
-  <!-- Header / Mission Status -->
-  <header class="border-b border-primary/20 bg-background-dark/80 backdrop-blur-md sticky top-0 z-50">
-    <div class="flex items-center p-4 justify-between">
-      <div id="btn-voltar"
-        class="text-primary flex size-10 mt-2 shrink-0 items-center justify-center rounded-lg border border-primary/30 bg-primary/10 cursor-pointer hover:bg-primary/20 transition-all">
-        <span class="material-symbols-outlined">arrow_back</span>
-      </div>
-      <h2 class="text-slate-100 text-lg font-bold leading-tight tracking-wider uppercase flex-1 text-center">
-        JUSTIFICATIVA</h2>
-      <div class="w-10"></div>
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen flex flex-col pb-24 items-center">
+    <!-- Header / Navigation -->
+    <div class="flex items-center w-full max-w-md bg-background-light dark:bg-background-dark p-4 pb-2 justify-between border-b border-slate-200 dark:border-primary/20 sticky top-0 z-40">
+        <div id="btn-voltar"
+            class="text-primary flex size-10 mt-2 shrink-0 items-center justify-center rounded-lg border border-primary/30 bg-primary/10 cursor-pointer hover:bg-primary/20 transition-all">
+            <span class="material-symbols-outlined">arrow_back</span>
+        </div>
+        <h2 class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-tight flex-1 text-center pr-12 uppercase tracking-widest">
+            JUSTIFICATIVA</h2>
     </div>
-    <!-- Agent Progress Bar -->
-  </header>
-  <main class="flex-1 overflow-y-auto p-4 space-y-6">
+
+  <main class="flex-1 w-full max-w-md p-6 space-y-6">
     <!-- Mission Briefing / Form Section -->
-    <section class="bg-card-dark border border-primary/20 rounded-xl p-5 relative overflow-hidden">
+    <section class="bg-white/5 border border-primary/20 rounded-2xl p-6 relative overflow-hidden mt-6 shadow-inner">
       <div class="absolute top-0 right-0 p-2 opacity-10">
         <span class="material-symbols-outlined text-6xl">description</span>
       </div>
-      <h3 class="text-accent text-sm font-bold tracking-widest uppercase mb-4 flex items-center gap-2">
-        <span class="material-symbols-outlined text-sm">add_box</span> Nova Justificativa
+      <h3 class="text-primary text-sm font-bold tracking-widest uppercase mb-4 flex items-center gap-2 relative z-10">
+        <span class="material-symbols-outlined text-sm">add_box</span> NOVA JUSTIFICATIVA
       </h3>
-      <div class="space-y-4">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="space-y-4 relative z-10">
+        <div class="flex flex-col gap-4">
           <div class="hidden">
             <input id="incidente_data" type="date" />
           </div>
@@ -97,27 +93,26 @@
         </div>
         <div class="flex flex-col gap-2">
           <label class="text-slate-400 text-xs uppercase font-bold tracking-wider">ANEXAR EVIDÊNCIA (FOTO/PDF)</label>
-          <input type="file" id="incidente_evidencia" class="hidden" accept="image/*,.pdf" />
           <button id="btnAnexar" type="button"
-            class="w-full flex items-center justify-center gap-3 bg-background-dark border border-dashed border-primary/40 hover:border-primary text-slate-400 hover:text-primary py-4 rounded-lg transition-all transform active:scale-[0.98] group overflow-hidden relative">
+            class="w-full flex items-center justify-center gap-3 bg-background-dark border border-dashed border-primary/40 hover:border-primary text-slate-400 hover:text-primary py-4 rounded-xl transition-all transform active:scale-[0.98] group overflow-hidden relative">
             <span class="material-symbols-outlined">add_a_photo</span>
             <span id="txtAnexar" class="uppercase tracking-widest text-[10px] font-bold">Anexar Documento</span>
           </button>
           <p class="text-[8px] text-slate-500 uppercase tracking-widest text-center mt-1">PDF, JPG, PNG • MÁX 10MB</p>
         </div>
         <button
-          class="w-full bg-primary hover:bg-primary/80 text-white font-bold py-4 rounded-lg uppercase tracking-[0.2em] shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2">
-          <span class="material-symbols-outlined">send</span> Enviar Justificativa</button>
+          class="w-full bg-primary hover:bg-primary/80 text-white text-[10px] font-black py-4 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-primary/20 transition-all uppercase tracking-widest mt-4">
+          <span class="material-symbols-outlined text-sm">send</span> Enviar Justificativa</button>
       </div>
     </section>
 
     <!-- Previous Logs Section -->
-    <section class="space-y-4 pb-20">
-      <div class="flex justify-between items-center">
-        <h3 class="text-slate-100 text-sm font-bold tracking-widest uppercase flex items-center gap-2">
+    <section class="space-y-4 mt-8 pb-10">
+      <div class="flex justify-between items-center px-1">
+        <h3 class="text-slate-100 text-[10px] font-black tracking-widest uppercase flex items-center gap-2">
           <span class="material-symbols-outlined text-sm">history</span> Histórico
         </h3>
-        <span id="labelTotalJustificativas" class="text-[10px] text-slate-500 uppercase tracking-tighter">Total: 0
+        <span id="labelTotalJustificativas" class="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Total: 0
           registros</span>
       </div>
 
@@ -132,26 +127,35 @@
   </main>
   <!-- Bottom Navigation -->
   <nav
-    class="fixed bottom-0 left-0 right-0 bg-background-dark/90 border-t border-white/5 py-4 z-50 flex justify-center backdrop-blur-xl">
+    class="fixed bottom-0 left-0 right-0 bg-background-dark/90 border-t border-slate-800 py-2 pb-6 z-50 flex justify-center backdrop-blur-xl">
     <div class="flex items-center justify-around w-full max-w-md px-6">
       <a id="nav-inicio" href="painel_funcionario.html"
-        class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
-        <span class="material-symbols-outlined text-2xl">home</span>
-        <span class="text-[9px] font-black uppercase tracking-widest text-center">Início</span>
+        class="flex flex-col items-center justify-center w-16 h-14 group transition-all duration-300">
+        <div class="p-1.5 rounded-xl group-hover:bg-primary/10 transition-colors duration-300 mb-1">
+          <span class="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors text-2xl">home</span>
+        </div>
+        <span class="text-[9px] font-black uppercase tracking-widest text-slate-500 group-hover:text-primary transition-colors">Início</span>
       </a>
       <a href="estatistica_funcionario.html"
-        class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
-        <span class="material-symbols-outlined text-2xl">bar_chart</span>
-        <span class="text-[9px] font-black uppercase tracking-widest text-center">Estatística</span>
+        class="flex flex-col items-center justify-center w-16 h-14 group transition-all duration-300">
+        <div class="p-1.5 rounded-xl group-hover:bg-primary/10 transition-colors duration-300 mb-1">
+          <span class="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors text-2xl">bar_chart</span>
+        </div>
+        <span class="text-[9px] font-black uppercase tracking-widest text-slate-500 group-hover:text-primary transition-colors">Estatística</span>
       </a>
       <a href="historico_anual.html"
-        class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
-        <span class="material-symbols-outlined text-2xl">history</span>
-        <span class="text-[9px] font-black uppercase tracking-widest text-center">Histórico</span>
+        class="flex flex-col items-center justify-center w-16 h-14 group transition-all duration-300">
+        <div class="p-1.5 rounded-xl group-hover:bg-primary/10 transition-colors duration-300 mb-1">
+          <span class="material-symbols-outlined text-slate-400 group-hover:text-primary transition-colors text-2xl">history</span>
+        </div>
+        <span class="text-[9px] font-black uppercase tracking-widest text-slate-500 group-hover:text-primary transition-colors">Histórico</span>
       </a>
-      <a id="nav-perfil-link" href="perfil_funcionario.html" class="flex flex-col items-center gap-1.5 text-primary">
-        <span class="material-symbols-outlined text-2xl font-variation-settings-fill">person</span>
-        <span class="text-[9px] font-black uppercase tracking-widest text-center">Perfil</span>
+      <a id="nav-perfil-link" href="perfil_funcionario.html"
+        class="flex flex-col items-center justify-center w-16 h-14 group transition-all duration-300">
+        <div class="p-1.5 rounded-xl bg-primary/10 mb-1">
+            <span class="material-symbols-outlined text-primary font-variation-settings-fill text-2xl">person</span>
+        </div>
+        <span class="text-[9px] font-black uppercase tracking-widest text-primary">Perfil</span>
       </a>
     </div>
   </nav>
@@ -240,17 +244,40 @@
       if (!targetUserId) return;
 
       try {
-        const { data, error } = await supabase
+        // 1. Buscar Justificativas
+        const { data: dataJust, error: errJust } = await supabase
           .from('justificativas')
           .select('*')
           .eq('funcionario_id', targetUserId)
           .order('data_incidente', { ascending: false });
 
-        if (error) throw error;
+        // 2. Buscar Pontos com GPS Pendente (para exibir como alerta no histórico)
+        const { data: dataGps, error: errGps } = await supabase
+          .from('pontos')
+          .select('*')
+          .eq('funcionario_id', targetUserId)
+          .eq('status_validacao', 'pendente')
+          .order('data_hora', { ascending: false });
 
-        totalLabel.innerText = `Total: ${data.length} registros`;
+        if (errJust) throw errJust;
+        if (errGps) throw errGps;
 
-        if (data.length === 0) {
+        const combinedData = [
+          ...(dataJust || []).map(j => ({ ...j, itemType: 'ABONO' })),
+          ...(dataGps || []).map(g => ({
+            id: g.id,
+            data_incidente: g.data_hora.split('T')[0],
+            tipo_divergencia: 'Divergência de GPS',
+            descricao: g.justificativa_usuario || 'Batida fora do raio permitido.',
+            status: 'pendente',
+            itemType: 'GPS',
+            hora: new Date(g.data_hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+          }))
+        ].sort((a, b) => new Date(b.data_incidente) - new Date(a.data_incidente));
+
+        totalLabel.innerText = `Total: ${combinedData.length} registros`;
+
+        if (combinedData.length === 0) {
           historicoCont.innerHTML = `
                    <div class="text-center py-10 opacity-30">
                        <p class="text-xs uppercase tracking-widest">Nenhuma justificativa encontrada</p>
@@ -260,7 +287,7 @@
         }
 
         // Agrupar por data
-        const grouped = data.reduce((acc, item) => {
+        const grouped = combinedData.reduce((acc, item) => {
           const date = item.data_incidente;
           if (!acc[date]) acc[date] = [];
           acc[date].push(item);
@@ -272,9 +299,10 @@
           const dateFormatted = new Date(date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
 
           return `
-            <div class="bg-card-dark border border-white/5 rounded-xl overflow-hidden shadow-lg">
-                <div class="bg-primary/10 px-4 py-2 border-b border-white/5">
-                    <span class="text-primary text-[10px] font-black uppercase tracking-[0.2em]">${dateFormatted}</span>
+            <div class="bg-white/5 border border-white/10 rounded-2xl overflow-hidden shadow-lg mb-4">
+                <div class="bg-primary/10 px-4 py-3 border-b border-primary/10 flex justify-between items-center">
+                    <span class="text-primary text-[10px] font-black uppercase tracking-widest">${dateFormatted}</span>
+                    <span class="text-[9px] text-primary/80 font-black uppercase">${items.length} ${items.length > 1 ? 'REGISTROS' : 'REGISTRO'}</span>
                 </div>
                 <div class="p-4 space-y-4">
                     ${items.map(item => {
@@ -289,18 +317,27 @@
             return `
                             <div class="space-y-2 border-b border-white/5 pb-3 last:border-0 last:pb-0">
                                 <div class="flex justify-between items-center text-[9px] font-bold uppercase tracking-widest">
-                                    <span class="text-accent">${item.tipo_divergencia}</span>
+                                    <span class="${item.itemType === 'GPS' ? 'text-orange-500' : 'text-accent'} flex items-center gap-1">
+                                        <span class="material-symbols-outlined text-[12px]">${item.itemType === 'GPS' ? 'location_on' : 'description'}</span>
+                                        ${item.tipo_divergencia} ${item.hora ? '(' + item.hora + ')' : ''}
+                                    </span>
                                     <span class="${statusClasses} px-2 py-0.5 rounded-full border border-current font-bold">${item.status}</span>
                                 </div>
                                 <div class="flex justify-between items-start group">
                                     <p class="text-slate-400 text-xs italic leading-relaxed flex-1">"${item.descricao}"</p>
                                     <div class="flex gap-1 ml-2 transition-opacity">
+                                        ${item.itemType === 'ABONO' ? `
                                         <button onclick="window.editarJustificativa('${item.id}', '${item.data_incidente}', '${item.tipo_divergencia}', \`${item.descricao.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)" class="p-1.5 text-slate-400 hover:text-primary transition-colors">
                                             <span class="material-symbols-outlined text-sm">edit</span>
                                         </button>
                                         <button onclick="window.excluirJustificativa('${item.id}')" class="p-1.5 text-slate-400 hover:text-rose-500 transition-colors">
                                             <span class="material-symbols-outlined text-sm">delete</span>
                                         </button>
+                                        ` : `
+                                        <span class="p-1.5 text-slate-600 cursor-help" title="Pendência de GPS gerada pelo sistema">
+                                            <span class="material-symbols-outlined text-sm">info</span>
+                                        </span>
+                                        `}
                                     </div>
                                 </div>
                             </div>

@@ -84,43 +84,39 @@
             </div>
         </div>
 
-        <!-- Dashboard Stats Grid -->
-        <div class="w-full max-w-md grid grid-cols-3 gap-3 mt-8">
-            <div
-                class="bg-primary/5 border border-primary/20 rounded-xl p-3 text-center transition-all hover:bg-primary/10">
+        <!-- Estatísticas Globais (Row 2) -->
+        <div class="w-full max-w-md grid grid-cols-3 gap-2 mt-8">
+            <div class="bg-primary/5 border border-primary/20 rounded-2xl p-4 text-center">
                 <p class="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Funcionários</p>
-                <p id="statTotalGlobal" class="text-lg font-black text-slate-100">--</p>
+                <p id="statTotalGlobal" class="text-xl font-black text-slate-100">--</p>
             </div>
-            <div
-                class="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-3 text-center transition-all hover:bg-emerald-500/10">
+            <div class="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-4 text-center">
                 <p class="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Online</p>
-                <p id="statOnlineGlobal" class="text-lg font-black text-emerald-400">--</p>
+                <p id="statOnlineGlobal" class="text-xl font-black text-emerald-400">--</p>
             </div>
-            <div
-                class="bg-amber-500/5 border border-amber-500/20 rounded-xl p-3 text-center transition-all hover:bg-amber-500/10">
+            <div class="bg-amber-500/5 border border-amber-500/20 rounded-2xl p-4 text-center">
                 <p class="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Setores</p>
-                <p id="statTotalSetores" class="text-lg font-black text-slate-100">--</p>
+                <p id="statTotalSetores" class="text-xl font-black text-slate-100">--</p>
             </div>
         </div>
     </header>
 
-    <main class="flex-1 p-6 space-y-8 max-w-2xl mx-auto w-full">
-        <!-- Punch Button Area -->
-        <div class="w-full max-w-md flex justify-center mb-4 mx-auto">
+    <main class="flex-1 p-6 space-y-8 overflow-y-auto w-full max-w-2xl mx-auto flex flex-col items-center">
+        <!-- Punch Section -->
+        <section class="w-full max-w-md flex justify-center mx-auto mb-4 mt-2">
             <button id="punchButton"
-                class="relative group w-44 h-44 rounded-full bg-primary flex flex-col items-center justify-center text-center p-6 shadow-xl border-4 border-primary/30 hover:scale-105 transition-all">
+                class="relative group w-48 h-48 rounded-full bg-emerald-500 flex flex-col items-center justify-center text-center p-6 shadow-xl border-4 border-emerald-500/30 hover:scale-105 transition-all">
                 <span class="material-symbols-outlined text-4xl mb-2 text-white">power_settings_new</span>
                 <span
-                    class="text-[11px] font-black text-white leading-tight tracking-wider uppercase">REGISTRAR<br>PONTO</span>
+                    class="text-sm font-black text-white leading-tight tracking-wider uppercase">REGISTRAR<br>PONTO</span>
             </button>
-        </div>
+        </section>
 
         <!-- Session Stats -->
-        <div
-            class="w-full max-w-md bg-white/5 border border-slate-200 dark:border-primary/20 rounded-2xl p-6 backdrop-blur-sm mx-auto">
+        <div class="w-full max-w-md bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-6 backdrop-blur-sm mx-auto shadow-inner">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                    <span class="material-symbols-outlined text-lg text-primary">timer</span> MINHA SESSÃO
+                    <span class="material-symbols-outlined text-lg text-emerald-500">timer</span> MINHA SESSÃO
                 </h3>
             </div>
             <div class="grid grid-cols-3 gap-4">
@@ -134,59 +130,52 @@
                 </div>
                 <div class="text-center">
                     <p class="text-[9px] text-slate-500 uppercase font-bold mb-1">Duração</p>
-                    <p id="stats-total" class="text-xs font-bold text-primary">00:00</p>
+                    <p id="stats-total" class="text-xs font-bold text-emerald-500">00:00</p>
                 </div>
             </div>
         </div>
 
-        <!-- Daily Tasks -->
-        <div class="w-full max-w-md space-y-4 mx-auto">
-            <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                <span class="material-symbols-outlined text-lg">task_alt</span>MISSÕES DIÁRIAS
+        <!-- Missões Diárias -->
+        <section class="max-w-md w-full mx-auto space-y-4">
+            <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2 px-2">
+                <span class="material-symbols-outlined text-lg">task_alt</span> MISSÕES DIÁRIAS
             </h3>
-            <div class="grid grid-cols-2 gap-3">
-                <a href="anotacao_diaria.html"
-                    class="bg-white/5 border border-white/5 p-4 rounded-xl flex flex-col items-center gap-2 hover:bg-primary/10 transition-colors text-center">
-                    <span class="material-symbols-outlined text-primary">edit_note</span>
-                    <span class="text-[9px] font-bold uppercase tracking-tighter">Anotação</span>
-                </a>
-                <a href="justificativa.html"
-                    class="bg-white/5 border border-white/5 p-4 rounded-xl flex flex-col items-center gap-2 hover:bg-primary/10 transition-colors text-center">
-                    <span class="material-symbols-outlined text-amber-500">hourglass_top</span>
-                    <span class="text-[9px] font-bold uppercase tracking-tighter">Justificativa</span>
+            <div class="grid grid-cols-1">
+                <a href="diario_funcionario.html"
+                    class="bg-white/5 border border-primary/20 p-6 rounded-2xl flex items-center justify-between group hover:border-primary/40 hover:bg-primary/5 transition-all shadow-lg relative">
+                    <div class="flex items-center gap-4">
+                        <div class="size-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                            <span class="material-symbols-outlined text-primary text-3xl">local_library</span>
+                        </div>
+                        <div>
+                            <p class="text-[13px] font-black text-slate-100 uppercase tracking-widest leading-tight">Diário de Bordo</p>
+                            <p class="text-[10px] text-slate-400 font-bold uppercase mt-0.5">Relate atividades ou envie justificativas</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div id="badge-diario" class="bg-rose-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-lg shadow-rose-500/30 hidden">0</div>
+                        <span class="material-symbols-outlined text-slate-600 group-hover:text-primary transition-colors">chevron_right</span>
+                    </div>
                 </a>
             </div>
-        </div>
+        </section>
 
-
-        <!-- Calendar Section -->
-        <section class="space-y-4 max-w-md mx-auto border-t border-white/5 pt-8">
-            <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                <span class="material-symbols-outlined text-lg">calendar_month</span> CRONOGRAMA SETORIAL
+        <!-- Calendário -->
+        <section class="max-w-md w-full mx-auto border-t border-white/5 pt-8 space-y-4">
+            <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2 px-2">
+                <span class="material-symbols-outlined text-lg text-emerald-500">calendar_month</span> CRONOGRAMA SETORIAL
             </h3>
-            <div class="bg-white/5 border border-white/5 rounded-2xl p-4">
-                <div id="calendar-header" class="flex justify-between items-center mb-4 px-2">
-                    <p id="calendar-month" class="text-[11px] font-black text-slate-200 uppercase tracking-widest">MARÇO
-                        2026</p>
-                    <div class="flex gap-2 text-slate-400">
+            <div class="bg-white/5 border border-white/10 rounded-3xl p-6 shadow-inner">
+                <div class="flex justify-between items-center mb-6 px-2">
+                    <p id="calendar-month" class="text-xs font-black text-slate-100 uppercase tracking-widest">...</p>
+                    <div class="flex gap-4">
                         <span
-                            class="material-symbols-outlined text-sm cursor-pointer hover:text-primary">chevron_left</span>
+                            class="material-symbols-outlined text-sm text-slate-600 cursor-pointer hover:text-emerald-500 transition-colors">chevron_left</span>
                         <span
-                            class="material-symbols-outlined text-sm cursor-pointer hover:text-primary">chevron_right</span>
+                            class="material-symbols-outlined text-sm text-slate-600 cursor-pointer hover:text-emerald-500 transition-colors">chevron_right</span>
                     </div>
                 </div>
-                <div class="grid grid-cols-7 gap-1 text-center mb-2">
-                    <p class="text-[8px] font-black text-slate-600">DOM</p>
-                    <p class="text-[8px] font-black text-slate-600">SEG</p>
-                    <p class="text-[8px] font-black text-slate-600">TER</p>
-                    <p class="text-[8px] font-black text-slate-600">QUA</p>
-                    <p class="text-[8px] font-black text-slate-600">QUI</p>
-                    <p class="text-[8px] font-black text-slate-600">SEX</p>
-                    <p class="text-[8px] font-black text-slate-600">SAB</p>
-                </div>
-                <div id="app-calendar" class="grid grid-cols-7 gap-1">
-                    <!-- Gerado dinamicamente -->
-                </div>
+                <div id="app-calendar" class="grid grid-cols-7 gap-1"></div>
             </div>
         </section>
     </main>
@@ -293,22 +282,36 @@
         }
 
         async function updateNotificationBadge() {
-            if (!currentUser || !currentUser.setorId) return;
+            if (!currentUser) return;
             try {
-                // Para o gestor, filtramos as pendências pelo setor dele
-                const { count, error } = await supabase
+                // 1. Justificativas (Abonos)
+                let queryAbono = supabase
                     .from('justificativas')
                     .select('*, funcionarios!inner(setor_id)', { count: 'exact', head: true })
-                    .eq('status', 'pendente')
-                    .eq('funcionarios.setor_id', currentUser.setorId);
+                    .eq('status', 'pendente');
 
-                if (error) throw error;
+                // 2. Pontos (GPS)
+                let queryGps = supabase
+                    .from('pontos')
+                    .select('*, funcionarios!inner(setor_id)', { count: 'exact', head: true })
+                    .eq('status_validacao', 'pendente');
 
+                if (currentUser.role === 'Gestor' && currentUser.setorId) {
+                    queryAbono = queryAbono.eq('funcionarios.setor_id', currentUser.setorId);
+                    queryGps = queryGps.eq('funcionarios.setor_id', currentUser.setorId);
+                }
+
+                const [{ count: countAbono }, { count: countGps }] = await Promise.all([
+                    queryAbono,
+                    queryGps
+                ]);
+
+                const totalPendencias = (countAbono || 0) + (countGps || 0);
                 const badge = document.getElementById('notifBadge');
                 const bell = document.getElementById('notifBell');
 
-                if (count > 0) {
-                    badge.innerText = count > 99 ? '99+' : count;
+                if (totalPendencias > 0) {
+                    badge.innerText = totalPendencias > 99 ? '99+' : totalPendencias;
                     badge.classList.remove('hidden');
                     bell.classList.add('text-amber-500');
                     bell.classList.remove('text-slate-400');
@@ -384,27 +387,76 @@
             const today = new Date().toISOString().split('T')[0];
 
             async function refreshTodayStats() {
-                const { data: pts } = await supabase.from('pontos').select('*').eq('funcionario_id', userId).gte('data_hora', `${today}T00:00:00`).order('data_hora', { ascending: true });
-                const statusText = document.getElementById('status-text');
+                const todayStart = `${today}T00:00:00`;
+                const todayEnd = `${today}T23:59:59`;
 
-                if (pts && pts.length > 0) {
-                    document.getElementById('stats-inicio').innerText = new Date(pts[0].data_hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-                    const isOnline = pts.length % 2 !== 0;
-                    if (isOnline) {
-                        statusText.innerText = 'ONLINE';
-                        statusText.className = 'text-emerald-500 animate-pulse font-black';
-                        btn.classList.add('bg-emerald-600', 'border-emerald-400/50');
-                        btn.querySelector('span:last-child').innerHTML = 'SAÍDA<br>SERVIÇO';
-                        startTimer(pts[pts.length - 1].data_hora);
-                    } else {
-                        statusText.innerText = 'OFFLINE';
-                        statusText.className = 'text-slate-500 font-black';
-                        btn.classList.remove('bg-emerald-600', 'border-emerald-400/50');
-                        btn.querySelector('span:last-child').innerHTML = 'INICIAR<br>SESSÃO';
-                        document.getElementById('stats-fim').innerText = new Date(pts[pts.length - 1].data_hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-                        stopTimer();
-                    }
+                const { data } = await supabase
+                    .from('pontos')
+                    .select('*')
+                    .eq('funcionario_id', userId)
+                    .gte('data_hora', todayStart)
+                    .lte('data_hora', todayEnd)
+                    .order('data_hora', { ascending: false });
+
+                const isOnline = data && data.length > 0 && (data.length % 2 !== 0);
+
+                const statusText = document.getElementById('status-text');
+                if (statusText) {
+                    statusText.innerText = isOnline ? 'ONLINE' : 'OFFLINE';
+                    statusText.className = isOnline ? 'text-[11px] font-bold text-emerald-500 uppercase' : 'text-[11px] font-bold text-slate-500 uppercase';
                 }
+
+                if (btn) {
+                    btn.innerHTML = isOnline
+                        ? `<span class="material-symbols-outlined text-4xl mb-2 text-rose-500">power_settings_new</span>
+                           <span class="text-sm font-black text-rose-500 leading-tight tracking-wider uppercase">ENCERRAR<br>PONTO</span>`
+                        : `<span class="material-symbols-outlined text-4xl mb-2 text-white">power_settings_new</span>
+                           <span class="text-sm font-black text-white leading-tight tracking-wider uppercase">REGISTRAR<br>PONTO</span>`;
+
+                    btn.className = isOnline
+                        ? "relative group w-48 h-48 rounded-full bg-rose-500/10 border-4 border-rose-500/30 flex flex-col items-center justify-center text-center p-6 shadow-xl shadow-rose-500/10 hover:scale-105 active:scale-95 transition-all"
+                        : "relative group w-48 h-48 rounded-full bg-emerald-500 border-4 border-emerald-500/30 flex flex-col items-center justify-center text-center p-6 shadow-xl shadow-emerald-500/20 hover:scale-105 active:scale-95 transition-all";
+                }
+
+                // Atualizando as Sessões Atuais
+                if (data && data.length > 0) {
+                    const statsInicio = document.getElementById('stats-inicio');
+                    if (statsInicio) statsInicio.innerText = new Date(data[data.length - 1].data_hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+                    const statsFim = document.getElementById('stats-fim');
+                    if (statsFim) {
+                        if (data.length >= 2 && !isOnline) {
+                            statsFim.innerText = new Date(data[0].data_hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                        } else if (data.length >= 3 && isOnline) {
+                            statsFim.innerText = new Date(data[1].data_hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                        } else {
+                            statsFim.innerText = '--:--';
+                        }
+                    }
+
+                    let totalMs = 0;
+                    for (let i = data.length - 1; i >= 0; i -= 2) {
+                        const inTime = new Date(data[i].data_hora).getTime();
+                        const outTime = (i - 1 >= 0) ? new Date(data[i - 1].data_hora).getTime() : new Date().getTime();
+                        totalMs += (outTime - inTime);
+                    }
+                    
+                    const totalHours = Math.floor(totalMs / 3600000);
+                    const totalMins = Math.floor((totalMs % 3600000) / 60000);
+                    const statsTotal = document.getElementById('stats-total');
+                    if (statsTotal) {
+                        statsTotal.innerText = `${String(totalHours).padStart(2, '0')}:${String(totalMins).padStart(2, '0')}`;
+                    }
+                } else {
+                    const statsInicio = document.getElementById('stats-inicio');
+                    if (statsInicio) statsInicio.innerText = '--:--';
+                    const statsFim = document.getElementById('stats-fim');
+                    if (statsFim) statsFim.innerText = '--:--';
+                    const statsTotal = document.getElementById('stats-total');
+                    if (statsTotal) statsTotal.innerText = '00:00';
+                }
+
+                if (isOnline) startTimer(data[0].data_hora); else stopTimer();
             }
 
             let timerInterval;
@@ -416,24 +468,32 @@
                     const h = Math.floor(diff / 3600000);
                     const m = Math.floor((diff % 3600000) / 60000);
                     const s = Math.floor((diff % 60000) / 1000);
-                    document.getElementById('user-timer').innerText = `+${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+                    const timerEl = document.getElementById('user-timer');
+                    if (timerEl) timerEl.innerText = `+${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
                 }, 1000);
             }
 
             function stopTimer() {
                 if (timerInterval) clearInterval(timerInterval);
-                document.getElementById('user-timer').innerText = '+00:00:00';
+                const timerEl = document.getElementById('user-timer');
+                if (timerEl) timerEl.innerText = '+00:00:00';
             }
 
-            btn.onclick = async () => {
-                UI.showLoader();
-                try {
-                    await supabase.from('pontos').insert([{ funcionario_id: userId, data_hora: new Date().toISOString() }]);
-                    UI.showToast('Ponto registrado!', 'success');
-                    await refreshTodayStats();
-                } catch (e) { UI.showToast('Erro ao carregar', 'error'); }
-                finally { UI.hideLoader(); }
-            };
+            if (btn) {
+                btn.onclick = async () => {
+                    UI.showLoader();
+                    try {
+                        await supabase.from('pontos').insert([{ funcionario_id: userId, data_hora: new Date().toISOString() }]);
+                        UI.showToast('Ponto registrado com sucesso!', 'success');
+                        await refreshTodayStats();
+                        await loadGlobalStats();
+                    } catch (e) {
+                        UI.showToast('Erro ao registrar ponto', 'error');
+                    } finally {
+                        UI.hideLoader();
+                    }
+                };
+            }
 
             await refreshTodayStats();
         }
@@ -464,8 +524,8 @@
                 // Buscar batidas de hoje para o setor
                 const { data: punches } = await supabase
                     .from('pontos')
-                    .select('*, funcionarios!inner(nome_completo, setor, funcao, nickname)')
-                    .eq('funcionarios.setor', currentUser.setor)
+                    .select('*, funcionarios!inner(nome_completo, setor_id, funcao, matricula)')
+                    .eq('funcionarios.setor_id', currentUser.setorId)
                     .gte('data_hora', `${today}T00:00:00`);
 
                 if (!punches) return;
@@ -479,7 +539,7 @@
                             count: 0,
                             name: p.funcionarios.nome_completo,
                             funcao: p.funcionarios.funcao,
-                            nickname: p.funcionarios.nickname,
+                            nickname: p.funcionarios.matricula,
                             lastTime: p.data_hora
                         };
                     }
@@ -533,8 +593,8 @@
             try {
                 const { data, error } = await supabase
                     .from('justificativas')
-                    .select('*, funcionarios!inner(nome_completo, setor)')
-                    .eq('funcionarios.setor', currentUser.setor)
+                    .select('*, funcionarios!inner(nome_completo, setor_id)')
+                    .eq('funcionarios.setor_id', currentUser.setorId)
                     .eq('status', 'pending')
                     .order('created_at', { ascending: false })
                     .limit(3);

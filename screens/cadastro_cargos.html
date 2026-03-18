@@ -59,24 +59,68 @@
       <div class="bg-slate-900/50 border border-primary/20 rounded-xl p-6 sci-fi-gradient glow-border neon-border">
         <form id="form-cargo" class="space-y-5">
           <div class="space-y-2">
-            <label class="text-xs font-semibold uppercase tracking-tighter opacity-60 ml-1">Identificação do
-              Cargo</label>
+            <label class="text-xs font-semibold uppercase tracking-tighter opacity-60 ml-1">Identificação do Cargo</label>
             <div class="relative">
               <input id="nome-cargo"
-                class="w-full bg-slate-100 dark:bg-background-dark/50 border-slate-200 dark:border-slate-border rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent transition-all placeholder:opacity-30"
+                class="w-full bg-slate-100 dark:bg-background-dark/50 border-slate-200 dark:border-slate-border rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent transition-all placeholder:opacity-30 text-slate-100"
                 placeholder="Ex: Engenheiro de Sistemas" type="text" required />
               <span class="material-symbols-outlined absolute right-3 top-3 text-primary/40">badge</span>
             </div>
           </div>
           <div class="space-y-2">
-            <label class="text-xs font-semibold uppercase tracking-tighter opacity-60 ml-1">Nível de Acesso
-              Recomendado</label>
+            <label class="text-xs font-semibold uppercase tracking-tighter opacity-60 ml-1">Descrição do Cargo / Atribuições</label>
+            <textarea id="descricao-cargo"
+              class="w-full bg-slate-100 dark:bg-background-dark/50 border-slate-200 dark:border-slate-border rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent transition-all placeholder:opacity-30 text-slate-100 min-h-[100px] resize-none"
+              placeholder="Descreva as principais responsabilidades deste cargo..."></textarea>
+          </div>
+          <div class="space-y-2">
+            <label class="text-xs font-semibold uppercase tracking-tighter opacity-60 ml-1">Nível de Acesso Recomendado</label>
             <select id="nivel-cargo"
               class="w-full bg-slate-100 dark:bg-background-dark/50 border-slate-200 dark:border-slate-border rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-slate-100">
               <option value="Fundamental">Nível Fundamental</option>
               <option value="Médio">Nível Médio</option>
+              <option value="Técnico">Nível Técnico</option>
               <option value="Superior">Nível Superior</option>
             </select>
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-xs font-semibold uppercase tracking-tighter opacity-60 ml-1">Graduação Principal Exigida</label>
+            <div class="relative">
+              <input id="graduacao-principal"
+                class="w-full bg-slate-100 dark:bg-background-dark/50 border-slate-200 dark:border-slate-border rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent transition-all placeholder:opacity-30 text-slate-100"
+                placeholder="Ex: Engenharia Elétrica, Direito..." type="text" />
+              <span class="material-symbols-outlined absolute right-3 top-3 text-primary/40">school</span>
+            </div>
+          </div>
+
+          <!-- Especialidades (Inline Search Style) -->
+          <div class="space-y-4">
+            <label class="text-xs font-semibold uppercase tracking-tighter opacity-60 ml-1 flex items-center gap-2">
+              <span class="material-symbols-outlined text-[14px]">psychology</span> Especialidades Requeridas
+            </label>
+            
+            <div class="relative group">
+              <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <span class="material-symbols-outlined text-primary text-xl">search</span>
+              </div>
+              <input id="input-busca-especialidade" oninput="filtrarEspecialidadesInline()"
+                class="block w-full pl-12 pr-4 py-4 bg-primary/5 border border-primary/20 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all placeholder-slate-500 text-slate-100 text-sm"
+                placeholder="Localizar especialidade por nome ou código..." type="text" autocomplete="off" />
+              <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                <span class="text-[9px] font-bold text-primary/40 uppercase tracking-widest group-focus-within:text-primary/60 transition-colors">Scanner Ativo</span>
+              </div>
+            </div>
+
+            <!-- Resultados da Busca Inline (Dropdown Fake) -->
+            <div id="resultados-busca-especialidades" class="hidden overflow-hidden bg-slate-900 border border-primary/20 rounded-xl shadow-2xl max-h-60 overflow-y-auto scrollbar-thin divide-y divide-white/5 z-20">
+              <!-- Resultados injetados via JS -->
+            </div>
+
+            <!-- Especialidades Selecionadas -->
+            <div id="lista-especialidades-selecionadas" class="flex flex-wrap gap-2 empty:hidden py-1 border-t border-white/5 pt-3">
+              <!-- Chips de Especialidades Selecionadas -->
+            </div>
           </div>
           <div class="flex gap-2">
             <button id="btn-submit-cargo"
@@ -140,36 +184,84 @@
     import { supabase } from '../js/supabase-config.js';
     import { UI } from '../js/ui-utils.js';
 
+    let especialidadesDisponiveis = [];
+    let especialidadesSelecionadasIds = [];
+
+    async function carregarEspecialidadesBase() {
+      try {
+        const { data, error } = await supabase.from('especialidades').select('*').order('nome');
+        if (error) {
+            console.error('Erro RLS/Supabase:', error);
+            return;
+        }
+        
+        especialidadesDisponiveis = data || [];
+        console.log(`Log: ${especialidadesDisponiveis.length} especialidades carregadas.`);
+      } catch (err) {
+        console.error('Erro crítico ao carregar catálogo:', err);
+      }
+    }
+
     async function loadCargos() {
       const container = document.getElementById('lista-cargos');
       const countSpan = document.getElementById('total-cargos');
 
       try {
-        const { data, error } = await supabase.from('cargos').select('*').order('nome');
+        // Busca cargos e suas especialidades usando a tabela de ligação
+        const { data, error } = await supabase
+          .from('cargos')
+          .select(`
+            *,
+            cargos_especialidades (
+              especialidades (*)
+            )
+          `)
+          .order('nome');
+          
         if (error) throw error;
 
         countSpan.innerText = `${data.length} REGISTROS`;
-        container.innerHTML = data.map(c => `
-                <div class="group bg-slate-900/50 border border-primary/10 rounded-xl p-4 flex items-center justify-between hover:border-primary/50 transition-all neon-border">
-                  <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
-                      <span class="material-symbols-outlined">${getIconForNivel(c.nivel)}</span>
+        container.innerHTML = data.map(c => {
+          const especs = c.cargos_especialidades?.map(ce => ce.especialidades) || [];
+          return `
+                <div class="group bg-slate-900/50 border border-primary/10 rounded-xl p-4 flex flex-col gap-3 hover:border-primary/50 transition-all neon-border">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                      <div class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary border border-primary/20 shrink-0">
+                        <span class="material-symbols-outlined">${getIconForNivel(c.nivel)}</span>
+                      </div>
+                      <div>
+                        <h3 class="font-bold text-sm uppercase tracking-tight">${c.nome}</h3>
+                        <p class="text-[10px] text-primary font-black uppercase tracking-widest flex items-center gap-2">
+                            ${c.nivel || 'Básico'} 
+                            ${c.graduacao_principal ? `• <span class="text-slate-400">${c.graduacao_principal}</span>` : ''}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 class="font-bold text-sm uppercase tracking-tight">${c.nome}</h3>
-                      <p class="text-xs text-primary font-medium uppercase tracking-tighter">${c.nivel || 'Básico'}</p>
+                    <div class="flex gap-1 opacity-40 group-hover:opacity-100 transition-opacity">
+                      <button onclick='prepararEdicao(${JSON.stringify(c)})' class="p-2 hover:bg-primary/10 hover:text-primary rounded-lg transition-colors">
+                        <span class="material-symbols-outlined text-xl">edit</span>
+                      </button>
+                      <button onclick="deletarCargo('${c.id}')" class="p-2 hover:bg-red-500/10 hover:text-red-500 rounded-lg transition-colors">
+                        <span class="material-symbols-outlined text-xl">delete</span>
+                      </button>
                     </div>
                   </div>
-                  <div class="flex gap-1 opacity-40 group-hover:opacity-100 transition-opacity">
-                    <button onclick="prepararEdicao('${c.id}', '${c.nome}', '${c.nivel}')" class="p-2 hover:bg-primary/10 hover:text-primary rounded-lg transition-colors">
-                      <span class="material-symbols-outlined text-xl">edit</span>
-                    </button>
-                    <button onclick="deletarCargo('${c.id}')" class="p-2 hover:bg-red-500/10 hover:text-red-500 rounded-lg transition-colors">
-                      <span class="material-symbols-outlined text-xl">delete</span>
-                    </button>
-                  </div>
+                  
+                  ${c.descricao ? `<p class="text-xs text-slate-500 line-clamp-2 px-1 border-l border-white/5 ml-1">${c.descricao}</p>` : ''}
+                  
+                  ${especs.length > 0 ? `
+                    <div class="flex flex-wrap gap-1.5 mt-1 ml-1">
+                      ${especs.map(e => `
+                        <span class="text-[9px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-white/5 font-mono">
+                          ${e.codigo} • ${e.nome}
+                        </span>
+                      `).join('')}
+                    </div>
+                  ` : ''}
                 </div>
-            `).join('');
+            `;
+        }).join('');
 
         if (data.length === 0) {
           container.innerHTML = '<p class="text-center py-8 opacity-40 text-xs uppercase font-bold tracking-widest">Nenhum cargo registrado</p>';
@@ -183,10 +275,106 @@
       const icons = {
         'Fundamental': 'military_tech',
         'Médio': 'engineering',
+        'Técnico': 'construction',
         'Superior': 'psychology'
       };
       return icons[nivel] || 'badge';
     }
+
+    // Busca Inline de Especialidades
+    window.filtrarEspecialidadesInline = () => {
+        const termo = document.getElementById('input-busca-especialidade').value.toLowerCase().trim();
+        const resultadosDiv = document.getElementById('resultados-busca-especialidades');
+        
+        if (!termo) {
+            resultadosDiv.innerHTML = '';
+            resultadosDiv.classList.add('hidden');
+            return;
+        }
+
+        if (!Array.isArray(especialidadesDisponiveis) || especialidadesDisponiveis.length === 0) {
+            resultadosDiv.innerHTML = `<p class="text-center py-4 text-[9px] text-amber-500 uppercase font-black italic">Catálogo de especialidades vazio. Verifique o banco de dados.</p>`;
+            resultadosDiv.classList.remove('hidden');
+            return;
+        }
+
+        const filtradas = especialidadesDisponiveis.filter(e => {
+            const nome = (e.nome || '').toLowerCase();
+            const codigo = (e.codigo || '').toLowerCase();
+            const jaSelecionada = especialidadesSelecionadasIds.includes(e.id);
+            
+            return (nome.includes(termo) || codigo.includes(termo)) && !jaSelecionada;
+        });
+
+        if (filtradas.length > 0) {
+            resultadosDiv.innerHTML = filtradas.map(e => `
+                <div onclick="toggleSelecaoEspecialidadeInline('${e.id}')" 
+                     class="p-4 hover:bg-primary/10 cursor-pointer flex items-center justify-between group/item transition-colors">
+                  <div class="flex items-center gap-3">
+                    <div class="size-8 rounded bg-primary/20 flex items-center justify-center text-primary text-[10px] font-bold shrink-0">${e.codigo}</div>
+                    <div>
+                      <h4 class="text-[11px] font-bold uppercase text-slate-200">${e.nome}</h4>
+                      <p class="text-[8px] text-slate-500 uppercase">${e.nivel_graduacao || ''} • ${e.nome_graduacao_principal || ''}</p>
+                    </div>
+                  </div>
+                  <span class="material-symbols-outlined text-primary/40 group-hover/item:text-primary transition-colors">add_circle</span>
+                </div>
+            `).join('');
+            resultadosDiv.classList.remove('hidden');
+        } else {
+            resultadosDiv.innerHTML = `<p class="text-center py-4 text-[9px] text-slate-500 uppercase font-black italic">Nenhuma especialidade localizada</p>`;
+            resultadosDiv.classList.remove('hidden');
+        }
+    };
+
+    window.toggleSelecaoEspecialidadeInline = (id) => {
+      const index = especialidadesSelecionadasIds.indexOf(id);
+      if (index > -1) especialidadesSelecionadasIds.splice(index, 1);
+      else {
+          especialidadesSelecionadasIds.push(id);
+          // Limpa a busca e foca novamente para permitir nova pesquisa imediata
+          document.getElementById('input-busca-especialidade').value = '';
+          document.getElementById('resultados-busca-especialidades').classList.add('hidden');
+          document.getElementById('input-busca-especialidade').focus();
+      }
+      renderSeleccionadasVisual();
+    };
+
+    function renderSeleccionadasVisual() {
+      const container = document.getElementById('lista-especialidades-selecionadas');
+      const selecionadas = especialidadesDisponiveis.filter(e => especialidadesSelecionadasIds.includes(e.id));
+      
+      if (selecionadas.length > 0) {
+        container.innerHTML = selecionadas.map(e => `
+          <div class="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 border border-primary/30 rounded-lg text-primary animate-in fade-in zoom-in duration-300">
+            <span class="text-[10px] font-bold uppercase">${e.codigo} • ${e.nome}</span>
+            <button type="button" onclick="window.removerEspecialidade('${e.id}')" class="flex items-center hover:text-white transition-colors">
+              <span class="material-symbols-outlined text-xs">close</span>
+            </button>
+          </div>
+        `).join('');
+      } else {
+        container.innerHTML = '';
+      }
+    }
+
+    window.removerEspecialidade = (id) => {
+        especialidadesSelecionadasIds = especialidadesSelecionadasIds.filter(sid => sid !== id);
+        renderSeleccionadasVisual();
+    };
+
+    // Fechar resultados ao clicar fora
+    document.addEventListener('click', (e) => {
+        const res = document.getElementById('resultados-busca-especialidades');
+        const input = document.getElementById('input-busca-especialidade');
+        if (!res.contains(e.target) && !input.contains(e.target)) {
+            res.classList.add('hidden');
+        }
+    });
+
+    window.fecharModalEspecialidades = () => {
+      document.getElementById('modal-especialidades').classList.add('hidden');
+    };
 
     // Retorno explícito
     document.getElementById('btn-voltar').onclick = () => {
@@ -195,10 +383,17 @@
 
     let editingCargoId = null;
 
-    window.prepararEdicao = (id, nome, nivel) => {
-      editingCargoId = id;
-      document.getElementById('nome-cargo').value = nome;
-      document.getElementById('nivel-cargo').value = nivel;
+    window.prepararEdicao = (cargo) => {
+      editingCargoId = cargo.id;
+      document.getElementById('nome-cargo').value = cargo.nome;
+      document.getElementById('nivel-cargo').value = cargo.nivel;
+      document.getElementById('descricao-cargo').value = cargo.descricao || '';
+      document.getElementById('graduacao-principal').value = cargo.graduacao_principal || '';
+      
+      // Especialidades do Cargo
+      especialidadesSelecionadasIds = cargo.cargos_especialidades?.map(ce => ce.especialidades.id) || [];
+      renderSeleccionadasVisual();
+
       document.getElementById('label-submit').innerText = 'Atualizar Cargo';
       document.getElementById('btn-cancelar-edicao').classList.remove('hidden');
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -207,6 +402,8 @@
     document.getElementById('btn-cancelar-edicao').onclick = () => {
       editingCargoId = null;
       document.getElementById('form-cargo').reset();
+      especialidadesSelecionadasIds = [];
+      renderSeleccionadasVisual();
       document.getElementById('label-submit').innerText = 'Registrar Cargo';
       document.getElementById('btn-cancelar-edicao').classList.add('hidden');
     };
@@ -232,20 +429,40 @@
 
       const dados = {
         nome: document.getElementById('nome-cargo').value,
-        nivel: document.getElementById('nivel-cargo').value
+        nivel: document.getElementById('nivel-cargo').value,
+        descricao: document.getElementById('descricao-cargo').value,
+        graduacao_principal: document.getElementById('graduacao-principal').value
       };
 
       try {
+        let cargoId = editingCargoId;
+
         if (editingCargoId) {
           const { error } = await supabase.from('cargos').update(dados).eq('id', editingCargoId);
           if (error) throw error;
-          UI.showToast('Cargo atualizado!', 'success');
         } else {
-          const { error } = await supabase.from('cargos').insert([dados]);
+          const { data, error } = await supabase.from('cargos').insert([dados]).select();
           if (error) throw error;
-          UI.showToast('Cargo registrado!', 'success');
+          cargoId = data[0].id;
         }
 
+        // Atualizar Especialidades (Limpar e Re-inserir)
+        if (cargoId) {
+            // Delete old relationships
+            await supabase.from('cargos_especialidades').delete().eq('cargo_id', cargoId);
+            
+            // Insert new relationships
+            if (especialidadesSelecionadasIds.length > 0) {
+                const inserts = especialidadesSelecionadasIds.map(eid => ({
+                    cargo_id: cargoId,
+                    especialidade_id: eid
+                }));
+                const { error: relError } = await supabase.from('cargos_especialidades').insert(inserts);
+                if (relError) throw relError;
+            }
+        }
+
+        UI.showToast(editingCargoId ? 'Cargo atualizado!' : 'Cargo registrado!', 'success');
         document.getElementById('btn-cancelar-edicao').click();
         loadCargos();
       } catch (err) {
@@ -256,7 +473,7 @@
       }
     });
 
-    loadCargos();
+    carregarEspecialidadesBase().then(() => loadCargos());
 
     // Navegação dinâmica
     (async () => {

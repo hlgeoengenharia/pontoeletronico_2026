@@ -72,81 +72,85 @@
             </div>
         </div>
 
-        <!-- Banco de Horas (Substituto da XP Bar) -->
-        <div class="w-full max-w-md space-y-2 mt-8">
-            <div class="flex justify-between items-end">
-                <span class="text-[8px] font-black text-primary uppercase tracking-widest">Banco de Horas:</span>
-                <span id="saldo-total" class="text-[10px] font-bold text-slate-100">+00:00</span>
+        <!-- Estatísticas Globais (Row 2) -->
+        <div class="w-full max-w-md grid grid-cols-3 gap-2 mt-8">
+            <div class="bg-primary/5 border border-primary/20 rounded-2xl p-4 text-center">
+                <p class="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Funcionários</p>
+                <p id="statTotalGlobal" class="text-xl font-black text-slate-100">--</p>
             </div>
-            <div class="h-2 w-full bg-slate-200 dark:bg-primary/10 rounded-full overflow-hidden">
-                <div id="xp-bar"
-                    class="h-full bg-primary w-0 rounded-full shadow-[0_0_12px_rgba(13,89,242,0.5)] transition-all duration-1000">
-                </div>
+            <div class="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-4 text-center">
+                <p class="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Online</p>
+                <p id="statOnlineGlobal" class="text-xl font-black text-emerald-400">--</p>
+            </div>
+            <div class="bg-primary/5 border border-primary/20 rounded-2xl p-4 text-center">
+                <p class="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Setores</p>
+                <p id="statTotalSetores" class="text-xl font-black text-slate-100">--</p>
             </div>
         </div>
     </header>
 
-    <main class="flex-1 flex flex-col items-center p-6 gap-8 w-full max-w-2xl mx-auto">
-        <div class="w-full max-w-md flex justify-center mb-8 mt-2">
+    <main class="flex-1 p-6 space-y-8 overflow-y-auto w-full max-w-2xl mx-auto flex flex-col items-center">
+        <!-- Punch Section -->
+        <section class="w-full max-w-md flex justify-center mx-auto mb-4 mt-2">
             <button id="punchButton"
                 class="relative group w-48 h-48 rounded-full bg-primary flex flex-col items-center justify-center text-center p-6 shadow-xl border-4 border-primary/30 hover:scale-105 transition-all">
                 <span class="material-symbols-outlined text-4xl mb-2 text-white">power_settings_new</span>
                 <span
                     class="text-sm font-black text-white leading-tight tracking-wider uppercase">REGISTRAR<br>PONTO</span>
             </button>
-        </div>
+        </section>
 
-        <div
-            class="w-full max-w-md bg-white/5 dark:bg-primary/5 border border-slate-200 dark:border-primary/20 rounded-2xl p-6 backdrop-blur-sm">
+        <!-- Session Stats -->
+        <div class="w-full max-w-md bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl p-6 backdrop-blur-sm mx-auto shadow-inner">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                    <span class="material-symbols-outlined text-lg text-primary">timer</span> SESSÃO ATUAL
+                <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                    <span class="material-symbols-outlined text-lg text-primary">timer</span> MINHA SESSÃO
                 </h3>
             </div>
             <div class="grid grid-cols-3 gap-4">
                 <div class="text-center">
-                    <p class="text-[10px] text-slate-500 uppercase font-bold mb-1">Início</p>
-                    <p id="stats-inicio" class="text-sm font-bold">--:--</p>
+                    <p class="text-[9px] text-slate-500 uppercase font-bold mb-1">Início</p>
+                    <p id="stats-inicio" class="text-xs font-bold">--:--</p>
                 </div>
                 <div class="text-center">
-                    <p class="text-[10px] text-slate-500 uppercase font-bold mb-1">Fim</p>
-                    <p id="stats-fim" class="text-sm font-bold text-slate-400">--:--</p>
+                    <p class="text-[9px] text-slate-500 uppercase font-bold mb-1">Fim</p>
+                    <p id="stats-fim" class="text-xs font-bold text-slate-400">--:--</p>
                 </div>
                 <div class="text-center">
-                    <p class="text-[10px] text-slate-500 uppercase font-bold mb-1">Total</p>
-                    <p id="stats-total" class="text-sm font-bold text-primary">00:00</p>
+                    <p class="text-[9px] text-slate-500 uppercase font-bold mb-1">Duração</p>
+                    <p id="stats-total" class="text-xs font-bold text-primary">00:00</p>
                 </div>
             </div>
         </div>
 
-        <div class="w-full max-w-md space-y-4">
-            <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                <span class="material-symbols-outlined text-lg">task_alt</span>MISSÕES DIÁRIAS
+        <!-- Missões Diárias -->
+        <section class="max-w-md w-full mx-auto space-y-4">
+            <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2 px-2">
+                <span class="material-symbols-outlined text-lg">task_alt</span> MISSÕES DIÁRIAS
             </h3>
-            <div class="space-y-3">
-                <a href="anotacao_diaria.html"
-                    class="bg-white dark:bg-primary/5 border border-slate-200 dark:border-primary/20 p-4 rounded-xl flex items-center gap-4 hover:bg-primary/10 transition-colors">
-                    <div
-                        class="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400">
-                        <span class="material-symbols-outlined">edit_note</span>
+            <div class="grid grid-cols-1">
+                <a href="diario_funcionario.html" id="link-diario-bordo"
+                    class="bg-white/5 border border-primary/20 p-6 rounded-2xl flex items-center justify-between group hover:border-primary/40 hover:bg-primary/5 transition-all shadow-lg relative">
+                    <div class="flex items-center gap-4">
+                        <div class="size-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                            <span class="material-symbols-outlined text-primary text-3xl">local_library</span>
+                        </div>
+                        <div>
+                            <p class="text-[13px] font-black text-slate-100 uppercase tracking-widest leading-tight">Diário de Bordo</p>
+                            <p class="text-[10px] text-slate-400 font-bold uppercase mt-0.5">Relate atividades ou envie justificativas</p>
+                        </div>
                     </div>
-                    <div class="flex-1 text-sm font-bold uppercase tracking-tight">Anotação Diária</div>
-                    <span class="material-symbols-outlined text-slate-300 dark:text-slate-700">chevron_right</span>
-                </a>
-                <a href="justificativa.html"
-                    class="bg-white dark:bg-primary/5 border border-slate-200 dark:border-primary/20 p-4 rounded-xl flex items-center gap-4 hover:bg-primary/10 transition-colors">
-                    <div
-                        class="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400">
-                        <span class="material-symbols-outlined">hourglass_top</span>
+                    <div class="flex items-center gap-2">
+                        <div id="badge-diario" class="bg-rose-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-lg shadow-rose-500/30 hidden">0</div>
+                        <div id="badge-justificativa" class="bg-amber-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-lg shadow-amber-500/30 hidden">0</div>
+                        <span class="material-symbols-outlined text-slate-600 group-hover:text-primary transition-colors">chevron_right</span>
                     </div>
-                    <div class="flex-1 text-sm font-bold uppercase tracking-tight">Justificativa</div>
-                    <span class="material-symbols-outlined text-slate-300 dark:text-slate-700">chevron_right</span>
                 </a>
             </div>
-        </div>
+        </section>
 
         <!-- Calendário -->
-        <section class="max-w-md mx-auto border-t border-white/5 pt-8 space-y-4 w-full">
+        <section class="max-w-md w-full mx-auto border-t border-white/5 pt-8 space-y-4">
             <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2 px-2">
                 <span class="material-symbols-outlined text-lg text-primary">calendar_month</span> MEU CRONOGRAMA
             </h3>
@@ -164,6 +168,66 @@
             </div>
         </section>
     </main>
+
+    <!-- Bottom Navigation -->
+    <nav
+        class="fixed bottom-0 left-0 right-0 bg-background-dark/90 border-t border-white/5 py-4 z-50 flex justify-center backdrop-blur-xl">
+        <div class="flex items-center justify-around w-full max-w-md px-6">
+            <a id="nav-inicio" href="painel_funcionario.html" class="flex flex-col items-center gap-1.5 text-primary">
+                <span class="material-symbols-outlined text-2xl font-variation-settings-fill">home</span>
+                <span class="text-[9px] font-black uppercase tracking-widest text-center">Início</span>
+            </a>
+            <a href="estatistica_funcionario.html"
+                class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+                <span class="material-symbols-outlined text-2xl">bar_chart</span>
+                <span class="text-[9px] font-black uppercase tracking-widest text-center">Estatística</span>
+            </a>
+            <a href="historico_anual.html"
+                class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+                <span class="material-symbols-outlined text-2xl">history</span>
+                <span class="text-[9px] font-black uppercase tracking-widest text-center">Histórico</span>
+            </a>
+            <a id="nav-perfil-link" href="#"
+                class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+                <span class="material-symbols-outlined text-2xl">person</span>
+                <span class="text-[9px] font-black uppercase tracking-widest text-center">Perfil</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Modal de Justificativa Geofence -->
+    <div id="modalJustificativa"
+        class="fixed inset-0 bg-black/90 z-[200] hidden items-center justify-center p-6 backdrop-blur-md">
+        <div class="bg-background-dark border border-primary/30 rounded-3xl p-8 w-full max-w-md space-y-6 shadow-2xl">
+            <div class="text-center space-y-2">
+                <div
+                    class="inline-flex items-center justify-center size-16 rounded-full bg-orange-500/20 text-orange-500 mb-2">
+                    <span class="material-symbols-outlined text-4xl">location_off</span>
+                </div>
+                <h3 class="text-xl font-black text-slate-100 uppercase italic">Fora do Raio Permitido</h3>
+                <p class="text-xs text-slate-400 uppercase font-bold tracking-tight">Detectamos que você não está no seu
+                    setor de alocação.</p>
+            </div>
+
+            <div class="space-y-4">
+                <label class="block">
+                    <span
+                        class="text-[10px] font-black text-primary uppercase tracking-widest ml-1 mb-2 block">Deseja justificar?</span>
+                    <textarea id="justificativaTexto" rows="3"
+                        class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm text-slate-100 placeholder:text-slate-600 focus:border-primary outline-none transition-all"
+                        placeholder="Explique por que está batendo ponto neste local..."></textarea>
+                </label>
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="fecharModalJustificativa()"
+                    class="flex-1 py-4 rounded-2xl border border-white/10 text-xs font-black uppercase text-slate-400 hover:bg-white/5 transition-all">Cancelar</button>
+                <button id="btnConfirmarPontoForaRaio"
+                    class="flex-1 py-4 rounded-2xl bg-orange-500 text-white text-xs font-black uppercase shadow-lg shadow-orange-500/20 hover:bg-orange-600 transition-all">Registrar
+                    Ponto</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Sidebar Menu Overlay -->
     <div id="sidebarOverlay"
@@ -287,6 +351,12 @@
         import { Auth } from '../js/auth.js';
         import { UI } from '../js/ui-utils.js';
         import { NotificationsEngine } from '../js/notifications-engine.js';
+        import { ScalesEngine } from '../js/scales-engine.js';
+        import { GPSTracker } from '../js/gps-tracker.js';
+
+        let currentUser = null;
+        let currentPointStatus = 'check-in'; // check-in or check-out
+        let lastPunch = null;
 
         window.addEventListener('load', async function () {
             const urlParams = new URLSearchParams(window.location.search);
@@ -323,31 +393,249 @@
                 const alerts = await NotificationsEngine.checkScaleAlerts(user);
                 NotificationsEngine.renderAlerts(document.querySelector('main'), alerts);
 
-                // Atualizar link de perfil
+                // Atualizar link de perfil e espelho
                 const profileLink = document.getElementById('nav-perfil-link');
                 if (profileLink) {
                     profileLink.href = `perfil_funcionario.html?id=${targetId}&v=5`;
                     const sidebarProfile = document.getElementById('sidebar-perfil-link');
                     if (sidebarProfile) sidebarProfile.href = profileLink.href;
-                } else {
-                    console.error('ERRO: nav-perfil-link não encontrado no DOM!');
                 }
 
+                const espelhoLink = document.getElementById('link-espelho-mensal');
+                if (espelhoLink) espelhoLink.href = `historico_mensal.html?id=${targetId}`;
+
+                const diarioLink = document.getElementById('link-diario-bordo');
+                if (diarioLink) diarioLink.href = `diario_funcionario.html?id=${targetId}`;
+
+                // Iniciar motor de GPS (Externo/Geofence)
+                GPSTracker.startTracking(user);
+
+                // Checar ocorrências pendentes no Diário
+                const { count, error: errCount } = await supabase
+                    .from('diario_logs')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('funcionario_id', targetId)
+                    .eq('lido_pelo_funcionario', false);
+                
+                if (!errCount && count > 0) {
+                    const badge = document.getElementById('badge-diario');
+                    if (badge) {
+                        badge.innerText = count;
+                        badge.classList.remove('hidden');
+                        badge.classList.add('animate-bounce');
+                    }
+                }
+                
+                // Checar justificativas pendentes automáticas
+                await NotificationsEngine.checkMissingPunches(user);
+                
+                const { count: justCount, error: errJustCount } = await supabase
+                    .from('justificativas')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('funcionario_id', targetId)
+                    .eq('status', 'pendente');
+
+                if (!errJustCount && justCount > 0) {
+                    const badgeJ = document.getElementById('badge-justificativa');
+                    if (badgeJ) {
+                        badgeJ.innerText = justCount;
+                        badgeJ.classList.remove('hidden');
+                        badgeJ.classList.add('animate-bounce');
+                    }
+                }
 
                 // Stats diários resumidos
                 const today = new Date().toISOString().split('T')[0];
                 const { data: pts } = await supabase.from('pontos').select('*').eq('funcionario_id', targetId).gte('data_hora', `${today}T00:00:00`).order('data_hora', { ascending: true });
 
+                currentUser = user;
                 if (pts && pts.length > 0) {
-                    document.getElementById('stats-inicio').innerText = new Date(pts[0].data_hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-                    if (pts.length % 2 === 0) {
-                        document.getElementById('stats-fim').innerText = new Date(pts[pts.length - 1].data_hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                    lastPunch = pts[pts.length - 1];
+                    currentPointStatus = pts.length % 2 === 0 ? 'check-in' : 'check-out';
+                    const isOnline = pts.length % 2 !== 0;
+
+                    const statsInicio = document.getElementById('stats-inicio');
+                    if (statsInicio) statsInicio.innerText = new Date(pts[0].data_hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+                    const statsFim = document.getElementById('stats-fim');
+                    if (statsFim) {
+                        if (pts.length >= 2 && !isOnline) {
+                            statsFim.innerText = new Date(pts[pts.length - 1].data_hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                        } else if (pts.length >= 3 && isOnline) {
+                            statsFim.innerText = new Date(pts[pts.length - 2].data_hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                        } else {
+                            statsFim.innerText = '--:--';
+                        }
                     }
+
+                    // Calculate total duration for today (with ascending array)
+                    let totalMs = 0;
+                    for (let i = 0; i < pts.length; i += 2) {
+                        const inTime = new Date(pts[i].data_hora).getTime();
+                        const outTime = (i + 1 < pts.length) ? new Date(pts[i + 1].data_hora).getTime() : new Date().getTime();
+                        totalMs += (outTime - inTime);
+                    }
+                    
+                    const totalHours = Math.floor(totalMs / 3600000);
+                    const totalMins = Math.floor((totalMs % 3600000) / 60000);
+                    const statsTotal = document.getElementById('stats-total');
+                    if (statsTotal) {
+                        statsTotal.innerText = `${String(totalHours).padStart(2, '0')}:${String(totalMins).padStart(2, '0')}`;
+                    }
+                } else {
+                    const statsInicio = document.getElementById('stats-inicio');
+                    if (statsInicio) statsInicio.innerText = '--:--';
+                    const statsFim = document.getElementById('stats-fim');
+                    if (statsFim) statsFim.innerText = '--:--';
+                    const statsTotal = document.getElementById('stats-total');
+                    if (statsTotal) statsTotal.innerText = '00:00';
                 }
+
+                updatePunchButton();
+                setInterval(updatePunchButton, 60000); // Check every minute
             } catch (e) {
                 console.error('Falha ao carregar perfil:', e);
             }
         });
+
+        function updatePunchButton() {
+            const btn = document.getElementById('punchButton');
+            if (!currentUser || !currentUser.escalas) return;
+
+            const escala = currentUser.escalas;
+            const isCheckin = currentPointStatus === 'check-in';
+            const scheduledTime = isCheckin ? escala.horario_entrada : escala.horario_saida;
+            const tolMin = isCheckin ? escala.tolerancia_entrada_minutos : escala.tolerancia_saida_minutos;
+
+            let isPulsing = false;
+            if (scheduledTime) {
+                const now = new Date();
+                const [h, m] = scheduledTime.split(':').map(Number);
+                const scheduled = new Date();
+                scheduled.setHours(h, m, 0, 0);
+                const diffMinutes = (now - scheduled) / (1000 * 60);
+
+                if (isCheckin) {
+                    if (Math.abs(diffMinutes) <= (tolMin || 15)) isPulsing = true;
+                } else {
+                    if (diffMinutes >= -5 && diffMinutes <= (tolMin || 15)) isPulsing = true;
+                }
+            }
+
+            btn.disabled = false;
+            btn.classList.remove('opacity-50', 'grayscale', 'animate-pulse', 'border-[6px]', 'shadow-[0_0_40px_rgba(13,89,242,0.8)]');
+            
+            if (isPulsing) {
+                btn.classList.add('animate-pulse', 'border-[6px]', 'shadow-[0_0_40px_rgba(13,89,242,0.8)]');
+            } else {
+                btn.classList.add('opacity-90');
+            }
+
+            btn.querySelector('span:last-child').innerHTML = isCheckin ? 'FAZER<br>CHECK-IN' : 'FAZER<br>CHECK-OUT';
+        }
+
+        document.getElementById('punchButton').onclick = async () => {
+            const actionName = currentPointStatus === 'check-in' ? 'check-in' : 'check-out';
+            if(!confirm(`Deseja realmente fazer o ${actionName}?`)) return;
+
+            UI.showLoader();
+            try {
+                const position = await getCurrentPosition();
+                const distance = ScalesEngine.calculateDistance(
+                    position.coords.latitude,
+                    position.coords.longitude,
+                    currentUser.setores?.latitude,
+                    currentUser.setores?.longitude
+                );
+
+                const raioPermitido = currentUser.escalas?.raio_geofence_metros || 100;
+                const isWithinRange = distance <= raioPermitido;
+
+                if (!isWithinRange && currentUser.modalidade !== 'externo') {
+                    UI.hideLoader();
+                    abrirModalJustificativa(position);
+                } else {
+                    await registrarPonto(position, true);
+                }
+            } catch (err) {
+                UI.hideLoader();
+                UI.showToast('Erro ao capturar localização. Verifique o GPS.', 'error');
+            }
+        };
+
+        function getCurrentPosition() {
+            return new Promise((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(resolve, reject, {
+                    enableHighAccuracy: true,
+                    timeout: 5000,
+                    maximumAge: 0
+                });
+            });
+        }
+
+        function abrirModalJustificativa(position) {
+            const modal = document.getElementById('modalJustificativa');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            document.getElementById('justificativaTexto').value = 'DETECTAMOS QUE VOCÊ NÃO ESTÁ NO SEU SETOR DE ALOCAÇÃO';
+
+            document.getElementById('btnConfirmarPontoForaRaio').onclick = async () => {
+                const justificativa = document.getElementById('justificativaTexto').value;
+
+                fecharModalJustificativa();
+                UI.showLoader();
+                await registrarPonto(position, false, justificativa);
+            };
+        }
+
+        window.fecharModalJustificativa = () => {
+            const modal = document.getElementById('modalJustificativa');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        };
+
+        async function registrarPonto(position, noRaio, justificativa = "") {
+            try {
+                const dados = {
+                    funcionario_id: currentUser.id,
+                    tipo: currentPointStatus,
+                    latitude: position.coords.latitude,
+                    longitude: position.coords.longitude,
+                    precisao: position.coords.accuracy,
+                    dentro_do_raio: noRaio,
+                    justificativa_usuario: justificativa,
+                    status_validacao: noRaio ? 'aprovado' : 'pendente',
+                    modalidade: currentUser.modalidade || 'presencial'
+                };
+
+                const { error } = await supabase.from('pontos').insert([dados]);
+                if (error) throw error;
+                
+                if (!noRaio) {
+                    const txtClear = justificativa.trim();
+                    const justificado = txtClear !== '' && txtClear !== 'DETECTAMOS QUE VOCÊ NÃO ESTÁ NO SEU SETOR DE ALOCAÇÃO';
+                    await supabase.from('diario_logs').insert([{
+                        funcionario_id: currentUser.id,
+                        data_hora: new Date().toISOString(),
+                        tipo: 'ponto_fora_raio',
+                        mensagem_padrao: 'Ponto registrado fora do raio permitido.',
+                        coordenadas: `${position.coords.latitude},${position.coords.longitude}`,
+                        justificativa_colaborador: txtClear ? txtClear : null,
+                        lido_pelo_funcionario: justificado,
+                        status_pendencia: 'pendente'
+                    }]);
+                }
+
+                UI.showToast('Ponto registrado com sucesso!', 'success');
+                window.location.reload();
+            } catch (err) {
+                console.error(err);
+                UI.showToast('Erro ao salvar ponto no sistema.', 'error');
+            } finally {
+                UI.hideLoader();
+            }
+        }
     </script>
 </body>
 

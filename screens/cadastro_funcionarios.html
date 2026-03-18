@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html class="dark" lang="pt-BR">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>CRUD de Funcionários - Admin</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap"
+    rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap"
+    rel="stylesheet" />
+  <script src="../js/theme.js?v=1.0"></script>
+  <style>
+    body { font-family: 'Space Grotesk', sans-serif; }
+    .sci-fi-border { border: 1px solid rgba(13, 89, 242, 0.3); box-shadow: 0 0 15px rgba(13, 89, 242, 0.1); }
+    .sci-fi-gradient { background: linear-gradient(135deg, rgba(13, 89, 242, 0.1) 0%, rgba(16, 22, 34, 1) 100%); }
+    .readonly-field { background-color: rgba(255, 255, 255, 0.02) !important; cursor: not-allowed; opacity: 0.8; }
+  </style>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen pb-24">
+  <header class="border-b border-primary/20 bg-background-dark/80 backdrop-blur-md sticky top-0 z-50">
+    <div class="flex items-center p-4 justify-between max-w-4xl mx-auto">
+      <div onclick="history.back()"
+        class="text-primary flex size-10 items-center justify-center rounded-lg border border-primary/30 bg-primary/10 cursor-pointer hover:bg-primary/20 transition-all">
+        <span class="material-symbols-outlined">arrow_back</span>
+      </div>
+      <h2 class="text-slate-100 text-lg font-bold tracking-wider uppercase flex-1 text-center italic">CADASTRO FUNC.</h2>
+      <div class="flex size-10 items-center justify-center rounded-lg bg-primary/10 border border-primary/30 text-primary">
+        <span class="material-symbols-outlined">badge</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="p-4 max-w-4xl mx-auto space-y-8">
+    <!-- Bloco de Pesquisa -->
+    <section class="bg-slate-800/30 border border-white/5 rounded-2xl p-4 flex gap-4">
+        <input type="text" id="search-input" placeholder="Buscar por Nome ou Matrícula..."
+               class="flex-1 bg-background-dark/50 border-primary/30 rounded-xl focus:ring-primary focus:border-primary text-slate-100 px-4">
+        <button id="btn-novo" class="bg-primary hover:bg-primary/80 text-white font-bold py-3 px-6 rounded-xl flex items-center gap-2 uppercase tracking-wide transition-all shadow-lg border border-primary/50">
+            <span class="material-symbols-outlined">add</span> Novo
+        </button>
+    </section>
+
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+        <!-- Lista de Funcionários -->
+        <section class="md:col-span-5 space-y-4">
+            <div class="flex items-center justify-between">
+                <h3 class="text-xs font-black text-slate-500 uppercase tracking-widest">Base de Usuários</h3>
+                <span id="total-funcs" class="bg-primary/20 text-primary px-2 py-0.5 rounded text-[10px] font-bold">0</span>
+            </div>
+            <div id="lista-funcionarios" class="space-y-2 h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+                <!-- Items gerados via JS -->
+                 <p class="text-center text-slate-500 py-10">Carregando...</p>
+            </div>
+        </section>
+
+        <!-- Formulário (Leitura/Edição) -->
+        <section id="form-section" class="md:col-span-7 sci-fi-border sci-fi-gradient rounded-2xl p-6 hidden">
+            <div class="flex justify-between items-start mb-6 border-b border-primary/20 pb-4">
+                <div>
+                    <h2 id="form-title" class="text-xl font-bold uppercase tracking-wider text-white">Visualizar Dados</h2>
+                    <p class="text-[10px] text-slate-400 uppercase tracking-widest mt-1">Os campos iniciam bloqueados.</p>
+                </div>
+                <div id="action-buttons" class="flex gap-2">
+                    <button id="btn-editar" class="p-2 bg-emerald-500/10 text-emerald-500 border border-emerald-500/30 rounded flex items-center gap-1 text-xs uppercase font-bold hover:bg-emerald-500/20 transition-all">
+                        <span class="material-symbols-outlined text-sm">edit</span> Editar
+                    </button>
+                    <button id="btn-excluir" class="p-2 bg-rose-500/10 text-rose-500 border border-rose-500/30 rounded flex items-center gap-1 text-xs uppercase font-bold hover:bg-rose-500/20 transition-all">
+                        <span class="material-symbols-outlined text-sm">delete</span>
+                    </button>
+                </div>
+            </div>
+
+            <form id="form-funcionario" class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="col-span-2">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Nome Completo</label>
+                        <input id="f_nome" type="text" readonly class="readonly-field w-full bg-background-dark border-primary/20 rounded-lg text-slate-100 p-3" required>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Matrícula</label>
+                        <input id="f_matricula" type="text" readonly class="readonly-field w-full bg-background-dark border-primary/20 rounded-lg text-slate-100 p-3" required>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">CPF</label>
+                        <input id="f_cpf" type="text" readonly class="readonly-field w-full bg-background-dark border-primary/20 rounded-lg text-slate-100 p-3">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Email</label>
+                        <input id="f_email" type="email" readonly class="readonly-field w-full bg-background-dark border-primary/20 rounded-lg text-slate-100 p-3">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Nível de Acesso</label>
+                        <select id="f_nivel" disabled class="readonly-field w-full bg-background-dark border-primary/20 rounded-lg text-slate-100 p-3 outline-none">
+                            <option value="Funcionário">Funcionário</option>
+                            <option value="Gestor">Gestor</option>
+                            <option value="Admin">Admin</option>
+                        </select>
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Cargo (Opcional)</label>
+                        <select id="f_cargo" disabled class="readonly-field w-full bg-background-dark border-primary/20 rounded-lg text-slate-100 p-3 outline-none">
+                            <option value="">Selecione um Cargo/Nível (Ex: Piloto Sr)</option>
+                            <!-- Cargos via JS -->
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4 border-t border-white/5 pt-4">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Setor</label>
+                        <select id="f_setor" disabled class="readonly-field w-full bg-background-dark border-primary/20 rounded-lg text-slate-100 p-3 outline-none">
+                            <option value="">Sem Setor Definido</option>
+                            <!-- Setores via JS -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Escala Base</label>
+                        <select id="f_escala" disabled class="readonly-field w-full bg-background-dark border-primary/20 rounded-lg text-slate-100 p-3 outline-none">
+                            <option value="">Sem Escala Definida</option>
+                            <!-- Escalas via JS -->
+                        </select>
+                    </div>
+                </div>
+
+                <div id="submit-actions" class="hidden flex gap-3 pt-6 border-t border-white/5 mt-6">
+                    <button type="button" id="btn-cancel-edit" class="flex-1 px-4 py-3 bg-slate-800 text-slate-300 rounded-lg uppercase text-xs font-bold hover:bg-slate-700 transition-all">Cancelar</button>
+                    <button type="submit" class="flex-[2] bg-primary text-white rounded-lg uppercase text-xs font-bold shadow-lg shadow-primary/30 py-3 hover:bg-primary/80 transition-all">Salvar Alterações</button>
+                </div>
+            </form>
+        </section>
+    </div>
+  </main>
+
+  <!-- Modal Exclusão -->
+  <div id="modalDelete" class="fixed inset-0 bg-black/80 z-[200] hidden items-center justify-center p-4 backdrop-blur-sm">
+      <div class="bg-background-dark border border-rose-500/30 rounded-2xl p-6 w-full max-w-sm text-center shadow-2xl">
+          <span class="material-symbols-outlined text-rose-500 text-5xl mb-2">warning</span>
+          <h3 class="text-white text-lg font-bold uppercase mb-2">Confirmar Exclusão</h3>
+          <p class="text-slate-400 text-sm mb-6">Esta ação é irreversível. Deseja mesmo excluir este funcionário e todos os seus registros atrelados (ex: pontos)?</p>
+          <div class="flex gap-2">
+              <button onclick="document.getElementById('modalDelete').classList.add('hidden');" class="flex-1 py-3 bg-slate-800 text-white rounded-lg uppercase text-xs font-bold">Cancelar</button>
+              <button id="confirmDeleteBtn" class="flex-1 py-3 bg-rose-600 text-white rounded-lg uppercase text-xs font-bold shadow-lg shadow-rose-600/30">Sim, Excluir</button>
+          </div>
+      </div>
+  </div>
+
+  <script type="module">
+    import { supabase } from '../js/supabase-config.js';
+    import { UI } from '../js/ui-utils.js';
+
+    let funcsCache = [];
+    let setoresCache = [];
+    let escalasCache = [];
+    let cargosCache = [];
+    let selectedId = null;
+    let isEditing = false;
+
+    async function init() {
+        UI.showLoader();
+        await Promise.all([loadDependencies(), carregarLista()]);
+        UI.hideLoader();
+
+        document.getElementById('search-input').addEventListener('input', (e) => filterList(e.target.value));
+        document.getElementById('btn-novo').addEventListener('click', prepareNew);
+        document.getElementById('btn-editar').addEventListener('click', () => toggleEditMode(true));
+        document.getElementById('btn-cancel-edit').addEventListener('click', cancelEdit);
+        document.getElementById('btn-excluir').addEventListener('click', promptDelete);
+        document.getElementById('form-funcionario').addEventListener('submit', handleSave);
+    }
+
+    async function loadDependencies() {
+        try {
+            const [rSetores, rEscalas, rCargos] = await Promise.all([
+                supabase.from('setores').select('id, nome').order('nome'),
+                supabase.from('escalas').select('id, nome').order('nome'),
+                supabase.from('cargos').select('id, nome, nivel').order('nome')
+            ]);
+            
+            setoresCache = rSetores.data || [];
+            escalasCache = rEscalas.data || [];
+            cargosCache = rCargos.data || [];
+
+            const sSetor = document.getElementById('f_setor');
+            setoresCache.forEach(s => sSetor.innerHTML += `<option value="${s.id}">${s.nome}</option>`);
+
+            const sEscala = document.getElementById('f_escala');
+            escalasCache.forEach(e => sEscala.innerHTML += `<option value="${e.id}">${e.nome}</option>`);
+
+            const sCargo = document.getElementById('f_cargo');
+            cargosCache.forEach(c => sCargo.innerHTML += `<option value="${c.id}">${c.nome} [${c.nivel}]</option>`);
+
+        } catch(e) { console.error('Errodeps', e); }
+    }
+
+    async function carregarLista() {
+        try {
+            const { data, error } = await supabase.from('funcionarios').select('*, setores(nome)').order('nome_completo');
+            if (error) throw error;
+            funcsCache = data;
+            document.getElementById('total-funcs').innerText = data.length;
+            renderList(funcsCache);
+        } catch(e) {
+            UI.showToast('Erro ao listar base.', 'error');
+        }
+    }
+
+    function renderList(list) {
+        const container = document.getElementById('lista-funcionarios');
+        if(list.length === 0) {
+            container.innerHTML = `<p class="text-xs text-slate-500 text-center italic mt-4">Nenhum registro encontrado.</p>`;
+            return;
+        }
+
+        container.innerHTML = list.map(f => `
+            <div onclick="selectFunc('${f.id}')" class="p-3 bg-slate-800/20 border ${f.id === selectedId ? 'border-primary bg-primary/10' : 'border-white/5'} rounded-xl cursor-pointer hover:border-primary/50 transition-all flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-background-dark border border-white/10 shrink-0 overflow-hidden">
+                    <img src="${f.foto_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(f.nome_completo)}&background=0f172a&color=fff`}" class="w-full h-full object-cover">
+                </div>
+                <div class="overflow-hidden">
+                    <p class="text-[11px] font-bold text-white truncate uppercase">${f.nome_completo}</p>
+                    <p class="text-[9px] text-primary truncate uppercase">MT: ${f.matricula}</p>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function filterList(term) {
+        let t = term.toLowerCase().trim();
+        const filt = funcsCache.filter(f => f.nome_completo.toLowerCase().includes(t) || f.matricula.toLowerCase().includes(t));
+        renderList(filt);
+    }
+
+    window.selectFunc = (id) => {
+        selectedId = id;
+        renderList(funcsCache); // update active state in list
+        const f = funcsCache.find(x => x.id === id);
+        if(!f) return;
+
+        document.getElementById('form-section').classList.remove('hidden');
+        document.getElementById('form-title').innerText = "Dados do Funcionário";
+        document.getElementById('action-buttons').classList.remove('hidden');
+
+        // Populate fields
+        document.getElementById('f_nome').value = f.nome_completo || '';
+        document.getElementById('f_matricula').value = f.matricula || '';
+        document.getElementById('f_cpf').value = f.cpf || '';
+        document.getElementById('f_email').value = f.email || '';
+        document.getElementById('f_nivel').value = f.nivel_acesso || '';
+        document.getElementById('f_setor').value = f.setor_id || '';
+        document.getElementById('f_escala').value = f.escala_id || '';
+        document.getElementById('f_cargo').value = f.cargo_id || '';
+
+        toggleEditMode(false);
+    };
+
+    function prepareNew() {
+        selectedId = null;
+        renderList(funcsCache); // untoggle list
+        
+        document.getElementById('form-section').classList.remove('hidden');
+        document.getElementById('form-title').innerText = "Novo Funcionário";
+        document.getElementById('action-buttons').classList.add('hidden');
+        document.getElementById('form-funcionario').reset();
+        
+        toggleEditMode(true);
+    }
+
+    function toggleEditMode(enable) {
+        isEditing = enable;
+        const inputs = document.querySelectorAll('#form-funcionario input, #form-funcionario select');
+        const submitGroup = document.getElementById('submit-actions');
+
+        inputs.forEach(el => {
+            if(enable) {
+                el.removeAttribute('readonly');
+                el.removeAttribute('disabled');
+                el.classList.remove('readonly-field');
+            } else {
+                el.setAttribute(el.tagName === 'SELECT' ? 'disabled' : 'readonly', 'true');
+                el.classList.add('readonly-field');
+            }
+        });
+
+        if(enable) submitGroup.classList.remove('hidden');
+        else submitGroup.classList.add('hidden');
+    }
+
+    function cancelEdit() {
+        if(selectedId) {
+            selectFunc(selectedId); // re-populates original data and disables editing
+        } else {
+            document.getElementById('form-section').classList.add('hidden'); // hide if it was 'new'
+        }
+    }
+
+    function promptDelete() {
+        if(!selectedId) return;
+        const modal = document.getElementById('modalDelete');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        
+        document.getElementById('confirmDeleteBtn').onclick = async () => {
+             modal.classList.add('hidden');
+             UI.showLoader();
+             const { error } = await supabase.from('funcionarios').delete().eq('id', selectedId);
+             UI.hideLoader();
+             if(error) { UI.showToast('Erro ao excluir (Pode ter dependências).', 'error'); }
+             else {
+                 selectedId = null;
+                 document.getElementById('form-section').classList.add('hidden');
+                 UI.showToast('Excluído com sucesso.', 'success');
+                 carregarLista();
+             }
+        };
+    }
+
+    async function handleSave(e) {
+        e.preventDefault();
+        UI.showLoader();
+
+        const payload = {
+            nome_completo: document.getElementById('f_nome').value,
+            matricula: document.getElementById('f_matricula').value,
+            cpf: document.getElementById('f_cpf').value || null,
+            email: document.getElementById('f_email').value || null,
+            nivel_acesso: document.getElementById('f_nivel').value,
+            setor_id: document.getElementById('f_setor').value || null,
+            escala_id: document.getElementById('f_escala').value || null,
+            cargo_id: document.getElementById('f_cargo').value || null
+        };
+
+        try {
+            if (selectedId) {
+                const { error } = await supabase.from('funcionarios').update(payload).eq('id', selectedId);
+                if(error) throw error;
+                UI.showToast('Cadastro atualizado!', 'success');
+            } else {
+                const { error, data } = await supabase.from('funcionarios').insert([payload]).select().single();
+                if(error) throw error;
+                selectedId = data.id;
+                UI.showToast('Funcionário registrado!', 'success');
+            }
+            toggleEditMode(false);
+            await carregarLista();
+            selectFunc(selectedId); // Re-focus and update UI
+        } catch(err) {
+            console.error(err);
+            UI.showToast('Erro ao salvar no banco. Verifique duplicidade de Matrícula/CPF.', 'error');
+        } finally {
+            UI.hideLoader();
+        }
+    }
+
+    init();
+  </script>
+</body>
+</html>
