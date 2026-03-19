@@ -173,13 +173,18 @@ const UI = {
             items.push({ href: 'historico_anual.html', icon: 'history', label: 'Meu Histórico' });
         }
 
-        menuHtml = items.map(item => `
-            <a href="${item.href}${item.href === 'perfil_funcionario.html' && !employeeId ? '' : contextQuery}" 
-               class="flex items-center gap-4 p-3 rounded-lg hover:bg-primary/10 text-slate-600 dark:text-slate-300 hover:text-primary transition-all group">
+        menuHtml = items.map(item => {
+            // Não propagar contexto para páginas de "Novo Cadastro"
+            const skipContext = (item.href === 'cadastro_funcionario.html' || item.href === 'cadastro_setores.html' || item.href === 'cadastro_escalas.html' || item.href === 'cadastro_cargos.html');
+            const finalHref = skipContext ? item.href : `${item.href}${item.href === 'perfil_funcionario.html' && !employeeId ? '' : contextQuery}`;
+            
+            return `
+            <a href="${finalHref}" class="flex items-center gap-4 p-3 rounded-lg hover:bg-primary/10 text-slate-600 dark:text-slate-300 hover:text-primary transition-all group">
                 <span class="material-symbols-outlined text-slate-400 group-hover:text-primary">${item.icon}</span>
                 <span class="text-sm font-bold uppercase tracking-tight">${item.label}</span>
             </a>
-        `).join('');
+            `;
+        }).join('');
 
         sidebarNav.innerHTML = menuHtml;
 

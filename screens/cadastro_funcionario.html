@@ -31,7 +31,7 @@
     </div>
 
     <!-- Main Content -->
-    <main class="flex-1 p-6 max-w-lg mx-auto w-full">
+    <main class="flex-1 p-6 space-y-8 overflow-y-auto max-w-2xl mx-auto w-full pb-32">
         <!-- Controle de Edição (Modo de Segurança) -->
         <div id="edit-control-container" class="mb-6 animate-in fade-in slide-in-from-top-4 duration-500">
             <div class="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 flex items-center justify-between gap-4 neon-border-amber">
@@ -67,7 +67,11 @@
             </div>
         </div>
 
-        <form id="cadastro-form" class="space-y-8 pb-32">
+        <form id="cadastro-form" class="space-y-8 pb-32" autocomplete="off">
+            <!-- Hidden inputs to trick some browsers -->
+            <input type="text" name="prevent_autofill" id="prevent_autofill" value="" style="display:none;" />
+            <input type="password" name="password_fake" id="password_fake" value="" style="display:none;" />
+            
             <!-- Upload de Foto -->
             <div class="flex flex-col items-center justify-center mb-8">
                 <div class="relative group cursor-pointer" onclick="document.getElementById('avatar-input').click()">
@@ -1136,7 +1140,7 @@
 
     <script type="module">
         import { Auth } from '../js/auth.js';
-        import { UI } from '../js/ui-utils.js';
+        import { UI } from '../js/ui-utils.js?v=4';
         window.addEventListener('load', () => {
             const user = Auth.getUser();
             if (user) UI.updateFooterNavigation(user.role);
