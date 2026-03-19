@@ -1014,8 +1014,25 @@
                     }
 
                     UI.showToast('Tripulante registrado com sucesso!', 'success');
+                    
+                    // Resetar formulário para estado inicial conforme solicitado pelo usuário
+                    setTimeout(() => {
+                        const form = document.getElementById('employee-form');
+                        if (form) form.reset();
+                        
+                        // Limpar campos manualmente que o form.reset() pode não pegar (como fotos, seletores customizados)
+                        const avatarImg = document.getElementById('avatar-preview');
+                        if (avatarImg) avatarImg.src = 'https://ui-avatars.com/api/?name=User&background=0D59F2&color=fff';
+                        
+                        avatarUrl = null;
+                        
+                        // Bloquear o formulário novamente
+                        setFormLocked(true);
+                        
+                        // Scroll para o topo
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }, 1500);
                 }
-                setTimeout(() => window.location.href = 'relacao_funcionarios.html', 1500);
 
             } catch (err) {
                 console.error('Erro no cadastro:', err);

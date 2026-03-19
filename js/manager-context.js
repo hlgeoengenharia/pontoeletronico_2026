@@ -20,7 +20,7 @@
     const isGestorSession = (loggedInRole === 'admin' || loggedInRole === 'manager' || loggedInRole === 'gestor' || loggedInRole === 'comandante');
     // Só é inspeção se houver um ID na URL e esse ID for DIFERENTE do ID logado
     const isInspecting = normalizedEmployeeId && normalizedEmployeeId !== normalizedLoggedInId;
-    console.log(`[ManagerContext V2.8] Inicializado. Session: ${loggedInRole}, Mode: ${isInspecting ? 'INSPECT' : 'SELF'}`);
+    console.log(`[ManagerContext V2.9] Inicializado. Session: ${loggedInRole}, Mode: ${isInspecting ? 'INSPECT' : 'SELF'}`);
 
     // Activation logic (UI Context Header & Bottom Nav Repurpose)
     if (isGestorSession) {
@@ -79,7 +79,10 @@
                 box-shadow: 0 8px 32px rgba(0,0,0,0.8);
                 backdrop-filter: blur(10px);
             }
-            body { padding-top: 120px !important; }
+            /* Aumentar padding para não cobrir o conteúdo e garantir prioridade */
+            body { padding-top: 140px !important; }
+            #manager-mode-bar ~ header, 
+            #manager-mode-bar ~ .fixed.top-0 { margin-top: 120px !important; }
             .manager-tabs {
                 display: flex; gap: 6px; background: rgba(255, 255, 255, 0.05);
                 padding: 4px; border-radius: 12px;
