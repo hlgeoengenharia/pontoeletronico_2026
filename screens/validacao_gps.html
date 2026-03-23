@@ -140,17 +140,21 @@
                             </div>
                             <div class="flex-1">
                                 <h4 class="text-sm font-black text-slate-100 uppercase tracking-tight">${p.funcionarios.nome_completo}</h4>
-                                <p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest">${p.funcionarios.setores?.nome || 'SETOR N/D'}</p>
+                                <div class="flex items-center gap-2">
+                                    <p class="text-[10px] text-slate-500 uppercase font-bold tracking-widest">${p.funcionarios.setores?.nome || 'SETOR N/D'}</p>
+                                    <span class="text-[9px] text-slate-500 font-bold">
+                                        ${new Date(p.data_hora).toLocaleDateString('pt-BR')} | ${new Date(p.data_hora).toLocaleTimeString('pt-BR')}
+                                    </span>
+                                </div>
                             </div>
                             <div class="text-right">
-                                <p class="text-sm font-black text-orange-500">${new Date(p.data_hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</p>
-                                <p class="text-[8px] text-slate-600 font-bold uppercase">${new Date(p.data_hora).toLocaleDateString('pt-BR')}</p>
+                                <span class="text-[9px] px-2 py-0.5 rounded bg-orange-500/10 text-orange-500 border border-orange-500/20 font-black uppercase tracking-widest">PENDENTE</span>
                             </div>
                         </div>
                         
                         <div class="bg-orange-500/5 border-l-2 border-orange-500 p-3 rounded-r-lg">
                             <p class="text-[10px] text-orange-500/70 font-black uppercase mb-1">Motivo / Justificativa:</p>
-                            <p class="text-xs text-slate-300 italic truncate italic">"${p.justificativa_usuario || 'Não informada'}"</p>
+                            <p class="text-xs text-slate-300 italic truncate h-[1.2rem]">"${p.justificativa_usuario || 'Localização registrada automaticamente pelo sistema para validar sua presença em serviço durante a jornada.'}"</p>
                         </div>
 
                         <button onclick='abrirModalMapa(${JSON.stringify(p)})' class="w-full py-3 rounded-xl bg-white/5 border border-white/10 text-[10px] font-black uppercase text-slate-400 group-hover:bg-primary group-hover:text-white group-hover:border-transparent transition-all">Ver Detalhes no Mapa</button>

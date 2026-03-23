@@ -59,8 +59,8 @@ class GPSTracker {
             const coordStr = `${lat},${lng}`;
             const nowTime = new Date().toLocaleTimeString('pt-BR');
 
-            // 2. Log de Pulso (Com Timestamp)
-            const pulseMsg = `Localização registrada automaticamente pelo sistema às ${nowTime} para validar sua presença em serviço durante a jornada.`;
+            // 2. Log de Pulso (sem o horário no texto)
+            const pulseMsg = `Localização registrada automaticamente pelo sistema para validar sua presença em serviço durante a jornada.`;
             await this.logOccurrence(user.id, 'gps_pulse', pulseMsg, coordStr);
             console.log(`[GPSTracker] Pulso de GPS enviado (${nowTime}) para funcionario_id: ${user.id}`);
             
@@ -80,10 +80,10 @@ class GPSTracker {
                      const currentStatus = isInside ? 'inside' : 'outside';
 
                      if (this.lastGeofenceStatus !== null && this.lastGeofenceStatus !== currentStatus) {
-                         // Quebra de Perímetro Detectada
+                         // Quebra de Perímetro Detectada (sem o horário no texto)
                          const msg = currentStatus === 'outside' 
-                            ? `O sistema detectou às ${nowTime} que você se ausentou do raio de alcance permitido para o seu local de escala.` 
-                            : `O sistema detectou às ${nowTime} o seu retorno para dentro do raio de alcance permitido do seu local de escala.`;
+                            ? `O sistema detectou que você se ausentou do raio de alcance permitido para o seu local de escala/setor designado.` 
+                            : `O sistema detectou o seu retorno para dentro do raio de alcance permitido do seu local de escala/setor designado.`;
                          await this.logOccurrence(user.id, currentStatus === 'outside' ? 'geofence_out' : 'geofence_in', msg, coordStr);
                      }
                      

@@ -722,10 +722,10 @@
 
                                     return `
                                         <div class="card-history ${colorClass} bg-white/5 p-2 rounded-r-lg">
-                                            <div class="flex justify-between items-start mb-1">
+                                            <div class="flex items-center gap-2 mb-1">
                                                 <h5 class="text-[8px] font-black uppercase tracking-wider ${colorClass}">${title}</h5>
                                                 <span class="text-[8px] font-black text-slate-500 uppercase">
-                                                    ${isToday ? 'Hoje' : hDate.toLocaleDateString('pt-BR')}
+                                                    ${new Date(h.created_at).toLocaleDateString('pt-BR')} | ${new Date(h.created_at).toLocaleTimeString('pt-BR')}
                                                 </span>
                                             </div>
                                             <p class="text-[9px] text-slate-300 italic mb-2 leading-tight">"${h.conteudo}"</p>

@@ -461,8 +461,8 @@
                                 statusClass = statusMap[item.status_pendencia?.toLowerCase()] || statusMap['pendente'];
                                 statusLabel = item.status_pendencia?.toUpperCase() || 'PENDENTE';
                             } else if (item.itemType === 'COMUNICADO') {
-                                statusClass = item.lido ? statusMap['aprovado'] : statusMap['pendente'];
-                                statusLabel = item.lido ? 'LIDO' : 'NOVO';
+                                statusClass = item.lido ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-amber-500/10 text-amber-500 border-amber-500/20';
+                                statusLabel = 'CIENTE';
                             }
                             
                             // Mapeamento de Cores e Títulos Refinado
@@ -511,16 +511,31 @@
                                 'Funcionário retornou ao local de trabalho': 'O sistema detectou o seu retorno para dentro do raio de alcance permitido do seu local de escala/setor designado.',
                                 'Solicitação de ponto fora do raio': 'Sua tentativa de registro de ponto foi bloqueada ou sinalizada por estar fora do raio de geofence permitido para o seu setor.'
                             };
-                            const displayConteudo = messageDict[item.conteudo] || item.conteudo;
+
+                            // Fallback detalhado se não houver mensagem ou se a mensagem for curta/vazia
+                            const defaultMessages = {
+                                'gps_pulse': 'Localização registrada automaticamente pelo sistema para validar sua presença em serviço durante a jornada.',
+                                'gps_hora': 'Registro automático de localização para fins de auditoria em jornada de trabalho sob regime externo.',
+                                'geofence_out': 'O sistema detectou que você se ausentou do raio de alcance permitido para o seu local de escala/setor designado.',
+                                'geofence_in': 'O sistema detectou o seu retorno para dentro do raio de alcance permitido do seu local de escala/setor designado.',
+                                'ponto_fora_raio': 'Sua tentativa de registro de ponto foi bloqueada ou sinalizada por estar fora do raio de geofence permitido para o seu setor.'
+                            };
+
+                            const displayConteudo = messageDict[item.conteudo] || item.conteudo || defaultMessages[item.tipo] || 'Registro automático de posição.';
 
                             return `
                             <div class="card-history ${colorClass} py-2 mb-6 last:mb-0 group">
                                 <div class="flex justify-between items-start mb-2">
                                     <div class="flex flex-col gap-1">
-                                        <h3 class="text-[11px] font-black uppercase tracking-widest ${colorClass}">${title}</h3>
+                                        <div class="flex items-center gap-2">
+                                            <h3 class="text-[11px] font-black uppercase tracking-widest ${colorClass}">${title}</h3>
+                                            <span class="text-[10px] text-slate-500 font-bold tracking-tighter">
+                                                ${new Date(item.created_at || item.data_hora).toLocaleDateString('pt-BR')} | ${new Date(item.created_at || item.data_hora).toLocaleTimeString('pt-BR')}
+                                            </span>
+                                        </div>
                                         <p class="text-slate-300 text-sm italic leading-relaxed">"${displayConteudo}"</p>
                                     </div>
-                                    ${(isJustif || isSystem || item.itemType === 'COMUNICADO') ? `
+                                    ${(isJustif || isSystem) ? `
                                         <span class="${statusClass} text-[8px] px-2 py-0.5 rounded-full border border-current font-black uppercase tracking-widest shrink-0 mt-1">${statusLabel}</span>
                                     ` : ''}
                                 </div>
@@ -541,7 +556,7 @@
                                                             title="Excluir">
                                                         <span class="material-symbols-outlined text-base">delete</span>
                                                     </button>`;
-                                            } else if (isSystem && item.status_pendencia === 'pendente' && (new Date() - new Date(item.created_at) < 24 * 60 * 60 * 1000)) {
+                                            } else if (isSystem && item.status_pendencia === 'pendente' && (new Date() - new Date(item.data_hora || item.created_at) < 24 * 60 * 60 * 1000)) {
                                                 return `
                                                     <button onclick="window.toggleEditCard('${item.id}', '${item.tipo_raw}', \`${(item.justificativa_colaborador || '').replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)" 
                                                             class="px-3 py-1.5 bg-primary/10 border border-primary/20 rounded-lg text-primary hover:bg-primary/20 transition-all flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest"
@@ -556,12 +571,16 @@
                                                             title="Excluir">
                                                         <span class="material-symbols-outlined text-base">delete</span>
                                                     </button>`;
-                                            } else if (item.itemType === 'COMUNICADO' && !item.lido) {
+                                            } else if (item.itemType === 'COMUNICADO') {
+                                                const btnClass = item.lido 
+                                                    ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500" 
+                                                    : "bg-amber-500/10 border-amber-500/20 text-amber-500 hover:bg-amber-500/20";
+                                                const icon = item.lido ? "done_all" : "done";
                                                 return `
-                                                    <button onclick="window.marcarComunicadoLido('${item.id}')" 
-                                                            class="px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-500 hover:bg-emerald-500/20 transition-all flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest">
-                                                        <span class="material-symbols-outlined text-sm">done_all</span>
-                                                        <span>Lido</span>
+                                                    <button ${item.lido ? 'disabled' : `onclick="window.marcarComunicadoLido('${item.id}')"`} 
+                                                            class="px-3 py-1.5 ${btnClass} border rounded-lg transition-all flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest ${item.lido ? 'opacity-80' : ''}">
+                                                        <span class="material-symbols-outlined text-sm">${icon}</span>
+                                                        <span>CIENTE</span>
                                                     </button>`;
                                             }
                                             return '';
@@ -765,7 +784,7 @@
 
                 if (error) throw error;
 
-                UI.showToast('Comunicado marcado como lido!', 'success');
+                UI.showToast('Registrado com sucesso!', 'success');
                 await loadUnifiedHistory();
             } catch (err) {
                 console.error(err);

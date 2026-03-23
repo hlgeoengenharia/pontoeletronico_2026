@@ -322,14 +322,32 @@
                     error = res.error;
                 }
 
-                if (error) throw error;
-
-                UI.showToast('Alteração salva com sucesso!', 'success');
+                UI.showToast('Registrado com sucesso!', 'success');
                 window.toggleEditCard(id);
                 loadData(); // Recarrega os dados do mês
             } catch (err) {
                 console.error(err);
                 UI.showToast('Erro ao salvar alteração.', 'error');
+            } finally {
+                UI.hideLoader();
+            }
+        };
+
+        window.marcarComunicadoLido = async (id) => {
+            UI.showLoader();
+            try {
+                const { error } = await supabase
+                    .from('comunicados')
+                    .update({ lido: true })
+                    .eq('id', id);
+
+                if (error) throw error;
+
+                UI.showToast('Registrado com sucesso!', 'success');
+                await loadData();
+            } catch (err) {
+                console.error(err);
+                UI.showToast('Erro ao atualizar comunicado.', 'error');
             } finally {
                 UI.hideLoader();
             }
@@ -502,12 +520,22 @@
                              </div>
                         </td>
                         <td class="p-4 align-top text-xs font-black italic ${balanceClass}">${formatBalance(balance)}</td>
+                        <td class="p-4 align-top text-center">${statusHtml}</td>
                     </tr>
                 `;
 
                 if (hasDetails) {
                     const dayItems = [
-                        ...dayComunicados.map(c => ({ id: c.id, type: 'COMUNICADO', content: c.mensagem, time: c.created_at, color: 'premium-border-green', label: 'Comunicado Oficial', lido: c.lido })),
+                        ...dayComunicados.map(c => ({ 
+                            id: c.id, 
+                            type: 'COMUNICADO', 
+                            content: c.mensagem, 
+                            time: c.created_at, 
+                            color: c.subtipo === 'hora_extra' ? 'premium-border-amber' : 'premium-border-green', 
+                            label: c.subtipo === 'hora_extra' ? 'Solicitação de Hora Extra' : 'Comunicado Oficial',
+                            lido: c.lido,
+                            subtipo: c.subtipo
+                        })),
                         ...dayAnotacoes.map(a => ({ id: a.id, type: 'ATIVIDADE', content: a.content || a.conteudo, time: a.created_at, color: 'premium-border-blue', label: 'Anotação do Dia' })),
                         ...dayJustificativas.map(j => ({ id: j.id, type: 'JUSTIFICATIVA', content: j.descricao, time: j.created_at, color: 'premium-border-amber', label: 'Justificativa de Ponto', status: j.status, motivo: j.tipo_divergencia, file: j.evidencia_url })),
                         ...dayLogs.map(l => {
@@ -518,6 +546,14 @@
                                 'Funcionário retornou ao local de trabalho': 'O sistema detectou o seu retorno para dentro do raio de alcance permitido do seu local de escala/setor designado.',
                                 'Solicitação de ponto fora do raio': 'Sua tentativa de registro de ponto foi bloqueada ou sinalizada por estar fora do raio de geofence permitido para o seu setor.'
                             };
+
+                            const defaultMessages = {
+                                'gps_pulse': 'Localização registrada automaticamente pelo sistema para validar sua presença em serviço durante a jornada.',
+                                'gps_hora': 'Registro automático de localização para fins de auditoria em jornada de trabalho sob regime externo.',
+                                'geofence_out': 'O sistema detectou que você se ausentou do raio de alcance permitido para o seu local de escala/setor designado.',
+                                'geofence_in': 'O sistema detectou o seu retorno para dentro do raio de alcance permitido do seu local de escala/setor designado.',
+                                'ponto_fora_raio': 'Sua tentativa de registro de ponto foi bloqueada ou sinalizada por estar fora do raio de geofence permitido para o seu setor.'
+                            };
                             const tDict = {
                                 'gps_pulse': 'CHECK-POINT DE LOCALIZAÇÃO (PULSO)',
                                 'gps_hora': 'RASTREIO DE REGIME EXTERNO',
@@ -525,7 +561,7 @@
                                 'geofence_in': 'QUEBRA DE PERÍMETRO (ENTRADA)',
                                 'ponto_fora_raio': 'SOLICITAÇÃO DE PONTO FORA DO RAIO'
                             };
-                            return { id: l.id, type: 'GPS', content: mDict[l.conteudo] || l.conteudo || 'Registro automático de posição.', time: l.created_at, color: 'premium-border-rose', label: tDict[l.tipo] || 'OCORRÊNCIA DE SISTEMA', coordenadas: l.coordenadas, status_pendencia: l.status_pendencia, justificativa_colaborador: l.justificativa_colaborador, tipo_raw: l.tipo };
+                            return { id: l.id, type: 'GPS', content: mDict[l.conteudo] || l.conteudo || defaultMessages[l.tipo] || 'Registro automático de posição.', time: l.created_at, color: 'premium-border-rose', label: tDict[l.tipo] || 'OCORRÊNCIA DE SISTEMA', coordenadas: l.coordenadas, status_pendencia: l.status_pendencia, justificativa_colaborador: l.justificativa_colaborador, tipo_raw: l.tipo };
                         })
                     ].sort((a, b) => new Date(a.time) - new Date(b.time));
 
@@ -556,26 +592,26 @@
                                     } else if (isSystem) {
                                         statusClass = statusMap[item.status_pendencia?.toLowerCase()] || statusMap['pendente'];
                                         statusLabel = item.status_pendencia?.toUpperCase() || 'PENDENTE';
-                                    } else if (item.type === 'COMUNICADO') {
-                                        statusClass = item.lido ? statusMap['aprovado'] : statusMap['pendente'];
-                                        statusLabel = item.lido ? 'LIDO' : 'NOVO';
+                                    } else if (item.itemType === 'COMUNICADO') {
+                                        statusClass = item.lido ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-amber-500/10 text-amber-500 border-amber-500/20';
+                                        statusLabel = 'CIENTE';
                                     }
 
                                     return `
                                         <div class="card-history ${item.color} animate-in fade-in slide-in-from-bottom-4 duration-500 ml-2 mb-4">
                                             <div class="flex items-start justify-between mb-2">
-                                                <div class="flex flex-col gap-1">
                                                     <div class="flex items-center gap-2">
                                                         <span class="material-symbols-outlined text-[12px]" style="color: currentColor">
                                                             ${item.type === 'COMUNICADO' ? 'campaign' : item.type === 'ATIVIDADE' ? 'edit_note' : item.type === 'JUSTIFICATIVA' ? 'warning' : 'location_on'}
                                                         </span>
                                                         <p class="text-[9px] font-black uppercase tracking-widest" style="color: currentColor">${item.label}</p>
+                                                        <span class="text-[8px] text-slate-500 font-bold ml-1">
+                                                            ${new Date(item.time).toLocaleDateString('pt-BR')} | ${new Date(item.time).toLocaleTimeString('pt-BR')}
+                                                        </span>
                                                     </div>
                                                     <p class="text-[11px] text-slate-300 leading-relaxed italic">"${item.content}"</p>
-                                                </div>
                                                 <div class="flex flex-col items-end gap-1.5">
-                                                    <span class="text-[8px] text-slate-500 font-bold">${new Date(item.time).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}</span>
-                                                    ${(isJustif || isSystem || item.type === 'COMUNICADO') ? `
+                                                    ${(isJustif || isSystem) ? `
                                                         <span class="${statusClass} text-[7px] px-1.5 py-0.5 rounded-full border border-current font-black uppercase tracking-widest shrink-0">${statusLabel}</span>
                                                     ` : ''}
                                                 </div>
@@ -592,12 +628,24 @@
                                                                         class="p-1.5 bg-white/5 border border-white/10 rounded-lg text-slate-400 hover:text-primary transition-all shadow-sm">
                                                                     <span class="material-symbols-outlined text-[14px]">edit</span>
                                                                 </button>`;
-                                                        } else if (isSystem && item.status_pendencia === 'pendente') {
+                                                        } else if (isSystem && item.status_pendencia === 'pendente' && (new Date() - new Date(item.time) < 24 * 60 * 60 * 1000)) {
                                                             return `
-                                                                <button onclick="window.toggleEditCard('${item.id}', '${item.tipo_raw}', \`${(item.justificativa_colaborador || '').replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)" 
-                                                                        class="px-2 py-1 bg-primary/10 border border-primary/20 rounded-lg text-primary hover:bg-primary/20 transition-all flex items-center gap-1 text-[8px] font-black uppercase tracking-widest">
+                                                                <button onclick="window.toggleEditCard('${item.id}', '${item.tipo_raw}', \`${(item.content || '').replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)" 
+                                                                        class="px-2 py-1 bg-primary/10 border border-primary/20 rounded-lg text-primary hover:bg-primary/20 transition-all flex items-center gap-1 text-[8px] font-black uppercase tracking-widest"
+                                                                        title="Justificar">
                                                                     <span class="material-symbols-outlined text-xs">edit_note</span>
                                                                     <span>Justificar</span>
+                                                                </button>`;
+                                                        } else if (item.type === 'COMUNICADO') {
+                                                            const btnClass = item.lido 
+                                                                ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500" 
+                                                                : "bg-amber-500/10 border-amber-500/20 text-amber-500 hover:bg-amber-500/20";
+                                                            const icon = item.lido ? "done_all" : "done";
+                                                            return `
+                                                                <button ${item.lido ? 'disabled' : `onclick="window.marcarComunicadoLido('${item.id}')"`} 
+                                                                        class="px-2 py-1 ${btnClass} border rounded-lg transition-all flex items-center gap-1 text-[8px] font-black uppercase tracking-widest ${item.lido ? 'opacity-80' : ''}">
+                                                                    <span class="material-symbols-outlined text-xs">${icon}</span>
+                                                                    <span>CIENTE</span>
                                                                 </button>`;
                                                         }
                                                         return '';

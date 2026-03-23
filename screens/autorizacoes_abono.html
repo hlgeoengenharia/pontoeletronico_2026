@@ -160,17 +160,14 @@
                             </div>
                         </div>
 
-                        <div class="mb-3 flex items-center gap-1.5">
-                            <span class="material-symbols-outlined text-[16px] text-slate-400">calendar_month</span>
-                            <p class="text-slate-400 text-[10px] font-bold uppercase tracking-widest">
-                                ${new Date(item.data_incidente).toLocaleDateString('pt-BR')} 
-                                ${isGps ? ' - ' + new Date(item.data_incidente).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : ''}
-                            </p>
-                        </div>
-
                         <div class="bg-black/30 rounded-lg p-3.5 mb-5 border-l-4 ${isGps || item.itemType === 'SISTEMA' ? 'border-rose-500' : 'border-amber-500'} font-medium">
-                            <p class="text-slate-200 text-xs leading-relaxed font-bold">${item.tipo_divergencia.toUpperCase()}</p>
-                            <p class="text-slate-400 text-[10px] mt-2 italic leading-relaxed">${item.descricao || (isGps || item.itemType === 'SISTEMA' ? 'Batida realizada fora do raio permitido.' : 'Sem descrição detalhada.')}</p>
+                            <div class="flex items-center gap-2 mb-2">
+                                <p class="text-slate-200 text-xs leading-relaxed font-bold">${item.tipo_divergencia.toUpperCase()}</p>
+                                <span class="text-[9px] text-slate-500 font-bold">
+                                    ${new Date(item.data_incidente).toLocaleDateString('pt-BR')} | ${new Date(item.data_incidente).toLocaleTimeString('pt-BR')}
+                                </span>
+                            </div>
+                            <p class="text-slate-400 text-[10px] mt-2 italic leading-relaxed">${item.descricao || (isGps || item.itemType === 'SISTEMA' ? 'Localização registrada automaticamente pelo sistema para validar sua presença em serviço durante a jornada.' : 'Sem descrição detalhada.')}</p>
                             
                             ${item.coordenadas || (item.latitude && item.longitude) ? `
                             <button onclick="toggleMap('${item.id}', '${item.coordenadas || (item.latitude + ',' + item.longitude)}', this)" class="mt-4 inline-flex items-center gap-2 px-3 py-1.5 bg-rose-500/10 border border-rose-500/20 rounded-lg text-rose-500 hover:bg-rose-500/20 transition-all font-black">
