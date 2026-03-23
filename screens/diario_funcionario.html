@@ -11,9 +11,58 @@
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
         rel="stylesheet">
     <script src="../js/theme.js?v=1.0"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
         .font-variation-settings-fill {
             font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        /* Estilos do Novo Card de Histórico */
+        .card-history {
+            position: relative;
+            padding-left: 16px !important;
+            transition: all 0.3s ease;
+        }
+        .card-history::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 4px;
+            bottom: 4px;
+            width: 4px;
+            border-radius: 10px;
+            background: currentColor;
+            opacity: 0.8;
+        }
+        .map-container-card {
+            height: 0;
+            overflow: hidden;
+            transition: height 0.3s ease-out;
+            border-radius: 12px;
+            margin-top: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .map-container-card.active {
+            height: 200px;
+            margin-bottom: 8px;
+        }
+        .edit-container-card {
+            height: 0;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 12px;
+            margin-top: 0;
+            background: rgba(13, 89, 242, 0.05);
+            border: 1px solid transparent;
+        }
+        .edit-container-card.active {
+            height: auto;
+            min-height: 160px;
+            margin-top: 12px;
+            margin-bottom: 8px;
+            padding: 16px;
+            border-color: rgba(13, 89, 242, 0.2);
+            background: rgba(13, 89, 242, 0.1);
         }
     </style>
     <title>Diário de Bordo | ChronoSync</title>
@@ -31,44 +80,32 @@
     </div>
 
     <main class="flex-1 w-full max-w-md p-6 space-y-6">
-        <!-- Ocorrências do Sistema Form -->
-        <section class="bg-white/5 border border-rose-500/20 rounded-2xl p-6 relative overflow-hidden mt-6 shadow-inner">
-            <div class="absolute top-0 right-0 p-2 opacity-10">
-                <span class="material-symbols-outlined text-6xl text-rose-500">warning</span>
-            </div>
-            <h3 class="text-rose-500 text-sm font-bold tracking-widest uppercase mb-2 flex items-center gap-2 relative z-10">
-                <span class="material-symbols-outlined text-sm">fact_check</span> Ocorrências do Sistema
-            </h3>
-            <p class="text-[10px] text-slate-500 mb-6 relative z-10">Atenção às pendências que exigem justificativa.</p>
-            
-            <div id="logs-container" class="space-y-4 relative z-10">
-                <p class="text-center text-slate-500 py-10 text-sm italic">Carregando ocorrências...</p>
-            </div>
-        </section>
 
         <!-- Nova Anotação Form -->
         <section class="bg-white/5 border border-primary/20 rounded-2xl p-6 relative overflow-hidden mt-10 shadow-inner">
             <div class="absolute top-0 right-0 p-2 opacity-10">
                 <span class="material-symbols-outlined text-6xl">edit_note</span>
             </div>
-            <h3 class="text-primary text-sm font-bold tracking-widest uppercase mb-4 flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                    <span class="material-symbols-outlined text-sm">add_box</span>
-                    <span id="titleAnotacao">REGISTRAR ATIVIDADE</span>
-                </div>
-                
-                <!-- Toggle Mode Selector (Melhoria de Acessibilidade e Clicagem) -->
-                <div class="flex bg-background-dark p-1 rounded-xl border border-white/10 shadow-lg">
+            <!-- Seletor de Modo e Título Centralizados -->
+            <div class="flex flex-col items-center gap-4 mb-6 pt-2">
+                <!-- Toggle Mode Selector -->
+                <div class="flex bg-background-dark p-1 rounded-2xl border border-white/10 shadow-2xl w-full max-w-[300px]">
                     <button type="button" id="btnModeAtividade" 
-                        class="flex-1 px-6 py-2.5 text-[11px] font-black uppercase tracking-wider rounded-lg bg-primary text-white transition-all shadow-lg">
+                        class="flex-1 px-4 py-2.5 text-[10px] font-black uppercase tracking-wider rounded-xl bg-primary text-white transition-all shadow-lg whitespace-nowrap">
                         Atividade
                     </button>
                     <button type="button" id="btnModeJustificativa" 
-                        class="flex-1 px-6 py-2.5 text-[11px] font-black uppercase tracking-wider rounded-lg text-slate-400 hover:text-white transition-all">
+                        class="flex-1 px-4 py-2.5 text-[10px] font-black uppercase tracking-wider rounded-xl text-slate-400 hover:text-white transition-all whitespace-nowrap">
                         Justificativa
                     </button>
                 </div>
-            </h3>
+
+                <!-- Título Dinâmico -->
+                <h3 class="text-primary text-[10px] font-black tracking-[0.3em] uppercase flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined text-base">add_box</span>
+                    <span id="titleAnotacao">REGISTRAR ATIVIDADE</span>
+                </h3>
+            </div>
             <div class="space-y-4" id="anotacaoForm">
                 <div class="hidden">
                     <input id="inputDataAnotacao" type="date" />
@@ -142,38 +179,12 @@
         </section>
     </main>
 
-    <!-- Modal de Justificativa/Leitura -->
-    <div id="modalResolver" class="fixed inset-0 bg-black/90 z-[100] hidden items-center justify-center p-6 backdrop-blur-md">
-        <div class="bg-background-dark border border-primary/30 rounded-3xl p-8 w-full max-w-sm space-y-6 shadow-2xl relative">
-            <div class="text-center space-y-2">
-                <div class="inline-flex items-center justify-center size-14 rounded-full bg-primary/20 text-primary mb-2">
-                    <span class="material-symbols-outlined text-3xl">fact_check</span>
-                </div>
-                <h3 class="text-lg font-black text-slate-100 uppercase italic leading-tight">Resolver Ocorrência</h3>
-            </div>
-
-            <div class="space-y-4">
-                <p id="modal-log-msg" class="text-xs text-slate-300 bg-white/5 p-3 rounded-lg border border-white/10"></p>
-                
-                <label class="block">
-                    <span class="text-[10px] font-black text-primary uppercase tracking-widest ml-1 mb-2 block">Deseja adicionar uma justificativa? (Opcional)</span>
-                    <textarea id="justificativaInput" rows="3" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm text-slate-100 placeholder:text-slate-600 focus:border-primary outline-none transition-all" placeholder="Explique o motivo do evento..."></textarea>
-                </label>
-            </div>
-
-            <div class="flex gap-3 pt-2">
-                <button onclick="fecharModal()" class="flex-1 py-3 rounded-2xl border border-white/10 text-[10px] font-black uppercase text-slate-400 hover:bg-white/5 transition-all">Cancelar</button>
-                <button border="0" id="btnSalvarResolucao" class="flex-1 py-3 rounded-2xl bg-primary text-white text-[10px] font-black uppercase shadow-lg shadow-primary/20 hover:bg-primary/80 transition-all">Marcar como Lido</button>
-            </div>
-        </div>
-    </div>
 
     <script type="module">
         import { supabase } from '../js/supabase-config.js';
         import { UI } from '../js/ui-utils.js';
 
         let targetId = null;
-        let selectedLogId = null;
 
         async function init() {
             UI.showLoader();
@@ -186,130 +197,10 @@
                 return;
             }
 
-            await loadLogs();
             await initAnotacoesLogic();
             UI.hideLoader();
         }
 
-        async function loadLogs() {
-            try {
-                const { data, error } = await supabase
-                    .from('diario_logs')
-                    .select('*')
-                    .eq('funcionario_id', targetId)
-                    .order('created_at', { ascending: false })
-                    .limit(50);
-
-                if (error) throw error;
-                renderLogs(data || []);
-            } catch (e) {
-                console.error(e);
-                UI.showToast('Erro ao carregar diário.', 'error');
-            }
-        }
-
-        function renderLogs(logs) {
-            const container = document.getElementById('logs-container');
-            if (logs.length === 0) {
-                container.innerHTML = `<div class="bg-white/5 border border-white/10 rounded-2xl p-8 text-center text-slate-500 text-xs italic">Nenhuma ocorrência registrada no diário.</div>`;
-                return;
-            }
-
-            container.innerHTML = logs.map(log => {
-                const isUnread = !log.lido_pelo_funcionario;
-                const dDate = new Date(log.data_hora);
-                const dateFmt = dDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' });
-                const timeFmt = dDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-
-                let coordHtml = '';
-                if (log.coordenadas) {
-                    coordHtml = `
-                    <a href="https://www.google.com/maps?q=${log.coordenadas}" target="_blank" class="mt-3 inline-flex items-center gap-1.5 text-[10px] font-bold text-primary hover:text-white transition-colors bg-primary/10 px-3 py-1.5 rounded-lg">
-                        <span class="material-symbols-outlined text-sm">location_on</span> Ver localização no Google Maps
-                    </a>`;
-                }
-
-                let justifHtml = '';
-                if (log.justificativa_colaborador) {
-                    justifHtml = `<div class="mt-3 bg-white/5 border border-white/5 p-3 rounded-lg text-xs text-slate-300 italic"><span class="text-primary font-bold mr-1">Sua Justificativa:</span> ${log.justificativa_colaborador}</div>`;
-                }
-
-                let actionHtml = '';
-                if (isUnread) {
-                    actionHtml = `
-                    <button onclick="abrirModal('${log.id}', '${encodeURIComponent(log.mensagem_padrao)}')" class="mt-4 w-full bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 border border-rose-500/30 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg flex items-center justify-center gap-2">
-                        <span class="material-symbols-outlined text-sm">warning</span> Resolver Pendência
-                    </button>`;
-                } else if (log.status_pendencia === 'pendente') {
-                    actionHtml = `
-                    <button onclick="abrirModal('${log.id}', '${encodeURIComponent(log.mensagem_padrao)}', '${encodeURIComponent(log.justificativa_colaborador || '')}')" class="mt-4 w-full bg-slate-500/10 hover:bg-slate-500/20 text-slate-400 border border-slate-500/30 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg flex items-center justify-center gap-2">
-                        <span class="material-symbols-outlined text-sm">edit</span> Editar Justificativa
-                    </button>`;
-                } else {
-                    actionHtml = `
-                    <div class="mt-4 w-full bg-emerald-500/5 text-emerald-500/70 border border-emerald-500/10 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2">
-                        <span class="material-symbols-outlined text-sm">gpp_good</span> Analisado - Não Editável
-                    </div>`;
-                }
-
-                return `
-                <div class="bg-white/5 border ${isUnread ? 'border-rose-500/50 shadow-lg shadow-rose-500/5' : 'border-white/10'} rounded-2xl p-5 relative overflow-hidden transition-all group hover:border-primary/30">
-                    ${isUnread ? '<div class="absolute top-0 right-0 bg-rose-500 text-white text-[8px] font-black uppercase tracking-widest px-3 py-1 rounded-bl-lg">Não Lido</div>' : ''}
-                    
-                    <div class="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">
-                        <span class="material-symbols-outlined text-sm">schedule</span> ${dateFmt} &bull; ${timeFmt}
-                    </div>
-                    
-                    <p class="text-sm font-medium text-slate-100 leading-snug">${log.mensagem_padrao}</p>
-                    
-                    ${coordHtml}
-                    ${justifHtml}
-                    ${actionHtml}
-                </div>`;
-            }).join('');
-        }
-
-        window.abrirModal = (id, b64msg, b64justif = '') => {
-            selectedLogId = id;
-            document.getElementById('modal-log-msg').innerText = decodeURIComponent(b64msg);
-            document.getElementById('justificativaInput').value = b64justif ? decodeURIComponent(b64justif) : '';
-            
-            const m = document.getElementById('modalResolver');
-            m.classList.remove('hidden');
-            m.classList.add('flex');
-            
-            document.getElementById('btnSalvarResolucao').innerText = b64justif ? 'Salvar Alteração' : 'Marcar como Lido';
-        };
-
-        window.fecharModal = () => {
-             const m = document.getElementById('modalResolver');
-             m.classList.add('hidden');
-             m.classList.remove('flex');
-             selectedLogId = null;
-        };
-
-        document.getElementById('btnSalvarResolucao').onclick = async () => {
-            if (!selectedLogId) return;
-            const jText = document.getElementById('justificativaInput').value.trim();
-
-            UI.showLoader();
-            try {
-                const payload = { lido_pelo_funcionario: true };
-                if (jText) payload.justificativa_colaborador = jText;
-
-                const { error } = await supabase.from('diario_logs').update(payload).eq('id', selectedLogId);
-                if (error) throw error;
-
-                UI.showToast('Ocorrência resolvida com sucesso!', 'success');
-                fecharModal();
-                await loadLogs();
-            } catch (e) {
-                console.error(e);
-                UI.showToast('Erro ao resolver ocorrência.', 'error');
-            } finally {
-                UI.hideLoader();
-            }
-        };
 
         // Botão de voltar unificado
         document.getElementById('btn-voltar').onclick = () => UI.voltarInicio();
@@ -348,7 +239,13 @@
                 btnJustificativa.classList.remove('bg-primary', 'text-white', 'shadow-lg');
                 btnJustificativa.classList.add('text-slate-400');
                 camposJustif.classList.add('hidden');
+                
+                // Atualizar Título e Cores
+                titleAnotacao.closest('h3').classList.remove('text-amber-500');
+                titleAnotacao.closest('h3').classList.add('text-primary');
+                titleAnotacao.previousElementSibling.innerText = 'add_box';
                 titleAnotacao.innerText = 'REGISTRAR ATIVIDADE';
+                
                 labelAtividade.innerText = `DESCRIÇÃO DA ATIVIDADE (${todayBR})`;
                 btnSalvar.innerHTML = '<span class="material-symbols-outlined text-sm">send</span> Enviar Anotação';
             };
@@ -360,7 +257,13 @@
                 btnAtividade.classList.remove('bg-primary', 'text-white', 'shadow-lg');
                 btnAtividade.classList.add('text-slate-400');
                 camposJustif.classList.remove('hidden');
+                
+                // Atualizar Título e Cores
+                titleAnotacao.closest('h3').classList.remove('text-primary');
+                titleAnotacao.closest('h3').classList.add('text-amber-500');
+                titleAnotacao.previousElementSibling.innerText = 'history_edu';
                 titleAnotacao.innerText = 'ENVIAR JUSTIFICATIVA';
+                
                 labelAtividade.innerText = `MOTIVO/EXPLICAÇÃO (${todayBR})`;
                 btnSalvar.innerHTML = '<span class="material-symbols-outlined text-sm">send</span> Enviar Justificativa';
             };
@@ -425,14 +328,42 @@
                     .select('*')
                     .eq('funcionario_id', targetId);
 
-                if (errAnot || errJust) throw (errAnot || errJust);
+                const { data: logs, error: errLogs } = await supabase
+                    .from('diario_logs')
+                    .select('*')
+                    .eq('funcionario_id', targetId);
+                
+                // 3. Buscar Comunicados (Gerais, Setoriais do meu setor, ou Individuais para mim)
+                const { data: user } = await supabase.from('funcionarios').select('setor_id').eq('id', targetId).single();
+                const mySectorId = user?.setor_id;
 
-                // 3. Unificar Dados
+                const { data: comunicados, error: errCom } = await supabase
+                    .from('comunicados')
+                    .select('*, remetente:funcionarios!remetente_id(nickname, nome_completo)')
+                    .or(`destinatario_id.eq.${targetId},tipo.eq.geral,setor_id.eq.${mySectorId || '00000000-0000-0000-0000-000000000000'}`);
+
+                if (errAnot || errJust || errLogs || errCom) throw (errAnot || errJust || errLogs || errCom);
+
+                // 4. Unificar Dados
                 allHistoryData = [
                     ...(anotacoes || []).map(a => ({ ...a, itemType: 'ATIVIDADE', data_item: a.data })),
-                    ...(justif || []).map(j => ({ ...j, itemType: 'JUSTIFICATIVA', data_item: j.data_incidente, conteudo: j.descricao }))
-                ].sort((a, b) => new Date(b.data_item) - new Date(a.data_item) || new Date(b.created_at) - new Date(a.created_at));
+                    ...(justif || []).map(j => ({ ...j, itemType: 'JUSTIFICATIVA', data_item: j.data_incidente, conteudo: j.descricao })),
+                    ...(comunicados || []).map(c => ({ 
+                        ...c, 
+                        itemType: 'COMUNICADO', 
+                        data_item: c.created_at.split('T')[0], 
+                        conteudo: c.conteudo,
+                        tipo_divergencia: c.subtipo === 'hora_extra' ? 'SOLICITAÇÃO DE HORA EXTRA' : 'COMUNICADO OFICIAL'
+                    })),
+                    ...(logs || []).map(l => ({ 
+                        ...l, 
+                        itemType: 'SISTEMA', 
+                        data_item: l.data_hora.split('T')[0], 
+                        conteudo: l.mensagem_padrao
+                    }))
+                ].sort((a, b) => (new Date(b.data_item) - new Date(a.data_item)) || (new Date(b.created_at) - new Date(a.created_at)));
 
+                if (labelTotalAnotacoes) labelTotalAnotacoes.innerText = `Total: ${allHistoryData.length} registros`;
                 renderUnifiedHistory();
 
             } catch (err) {
@@ -511,48 +442,160 @@
                     <div class="p-4 space-y-5">
                         ${items.map(item => {
                             const isJustif = item.itemType === 'JUSTIFICATIVA';
+                            const isSystem = item.itemType === 'SISTEMA';
                             const statusMap = {
                                 'pendente': 'bg-amber-500/10 text-amber-500 border-amber-500/20',
+                                'aprovado': 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
+                                'rejeitado': 'bg-rose-500/10 text-rose-500 border-rose-500/20',
                                 'aprovada': 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
                                 'rejeitada': 'bg-rose-500/10 text-rose-500 border-rose-500/20'
                             };
-                            const statusClass = isJustif ? (statusMap[item.status.toLowerCase()] || statusMap['pendente']) : '';
+
+                            let statusClass = '';
+                            let statusLabel = '';
                             
+                            if (isJustif) {
+                                statusClass = statusMap[item.status?.toLowerCase()] || statusMap['pendente'];
+                                statusLabel = item.status?.toUpperCase() || 'PENDENTE';
+                            } else if (isSystem) {
+                                statusClass = statusMap[item.status_pendencia?.toLowerCase()] || statusMap['pendente'];
+                                statusLabel = item.status_pendencia?.toUpperCase() || 'PENDENTE';
+                            } else if (item.itemType === 'COMUNICADO') {
+                                statusClass = item.lido ? statusMap['aprovado'] : statusMap['pendente'];
+                                statusLabel = item.lido ? 'LIDO' : 'NOVO';
+                            }
+                            
+                            // Mapeamento de Cores e Títulos Refinado
+                            let colorClass = 'text-primary';
+                            let title = 'REGISTRO DE ATIVIDADE';
+
+                            if (isJustif) {
+                                colorClass = 'text-orange-500';
+                                title = item.tipo_divergencia || 'JUSTIFICATIVA DE INCIDENTE';
+                            } else if (item.itemType === 'COMUNICADO') {
+                                if (item.subtipo === 'hora_extra') {
+                                    colorClass = 'text-amber-500';
+                                    title = 'SOLICITAÇÃO DE HORA EXTRA';
+                                } else {
+                                    colorClass = 'text-emerald-500';
+                                    title = 'COMUNICADO OFICIAL';
+                                }
+                            } else if (isSystem) {
+                                const type = item.tipo || '';
+                                if (type === 'gps_pulse') {
+                                    colorClass = 'text-rose-400/90';
+                                    title = 'CHECK-POINT DE LOCALIZAÇÃO (PULSO)';
+                                } else if (type === 'gps_hora') {
+                                    colorClass = 'text-rose-300/80';
+                                    title = 'RASTREIO DE REGIME EXTERNO';
+                                } else if (type === 'geofence_out') {
+                                    colorClass = 'text-rose-500';
+                                    title = 'QUEBRA DE PERÍMETRO (SAÍDA)';
+                                } else if (type === 'geofence_in') {
+                                    colorClass = 'text-rose-500';
+                                    title = 'QUEBRA DE PERÍMETRO (ENTRADA)';
+                                } else if (type === 'ponto_fora_raio') {
+                                    colorClass = 'text-rose-600 font-bold';
+                                    title = 'SOLICITAÇÃO DE PONTO FORA DO RAIO';
+                                } else {
+                                    colorClass = 'text-rose-500';
+                                    title = item.tipo_divergencia || 'OCORRÊNCIA DE SISTEMA';
+                                }
+                            }
+
+                            // Tradução de mensagens técnicas para explicações claras
+                            const messageDict = {
+                                'Pulso de localização automática': 'Localização registrada automaticamente pelo sistema para validar sua presença em serviço durante a jornada.',
+                                'Log Automático de Rastreio (Regime Externo)': 'Registro automático de localização para fins de auditoria em jornada de trabalho sob regime externo.',
+                                'Funcionário saiu do local de trabalho': 'O sistema detectou que você se ausentou do raio de alcance permitido para o seu local de escala/setor designado.',
+                                'Funcionário retornou ao local de trabalho': 'O sistema detectou o seu retorno para dentro do raio de alcance permitido do seu local de escala/setor designado.',
+                                'Solicitação de ponto fora do raio': 'Sua tentativa de registro de ponto foi bloqueada ou sinalizada por estar fora do raio de geofence permitido para o seu setor.'
+                            };
+                            const displayConteudo = messageDict[item.conteudo] || item.conteudo;
+
                             return `
-                            <div class="space-y-3 border-b border-white/5 pb-5 last:border-0 last:pb-0 group">
-                                <div class="flex justify-between items-center">
-                                    <div class="flex items-center gap-2">
-                                        <span class="material-symbols-outlined text-sm ${isJustif ? 'text-amber-500' : 'text-primary'}">${isJustif ? 'history_edu' : 'sticky_note_2'}</span>
-                                        <span class="text-[9px] font-black uppercase tracking-widest ${isJustif ? 'text-amber-500/80' : 'text-primary/80'}">
-                                            ${isJustif ? (item.tipo_divergencia || 'Justificativa') : 'Anotação de Atividade'}
-                                        </span>
+                            <div class="card-history ${colorClass} py-2 mb-6 last:mb-0 group">
+                                <div class="flex justify-between items-start mb-2">
+                                    <div class="flex flex-col gap-1">
+                                        <h3 class="text-[11px] font-black uppercase tracking-widest ${colorClass}">${title}</h3>
+                                        <p class="text-slate-300 text-sm italic leading-relaxed">"${displayConteudo}"</p>
                                     </div>
-                                    ${isJustif ? `<span class="${statusClass} text-[10px] px-3 py-1 rounded-full border border-current font-black uppercase tracking-wider">${item.status}</span>` : ''}
+                                    ${(isJustif || isSystem || item.itemType === 'COMUNICADO') ? `
+                                        <span class="${statusClass} text-[8px] px-2 py-0.5 rounded-full border border-current font-black uppercase tracking-widest shrink-0 mt-1">${statusLabel}</span>
+                                    ` : ''}
                                 </div>
                                 
-                                <div class="flex justify-between items-start gap-3">
-                                    <p class="text-slate-300 text-sm italic leading-relaxed flex-1">"${item.conteudo}"</p>
-                                    <div class="flex gap-1 opacity-40 group-hover:opacity-100 transition-opacity">
-                                        ${!isJustif ? `
-                                        <button onclick="window.editarAnotacao('${item.id}', \`${item.conteudo.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)" class="p-1.5 bg-white/5 text-slate-400 hover:text-primary rounded-lg">
-                                            <span class="material-symbols-outlined text-sm">edit</span>
-                                        </button>
-                                        <button onclick="window.excluirAnotacao('${item.id}')" class="p-1.5 bg-white/5 text-slate-400 hover:text-rose-500 rounded-lg">
-                                            <span class="material-symbols-outlined text-sm">delete</span>
-                                        </button>
-                                        ` : (item.status === 'pendente' ? `
-                                        <button onclick="window.excluirJustificativa('${item.id}')" class="p-1.5 bg-white/5 text-slate-400 hover:text-rose-500 rounded-lg">
-                                            <span class="material-symbols-outlined text-sm">delete</span>
-                                        </button>
-                                        ` : '')}
-                                    </div>
+                                <div class="flex flex-wrap gap-2 mt-3 overflow-hidden">
+                                     <!-- Ações de Edição/Exclusão (Só se for de hoje/recente) -->
+                                     <div class="flex gap-2">
+                                        ${(() => {
+                                            if (item.itemType === 'ATIVIDADE' && (new Date() - new Date(item.created_at) < 24 * 60 * 60 * 1000)) {
+                                                return `
+                                                    <button onclick="window.toggleEditCard('${item.id}', 'atividade', \`${item.conteudo.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)" 
+                                                            class="p-2 bg-white/5 border border-white/10 rounded-lg text-slate-400 hover:text-primary hover:border-primary/30 transition-all shadow-sm"
+                                                            title="Editar">
+                                                        <span class="material-symbols-outlined text-base">edit</span>
+                                                    </button>
+                                                    <button onclick="window.excluirAnotacao('${item.id}')" 
+                                                            class="p-2 bg-white/5 border border-white/10 rounded-lg text-slate-400 hover:text-rose-500 hover:border-rose-500/30 transition-all shadow-sm"
+                                                            title="Excluir">
+                                                        <span class="material-symbols-outlined text-base">delete</span>
+                                                    </button>`;
+                                            } else if (isSystem && item.status_pendencia === 'pendente' && (new Date() - new Date(item.created_at) < 24 * 60 * 60 * 1000)) {
+                                                return `
+                                                    <button onclick="window.toggleEditCard('${item.id}', '${item.tipo_raw}', \`${(item.justificativa_colaborador || '').replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)" 
+                                                            class="px-3 py-1.5 bg-primary/10 border border-primary/20 rounded-lg text-primary hover:bg-primary/20 transition-all flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest"
+                                                            title="Justificar">
+                                                        <span class="material-symbols-outlined text-sm">edit_note</span>
+                                                        <span>Justificar</span>
+                                                    </button>`;
+                                            } else if (item.itemType === 'JUSTIFICATIVA' && item.status === 'pendente') {
+                                                return `
+                                                    <button onclick="window.excluirJustificativa('${item.id}')" 
+                                                            class="p-2 bg-white/5 border border-white/10 rounded-lg text-slate-400 hover:text-rose-500 hover:border-rose-500/30 transition-all"
+                                                            title="Excluir">
+                                                        <span class="material-symbols-outlined text-base">delete</span>
+                                                    </button>`;
+                                            } else if (item.itemType === 'COMUNICADO' && !item.lido) {
+                                                return `
+                                                    <button onclick="window.marcarComunicadoLido('${item.id}')" 
+                                                            class="px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-500 hover:bg-emerald-500/20 transition-all flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest">
+                                                        <span class="material-symbols-outlined text-sm">done_all</span>
+                                                        <span>Lido</span>
+                                                    </button>`;
+                                            }
+                                            return '';
+                                        })()}
+                                     </div>
+
+                                     <!-- Ações de Localização/Evidência -->
+                                     <div class="flex gap-2">
+                                        ${item.evidencia_url ? `
+                                            <a href="${item.evidencia_url}" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded-lg text-amber-500 hover:bg-amber-500/20 transition-all text-[9px] font-black uppercase tracking-widest">
+                                                <span class="material-symbols-outlined text-sm">attach_file</span>
+                                                <span>Ver Arquivo</span>
+                                            </a>
+                                        ` : ''}
+                                        ${item.coordenadas ? `
+                                            <button id="btn-map-${item.id}" onclick="window.toggleMapaCard('${item.id}', '${item.coordenadas}')" 
+                                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/10 border border-rose-500/20 rounded-lg text-rose-500 hover:bg-rose-500/20 transition-all text-[9px] font-black uppercase tracking-widest shadow-lg shadow-rose-500/5">
+                                                <span id="icon-map-${item.id}" class="material-symbols-outlined text-sm">map</span>
+                                                <span id="txt-map-${item.id}">Ver Localização no Mapa</span>
+                                            </button>
+                                        ` : ''}
+                                     </div>
                                 </div>
 
-                                ${item.evidencia_url ? `
-                                <a href="${item.evidencia_url}" target="_blank" class="inline-flex items-center gap-2 px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 rounded-lg text-amber-500 hover:bg-amber-500/20 transition-all">
-                                    <span class="material-symbols-outlined text-sm">attach_file</span>
-                                    <span class="text-[9px] font-black uppercase tracking-widest">Ver Comprovante</span>
-                                </a>
+                                <!-- Container do Mapa (Oculto por padrão) -->
+                                <div id="map-card-${item.id}" class="map-container-card"></div>
+
+                                <!-- Container de Edição In-Card -->
+                                <div id="edit-card-${item.id}" class="edit-container-card"></div>
+
+                                ${item.justificativa_colaborador ? `
+                                <div class="mt-3 bg-white/5 border border-white/5 p-3 rounded-lg text-[11px] text-slate-400 italic">
+                                    <span class="text-primary font-bold mr-1 not-italic tracking-tighter uppercase">Justificativa Enviada:</span> ${item.justificativa_colaborador}
+                                </div>
                                 ` : ''}
                             </div>`;
                         }).join('')}
@@ -624,7 +667,6 @@
                 document.getElementById('btnAnexarEvidencia').classList.add('border-primary/40', 'text-slate-400');
                 
                 await loadUnifiedHistory();
-
             } catch (err) {
                 console.error(err);
                 UI.showToast('Erro ao realizar registro.', 'error');
@@ -660,6 +702,37 @@
             window.scrollTo({ top: inputConteudo.getBoundingClientRect().top + window.scrollY - 100, behavior: 'smooth' });
         };
 
+        window.justificarLogSistema = async (id, currentJustif) => {
+            const novaJustificativa = prompt("Insira sua justificativa para esta ocorrência:", currentJustif);
+            
+            if (novaJustificativa === null) return; // Cancelou
+            if (novaJustificativa.trim() === "") {
+                UI.showToast('A justificativa não pode ser vazia.', 'warning');
+                return;
+            }
+
+            UI.showLoader();
+            try {
+                const { error } = await supabase
+                    .from('diario_logs')
+                    .update({ 
+                        justificativa_colaborador: novaJustificativa.trim(),
+                        status_pendencia: 'pendente' // Garante que continua pendente para análise
+                    })
+                    .eq('id', id);
+
+                if (error) throw error;
+
+                UI.showToast('Justificativa atualizada!', 'success');
+                await loadUnifiedHistory();
+            } catch (err) {
+                console.error(err);
+                UI.showToast('Erro ao atualizar justificativa.', 'error');
+            } finally {
+                UI.hideLoader();
+            }
+        };
+
         window.excluirAnotacao = async (id) => {
             if (!confirm('Deseja excluir permanentemente esta anotação?')) return;
 
@@ -677,6 +750,133 @@
             } catch (err) {
                 console.error(err);
                 UI.showToast('Erro ao excluir anotação.', 'error');
+            } finally {
+                UI.hideLoader();
+            }
+        };
+
+        window.marcarComunicadoLido = async (id) => {
+            UI.showLoader();
+            try {
+                const { error } = await supabase
+                    .from('comunicados')
+                    .update({ lido: true })
+                    .eq('id', id);
+
+                if (error) throw error;
+
+                UI.showToast('Comunicado marcado como lido!', 'success');
+                await loadUnifiedHistory();
+            } catch (err) {
+                console.error(err);
+                UI.showToast('Erro ao atualizar comunicado.', 'error');
+            } finally {
+                UI.hideLoader();
+            }
+        };
+
+        const mapInstances = {};
+        window.toggleMapaCard = (id, coordenadas) => {
+            const container = document.getElementById(`map-card-${id}`);
+            const btnTxt = document.getElementById(`txt-map-${id}`);
+            const btnIcon = document.getElementById(`icon-map-${id}`);
+            if (!container) return;
+
+            const isActive = container.classList.toggle('active');
+            
+            if (isActive) {
+                if (btnTxt) btnTxt.innerText = 'Fechar Visualização';
+                if (btnIcon) btnIcon.innerText = 'close';
+                
+                // Pequeno delay para a animação do CSS começar
+                setTimeout(() => {
+                    if (!mapInstances[id]) {
+                        const [lat, lng] = coordenadas.split(',').map(Number);
+                        const map = L.map(`map-card-${id}`, {
+                            zoomControl: false,
+                            attributionControl: false
+                        }).setView([lat, lng], 16);
+
+                        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
+                        
+                        // Icone personalizado para o marcador
+                        const pinIcon = L.divIcon({
+                            html: `<span class="material-symbols-outlined text-rose-500 font-variation-settings-fill" style="font-size: 32px; filter: drop-shadow(0 0 5px rgba(244,63,94,0.5))">location_on</span>`,
+                            className: 'custom-div-icon',
+                            iconSize: [32, 32],
+                            iconAnchor: [16, 32]
+                        });
+
+                        L.marker([lat, lng], {icon: pinIcon}).addTo(map);
+                        mapInstances[id] = map;
+                    } else {
+                        mapInstances[id].invalidateSize();
+                    }
+                }, 300);
+            } else {
+                if (btnTxt) btnTxt.innerText = 'Ver Localização no Mapa';
+                if (btnIcon) btnIcon.innerText = 'map';
+            }
+        };
+
+        window.toggleEditCard = (id, type, currentContent) => {
+            const container = document.getElementById(`edit-card-${id}`);
+            if (!container) return;
+
+            const isActive = container.classList.toggle('active');
+            if (isActive) {
+                container.innerHTML = `
+                    <div class="space-y-3">
+                        <label class="text-[9px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                            <span class="material-symbols-outlined text-sm">edit_note</span>
+                            ${type === 'atividade' ? 'Editar Atividade' : 'Responder Justificativa'}
+                        </label>
+                        <textarea id="edit-text-${id}" 
+                            class="w-full bg-background-dark border border-white/10 rounded-xl py-3 px-4 text-xs text-slate-100 placeholder:text-slate-600 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                            rows="4">${currentContent}</textarea>
+                        <div class="flex gap-2">
+                            <button onclick="window.salvarEdicaoCard('${id}', '${type}')" 
+                                class="flex-1 bg-primary text-white text-[9px] font-black py-3 rounded-lg uppercase tracking-widest transition-all hover:bg-primary/80">
+                                Salvar Alterações
+                            </button>
+                            <button onclick="window.toggleEditCard('${id}')" 
+                                class="px-4 bg-white/5 border border-white/10 text-slate-400 text-[9px] font-black py-3 rounded-lg uppercase tracking-widest transition-all hover:text-white">
+                                Cancelar
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = '';
+            }
+        };
+
+        window.salvarEdicaoCard = async (id, type) => {
+            const newContent = document.getElementById(`edit-text-${id}`).value;
+            if (!newContent.trim()) {
+                UI.showToast('O conteúdo não pode estar vazio.', 'warning');
+                return;
+            }
+
+            UI.showLoader();
+            try {
+                let error;
+                if (type === 'atividade') {
+                    const res = await supabase.from('anotacoes').update({ conteudo: newContent }).eq('id', id);
+                    error = res.error;
+                } else {
+                    const res = await supabase.from('diario_logs').update({ justificativa_colaborador: newContent, status_pendencia: 'em_analise' }).eq('id', id);
+                    error = res.error;
+                }
+
+                if (error) throw error;
+
+                UI.showToast('Alteração salva com sucesso!', 'success');
+                window.toggleEditCard(id);
+                await loadUnifiedHistory();
+            } catch (err) {
+                console.error(err);
+                UI.showToast('Erro ao salvar alteração.', 'error');
             } finally {
                 UI.hideLoader();
             }

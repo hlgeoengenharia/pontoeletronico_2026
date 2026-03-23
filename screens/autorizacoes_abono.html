@@ -92,25 +92,33 @@
             .select('*, funcionarios!inner(nome_completo, matricula, setor_id, funcao)')
             .eq('status_validacao', 'pendente');
 
-          if (user.role === 'gestor' || user.role === 'manager') {
+          // 3. Buscar Logs de Sistema (Divergências GPS no Diário)
+          let queryLogs = supabase
+            .from('diario_logs')
+            .select('*, funcionarios!inner(nome_completo, matricula, setor_id, funcao)')
+            .eq('status_pendencia', 'pendente');
+
+          if (user.role.toLowerCase() === 'gestor' || user.role.toLowerCase() === 'manager') {
             if (user.setorId) {
               queryJust = queryJust.eq('funcionarios.setor_id', user.setorId);
               queryGps = queryGps.eq('funcionarios.setor_id', user.setorId);
+              queryLogs = queryLogs.eq('funcionarios.setor_id', user.setorId);
             }
           }
 
-          const [{ data: dataJust, error: errJust }, { data: dataGps, error: errGps }] = await Promise.all([
+          const [{ data: dataJust, error: errJust }, { data: dataGps, error: errGps }, { data: dataLogs, error: errLogs }] = await Promise.all([
             queryJust,
-            queryGps
+            queryGps,
+            queryLogs
           ]);
 
-          if (errJust) throw errJust;
-          if (errGps) throw errGps;
+          if (errJust || errGps || errLogs) throw (errJust || errGps || errLogs);
 
           // Normalizar e Unificar
           const allPendencies = [
             ...(dataJust || []).map(j => ({ ...j, itemType: 'ABONO' })),
-            ...(dataGps || []).map(g => ({ ...g, itemType: 'GPS', data_incidente: g.data_hora, tipo_divergencia: 'Divergência de GPS', descricao: g.justificativa_usuario }))
+            ...(dataGps || []).map(g => ({ ...g, itemType: 'GPS', data_incidente: g.data_hora, tipo_divergencia: 'SOLICITAÇÃO DE PONTO FORA DO RAIO', descricao: g.justificativa_usuario })),
+            ...(dataLogs || []).map(l => ({ ...l, itemType: 'SISTEMA', data_incidente: l.data_hora, tipo_divergencia: 'SOLICITAÇÃO DE PONTO FORA DO RAIO', descricao: l.justificativa_colaborador }))
           ].sort((a, b) => new Date(b.data_incidente || b.created_at) - new Date(a.data_incidente || a.created_at));
 
           if (allPendencies.length === 0) {
@@ -146,7 +154,7 @@
                                     <h2 class="text-slate-100 font-bold text-base">${item.funcionarios.nome_completo}</h2>
                                     <p class="text-primary text-[11px] font-bold uppercase tracking-wider mb-0.5">${item.funcionarios.funcao || 'N/A'}</p>
                                     <div class="mt-1">
-                                        <span class="text-[10px] px-2 py-0.5 rounded ${badgeClass} border font-bold uppercase inline-block">${isGps ? 'GPS PENDENTE' : 'ABONO PENDENTE'}</span>
+                                        <span class="text-[10px] px-2 py-0.5 rounded ${badgeClass} border font-bold uppercase inline-block">PENDENTE</span>
                                     </div>
                                 </div>
                             </div>
@@ -160,9 +168,19 @@
                             </p>
                         </div>
 
-                        <div class="bg-black/30 rounded-lg p-3.5 mb-5 border-l-4 ${isGps ? 'border-orange-500' : 'border-amber-500'} font-medium">
-                            <p class="text-slate-200 text-xs leading-relaxed">MOTIVO: ${item.tipo_divergencia.toUpperCase()}</p>
-                            <p class="text-slate-400 text-[10px] mt-2 italic leading-relaxed">${item.descricao || (isGps ? 'Batida realizada fora do raio permitido.' : 'Sem descrição detalhada.')}</p>
+                        <div class="bg-black/30 rounded-lg p-3.5 mb-5 border-l-4 ${isGps || item.itemType === 'SISTEMA' ? 'border-rose-500' : 'border-amber-500'} font-medium">
+                            <p class="text-slate-200 text-xs leading-relaxed font-bold">${item.tipo_divergencia.toUpperCase()}</p>
+                            <p class="text-slate-400 text-[10px] mt-2 italic leading-relaxed">${item.descricao || (isGps || item.itemType === 'SISTEMA' ? 'Batida realizada fora do raio permitido.' : 'Sem descrição detalhada.')}</p>
+                            
+                            ${item.coordenadas || (item.latitude && item.longitude) ? `
+                            <button onclick="toggleMap('${item.id}', '${item.coordenadas || (item.latitude + ',' + item.longitude)}', this)" class="mt-4 inline-flex items-center gap-2 px-3 py-1.5 bg-rose-500/10 border border-rose-500/20 rounded-lg text-rose-500 hover:bg-rose-500/20 transition-all font-black">
+                                <span class="material-symbols-outlined text-sm">map</span>
+                                <span class="text-[9px] uppercase tracking-widest label-map">Ver Localização no Mapa</span>
+                            </button>
+                            <div id="map-container-${item.id}" class="hidden mt-4 w-full h-64 rounded-xl overflow-hidden border border-white/10 shadow-2xl animate-in zoom-in-95 duration-500">
+                                <iframe id="iframe-map-${item.id}" width="100%" height="100%" frameborder="0" style="border:0; filter: invert(90%) hue-rotate(180deg) brightness(0.9) contrast(1.2);" allowfullscreen></iframe>
+                            </div>
+                            ` : ''}
                         </div>
 
                         <div class="grid grid-cols-2 gap-2.5">
@@ -171,8 +189,8 @@
                                 <span class="material-symbols-outlined text-sm">block</span> REJEITAR
                             </button>
                             <button onclick="processarPendencia('${item.id}', 'aprovado', '${item.itemType}')"
-                                class="flex items-center justify-center gap-1.5 h-11 rounded-lg bg-primary hover:bg-primary/90 text-white text-[10px] font-bold transition-all shadow-[0_4px_12px_rgba(13,89,242,0.3)]">
-                                <span class="material-symbols-outlined text-sm">verified</span> ${isGps ? 'VALIDAR GPS' : 'ABONAR'}
+                                class="flex items-center justify-center gap-1.5 h-11 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-bold transition-all shadow-[0_4px_12px_rgba(16,185,129,0.3)]">
+                                <span class="material-symbols-outlined text-sm">verified</span> ABONAR
                             </button>
                         </div>
                     </div>
@@ -189,7 +207,10 @@
         UI.showLoader();
         try {
           let error;
-          if (type === 'ABONO') {
+          if (type === 'SISTEMA') {
+            const result = await supabase.from('diario_logs').update({ status_pendencia: status }).eq('id', id);
+            error = result.error;
+          } else if (type === 'ABONO') {
             const result = await supabase.from('justificativas').update({ status: status }).eq('id', id);
             error = result.error;
           } else {
@@ -207,6 +228,34 @@
         } finally {
           UI.hideLoader();
         }
+      };
+      
+      window.toggleMap = (id, coords, btn) => {
+          const container = document.getElementById(`map-container-${id}`);
+          const iframe = document.getElementById(`iframe-map-${id}`);
+          const label = btn.querySelector('.label-map');
+          const isHidden = container.classList.contains('hidden');
+
+          if (isHidden) {
+              // Expandir
+              container.classList.remove('hidden');
+              container.classList.add('block');
+              label.innerText = 'Recolher Mapa';
+              btn.classList.add('bg-rose-500', 'text-white', 'border-rose-500');
+              btn.classList.remove('bg-rose-500/10', 'text-rose-500', 'border-rose-500/20');
+              
+              const mapUrl = `https://maps.google.com/maps?q=${coords}&z=16&output=embed`;
+              if (iframe.src !== mapUrl) {
+                  iframe.src = mapUrl;
+              }
+          } else {
+              // Recolher
+              container.classList.add('hidden');
+              container.classList.remove('block');
+              label.innerText = 'Ver Localização no Mapa';
+              btn.classList.remove('bg-rose-500', 'text-white', 'border-rose-500');
+              btn.classList.add('bg-rose-500/10', 'text-rose-500', 'border-rose-500/20');
+          }
       };
 
       loadJustificativas();

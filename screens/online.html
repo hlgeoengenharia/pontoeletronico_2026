@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html class="dark" lang="pt-BR">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>Monitoramento Online - Admin Console</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap"
+    rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+    rel="stylesheet" />
+  <!-- Leaflet Map CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="../js/theme.js?v=1.0"></script>
+  <style>
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+      overflow: hidden;
+    }
+
+    #map {
+      height: 100vh;
+      width: 100vw;
+      z-index: 1;
+    }
+
+    .leaflet-container {
+      background: #101622 !important;
+    }
+
+    .glass-panel {
+      background: rgba(16, 22, 34, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(13, 89, 242, 0.2);
+    }
+
+    .neon-border {
+      box-shadow: 0 0 15px rgba(13, 89, 242, 0.3);
+    }
+
+    /* Custom Scrollbar */
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(13, 89, 242, 0.5);
+      border-radius: 10px;
+    }
+
+    /* Floating UI Elements */
+    .floating-ui {
+      position: fixed;
+      z-index: 1000;
+    }
+
+    .menu-lateral {
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 340px;
+      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 1050;
+    }
+
+    .menu-lateral.collapsed {
+      transform: translateX(-100%);
+    }
+
+    .btn-toggle {
+      position: fixed;
+      top: 24px;
+      left: 24px;
+      z-index: 1100;
+      transition: all 0.4s ease;
+    }
+
+    .btn-toggle.active {
+      left: 360px;
+    }
+
+    /* Status Markers */
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .status-online { background-color: #10B981; box-shadow: 0 0 8px #10B981; }
+    .status-offline { background-color: #EF4444; box-shadow: 0 0 8px #EF4444; }
+
+    /* Popups */
+    .leaflet-popup-content-wrapper {
+        background: rgba(16, 22, 34, 0.95) !important;
+        color: white !important;
+        border: 1px solid rgba(13, 89, 242, 0.3);
+        border-radius: 12px !important;
+        backdrop-filter: blur(8px);
+    }
+    .leaflet-popup-tip {
+        background: rgba(16, 22, 34, 0.95) !important;
+        border: 1px solid rgba(13, 89, 242, 0.3);
+    }
+
+    /* Custom Pin Styles */
+    .pin-container {
+      width: 50px;
+      height: 60px;
+      position: relative;
+      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4));
+    }
+    
+    .pin-drop {
+      width: 50px;
+      height: 50px;
+      background: #101622;
+      border: 2px solid #0d59f2;
+      border-radius: 50% 50% 50% 0;
+      transform: rotate(-45deg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .pin-drop::after {
+        content: '';
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        background: inherit;
+        border-right: 2px solid inherit;
+        border-bottom: 2px solid inherit;
+        bottom: -5px;
+        right: -5px;
+        display: none;
+    }
+
+    /* Histórico de Cards Padronizados */
+    .card-history {
+        position: relative;
+        padding-left: 12px;
+        transition: all 0.3s ease;
+    }
+    .card-history::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        border-radius: 4px;
+        background: currentColor;
+        box-shadow: 0 0 10px currentColor;
+        opacity: 0.8;
+    }
+    .card-history.text-primary::before { background: #0d59f2; }
+    .card-history.text-amber-500::before { background: #f59e0b; }
+    .card-history.text-emerald-500::before { background: #10b981; }
+    .card-history.text-orange-500::before { background: #f97316; }
+    .card-history.text-rose-500::before { background: #f43f5e; }
+
+    /* Popups Responsivos */
+    .leaflet-popup-content-wrapper {
+        min-width: 320px !important;
+        max-width: 380px !important;
+        padding: 4px !important;
+    }
+    
+    .leaflet-popup-content {
+        margin: 12px 16px !important;
+        line-height: 1.4 !important;
+    }
+    
+    @media (max-width: 640px) {
+        .leaflet-popup-content-wrapper {
+            min-width: 280px !important;
+            max-width: 320px !important;
+        }
+        .btn-touch {
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    }
+    
+    .pin-content {
+      transform: rotate(45deg);
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .pin-badge {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      background: #10B981;
+      color: white;
+      font-size: 9px;
+      font-weight: 900;
+      padding: 2px 6px;
+      border-radius: 20px;
+      border: 2px solid #101622;
+      z-index: 10;
+    }
+
+    .pin-employee {
+        border-color: var(--status-color);
+    }
+    
+    .pin-employee img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    /* Modal de Comunicado */
+    #modal-comunicado {
+      z-index: 2000;
+    }
+  </style>
+</head>
+
+<body class="bg-background-dark text-slate-100 min-h-screen">
+
+  <!-- Mapa Fullscreen -->
+  <div id="map"></div>
+
+  <!-- Botão de Menu (Hamburguer) -->
+  <button id="btn-toggle-menu" class="btn-toggle size-12 glass-panel rounded-xl flex items-center justify-center text-primary hover:bg-primary/10 transition-all border border-primary/30 shadow-2xl group">
+    <span class="material-symbols-outlined group-hover:scale-110 transition-transform">menu</span>
+  </button>
+
+  <!-- Menu Lateral -->
+  <aside id="menu-lateral" class="floating-ui menu-lateral glass-panel flex flex-col overflow-hidden shadow-2xl border-r border-primary/20 collapsed">
+    <!-- Header Menu -->
+    <div class="p-6 border-b border-white/5 bg-primary/5">
+        <div class="flex items-center gap-3 mb-4">
+            <span class="material-symbols-outlined text-primary text-3xl">satellite_alt</span>
+            <div>
+                <h2 class="text-sm font-black tracking-widest uppercase">Rede Neural</h2>
+                <p class="text-[9px] text-slate-500 font-bold uppercase tracking-tight">Monitoramento em Tempo Real</p>
+            </div>
+        </div>
+        <!-- Busca Rápida -->
+        <div class="relative">
+            <input id="search-online" type="text" placeholder="Filtrar setor ou funcionário..." 
+                class="w-full bg-background-dark/50 border border-primary/20 rounded-lg py-2 px-9 text-[10px] font-bold uppercase tracking-widest focus:ring-1 focus:ring-primary outline-none transition-all placeholder:text-slate-600">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-primary opacity-40 text-sm">search</span>
+        </div>
+    </div>
+
+    <!-- Lista de Setores (Accordion-like) -->
+    <div id="lista-setores-online" class="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-4">
+        <!-- Loader inicial -->
+        <div class="flex flex-col items-center justify-center py-10 opacity-30">
+            <span class="material-symbols-outlined animate-spin mb-2">sync</span>
+            <p class="text-[9px] font-bold uppercase tracking-widest">Sincronizando Dados...</p>
+        </div>
+    </div>
+
+    <!-- Botão de Comunicado Geral -->
+    <div class="p-4 bg-background-dark/50 border-t border-white/5">
+        <button onclick="abrirModalComunicado('geral')" class="w-full py-3 bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined text-sm">campaign</span> Comunicado Geral
+        </button>
+    </div>
+  </aside>
+
+  <!-- Botão de Voltar -->
+  <div class="floating-ui top-6 right-6 flex gap-3">
+    <div id="status-rede" class="px-4 py-2 glass-panel rounded-xl flex items-center gap-2 border border-emerald-500/20 shadow-lg">
+        <span class="status-dot status-online"></span>
+        <span class="text-[9px] font-black uppercase tracking-widest text-emerald-500">Fluxo Estável</span>
+    </div>
+    <button onclick="window.location.href='painel_admin.html'" class="size-12 glass-panel rounded-xl flex items-center justify-center text-slate-400 hover:text-white transition-all border border-white/10 shadow-lg">
+      <span class="material-symbols-outlined">close</span>
+    </button>
+  </div>
+
+  <!-- Modal de Comunicado (CRUD Card Style) -->
+  <div id="modal-comunicado" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center p-6 transition-all duration-300">
+      <div class="glass-panel w-full max-w-md rounded-3xl p-8 relative overflow-hidden neon-border">
+          <div class="absolute top-0 left-0 w-full h-1 bg-primary"></div>
+          
+          <div class="flex justify-between items-center mb-6">
+              <div class="flex items-center gap-3">
+                  <span id="label-tipo-icon" class="material-symbols-outlined text-primary text-3xl">sms</span>
+                  <div>
+                      <h3 class="text-sm font-black uppercase tracking-widest" id="label-tipo-comunicado">NOVO COMUNICADO</h3>
+                      <p id="label-alvo-comunicado" class="text-[9px] text-slate-500 font-bold uppercase">ALCANCE: TODOS OS FUNCIONÁRIOS</p>
+                  </div>
+              </div>
+              <button onclick="fecharModalComunicado()" class="text-slate-500 hover:text-white transition-colors">
+                  <span class="material-symbols-outlined">close</span>
+              </button>
+          </div>
+
+          <div class="space-y-6">
+              <!-- Seletor de Subtipo -->
+              <div class="flex bg-background-dark p-1 rounded-2xl border border-white/10">
+                  <button type="button" id="btn-msg-texto" onclick="setComunicadoSubtipo('mensagem')"
+                      class="flex-1 px-4 py-3 text-[10px] font-black uppercase tracking-wider rounded-xl bg-primary text-white transition-all shadow-lg">
+                      Mensagem
+                  </button>
+                  <button type="button" id="btn-msg-horaextra" onclick="setComunicadoSubtipo('hora_extra')"
+                      class="flex-1 px-4 py-3 text-[10px] font-black uppercase tracking-wider rounded-xl text-slate-400 hover:text-white transition-all">
+                      Hora Extra
+                  </button>
+              </div>
+
+              <div class="space-y-3">
+                  <label id="label-conteudo-mensagem" class="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">Conteúdo da Transmissão</label>
+                  <textarea id="comunicado-texto" rows="4" 
+                      class="w-full bg-background-dark/50 border border-white/10 rounded-2xl p-4 text-xs text-slate-100 placeholder:text-slate-700 focus:border-primary outline-none transition-all"
+                      placeholder="Digite a mensagem ou instruções da solicitação..."></textarea>
+              </div>
+
+              <button id="btn-enviar-comunicado"
+                  class="w-full py-4 bg-primary hover:bg-primary/90 text-white text-[11px] font-black uppercase tracking-[0.2em] rounded-2xl shadow-[0_0_20px_rgba(13,89,242,0.3)] transition-all flex items-center justify-center gap-2">
+                  <span class="material-symbols-outlined text-sm">send</span> ENVIAR
+              </button>
+          </div>
+      </div>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script type="module">
+    import { supabase } from '../js/supabase-config.js';
+    import { Auth } from '../js/auth.js';
+    import { UI } from '../js/ui-utils.js';
+
+    // --- CONFIGURAÇÃO DO MAPA ---
+    const map = L.map('map', {
+      zoomControl: false,
+      attributionControl: false
+    }).setView([-23.5505, -46.6333], 15);
+
+    L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+      subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+      maxZoom: 20
+    }).addTo(map);
+
+    // Grupos de Camadas
+    const sectorsGroup = L.layerGroup().addTo(map);
+    const employeesGroup = L.layerGroup().addTo(map);
+
+    // --- ESTADO GLOBAL ---
+    let sectors = [];
+    let employees = [];
+    let activeComunicado = {
+        tipo: 'geral',
+        subtipo: 'mensagem',
+        targetId: null, // funcionario_id ou setor_id
+        targetName: 'TODOS OS FUNCIONÁRIOS',
+        editId: null
+    };
+
+    // --- INICIALIZAÇÃO ---
+    async function init() {
+        UI.showLoader();
+        await fetchData();
+        renderSidebar();
+        renderMapLayers();
+        UI.hideLoader();
+
+        // Menu Toggle
+        const btnToggleMenu = document.getElementById('btn-toggle-menu');
+        const menuLateral = document.getElementById('menu-lateral');
+        btnToggleMenu.onclick = () => {
+            const isCollapsed = menuLateral.classList.toggle('collapsed');
+            btnToggleMenu.classList.toggle('active', !isCollapsed);
+            btnToggleMenu.querySelector('span').innerText = isCollapsed ? 'menu' : 'close';
+            
+            btnToggleMenu.classList.toggle('bg-rose-500/10', !isCollapsed);
+            btnToggleMenu.classList.toggle('border-rose-500/30', !isCollapsed);
+            btnToggleMenu.classList.toggle('text-rose-500', !isCollapsed);
+        };
+
+        // Busca
+        document.getElementById('search-online').oninput = (e) => filterSidebar(e.target.value);
+    }
+
+    async function fetchData() {
+        try {
+            // 1. Setores
+            const { data: sData, error: sError } = await supabase.from('setores').select('*, gestor:funcionarios!gestor_id(nome_completo)');
+            if (sError) console.error('Erro setores:', sError);
+            sectors = sData || [];
+
+            // 2. Funcionários e Tabelas Relacionadas (Busca Separada)
+            const [fRes, cRes, eRes, pRes] = await Promise.all([
+                supabase.from('funcionarios').select('id, nome_completo, nickname, cargo_id, especialidade_id, setor_id, nivel_acesso'),
+                supabase.from('cargos').select('id, nome'),
+                supabase.from('especialidades').select('id, nome'),
+                supabase.from('perfis_tripulantes').select('funcionario_id, foto_url')
+            ]);
+
+            if (fRes.error) throw fRes.error;
+            
+            const cargosMap = {};
+            (cRes.data || []).forEach(c => cargosMap[c.id] = c.nome);
+            
+            const espMap = {};
+            (eRes.data || []).forEach(e => espMap[e.id] = e.nome);
+
+            const fotosMap = {};
+            (pRes.data || []).forEach(p => fotosMap[p.funcionario_id] = p.foto_url);
+
+            const fData = (fRes.data || []).map(f => ({
+                ...f,
+                foto_url: fotosMap[f.id] || null,
+                cargos: { nome: cargosMap[f.cargo_id] || 'Tripulante' },
+                especialidades: { nome: espMap[f.especialidade_id] || 'N/A' }
+            }));
+            
+            // 3. Status Online (Resiliente ao Fuso Horário)
+            let statusMap = {};
+            try {
+                const now = new Date();
+                const offset = now.getTimezoneOffset() * 60000;
+                const localToday = new Date(now - offset).toISOString().split('T')[0];
+                
+                const { data: pData } = await supabase
+                    .from('pontos')
+                    .select('funcionario_id, tipo, data_hora')
+                    .gte('data_hora', `${localToday}T00:00:00`)
+                    .order('data_hora', { ascending: true });
+                
+                pData?.forEach(p => {
+                    if (!statusMap[p.funcionario_id]) statusMap[p.funcionario_id] = [];
+                    statusMap[p.funcionario_id].push(p.tipo);
+                });
+            } catch (pErr) { console.error('Erro ao processar status:', pErr); }
+
+            // 4. Localizações (Resiliente)
+            let lastLocs = {};
+            try {
+                const { data: lData } = await supabase
+                    .from('pontos')
+                    .select('funcionario_id, latitude, longitude, data_hora')
+                    .not('latitude', 'is', null)
+                    .order('data_hora', { ascending: false });
+                
+                lData?.forEach(l => {
+                    if (!lastLocs[l.funcionario_id]) lastLocs[l.funcionario_id] = l;
+                });
+            } catch (lErr) { console.error('Erro ao buscar localizações:', lErr); }
+
+            // 3. Buscar Últimos Pulsos de GPS (Sinal de vida)
+            // Tipos: gps_pulse, gps_hora, geofence_in, geofence_out, ponto_fora_raio
+            const { data: pulses } = await supabase
+                .from('diario_logs')
+                .select('funcionario_id, coordenadas, data_hora')
+                .in('tipo', ['gps_pulse', 'gps_hora', 'geofence_in', 'geofence_out', 'ponto_fora_raio'])
+                .order('data_hora', { ascending: false });
+
+            const pulseMap = {};
+            (pulses || []).forEach(p => {
+                if (!pulseMap[p.funcionario_id]) pulseMap[p.funcionario_id] = p;
+            });
+
+            // 5. Buscar Todos os Comunicados (Histórico de H.E e Mensagens)
+            const { data: heData } = await supabase
+                .from('comunicados')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            const heMap = {};
+            (heData || []).forEach(he => {
+                if (!heMap[he.destinatario_id]) heMap[he.destinatario_id] = [];
+                heMap[he.destinatario_id].push(he);
+            });
+
+            employees = (fData || []).map(f => {
+                const punches = statusMap[f.id] || [];
+                const hasActivePunch = punches.length > 0 && punches[punches.length - 1] === 'check-in';
+                
+                const lastPulse = pulseMap[f.id];
+                let isRecentActivity = false;
+                if (lastPulse) {
+                    const diffMinutes = (new Date() - new Date(lastPulse.data_hora)) / (1000 * 60);
+                    if (diffMinutes <= 20) isRecentActivity = true;
+                }
+
+                const currentUser = Auth.getUser();
+                const isMe = f.id === currentUser.id;
+                
+                // Mapear Horas Extras do Funcionário
+                const myHEs = heMap[f.id] || [];
+                const nowLocal = new Date();
+                const localYear = nowLocal.getFullYear();
+                const localMonth = String(nowLocal.getMonth() + 1).padStart(2, '0');
+                const localDay = String(nowLocal.getDate()).padStart(2, '0');
+                const localToday = `${localYear}-${localMonth}-${localDay}`;
+                
+                const hasHEtoday = myHEs.some(he => he.created_at.startsWith(localToday));
+
+                // Regra Refinada:
+                // 1. Check-in ativo hoje OU atividade recente de GPS (20 min) -> Online para TODOS.
+                // 2. Se for EU (usuário logado), estou Online enquanto estiver na página (mesmo sem ponto).
+                // 3. Removida a regra de Admin/Gestor sempre online para outros, para evitar falsos positivos no mapa.
+                const isOnline = hasActivePunch || isRecentActivity || isMe;
+                const loc = lastLocs[f.id];
+                
+                // Priorizar a localização de GPS (Pulse) sobre a localização da última batida
+                let finalLat = loc?.latitude || null;
+                let finalLng = loc?.longitude || null;
+
+                if (lastPulse && lastPulse.coordenadas) {
+                    const [plat, plng] = lastPulse.coordenadas.split(',').map(Number);
+                    if (!isNaN(plat) && !isNaN(plng)) {
+                        finalLat = plat;
+                        finalLng = plng;
+                    }
+                }
+
+                return {
+                    ...f,
+                    status: isOnline ? 'online' : 'offline',
+                    last_lat: finalLat,
+                    last_lng: finalLng,
+                    hasHEtoday,
+                    heHistory: myHEs
+                };
+            });
+            console.log('Monitoramento de Tripulantes:', employees);
+
+        } catch (err) {
+            console.error('Erro fatal no sync:', err);
+            UI.showToast('Algumas camadas não puderam ser carregadas.', 'warning');
+        }
+    }
+
+    function renderSidebar() {
+        const container = document.getElementById('lista-setores-online');
+        if (sectors.length === 0) {
+            container.innerHTML = `<p class="text-[9px] text-slate-500 uppercase text-center py-4">Nenhum setor encontrado</p>`;
+            return;
+        }
+
+        container.innerHTML = sectors.map(s => {
+            const sectorEmployees = employees.filter(e => e.setor_id === s.id);
+            const onlineCount = sectorEmployees.filter(e => e.status === 'online').length;
+
+            // Determinar ícone baseado no nome (conforme relacao_setores.html)
+            let icon = 'domain';
+            const name = (s.nome || '').toLowerCase();
+            if (name.includes('engenharia')) icon = 'engineering';
+            else if (name.includes('dados') || name.includes('comunicação')) icon = 'analytics';
+            else if (name.includes('logística') || name.includes('operações')) icon = 'local_shipping';
+
+            return `
+                <div class="space-y-2 group/setor">
+                    <div onclick="focarSetor('${s.id}')" class="flex items-center justify-between p-3 bg-white/5 hover:bg-primary/10 border border-white/5 rounded-xl cursor-pointer transition-all">
+                        <div class="flex items-center gap-3">
+                            <span class="material-symbols-outlined text-primary text-xl">${icon}</span>
+                            <div>
+                                <h4 class="text-[10px] font-black uppercase tracking-widest text-slate-100">${s.nome}</h4>
+                                <p class="text-[8px] text-slate-500 font-bold uppercase tracking-tight">
+                                    <span class="text-slate-100">${sectorEmployees.length}</span> TRIPULANTES | 
+                                    <span class="text-emerald-500">${onlineCount}</span> ONLINE
+                                </p>
+                            </div>
+                        </div>
+                        <span class="material-symbols-outlined text-slate-600 group-hover/setor:text-primary transition-colors text-sm">location_searching</span>
+                    </div>
+                    
+                    <!-- Lista de Funcionários do Setor -->
+                    <div id="sublista-${s.id}" class="pl-4 space-y-1 hidden border-l border-primary/20 ml-5">
+                        ${sectorEmployees.map(e => {
+                            const isMe = e.id === Auth.getUser()?.id;
+                            return `
+                                <div onclick="focarFuncionario('${e.id}')" 
+                                     class="flex items-center justify-between p-2 rounded-lg cursor-pointer group/func transition-all 
+                                            ${e.status === 'online' ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-rose-500/10 border border-rose-500/20'} 
+                                            ${e.hasHEtoday ? '!border-amber-500/50' : ''}">
+                                    <div class="flex items-center gap-2">
+                                        <div class="relative flex items-center justify-center w-4 h-4">
+                                            ${e.hasHEtoday ? 
+                                                '<span class="material-symbols-outlined text-[14px] text-emerald-400 font-variation-settings-fill">schedule</span>' : 
+                                                `<span class="status-dot ${e.status === 'online' ? 'status-online' : 'status-offline'} !w-1.5 !h-1.5"></span>`
+                                            }
+                                        </div>
+                                        <span class="text-[9px] font-bold ${e.status === 'online' ? 'text-emerald-500' : 'text-rose-500'} uppercase group-hover/func:text-slate-100 transition-colors">
+                                            ${e.nickname || (e.nome_completo ? e.nome_completo.split(' ')[0] : 'N/A')}
+                                        </span>
+                                    </div>
+                                    ${e.hasHEtoday ? '<span class="text-[10px] animate-pulse">⚡</span>' : ''}
+                                </div>
+                            `;
+                        }).join('')}
+                        ${sectorEmployees.length === 0 ? '<p class="text-[8px] text-slate-600 uppercase p-2">Nenhum tripulante</p>' : ''}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function renderMapLayers() {
+        sectorsGroup.clearLayers();
+        employeesGroup.clearLayers();
+
+        // Renderizar Setores (Geofences + Pins de Gota)
+        sectors.forEach(s => {
+            if (s.latitude && s.longitude) {
+                const sectorEmployees = employees.filter(e => e.setor_id === s.id);
+                const onlineCount = sectorEmployees.filter(e => e.status === 'online').length;
+
+                // Determinar ícone (mesma lógica da sidebar)
+                let icon = 'domain';
+                const name = (s.nome || '').toLowerCase();
+                if (name.includes('engenharia')) icon = 'engineering';
+                else if (name.includes('dados') || name.includes('comunicação')) icon = 'analytics';
+                else if (name.includes('logística') || name.includes('operações')) icon = 'local_shipping';
+
+                // Geofence Circle
+                L.circle([s.latitude, s.longitude], {
+                    color: '#0d59f2',
+                    fillColor: '#0d59f2',
+                    fillOpacity: 0.1,
+                    weight: 1,
+                    radius: s.raio || 100
+                }).addTo(sectorsGroup);
+
+                // Marcador do Setor (Pino de Gota)
+                const sectorIcon = L.divIcon({
+                    className: 'custom-div-icon',
+                    html: `
+                        <div class="pin-container">
+                            <div class="pin-badge !bg-emerald-600 !px-1.5">${onlineCount}</div>
+                            <div class="pin-drop">
+                                <div class="pin-content">
+                                    <span class="material-symbols-outlined text-primary text-2xl">${icon}</span>
+                                </div>
+                            </div>
+                        </div>`,
+                    iconSize: [50, 60],
+                    iconAnchor: [25, 60]
+                });
+
+                const marker = L.marker([s.latitude, s.longitude], { icon: sectorIcon }).addTo(sectorsGroup);
+                
+                marker.bindPopup(`
+                    <div class="p-2 space-y-3 min-w-[180px]">
+                        <div class="border-b border-white/10 pb-2">
+                            <h3 class="text-xs font-black uppercase text-primary tracking-widest">${s.nome}</h3>
+                            <p class="text-[9px] text-slate-400 font-bold uppercase mt-1">Gestor: ${s.gestor?.nome_completo || 'N/A'}</p>
+                        </div>
+                        <div class="flex justify-between items-center bg-white/5 p-2 rounded-lg">
+                            <span class="text-[8px] font-black text-slate-500 uppercase">Equipe Ativa</span>
+                            <span class="text-[10px] font-black text-emerald-500">${onlineCount}/${sectorEmployees.length}</span>
+                        </div>
+                        <button onclick="window.abrirModalComunicado('setorial', '${s.id}', '${s.nome}')" class="w-full py-2.5 bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all mb-1">
+                            Comunicado ao Setor
+                        </button>
+                    </div>
+                `);
+
+                // Evento de clique para expandir na sidebar
+                marker.on('click', () => {
+                    const sublista = document.getElementById(`sublista-${s.id}`);
+                    if (sublista) sublista.classList.remove('hidden');
+                });
+            }
+        });
+
+        // Renderizar Funcionários (Pins de Gota com Foto - APENAS ONLINE)
+        employees.forEach(e => {
+            if (e.status === 'online' && e.last_lat && e.last_lng) {
+                const statusColor = '#10B981'; // Fugir do vermelho no mapa geográfico
+                const employeeIcon = L.divIcon({
+                    className: 'custom-div-icon',
+                    html: `
+                        <div class="pin-container">
+                            <div class="pin-drop pin-employee" style="border-color: ${statusColor}">
+                                <div class="pin-content">
+                                    <img src="${e.foto_url || `https://ui-avatars.com/api/?name=${e.nickname || e.nome_completo}&background=101622&color=${statusColor.replace('#','')}`}" 
+                                         class="rounded-full">
+                                </div>
+                            </div>
+                            <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 rounded-full status-online"></div>
+                        </div>`,
+                    iconSize: [50, 60],
+                    iconAnchor: [25, 60]
+                });
+
+                const marker = L.marker([e.last_lat, e.last_lng], { icon: employeeIcon }).addTo(employeesGroup);
+                
+                // Lógica de Histórico Unificado no Popup (Horas Extras e Comunicados)
+                const hasHE = e.heHistory.length > 0;
+                
+                let heHtml = '';
+                if (hasHE) {
+                    heHtml = `
+                        <div class="mt-3 pt-3 border-t border-white/10 space-y-3">
+                            <h4 class="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-1.5 mb-2">
+                                <span class="material-symbols-outlined text-sm">history</span> HISTÓRICO
+                            </h4>
+                            <div class="space-y-4 max-h-[160px] overflow-y-auto pr-1 custom-scrollbar">
+                                ${e.heHistory.map((h, idx) => {
+                                    const hDate = new Date(h.created_at);
+                                    const isRecent = (new Date() - hDate) < 24 * 60 * 60 * 1000;
+                                    const isToday = h.created_at.startsWith(new Date().toISOString().split('T')[0]);
+                                    
+                                    // Mapeamento de Cores e Títulos do Diário de Bordo
+                                    const isHE = h.subtipo === 'hora_extra';
+                                    const colorClass = isHE ? 'text-amber-500' : 'text-emerald-500';
+                                    const title = isHE ? 'SOLICITAÇÃO DE HORA EXTRA' : 'COMUNICADO OFICIAL';
+
+                                    return `
+                                        <div class="card-history ${colorClass} bg-white/5 p-2 rounded-r-lg">
+                                            <div class="flex justify-between items-start mb-1">
+                                                <h5 class="text-[8px] font-black uppercase tracking-wider ${colorClass}">${title}</h5>
+                                                <span class="text-[8px] font-black text-slate-500 uppercase">
+                                                    ${isToday ? 'Hoje' : hDate.toLocaleDateString('pt-BR')}
+                                                </span>
+                                            </div>
+                                            <p class="text-[9px] text-slate-300 italic mb-2 leading-tight">"${h.conteudo}"</p>
+                                            
+                                            ${isRecent ? `
+                                                <div class="flex gap-1 justify-end">
+                                                    <button onclick="window.editarHoraExtra('${h.id}', '${e.id}', \`${h.conteudo.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)" 
+                                                            class="p-1.5 bg-white/5 border border-white/10 rounded text-slate-400 hover:text-primary transition-all">
+                                                        <span class="material-symbols-outlined text-[12px]">edit</span>
+                                                    </button>
+                                                    <button onclick="window.excluirHoraExtra('${h.id}', '${e.id}')" 
+                                                            class="p-1.5 bg-white/5 border border-white/10 rounded text-slate-400 hover:text-rose-500 transition-all">
+                                                        <span class="material-symbols-outlined text-[12px]">delete</span>
+                                                    </button>
+                                                </div>
+                                            ` : ''}
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                marker.bindPopup(`
+                    <div class="p-2 space-y-3 min-w-[220px]">
+                        <div class="flex items-center gap-3 border-b border-white/10 pb-3">
+                            <img src="${e.foto_url || `https://ui-avatars.com/api/?name=${e.nickname || e.nome_completo}`}" class="w-10 h-10 rounded-full border border-primary/30 object-cover">
+                            <div class="flex-1 min-w-0">
+                                <h3 class="text-[11px] font-black uppercase text-slate-100 truncate">${e.nickname || e.nome_completo}</h3>
+                                <p class="text-[8px] text-primary font-bold uppercase tracking-tighter truncate">${e.cargos?.nome || 'Tripulante'}</p>
+                            </div>
+                        </div>
+                        <div class="space-y-1.5">
+                            <div class="flex justify-between text-[8px] font-bold uppercase text-slate-500">
+                                <span>Especialidade</span>
+                                <span class="text-slate-200">${e.especialidades?.nome || 'N/A'}</span>
+                            </div>
+                            <div class="flex justify-between text-[8px] font-bold uppercase text-slate-500">
+                                <span>Status</span>
+                                <span class="${e.status === 'online' ? 'text-emerald-500' : 'text-rose-500'} font-black italic">${e.status.toUpperCase()}</span>
+                            </div>
+                        </div>
+                        <button onclick="window.abrirModalComunicado('individual', '${e.id}', '${e.nickname || e.nome_completo}')" class="w-full py-3 bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all btn-touch">
+                            NOVO COMUNICADO
+                        </button>
+                        ${heHtml}
+                    </div>
+                `);
+            }
+        });
+    }
+
+    // --- FUNÇÕES DE NAVEGAÇÃO ---
+    window.focarSetor = (id) => {
+        const sector = sectors.find(s => s.id === id);
+        if (sector && sector.latitude) {
+            map.flyTo([sector.latitude, sector.longitude], 17);
+            
+            // Abrir popup no mapa
+            sectorsGroup.eachLayer(layer => {
+                if (layer instanceof L.Marker && layer.getLatLng().lat === sector.latitude) {
+                    layer.openPopup();
+                }
+            });
+
+            // Toggle sublista no menu
+            const sublista = document.getElementById(`sublista-${id}`);
+            const allSublistas = document.querySelectorAll('[id^="sublista-"]');
+            allSublistas.forEach(el => {
+                if (el !== sublista) el.classList.add('hidden');
+            });
+            sublista.classList.remove('hidden');
+        }
+    };
+
+    window.focarFuncionario = (id) => {
+        const emp = employees.find(e => e.id === id);
+        if (emp && emp.last_lat) {
+            map.flyTo([emp.last_lat, emp.last_lng], 18);
+            
+            // Abrir popup no mapa
+            employeesGroup.eachLayer(layer => {
+                if (layer instanceof L.Marker && layer.getLatLng().lat === emp.last_lat) {
+                    layer.openPopup();
+                }
+            });
+        } else {
+            UI.showToast('Localização indisponível.', 'info');
+        }
+    };
+
+    function filterSidebar(term) {
+        const query = term.toLowerCase();
+        const sectorDivs = document.querySelectorAll('#lista-setores-online > div');
+        sectorDivs.forEach(div => {
+            const h4 = div.querySelector('h4').innerText.toLowerCase();
+            const funcs = Array.from(div.querySelectorAll('#sublista- div span')).map(s => s.innerText.toLowerCase());
+            
+            const matchSector = h4.includes(query);
+            const matchFunc = funcs.some(f => f.includes(query));
+
+            if (matchSector || matchFunc) {
+                div.classList.remove('hidden');
+                if (matchFunc) div.querySelector('[id^="sublista-"]').classList.remove('hidden');
+            } else {
+                div.classList.add('hidden');
+            }
+        });
+    }
+
+    // --- LÓGICA DE COMUNICADOS ---
+    window.abrirModalComunicado = (tipo, targetId = null, targetName = '') => {
+        activeComunicado.tipo = tipo;
+        activeComunicado.targetId = targetId;
+        activeComunicado.subtipo = 'mensagem';
+        activeComunicado.targetName = targetName || 'TODOS OS FUNCIONÁRIOS';
+
+        const isIndividual = tipo === 'individual';
+        const labelConteudo = document.getElementById('label-conteudo-mensagem');
+        if (labelConteudo) labelConteudo.innerText = isIndividual ? 'Conteúdo da Mensagem' : 'Conteúdo da Transmissão';
+
+        document.getElementById('label-tipo-comunicado').innerText = `NOVO COMUNICADO ${tipo === 'geral' ? 'GERAL' : (tipo === 'setorial' ? 'SETORIAL' : 'INDIVIDUAL')}`;
+        document.getElementById('label-alvo-comunicado').innerText = `ALCANCE: ${activeComunicado.targetName}`;
+        document.getElementById('label-tipo-icon').innerText = isIndividual ? 'person_search' : (tipo === 'setorial' ? 'hub' : 'campaign');
+        
+        setComunicadoSubtipo('mensagem');
+        document.getElementById('comunicado-texto').value = '';
+        
+        const modal = document.getElementById('modal-comunicado');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    };
+
+    window.fecharModalComunicado = () => {
+        const modal = document.getElementById('modal-comunicado');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    };
+
+    window.setComunicadoSubtipo = (subtipo) => {
+        activeComunicado.subtipo = subtipo;
+        const btnMsg = document.getElementById('btn-msg-texto');
+        const btnHE = document.getElementById('btn-msg-horaextra');
+        
+        if (subtipo === 'mensagem') {
+            btnMsg.classList.add('bg-primary', 'text-white', 'shadow-lg');
+            btnMsg.classList.remove('text-slate-400');
+            btnHE.classList.remove('bg-primary', 'text-white', 'shadow-lg');
+            btnHE.classList.add('text-slate-400');
+        } else {
+            btnHE.classList.add('bg-primary', 'text-white', 'shadow-lg');
+            btnHE.classList.remove('text-slate-400');
+            btnMsg.classList.remove('bg-primary', 'text-white', 'shadow-lg');
+            btnMsg.classList.add('text-slate-400');
+        }
+    };
+
+    document.getElementById('btn-enviar-comunicado').onclick = async () => {
+        const conteudo = document.getElementById('comunicado-texto').value.trim();
+        if (!conteudo) {
+            UI.showToast('Escreva o conteúdo da mensagem.', 'warning');
+            return;
+        }
+
+        UI.showLoader();
+        try {
+            const remetenteId = localStorage.getItem('userId');
+            
+            // 1. Criar ou Atualizar Comunicado
+            const comunicadoData = {
+                remetente_id: remetenteId,
+                tipo: activeComunicado.tipo,
+                subtipo: activeComunicado.subtipo,
+                conteudo: conteudo,
+                destinatario_id: activeComunicado.tipo === 'individual' ? activeComunicado.targetId : null,
+                setor_id: activeComunicado.tipo === 'setorial' ? activeComunicado.targetId : null
+            };
+
+            let comError;
+            if (activeComunicado.editId) {
+                const { error } = await supabase.from('comunicados').update(comunicadoData).eq('id', activeComunicado.editId);
+                comError = error;
+            } else {
+                const { error } = await supabase.from('comunicados').insert([comunicadoData]);
+                comError = error;
+            }
+            if (comError) throw comError;
+
+            // 2. Se for Hora Extra Individual, liberar o check-out no ponto aberto
+            if (activeComunicado.subtipo === 'hora_extra' && activeComunicado.tipo === 'individual') {
+                const today = new Date().toISOString().split('T')[0];
+                const { data: openPoint } = await supabase
+                    .from('pontos')
+                    .select('*')
+                    .eq('funcionario_id', activeComunicado.targetId)
+                    .eq('tipo', 'check-in')
+                    .gte('data_hora', `${today}T00:00:00`)
+                    .order('data_hora', { ascending: false })
+                    .limit(1)
+                    .single();
+                
+                if (openPoint) {
+                    await supabase.from('pontos').update({ hora_extra_liberada: true }).eq('id', openPoint.id);
+                }
+            }
+
+            // 3. Limpar ID de Edição
+            activeComunicado.editId = null;
+
+            UI.showToast('Transmissão concluída com sucesso!', 'success');
+            fecharModalComunicado();
+            await init(); // Se for edição, recarregar para ver mudanca
+        } catch (err) {
+            console.error('Erro ao enviar:', err);
+            UI.showToast('Falha na transmissão.', 'error');
+        } finally {
+            UI.hideLoader();
+        }
+    };
+
+    window.excluirHoraExtra = async (comunicadoId, funcId) => {
+        if (!confirm('Deseja excluir esta solicitação de hora extra?')) return;
+        
+        UI.showLoader();
+        try {
+            // 1. Deletar comunicado
+            const { error: delError } = await supabase.from('comunicados').delete().eq('id', comunicadoId);
+            if (delError) throw delError;
+
+            // 2. Se for de hoje, remover a liberação no ponto aberto
+            const today = new Date().toISOString().split('T')[0];
+            const { data: openPoint } = await supabase
+                .from('pontos')
+                .select('*')
+                .eq('funcionario_id', funcId)
+                .eq('tipo', 'check-in')
+                .gte('data_hora', `${today}T00:00:00`)
+                .single();
+            
+            if (openPoint) {
+                await supabase.from('pontos').update({ hora_extra_liberada: false }).eq('id', openPoint.id);
+            }
+
+            UI.showToast('Solicitação excluída!', 'success');
+            await init(); // Recarregar tudo
+        } catch (err) {
+            console.error('Erro ao excluir:', err);
+            UI.showToast('Erro ao excluir solicitação.', 'error');
+        } finally {
+            UI.hideLoader();
+        }
+    };
+
+    window.editarHoraExtra = (id, funcId, conteudo) => {
+        const emp = employees.find(e => e.id === funcId);
+        activeComunicado.editId = id;
+        abrirModalComunicado('individual', funcId, emp?.nickname || emp?.nome_completo);
+        setComunicadoSubtipo('hora_extra');
+        document.getElementById('comunicado-texto').value = conteudo;
+        document.getElementById('label-tipo-comunicado').innerText = 'EDITAR HORA EXTRA';
+    };
+
+    init();
+  </script>
+</body>
+
+</html>

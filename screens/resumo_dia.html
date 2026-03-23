@@ -11,6 +11,8 @@
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
         rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="../js/theme.js?v=1.0"></script>
     <script src="../js/manager-context.js?v=2.7"></script>
     <title>ChronoSync - Resumo do Dia</title>
@@ -22,6 +24,60 @@
             .stats-grid { display: grid !important; grid-template-columns: repeat(4, 1fr) !important; gap: 0.5rem !important; }
             .bg-background-dark, .bg-\[\#0f172a\] { background: #f8fafc !important; border: 1px solid #e2e8f0 !important; }
             .text-slate-100, .text-slate-300 { color: #0f172a !important; }
+        }
+        /* Estilos do Novo Card de Histórico */
+        .card-history {
+            position: relative;
+            padding-left: 16px !important;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 16px;
+        }
+        .card-history::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 6px;
+            bottom: 6px;
+            width: 4px;
+            border-radius: 10px;
+            background: currentColor;
+            opacity: 0.8;
+        }
+        .premium-border-blue { color: #3b82f6; }
+        .premium-border-amber { color: #f59e0b; }
+        .premium-border-green { color: #10b981; }
+        .premium-border-rose { color: #f43f5e; }
+        .premium-border-purple { color: #a855f7; }
+
+        .map-container-card {
+            height: 0;
+            overflow: hidden;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 12px;
+            margin-top: 0;
+            opacity: 0;
+        }
+        .map-container-card.active {
+            height: 250px;
+            margin-top: 12px;
+            opacity: 1;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .edit-container-card {
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            opacity: 0;
+        }
+        .edit-container-card.active {
+            max-height: 500px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            opacity: 1;
         }
     </style>
 </head>
@@ -135,13 +191,15 @@
                 document.getElementById('funcSetor').innerText = `SETOR: ${func.setores?.nome || 'N/A'}`;
                 if (func.foto_url) document.getElementById('user-photo').src = func.foto_url;
 
-                const [ptsRes, anotRes, justRes] = await Promise.all([
+                const [ptsRes, anotRes, justRes, comsRes, logsRes] = await Promise.all([
                     supabase.from('pontos').select('*').eq('funcionario_id', targetId).gte('data_hora', `${dataRef}T00:00:00`).lte('data_hora', `${dataRef}T23:59:59`).order('data_hora', { ascending: true }),
                     supabase.from('anotacoes').select('*').eq('funcionario_id', targetId).eq('data', dataRef),
-                    supabase.from('justificativas').select('*').eq('funcionario_id', targetId).eq('data_incidente', dataRef)
+                    supabase.from('justificativas').select('*').eq('funcionario_id', targetId).eq('data_incidente', dataRef),
+                    supabase.from('comunicados').select('*').or(`target_id.eq.${targetId},target_id.is.null`).gte('created_at', `${dataRef}T00:00:00`).lte('created_at', `${dataRef}T23:59:59`),
+                    supabase.from('diario_logs').select('*').eq('funcionario_id', targetId).gte('created_at', `${dataRef}T00:00:00`).lte('created_at', `${dataRef}T23:59:59`)
                 ]);
 
-                renderResumo(ptsRes.data, anotRes.data, justRes.data, func.escalas, dataRef);
+                renderResumo(ptsRes.data, anotRes.data, justRes.data, comsRes.data || [], logsRes.data || [], func.escalas, dataRef);
 
             } catch (err) {
                 console.error(err);
@@ -151,7 +209,7 @@
             }
         }
 
-        function renderResumo(pontos, anotacoes, justificativas, escala, dataRef) {
+        function renderResumo(pontos, anotacoes, justificativas, comunicados, logs, escala, dataRef) {
             // 1. Cálculos de Tempo
             const workedMins = calculateWorkedMinutes(pontos);
             const plannedMins = ScalesEngine.calculateDailyWorkMinutes(escala);
@@ -211,68 +269,182 @@
                 `;
             }
 
-            // 3. Render Observações (Padrão Espelho de Ponto)
+            // 3. Render Observações Premium
             const obsCont = document.getElementById('containerObservacoes');
             obsCont.innerHTML = '';
 
-            if (anotacoes.length > 0) {
-                anotacoes.forEach(anot => {
-                    obsCont.innerHTML += `
-                        <div class="bg-primary/10 border border-primary/20 rounded-3xl p-6 relative overflow-hidden">
-                            <div class="flex items-center gap-3 mb-3">
-                                <span class="material-symbols-outlined text-primary text-xl">edit_note</span>
-                                <p class="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Anotação do Dia</p>
-                            </div>
-                            <p class="text-sm text-slate-200 leading-relaxed italic">"${anot.conteudo}"</p>
-                        </div>
-                    `;
-                });
-            }
+            const messageDict = {
+                'Pulso de localização automática': 'Localização registrada automaticamente pelo sistema para validar sua presença em serviço durante a jornada.',
+                'Log Automático de Rastreio (Regime Externo)': 'Registro automático de localização para fins de auditoria em jornada de trabalho sob regime externo.',
+                'Funcionário saiu do local de trabalho': 'O sistema detectou que você se ausentou do raio de alcance permitido para o seu local de escala/setor designado.',
+                'Funcionário retornou ao local de trabalho': 'O sistema detectou o seu retorno para dentro do raio de alcance permitido do seu local de escala/setor designado.',
+                'Solicitação de ponto fora do raio': 'Sua tentativa de registro de ponto foi bloqueada ou sinalizada por estar fora do raio de geofence permitido para o seu setor.'
+            };
+            const titleDict = {
+                'gps_pulse': 'CHECK-POINT DE LOCALIZAÇÃO (PULSO)',
+                'gps_hora': 'RASTREIO DE REGIME EXTERNO',
+                'geofence_out': 'QUEBRA DE PERÍMETRO (SAÍDA)',
+                'geofence_in': 'QUEBRA DE PERÍMETRO (ENTRADA)',
+                'ponto_fora_raio': 'SOLICITAÇÃO DE PONTO FORA DO RAIO'
+            };
 
-            if (justificativas.length > 0) {
-                justificativas.forEach(just => {
-                    const statusClass = just.status === 'aprovado' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' : 
-                                      just.status === 'rejeitado' ? 'bg-rose-500/20 text-rose-400 border-rose-500/30' : 
-                                      'bg-amber-500/20 text-amber-400 border-amber-500/30';
-                    
-                    obsCont.innerHTML += `
-                        <div class="bg-amber-500/10 border border-amber-500/20 rounded-3xl p-6">
-                            <div class="flex items-center justify-between mb-4">
-                                <div class="flex items-center gap-3">
-                                    <span class="material-symbols-outlined text-amber-500 text-xl">warning</span>
-                                    <p class="text-[10px] font-black text-amber-500 uppercase tracking-[0.2em]">Justificativa</p>
-                                </div>
-                                <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase border ${statusClass}">
-                                    ${just.status}
-                                </span>
-                            </div>
-                            <div class="space-y-4">
-                                <div class="border-l border-white/10 pl-4">
-                                    <p class="text-[9px] font-black text-slate-500 uppercase mb-1">Divergência</p>
-                                    <p class="text-xs font-black text-slate-100 uppercase">${just.tipo_divergencia}</p>
-                                </div>
-                                <div class="border-l border-white/10 pl-4">
-                                    <p class="text-[9px] font-black text-slate-500 uppercase mb-1">Motivo/Descrição</p>
-                                    <p class="text-sm text-slate-400 italic">"${just.descricao}"</p>
-                                </div>
-                                ${just.evidencia_url ? `
-                                    <a href="${just.evidencia_url}" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl transition-all">
-                                        <span class="material-symbols-outlined text-sm">attach_file</span>
-                                        <span class="text-[9px] font-black uppercase tracking-widest text-slate-300">Ver Evidência</span>
-                                    </a>
-                                ` : ''}
-                            </div>
-                        </div>
-                    `;
-                });
-            }
+            const allItems = [
+                ...comunicados.map(c => ({ 
+                    id: c.id, 
+                    type: 'COMUNICADO', 
+                    content: c.mensagem, 
+                    time: c.created_at, 
+                    color: 'premium-border-green', 
+                    label: 'Comunicado Oficial',
+                    lido: c.lido
+                })),
+                ...anotacoes.map(a => ({ 
+                    id: a.id, 
+                    type: 'ATIVIDADE', 
+                    content: a.content || a.conteudo, 
+                    time: a.created_at, 
+                    color: 'premium-border-blue', 
+                    label: 'Anotação do Dia' 
+                })),
+                ...justificativas.map(j => ({ 
+                    id: j.id, 
+                    type: 'JUSTIFICATIVA', 
+                    content: j.descricao, 
+                    time: j.created_at, 
+                    color: 'premium-border-amber', 
+                    label: 'Justificativa de Ponto', 
+                    status: j.status, 
+                    motivo: j.tipo_divergencia, 
+                    file: j.evidencia_url 
+                })),
+                ...logs.map(l => {
+                    const title = titleDict[l.tipo] || 'OCORRÊNCIA DE SISTEMA';
+                    const content = messageDict[l.conteudo] || l.conteudo || 'Registro automático de posição.';
+                    return { 
+                        id: l.id, 
+                        type: 'GPS', 
+                        content: content, 
+                        time: l.created_at, 
+                        color: 'premium-border-rose', 
+                        label: title,
+                        coordenadas: l.coordenadas,
+                        status_pendencia: l.status_pendencia,
+                        justificativa_colaborador: l.justificativa_colaborador,
+                        tipo_raw: l.tipo
+                    };
+                })
+            ].sort((a, b) => new Date(a.time) - new Date(b.time));
 
-            if (anotacoes.length === 0 && justificativas.length === 0) {
+            if (allItems.length === 0) {
                 obsCont.innerHTML = `
                     <div class="border border-dashed border-white/10 rounded-3xl p-8 text-center bg-white/[0.02]">
                         <p class="text-xs text-slate-600 font-bold uppercase tracking-widest italic">Nenhuma observação extra registrada.</p>
                     </div>
                 `;
+            } else {
+                obsCont.innerHTML = allItems.map(item => {
+                    const isJustif = item.type === 'JUSTIFICATIVA';
+                    const isSystem = item.type === 'GPS';
+                    const statusMap = {
+                        'pendente': 'bg-amber-500/10 text-amber-500 border-amber-500/20',
+                        'em_analise': 'bg-primary/10 text-primary border-primary/20',
+                        'aprovado': 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
+                        'rejeitado': 'bg-rose-500/10 text-rose-500 border-rose-500/20',
+                        'aprovada': 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
+                        'rejeitada': 'bg-rose-500/10 text-rose-500 border-rose-500/20'
+                    };
+
+                    let statusClass = '';
+                    let statusLabel = '';
+                    
+                    if (isJustif) {
+                        statusClass = statusMap[item.status?.toLowerCase()] || statusMap['pendente'];
+                        statusLabel = item.status?.toUpperCase() || 'PENDENTE';
+                    } else if (isSystem) {
+                        statusClass = statusMap[item.status_pendencia?.toLowerCase()] || statusMap['pendente'];
+                        statusLabel = item.status_pendencia?.toUpperCase() || 'PENDENTE';
+                    } else if (item.type === 'COMUNICADO') {
+                        statusClass = item.lido ? statusMap['aprovado'] : statusMap['pendente'];
+                        statusLabel = item.lido ? 'LIDO' : 'NOVO';
+                    }
+
+                    return `
+                    <div class="card-history ${item.color} animate-in fade-in slide-in-from-bottom-4 duration-500 mb-6 group">
+                        <div class="flex items-start justify-between mb-2">
+                            <div class="flex flex-col gap-1">
+                                <div class="flex items-center gap-2">
+                                    <span class="material-symbols-outlined text-sm" style="color: currentColor">
+                                        ${item.type === 'COMUNICADO' ? 'campaign' : item.type === 'ATIVIDADE' ? 'edit_note' : item.type === 'JUSTIFICATIVA' ? 'warning' : 'location_on'}
+                                    </span>
+                                    <p class="text-[11px] font-black uppercase tracking-widest" style="color: currentColor">${item.label}</p>
+                                </div>
+                                <p class="text-sm text-slate-300 leading-relaxed italic">"${item.content}"</p>
+                            </div>
+                            <div class="flex flex-col items-end gap-2">
+                                <span class="text-[9px] text-slate-500 font-bold">${new Date(item.time).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}</span>
+                                ${(isJustif || isSystem || item.type === 'COMUNICADO') ? `
+                                    <span class="${statusClass} text-[8px] px-2 py-0.5 rounded-full border border-current font-black uppercase tracking-widest shrink-0">${statusLabel}</span>
+                                ` : ''}
+                            </div>
+                        </div>
+
+                        ${item.motivo ? `<p class="text-[10px] font-black text-slate-100 uppercase mb-1">${item.motivo}</p>` : ''}
+                        
+                        <div class="flex flex-wrap gap-2 mt-3 overflow-hidden">
+                             <!-- Ações de Edição/Justificativa -->
+                             <div class="flex gap-2">
+                                ${((item) => {
+                                    if (item.type === 'ATIVIDADE' && (new Date() - new Date(item.time) < 24 * 60 * 60 * 1000)) {
+                                        return `
+                                            <button onclick="window.toggleEditCard('${item.id}', 'atividade', \`${item.content.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)" 
+                                                    class="p-2 bg-white/5 border border-white/10 rounded-lg text-slate-400 hover:text-primary hover:border-primary/30 transition-all shadow-sm"
+                                                    title="Editar">
+                                                <span class="material-symbols-outlined text-base">edit</span>
+                                            </button>`;
+                                    } else if (isSystem && item.status_pendencia === 'pendente') {
+                                        return `
+                                            <button onclick="window.toggleEditCard('${item.id}', '${item.tipo_raw}', \`${(item.justificativa_colaborador || '').replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)" 
+                                                    class="px-3 py-1.5 bg-primary/10 border border-primary/20 rounded-lg text-primary hover:bg-primary/20 transition-all flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest">
+                                                <span class="material-symbols-outlined text-sm">edit_note</span>
+                                                <span>Justificar</span>
+                                            </button>`;
+                                    }
+                                    return '';
+                                })(item)}
+                             </div>
+
+                             <!-- Ações de Localização/Evidência -->
+                             <div class="flex gap-2">
+                                ${item.file ? `
+                                    <a href="${item.file}" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg text-slate-400 hover:text-white transition-all text-[9px] font-black uppercase tracking-widest">
+                                        <span class="material-symbols-outlined text-sm">attach_file</span>
+                                        <span>Ver Arquivo</span>
+                                    </a>
+                                ` : ''}
+                                ${item.coordenadas ? `
+                                    <button id="btn-map-${item.id}" onclick="window.toggleMapaCard('${item.id}', '${item.coordenadas}')" 
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/10 border border-rose-500/20 rounded-lg text-rose-500 hover:bg-rose-500/20 transition-all text-[9px] font-black uppercase tracking-widest shadow-lg shadow-rose-500/5">
+                                        <span id="icon-map-${item.id}" class="material-symbols-outlined text-sm">map</span>
+                                        <span id="txt-map-${item.id}">Ver Localização no Mapa</span>
+                                    </button>
+                                ` : ''}
+                             </div>
+                        </div>
+
+                        <!-- Container do Mapa -->
+                        <div id="map-card-${item.id}" class="map-container-card"></div>
+
+                        <!-- Container de Edição In-Card -->
+                        <div id="edit-card-${item.id}" class="edit-container-card"></div>
+
+                        ${item.justificativa_colaborador ? `
+                        <div class="mt-3 bg-white/5 border border-white/5 p-3 rounded-lg text-[11px] text-slate-400 italic">
+                            <span class="text-primary font-bold mr-1 not-italic tracking-tighter uppercase">Justificativa Enviada:</span> ${item.justificativa_colaborador}
+                        </div>
+                        ` : ''}
+                    </div>
+                `;
+                }).join('');
             }
         }
 
@@ -290,14 +462,16 @@
         }
 
         function formatBalance(mins) {
-            const h = Math.floor(Math.abs(mins) / 60);
-            const m = Math.round(Math.abs(mins) % 60);
+            const absMins = Math.round(Math.abs(mins));
+            const h = Math.floor(absMins / 60);
+            const m = absMins % 60;
             return `${mins < 0 ? '-' : '+'}${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
         }
 
         function formatMinutes(mins) {
-            const h = Math.floor(mins / 60);
-            const m = Math.round(mins % 60);
+            const absMins = Math.round(Math.abs(mins));
+            const h = Math.floor(absMins / 60);
+            const m = absMins % 60;
             return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
         }
         
@@ -317,6 +491,111 @@
             }
             
             window.location.href = `resumo_dia.html?${urlParams.toString()}`;
+        };
+
+        const mapInstances = {};
+        window.toggleMapaCard = (id, coordenadas) => {
+            const container = document.getElementById(`map-card-${id}`);
+            const btnTxt = document.getElementById(`txt-map-${id}`);
+            const btnIcon = document.getElementById(`icon-map-${id}`);
+            if (!container) return;
+
+            const isActive = container.classList.toggle('active');
+            
+            if (isActive) {
+                if (btnTxt) btnTxt.innerText = 'Fechar Visualização';
+                if (btnIcon) btnIcon.innerText = 'close';
+                
+                setTimeout(() => {
+                    if (!mapInstances[id]) {
+                        const [lat, lng] = coordenadas.split(',').map(Number);
+                        const map = L.map(`map-card-${id}`, {
+                            zoomControl: false,
+                            attributionControl: false
+                        }).setView([lat, lng], 16);
+
+                        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
+                        
+                        const pinIcon = L.divIcon({
+                            html: `<span class="material-symbols-outlined text-rose-500 font-variation-settings-fill" style="font-size: 32px; filter: drop-shadow(0 0 5px rgba(244,63,94,0.5))">location_on</span>`,
+                            className: 'custom-div-icon',
+                            iconSize: [32, 32],
+                            iconAnchor: [16, 32]
+                        });
+
+                        L.marker([lat, lng], {icon: pinIcon}).addTo(map);
+                        mapInstances[id] = map;
+                    } else {
+                        mapInstances[id].invalidateSize();
+                    }
+                }, 300);
+            } else {
+                if (btnTxt) btnTxt.innerText = 'Ver Localização no Mapa';
+                if (btnIcon) btnIcon.innerText = 'map';
+            }
+        };
+
+        window.toggleEditCard = (id, type, currentContent) => {
+            const container = document.getElementById(`edit-card-${id}`);
+            if (!container) return;
+
+            const isActive = container.classList.toggle('active');
+            if (isActive) {
+                container.innerHTML = `
+                    <div class="space-y-3">
+                        <label class="text-[9px] font-black uppercase tracking-widest text-primary flex items-center gap-2">
+                            <span class="material-symbols-outlined text-sm">edit_note</span>
+                            ${type === 'atividade' ? 'Editar Atividade' : 'Responder Justificativa'}
+                        </label>
+                        <textarea id="edit-text-${id}" 
+                            class="w-full bg-background-dark border border-white/10 rounded-xl py-3 px-4 text-xs text-slate-100 placeholder:text-slate-600 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
+                            rows="4">${currentContent}</textarea>
+                        <div class="flex gap-2">
+                            <button onclick="window.salvarEdicaoCard('${id}', '${type}')" 
+                                class="flex-1 bg-primary text-white text-[9px] font-black py-3 rounded-lg uppercase tracking-widest transition-all hover:bg-primary/80">
+                                Salvar Alterações
+                            </button>
+                            <button onclick="window.toggleEditCard('${id}')" 
+                                class="px-4 bg-white/5 border border-white/10 text-slate-400 text-[9px] font-black py-3 rounded-lg uppercase tracking-widest transition-all hover:text-white">
+                                Cancelar
+                            </button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = '';
+            }
+        };
+
+        window.salvarEdicaoCard = async (id, type) => {
+            const newContent = document.getElementById(`edit-text-${id}`).value;
+            if (!newContent.trim()) {
+                UI.showToast('O conteúdo não pode estar vazio.', 'warning');
+                return;
+            }
+
+            UI.showLoader();
+            try {
+                let error;
+                if (type === 'atividade') {
+                    const res = await supabase.from('anotacoes').update({ conteudo: newContent }).eq('id', id);
+                    error = res.error;
+                } else {
+                    const res = await supabase.from('diario_logs').update({ justificativa_colaborador: newContent, status_pendencia: 'em_analise' }).eq('id', id);
+                    error = res.error;
+                }
+
+                if (error) throw error;
+
+                UI.showToast('Alteração salva com sucesso!', 'success');
+                window.toggleEditCard(id);
+                init(); // Recarrega os dados
+            } catch (err) {
+                console.error(err);
+                UI.showToast('Erro ao salvar alteração.', 'error');
+            } finally {
+                UI.hideLoader();
+            }
         };
 
         init();

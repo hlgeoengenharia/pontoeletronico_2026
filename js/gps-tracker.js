@@ -14,12 +14,13 @@ class GPSTracker {
      * @param {Object} user 
      */
     static startTracking(user) {
+        console.log('[GPSTracker] Iniciando rastreamento para:', user?.nome_completo);
         if (this.trackingInterval) clearInterval(this.trackingInterval);
         this.checkBackgroundLocation(user); // Chamada inicial
         
         // Verifica a cada 15 minutos (para geofencing ser mais ágil, mas poupar bateria)
-        // O rastreio "hora a hora" para externos será registrado se já passou de 1 hora
         this.trackingInterval = setInterval(() => {
+            console.log('[GPSTracker] Checkpoint de localização (15min)...');
             this.checkBackgroundLocation(user);
         }, 15 * 60 * 1000); // 15 min
     }
@@ -29,19 +30,45 @@ class GPSTracker {
     }
 
     static async checkBackgroundLocation(user) {
-        if (!user || (!user.escalas && !user.setores)) return;
+        if (!user || !user.id) return;
 
         try {
+            // 1. Verificar se o expediente está ativo (Ponto Aberto)
+            const today = new Date().toISOString().split('T')[0];
+            const { data: punches, error: punchError } = await supabase
+                .from('pontos')
+                .select('id')
+                .eq('funcionario_id', user.id)
+                .gte('data_hora', `${today}T00:00:00`)
+                .order('data_hora', { ascending: true });
+
+            if (punchError) throw punchError;
+
+            // Se o número de batidas for par (ou zero), o sistema está em check-in ou encerrou o dia.
+            // O rastreio só deve ocorrer se estivermos com o ponto aberto (ímpar).
+            const isShiftActive = punches && punches.length % 2 !== 0;
+
+            if (!isShiftActive) {
+                console.log('[GPSTracker] Rastreio ignorado: Funcionário fora de expediente (ponto fechado).');
+                return;
+            }
+
             const position = await this.getCurrentPosition();
             const lat = position.coords.latitude;
             const lng = position.coords.longitude;
             const coordStr = `${lat},${lng}`;
+            const nowTime = new Date().toLocaleTimeString('pt-BR');
 
-            // 1. Rastreamento Externo (Hora em Hora)
+            // 2. Log de Pulso (Com Timestamp)
+            const pulseMsg = `Localização registrada automaticamente pelo sistema às ${nowTime} para validar sua presença em serviço durante a jornada.`;
+            await this.logOccurrence(user.id, 'gps_pulse', pulseMsg, coordStr);
+            console.log(`[GPSTracker] Pulso de GPS enviado (${nowTime}) para funcionario_id: ${user.id}`);
+            
+            // 3. Rastreamento Externo (Hora em Hora)
             if (user.modalidade === 'Externo') {
                 await this.logHourlyLocation(user.id, coordStr);
             } 
-            // 2. Geofence (Presencial / Híbrido)
+            // 4. Geofence (Presencial / Híbrido)
             else if (['Presencial', 'Híbrido'].includes(user.modalidade)) {
                  if (user.setores && user.setores.latitude && user.setores.longitude) {
                      const distance = ScalesEngine.calculateDistance(
@@ -54,7 +81,9 @@ class GPSTracker {
 
                      if (this.lastGeofenceStatus !== null && this.lastGeofenceStatus !== currentStatus) {
                          // Quebra de Perímetro Detectada
-                         const msg = currentStatus === 'outside' ? 'Funcionário saiu do local de trabalho' : 'Funcionário retornou ao local de trabalho';
+                         const msg = currentStatus === 'outside' 
+                            ? `O sistema detectou às ${nowTime} que você se ausentou do raio de alcance permitido para o seu local de escala.` 
+                            : `O sistema detectou às ${nowTime} o seu retorno para dentro do raio de alcance permitido do seu local de escala.`;
                          await this.logOccurrence(user.id, currentStatus === 'outside' ? 'geofence_out' : 'geofence_in', msg, coordStr);
                      }
                      
@@ -83,7 +112,7 @@ class GPSTracker {
             if (diffMin < 55) return; // Não faz log se não passou aprox 1 hora
         }
 
-        await this.logOccurrence(userId, 'gps_hora', 'Log Automático de Rastreio (Regime Externo)', coordStr);
+        await this.logOccurrence(userId, 'gps_hora', 'Registro automático de localização para fins de auditoria em jornada de trabalho sob regime externo.', coordStr);
     }
 
     static async logOccurrence(userId, type, message, coords) {

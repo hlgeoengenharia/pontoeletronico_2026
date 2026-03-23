@@ -67,106 +67,133 @@
 
   </main>
 
-  <script>
-    (function () {
-      const SUPABASE_URL = 'https://pptprelbbrcqrbjssoci.supabase.co';
-      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBwdHByZWxiYnJjcXJianNzb2NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3NDgzNjksImV4cCI6MjA4ODMyNDM2OX0.votBbcGv7f9jpSSbBs0_GkgZ_Strm9IQxjl9oo0aPp8';
+  <script type="module">
+        import { supabase } from '../js/supabase-config.js?v=5';
+        import { Auth } from '../js/auth.js';
+        import { UI } from '../js/ui-utils.js';
+        import { ScalesEngine } from '../js/scales-engine.js';
 
-      let curYear = new Date().getFullYear();
-      let targetUserId = null;
-      let supabase = null;
+        let curYear = new Date().getFullYear();
+        let targetUserId = null;
 
-      window.addEventListener('load', async function () {
-        const urlParams = new URLSearchParams(window.location.search);
-        targetUserId = urlParams.get('id') || localStorage.getItem('userId');
-        if (!targetUserId || !window.supabase) return;
+        async function init() {
+            const urlParams = new URLSearchParams(window.location.search);
+            targetUserId = urlParams.get('id') || localStorage.getItem('userId');
+            if (!targetUserId) return;
 
-        supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            const userObj = Auth.getUser();
+            UI.updateFooterNavigation(userObj.role);
 
-        // Navegação dinâmica
-        const { Auth } = await import('../js/auth.js');
-        const { UI } = await import('../js/ui-utils.js');
-        const userObj = Auth.getUser();
-        UI.updateFooterNavigation(userObj.role);
+            try {
+                const { data: user } = await supabase.from('funcionarios').select('*, setores!setor_id(nome)').eq('id', targetUserId).single();
+                if (user) {
+                    document.getElementById('user-nome').innerText = user.nome_completo.toUpperCase();
+                    document.getElementById('user-cargo').innerText = `CARGO/FUNÇÃO: ${(user.funcao || 'TRIPULANTE').toUpperCase()}`;
+                    document.getElementById('user-setor-info').innerText = `SETOR: ${(user.setores?.nome || 'NÃO DEFINIDO').toUpperCase()}`;
+                    if (user.foto_url) document.getElementById('user-photo').src = user.foto_url;
+                }
 
-        try {
-          const { data: user } = await supabase.from('funcionarios').select('*, setores!setor_id(nome)').eq('id', targetUserId).single();
-          if (user) {
-            document.getElementById('user-nome').innerText = user.nome_completo.toUpperCase();
-            document.getElementById('user-cargo').innerText = `CARGO/FUNÇÃO: ${(user.funcao || 'TRIPULANTE').toUpperCase()}`;
-            document.getElementById('user-setor-info').innerText = `SETOR: ${(user.setores?.nome || 'NÃO DEFINIDO').toUpperCase()}`;
-            if (user.foto_url) document.getElementById('user-photo').src = user.foto_url;
-          }
+                const { data: allPoints } = await supabase.from('pontos').select('data_hora').eq('funcionario_id', targetUserId).order('data_hora', { ascending: false });
 
-          const { data: allPoints } = await supabase.from('pontos').select('data_hora').eq('funcionario_id', targetUserId).order('data_hora', { ascending: false });
+                if (allPoints && allPoints.length > 0) {
+                    curYear = new Date(allPoints[0].data_hora).getFullYear();
+                }
 
-          if (allPoints && allPoints.length > 0) {
-            curYear = new Date(allPoints[0].data_hora).getFullYear();
-          }
+                await loadAnnualData();
+            } catch (err) { console.error(err); }
+        }
 
-          await loadAnnualData();
-        } catch (err) { console.error(err); }
-      });
+        document.getElementById('prev-year').onclick = () => { curYear--; loadAnnualData(); };
+        document.getElementById('next-year').onclick = () => { curYear++; loadAnnualData(); };
 
-      document.getElementById('prev-year').onclick = () => { curYear--; loadAnnualData(); };
-      document.getElementById('next-year').onclick = () => { curYear++; loadAnnualData(); };
+        async function loadAnnualData() {
+            document.getElementById('current-year-display').innerText = curYear;
+            const grid = document.getElementById('months-grid');
+            grid.innerHTML = '<div class="text-center py-12 text-slate-500"><span class="material-symbols-outlined animate-spin">refresh</span></div>';
 
-      async function loadAnnualData() {
-        document.getElementById('current-year-display').innerText = curYear;
-        const grid = document.getElementById('months-grid');
-        grid.innerHTML = '<div class="text-center py-12 text-slate-500"><span class="material-symbols-outlined animate-spin">refresh</span></div>';
+            try {
+                const start = `${curYear}-01-01T00:00:00`;
+                const end = `${curYear}-12-31T23:59:59`;
+                const { data: pontos } = await supabase.from('pontos').select('*').eq('funcionario_id', targetUserId).gte('data_hora', start).lte('data_hora', end).order('data_hora', { ascending: true });
 
-        try {
-          const start = `${curYear}-01-01T00:00:00`;
-          const end = `${curYear}-12-31T23:59:59`;
-          const { data: pontos } = await supabase.from('pontos').select('*').eq('funcionario_id', targetUserId).gte('data_hora', start).lte('data_hora', end).order('data_hora', { ascending: true });
+                const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+                const stats = Array(12).fill(0).map((_, i) => ({ month: i, ms: 0, days: 0 }));
 
-          const months = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-          const stats = Array(12).fill(0).map((_, i) => ({ month: i, ms: 0, days: 0 }));
+                if (pontos) {
+                    const daily = {};
+                    pontos.forEach(p => {
+                        const d = p.data_hora.split('T')[0];
+                        if (!daily[d]) daily[d] = [];
+                        daily[d].push(p);
+                    });
+                    Object.keys(daily).forEach(day => {
+                        const dt = new Date(day + 'T12:00:00');
+                        const m = dt.getMonth();
+                        const pts = daily[day].sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora));
+                        let dayMs = 0;
+                        for (let i = 0; i < pts.length - 1; i += 2) {
+                            dayMs += (new Date(pts[i + 1].data_hora) - new Date(pts[i].data_hora));
+                        }
+                        stats[m].ms += dayMs;
+                        stats[m].days++;
+                    });
+                }
 
-          if (pontos) {
-            const daily = {};
-            pontos.forEach(p => {
-              const d = p.data_hora.split('T')[0];
-              if (!daily[d]) daily[d] = [];
-              daily[d].push(p);
-            });
-            Object.keys(daily).forEach(day => {
-              const dt = new Date(day + 'T12:00:00');
-              const m = dt.getMonth();
-              const pts = daily[day].sort((a, b) => new Date(a.data_hora) - new Date(b.data_hora));
-              let dayMs = 0;
-              for (let i = 0; i < pts.length - 1; i += 2) dayMs += (new Date(pts[i + 1].data_hora) - new Date(pts[i].data_hora));
-              stats[m].ms += dayMs;
-              stats[m].days++;
-            });
-          }
+                const now = new Date();
+                const currentMonth = now.getMonth();
+                const isCurrentYear = curYear === now.getFullYear();
 
-          grid.innerHTML = '';
-          months.forEach((name, i) => {
-            const s = stats[i];
-            const h = Math.floor(s.ms / 3600000);
-            const hasData = s.days > 0;
+                grid.innerHTML = '';
+                months.forEach((name, i) => {
+                    const s = stats[i];
+                    const isCurrent = isCurrentYear && i === currentMonth;
+                    
+                    const totalMins = Math.floor(s.ms / 60000);
+                    const h = Math.floor(totalMins / 60);
+                    const m = totalMins % 60;
+                    const timeLabel = h > 0 ? `${h}h ${m}m` : `${m}m`;
 
-            const div = document.createElement('div');
-            div.className = `p-4 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${hasData ? 'bg-primary/10 border-primary/30 hover:bg-primary/20' : 'bg-slate-900/50 border-white/5 opacity-50'}`;
-            div.onclick = () => {
-              window.location.href = `historico_mensal.html?id=${targetUserId}&month=${i}&year=${curYear}`;
-            };
-            div.innerHTML = `
+                    const hasData = s.days > 0;
+
+                    const div = document.createElement('div');
+                    
+                    // Lógica de Estilo Premium para o Mês Atual
+                    let styleClasses = `p-4 rounded-xl border transition-all cursor-pointer flex items-center justify-between `;
+                    if (isCurrent) {
+                        styleClasses += `bg-primary/20 border-primary shadow-[0_0_20px_rgba(13,89,242,0.2)] ring-1 ring-primary/50`;
+                    } else if (hasData) {
+                        styleClasses += `bg-white/5 border-white/10 hover:bg-white/10`;
+                    } else {
+                        styleClasses += `bg-slate-900/50 border-white/5 opacity-50`;
+                    }
+
+                    div.className = styleClasses;
+                    div.onclick = () => {
+                        window.location.href = `historico_mensal.html?id=${targetUserId}&month=${i}&year=${curYear}`;
+                    };
+
+                    div.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            ${isCurrent ? '<div class="size-2 rounded-full bg-primary animate-pulse"></div>' : ''}
                             <div>
-                                <p class="font-bold text-sm uppercase">${name}</p>
-                                <p class="text-[10px] text-slate-500 uppercase">${s.days} Missões Registradas</p>
+                                <p class="font-bold text-sm uppercase ${isCurrent ? 'text-primary' : ''}">${name}</p>
+                                <p class="text-[10px] text-slate-500 uppercase font-black">${s.days} Missões Registradas</p>
                             </div>
-                            <div class="text-right">
-                                <p class="text-lg font-black ${hasData ? 'text-primary' : 'text-slate-700'}">${h}h</p>
-                            </div>
-                        `;
-            grid.appendChild(div);
-          });
-        } catch (e) { console.error(e); }
-      }
-    })();
+                        </div>
+                        <div class="text-right">
+                            <p class="text-lg font-black ${hasData || isCurrent ? 'text-slate-100' : 'text-slate-700'}">${hasData ? timeLabel : '--'}</p>
+                            ${isCurrent && !hasData ? '<p class="text-[8px] text-primary font-bold uppercase">Mês Vigente</p>' : ''}
+                        </div>
+                    `;
+                    grid.appendChild(div);
+                });
+            } catch (e) { 
+                console.error(e); 
+                grid.innerHTML = '<p class="text-center py-12 text-rose-500 text-xs font-bold">Erro ao carregar dados.</p>';
+            }
+        }
+
+        window.addEventListener('load', init);
   </script>
 
   <!-- Bottom Navigation -->
@@ -206,7 +233,7 @@
       }
     });
   </script>
-  <script type="module" src="../js/manager-context.js?v=2.7"></script>
+  <script type="module" src="../js/manager-context.js?v=4.5"></script>
 </body>
 
 </html>

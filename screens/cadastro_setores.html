@@ -69,13 +69,20 @@
     </div>
   </header>
   <main class="flex-1 p-4 pb-24 space-y-8 max-w-2xl mx-auto w-full">
-    <!-- New Sector Form -->
+    <!-- Toggle Button Section -->
     <section class="space-y-4">
-      <div class="flex items-center gap-2 mb-4">
-        <span class="material-symbols-outlined text-primary">add_circle</span>
-        <h2 class="text-xl font-bold tracking-tight">Novo Setor</h2>
+      <div class="flex items-center justify-between px-1">
+        <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary text-sm">account_tree</span>
+            <h2 class="text-sm font-bold tracking-widest uppercase opacity-70">Gerenciamento</h2>
+        </div>
+        <button id="btn-toggle-form" class="bg-primary/20 hover:bg-primary/30 text-primary text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-lg border border-primary/30 transition-all flex items-center gap-2">
+            <span id="icon-toggle" class="material-symbols-outlined text-sm">add_circle</span>
+            <span id="txt-toggle">Criar Novo Setor</span>
+        </button>
       </div>
-      <div class="glass-panel p-6 rounded-xl space-y-6">
+
+      <div id="container-form" class="hidden glass-panel p-6 rounded-xl space-y-6 sci-fi-gradient glow-border neon-border scroll-mt-24">
         <form id="form-setor" class="space-y-6">
           <div class="space-y-2">
             <label class="text-sm font-medium text-slate-400 uppercase tracking-wider">Nome do Setor</label>
@@ -147,6 +154,16 @@
           class="bg-primary/20 text-primary text-xs font-bold px-2 py-1 rounded-full border border-primary/30">0
           ATIVOS</span>
       </div>
+
+      <!-- Card de Pesquisa -->
+      <div class="relative group mb-6">
+        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+          <span class="material-symbols-outlined text-primary/50 group-focus-within:text-primary transition-colors text-xl">search</span>
+        </div>
+        <input id="input-busca-setores"
+          class="block w-full pl-12 pr-4 py-4 bg-slate-900/50 border border-primary/20 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all placeholder-slate-500 text-slate-100 text-sm neon-border"
+          placeholder="Pesquisar por setor ou gestor..." type="text" oninput="filtrarListaSetores()" />
+      </div>
       <div id="lista-setores" class="space-y-3 pb-8">
         <!-- Lista Dinâmica -->
       </div>
@@ -202,6 +219,75 @@
     let marker, circle;
     let selectedLat = -23.5505;
     let selectedLng = -46.6333;
+    let currentMode = 'create'; // 'create', 'edit', 'view'
+    window.editingSetorId = null;
+    let userPos = null;
+
+    let userMarkers = new Map(); // Para rastrear marcadores de usuário por mapa
+
+
+    // Ícone personalizado para o Usuário/Gestor
+    const userIcon = L.divIcon({
+        className: 'user-location-marker',
+        html: `<div class="w-4 h-4 bg-blue-500 border-2 border-white rounded-full shadow-[0_0_10px_rgba(59,130,246,0.8)] animate-pulse"></div>`,
+        iconSize: [16, 16],
+        iconAnchor: [8, 8]
+    });
+
+    function addUserMarker(mapInstance) {
+        if (!userPos || !mapInstance) return;
+        // Se já existe um marcador para este mapa, removemos para evitar duplicatas
+        if (userMarkers.has(mapInstance)) {
+            mapInstance.removeLayer(userMarkers.get(mapInstance));
+        }
+        const m = L.marker([userPos.lat, userPos.lng], { icon: userIcon, zIndexOffset: 1000 }).addTo(mapInstance);
+        userMarkers.set(mapInstance, m);
+    }
+
+    function setFormMode(mode) {
+      currentMode = mode;
+      const inputs = ['nome-setor', 'gestor-search', 'radius-input'];
+      const isView = mode === 'view';
+      const isCreate = mode === 'create';
+
+      inputs.forEach(id => {
+        document.getElementById(id).disabled = isView;
+        document.getElementById(id).style.opacity = isView ? '0.6' : '1';
+      });
+
+      // Mapa interactivity
+      if (isView) {
+        map.dragging.disable();
+        map.touchZoom.disable();
+        map.doubleClickZoom.disable();
+        map.scrollWheelZoom.disable();
+        if (map.tap) map.tap.disable();
+      } else {
+        map.dragging.enable();
+        map.touchZoom.enable();
+        map.doubleClickZoom.enable();
+        map.scrollWheelZoom.enable();
+        if (map.tap) map.tap.enable();
+      }
+
+      // Buttons and labels
+      const labelBtn = document.getElementById('label-btn-setor');
+      const btnSalvar = document.getElementById('btn-salvar');
+      const btnCancel = document.getElementById('btn-cancelar-setor');
+      const mapInstruction = document.querySelector('.animate-pulse.uppercase');
+
+      if (isView) {
+        labelBtn.innerText = 'Fechar Visualização';
+        btnSalvar.classList.replace('bg-primary', 'bg-slate-700');
+        btnCancel.classList.add('hidden');
+        if (mapInstruction) mapInstruction.classList.add('hidden');
+      } else {
+        btnSalvar.classList.replace('bg-slate-700', 'bg-primary');
+        labelBtn.innerText = mode === 'edit' ? 'Atualizar Setor' : 'Inicializar Setor';
+        btnCancel.classList.toggle('hidden', isCreate);
+        if (mapInstruction) mapInstruction.classList.remove('hidden');
+      }
+    }
 
     function updateMap(lat, lng, radius) {
       if (marker) map.removeLayer(marker);
@@ -223,6 +309,7 @@
     }
 
     map.on('click', function (e) {
+      if (currentMode === 'view') return;
       const radius = parseInt(document.getElementById('radius-input').value) || 100;
       updateMap(e.latlng.lat, e.latlng.lng, radius);
     });
@@ -241,8 +328,17 @@
       if ("geolocation" in navigator) {
         navigator.geolocation.getCurrentPosition((position) => {
           const { latitude, longitude } = position.coords;
+          userPos = { lat: latitude, lng: longitude };
+          
           map.setView([latitude, longitude], 17);
           updateMap(latitude, longitude, parseInt(document.getElementById('radius-input').value) || 100);
+          
+          addUserMarker(map); // Adiciona no mapa principal
+
+          // Atualizar todos os mapas inline que já estiverem abertos
+          Object.values(inlineMaps).forEach((mapInstance) => {
+              addUserMarker(mapInstance);
+          });
         }, (error) => {
           console.warn("Geolocalização negada ou falhou:", error.message);
           UI.showToast("Localização não detectada. Use o mapa.", "info");
@@ -252,6 +348,34 @@
 
     // Lógica do Supabase - Busca de Gestores
     let allFuncionarios = [];
+
+    // Toggle Form
+    document.getElementById('btn-toggle-form').onclick = () => {
+        const container = document.getElementById('container-form');
+        const isHidden = container.classList.contains('hidden');
+        if (isHidden) {
+            container.classList.remove('hidden');
+            document.getElementById('txt-toggle').innerText = 'Sair do Cadastro';
+            document.getElementById('icon-toggle').innerText = 'cancel';
+            document.getElementById('nome-setor').focus();
+            
+            // Garantir que o mapa carregue corretamente ao abrir o container
+            setTimeout(() => map.invalidateSize(), 100);
+        } else {
+            fecharFormSetor();
+        }
+    };
+
+    function fecharFormSetor() {
+        window.editingSetorId = null;
+        document.getElementById('form-setor').reset();
+        document.getElementById('gestor-id').value = '';
+        document.getElementById('container-form').classList.add('hidden');
+        document.getElementById('txt-toggle').innerText = 'Criar Novo Setor';
+        document.getElementById('icon-toggle').innerText = 'add_circle';
+        setFormMode('create');
+        initUserLocation();
+    }
 
     async function preloadFuncionarios() {
       try {
@@ -302,6 +426,32 @@
       resultsDiv.classList.add('hidden');
     };
 
+    window.filtrarListaSetores = () => {
+        const termo = document.getElementById('input-busca-setores').value.toLowerCase().trim();
+        const cards = document.querySelectorAll('#lista-setores > div[id^="card-"]');
+        let count = 0;
+
+        cards.forEach(card => {
+            const id = card.id.replace('card-', '');
+            // Busca apenas no cabeçalho e na visualização de campos, ignorando o formulário de edição
+            const headerInfo = document.getElementById(`header-info-${id}`);
+            const viewFields = document.getElementById(`view-fields-${id}`);
+            
+            const headerText = headerInfo ? headerInfo.innerText.toLowerCase() : '';
+            const viewText = viewFields ? viewFields.innerText.toLowerCase() : '';
+            const allVisibleText = headerText + " " + viewText;
+
+            if (allVisibleText.includes(termo)) {
+                card.classList.remove('hidden');
+                count++;
+            } else {
+                card.classList.add('hidden');
+            }
+        });
+
+        document.getElementById('total-setores').innerText = `${count} ATIVOS`;
+    };
+
     // Fechar resultados ao clicar fora
     document.addEventListener('click', (e) => {
       if (!e.target.closest('.group')) resultsDiv.classList.add('hidden');
@@ -320,27 +470,95 @@
 
         countSpan.innerText = `${data.length} ATIVOS`;
         container.innerHTML = data.map(s => `
-                <div class="glass-panel p-4 rounded-xl flex items-center justify-between border-l-4 border-l-primary group hover:bg-primary/5 transition-colors">
-                  <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/20">
-                      <span class="material-symbols-outlined text-primary">engineering</span>
+                <div id="card-${s.id}" class="glass-panel rounded-xl border-l-4 border-l-primary group hover:bg-primary/5 transition-all overflow-hidden mb-3 shadow-lg">
+                  <!-- Header do Card -->
+                  <div onclick="toggleSetorDetails('${s.id}', ${s.latitude}, ${s.longitude}, ${s.raio})" 
+                       class="p-4 flex items-center justify-between cursor-pointer">
+                    <div class="flex items-center gap-4">
+                      <div class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/20">
+                        <span class="material-symbols-outlined text-primary">engineering</span>
+                      </div>
+                      <div id="header-info-${s.id}">
+                        <h3 class="font-bold text-slate-100 uppercase tracking-wide text-xs">${s.nome}</h3>
+                        <p class="text-[9px] text-slate-500 uppercase">Gestor: ${s.gestor?.nome_completo || 'N/A'}</p>
+                        <p class="text-[9px] text-primary font-mono mt-1 uppercase tracking-tight">Raio Ativo: ${s.raio}m</p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 class="font-bold text-slate-100 uppercase tracking-wide text-xs">${s.nome}</h3>
-                      <p class="text-xs text-slate-500 text-[10px]">Gestor: ${s.gestor?.nome_completo || 'N/A'}</p>
-                      <p class="text-[9px] text-primary font-mono mt-1 uppercase tracking-tight">Raio: ${s.raio}m</p>
+                    <div class="flex gap-2 opacity-40 group-hover:opacity-100 transition-opacity">
+                      <button onclick="event.stopPropagation(); startInlineEdit('${s.id}', '${s.nome}', '${s.gestor_id}', '${s.gestor?.nome_completo || ''}', ${s.raio}, ${s.latitude}, ${s.longitude})" 
+                              class="p-2.5 bg-primary/10 border border-primary/20 rounded-xl text-primary hover:bg-primary/20 hover:scale-110 shadow-lg shadow-primary/5 transition-all group/btn"
+                              title="Editar Setor">
+                        <span class="material-symbols-outlined text-lg">edit_note</span>
+                      </button>
+                      <button onclick="event.stopPropagation(); deletarSetor('${s.id}')" 
+                              class="p-2.5 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-500 hover:bg-rose-500/20 hover:scale-110 shadow-lg shadow-rose-500/5 transition-all group/btn"
+                              title="Excluir Setor">
+                        <span class="material-symbols-outlined text-lg">delete_forever</span>
+                      </button>
                     </div>
+
                   </div>
-                  <div class="flex gap-1 opacity-40 group-hover:opacity-100 transition-opacity">
-                    <button onclick="zoomToSetor(${s.latitude}, ${s.longitude}, ${s.raio})" class="p-2 hover:bg-slate-700/50 rounded-lg transition-colors text-slate-400 hover:text-white">
-                      <span class="material-symbols-outlined text-[18px]">location_searching</span>
-                    </button>
-                    <button onclick="prepararEdicaoSetor('${s.id}', '${s.nome}', '${s.gestor_id}', '${s.gestor?.nome_completo || ''}', ${s.raio}, ${s.latitude}, ${s.longitude})" class="p-2 hover:bg-primary/10 rounded-lg transition-colors text-slate-400 hover:text-primary">
-                      <span class="material-symbols-outlined text-[18px]">edit</span>
-                    </button>
-                    <button onclick="deletarSetor('${s.id}')" class="p-2 hover:bg-red-500/20 rounded-lg transition-colors text-slate-400 hover:text-red-500">
-                      <span class="material-symbols-outlined text-[18px]">delete</span>
-                    </button>
+
+                  <!-- Detalhes / Edição Expansível -->
+                  <div id="details-${s.id}" class="hidden p-4 border-t border-white/5 bg-background-dark/30 space-y-4 animate-in slide-in-from-top-2 duration-300">
+                    
+                    <!-- View Mode Info -->
+                    <div id="view-fields-${s.id}" class="grid grid-cols-2 gap-4 text-[9px] uppercase font-bold text-slate-500">
+                        <div class="space-y-1">
+                            <span class="opacity-50">Coordenadas</span>
+                            <div class="text-slate-100 font-mono bg-white/5 p-2 rounded">
+                                LAT: ${s.latitude.toFixed(6)}<br>
+                                LNG: ${s.longitude.toFixed(6)}
+                            </div>
+                        </div>
+                        <div class="space-y-1">
+                            <span class="opacity-50">Parâmetros de Geofence</span>
+                            <div class="text-slate-100 font-mono bg-white/5 p-2 rounded">
+                                RAIO: ${s.raio} METROS<br>
+                                STATUS: ATIVO
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Edit Mode Form (Hidden initially) -->
+                    <div id="edit-fields-${s.id}" class="hidden space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="space-y-1">
+                                <label class="text-[9px] font-bold text-primary uppercase">Nome do Setor</label>
+                                <input id="edit-nome-${s.id}" type="text" value="${s.nome}" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs text-slate-200 outline-none focus:border-primary/50 transition-all uppercase">
+                            </div>
+                            <div class="space-y-1 relative">
+                                <label class="text-[9px] font-bold text-primary uppercase">Gestor Responsável</label>
+                                <input id="edit-gestor-search-${s.id}" type="text" value="${s.gestor?.nome_completo || ''}" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs text-slate-200 outline-none focus:border-primary/50 transition-all" placeholder="Buscar gestor...">
+                                <input id="edit-gestor-id-${s.id}" type="hidden" value="${s.gestor_id}">
+                                <div id="edit-gestor-results-${s.id}" class="absolute z-[100] left-0 right-0 top-full mt-1 bg-slate-900 border border-white/10 rounded-xl hidden shadow-2xl max-h-48 overflow-y-auto"></div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="space-y-1">
+                                <label class="text-[9px] font-bold text-primary uppercase">Raio (Metros)</label>
+                                <input id="edit-raio-${s.id}" type="number" value="${s.raio}" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs text-slate-200 outline-none focus:border-primary/50 transition-all">
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-[9px] font-bold text-slate-500 uppercase opacity-50">Localização</label>
+                                <div class="text-[9px] font-mono text-slate-400 py-2">Clique no mapa para alterar</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[9px] uppercase font-bold text-slate-500 opacity-50">Mapa de Abrangência</span>
+                            <span id="map-hint-${s.id}" class="hidden text-[8px] font-bold text-primary animate-pulse uppercase">Clique para definir nova localização</span>
+                        </div>
+                        <div id="map-inline-${s.id}" class="h-48 w-full rounded-lg border border-primary/20 bg-slate-900/50"></div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div id="edit-actions-${s.id}" class="hidden flex gap-2 justify-end pt-2">
+                        <button onclick="cancelInlineEdit('${s.id}')" class="px-4 py-2 rounded-lg text-[9px] font-bold uppercase tracking-widest text-slate-400 hover:bg-white/5 transition-all">Cancelar</button>
+                        <button onclick="saveInlineEdit('${s.id}')" class="px-4 py-2 rounded-lg bg-primary/20 text-primary border border-primary/30 text-[9px] font-black uppercase tracking-widest hover:bg-primary/30 transition-all">Salvar Alterações</button>
+                    </div>
                   </div>
                 </div>
             `).join('');
@@ -350,31 +568,209 @@
       }
     }
 
-    let editingSetorId = null;
+    let inlineMaps = {};
+    let inlineMarkers = {};
+    let inlineCircles = {};
+    let inlineCoords = {}; // Armazena coords durante edição temporária
+
+    window.toggleSetorDetails = (id, lat, lng, radius) => {
+      const detailsDiv = document.getElementById(`details-${id}`);
+      const isHidden = detailsDiv.classList.contains('hidden');
+
+      if (isHidden) {
+        detailsDiv.classList.remove('hidden');
+        initInlineMap(id, lat, lng, radius);
+      } else {
+        cancelInlineEdit(id); // Fecha edição se estiver aberta
+        detailsDiv.classList.add('hidden');
+      }
+    };
+
+    function initInlineMap(id, lat, lng, radius, interactive = false) {
+        setTimeout(() => {
+            if (!inlineMaps[id]) {
+                const mapId = `map-inline-${id}`;
+                inlineMaps[id] = L.map(mapId, {
+                    dragging: interactive,
+                    zoomControl: false,
+                    touchZoom: interactive,
+                    doubleClickZoom: interactive,
+                    scrollWheelZoom: interactive,
+                    boxZoom: interactive,
+                    keyboard: interactive,
+                    tap: interactive
+                }).setView([lat, lng], 17);
+
+                L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+                    subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+                    attribution: '© Google Maps'
+                }).addTo(inlineMaps[id]);
+
+                inlineMarkers[id] = L.marker([lat, lng]).addTo(inlineMaps[id]);
+                inlineCircles[id] = L.circle([lat, lng], {
+                    color: '#0d59f2',
+                    fillColor: '#0d59f2',
+                    fillOpacity: 0.2,
+                    radius: radius
+                }).addTo(inlineMaps[id]);
+
+                addUserMarker(inlineMaps[id]); // Adiciona localização do gestor no card
+
+                // Input de raio sincronizado
+                const raioInput = document.getElementById(`edit-raio-${id}`);
+                if (raioInput) {
+                    raioInput.oninput = (e) => {
+                        const r = parseInt(e.target.value) || 0;
+                        inlineCircles[id].setRadius(r);
+                    };
+                }
+
+                // Evento de clique se for interativo
+                inlineMaps[id].on('click', (e) => {
+                    if (document.getElementById(`edit-fields-${id}`).classList.contains('hidden')) return;
+                    const { lat: newLat, lng: newLng } = e.latlng;
+                    updateInlineMapVisuals(id, newLat, newLng);
+                });
+            } else {
+                inlineMaps[id].invalidateSize();
+                if (interactive) {
+                    enableMapInteraction(id);
+                } else {
+                    disableMapInteraction(id);
+                }
+            }
+        }, 100);
+    }
+
+    function updateInlineMapVisuals(id, lat, lng) {
+        if (inlineMarkers[id]) inlineMarkers[id].setLatLng([lat, lng]);
+        if (inlineCircles[id]) inlineCircles[id].setLatLng([lat, lng]);
+        inlineCoords[id] = { lat, lng };
+    }
+
+    function enableMapInteraction(id) {
+        const m = inlineMaps[id];
+        if (!m) return;
+        m.dragging.enable();
+        m.touchZoom.enable();
+        m.doubleClickZoom.enable();
+        m.scrollWheelZoom.enable();
+        if (m.tap) m.tap.enable();
+        document.getElementById(`map-hint-${id}`).classList.remove('hidden');
+    }
+
+    function disableMapInteraction(id) {
+        const m = inlineMaps[id];
+        if (!m) return;
+        m.dragging.disable();
+        m.touchZoom.disable();
+        m.doubleClickZoom.disable();
+        m.scrollWheelZoom.disable();
+        if (m.tap) m.tap.disable();
+        document.getElementById(`map-hint-${id}`).classList.add('hidden');
+    }
+
+    window.startInlineEdit = (id, nome, gestorId, gestorNome, raio, lat, lng) => {
+        const detailsDiv = document.getElementById(`details-${id}`);
+        if (detailsDiv.classList.contains('hidden')) {
+            toggleSetorDetails(id, lat, lng, raio);
+        }
+
+        // Alternar campos
+        document.getElementById(`view-fields-${id}`).classList.add('hidden');
+        document.getElementById(`edit-fields-${id}`).classList.remove('hidden');
+        document.getElementById(`edit-actions-${id}`).classList.remove('hidden');
+        
+        // Inicializar busca de gestor
+        initInlineGestorSearch(id);
+        
+        // Ativar mapa
+        inlineCoords[id] = { lat, lng };
+        enableMapInteraction(id);
+    };
+
+    window.cancelInlineEdit = (id) => {
+        document.getElementById(`view-fields-${id}`).classList.remove('hidden');
+        document.getElementById(`edit-fields-${id}`).classList.add('hidden');
+        document.getElementById(`edit-actions-${id}`).classList.add('hidden');
+        disableMapInteraction(id);
+        // Resetar mapa para original? (Opcional, mas melhor recarregar lista se salvar)
+    };
+
+    window.saveInlineEdit = async (id) => {
+        const nome = document.getElementById(`edit-nome-${id}`).value;
+        const gestorId = document.getElementById(`edit-gestor-id-${id}`).value;
+        const raio = parseInt(document.getElementById(`edit-raio-${id}`).value);
+        const { lat, lng } = inlineCoords[id];
+
+        if (!nome || !gestorId) {
+            UI.showToast('Preencha nome e selecione um gestor', 'error');
+            return;
+        }
+
+        UI.showLoader();
+        try {
+            const { error } = await supabase.from('setores').update({
+                nome,
+                gestor_id: gestorId,
+                raio,
+                latitude: lat,
+                longitude: lng
+            }).eq('id', id);
+
+            if (error) throw error;
+            UI.showToast('Setor atualizado!', 'success');
+            loadSetores();
+        } catch (err) {
+            console.error('Erro ao atualizar inline:', err);
+            UI.showToast('Erro ao atualizar setor', 'error');
+        } finally {
+            UI.hideLoader();
+        }
+    };
+
+    function initInlineGestorSearch(id) {
+        const searchInput = document.getElementById(`edit-gestor-search-${id}`);
+        const resultsDiv = document.getElementById(`edit-gestor-results-${id}`);
+        const idInput = document.getElementById(`edit-gestor-id-${id}`);
+
+        searchInput.oninput = (e) => {
+            const term = e.target.value.toLowerCase();
+            if (!term) {
+                resultsDiv.classList.add('hidden');
+                return;
+            }
+            const filtered = allFuncionarios.filter(f => 
+                f.nome_completo.toLowerCase().includes(term) || 
+                (f.nickname && f.nickname.toLowerCase().includes(term))
+            ).slice(0, 5);
+
+            if (filtered.length > 0) {
+                resultsDiv.innerHTML = filtered.map(f => `
+                    <div class="px-3 py-2 hover:bg-primary/20 cursor-pointer border-b border-white/5 last:border-0"
+                         onclick="selectInlineGestor('${id}', '${f.id}', '${f.nome_completo}')">
+                        <p class="text-[10px] font-bold text-slate-100">${f.nome_completo}</p>
+                    </div>
+                `).join('');
+                resultsDiv.classList.remove('hidden');
+            } else {
+                resultsDiv.classList.add('hidden');
+            }
+        };
+    }
+
+    window.selectInlineGestor = (cardId, gestorId, gestorNome) => {
+        document.getElementById(`edit-gestor-id-${cardId}`).value = gestorId;
+        document.getElementById(`edit-gestor-search-${cardId}`).value = gestorNome;
+        document.getElementById(`edit-gestor-results-${cardId}`).classList.add('hidden');
+    };
 
     window.prepararEdicaoSetor = (id, nome, gestorId, gestorNome, raio, lat, lng) => {
-      editingSetorId = id;
-      document.getElementById('nome-setor').value = nome;
-      document.getElementById('gestor-id').value = gestorId;
-      document.getElementById('gestor-search').value = gestorNome;
-      document.getElementById('radius-input').value = raio;
-
-      updateMap(lat, lng, raio);
-      map.setView([lat, lng], 17);
-
-      document.getElementById('label-btn-setor').innerText = 'Atualizar Setor';
-      document.getElementById('btn-cancelar-setor').classList.remove('hidden');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+        // Redireciona para o novo fluxo inline
+        startInlineEdit(id, nome, gestorId, gestorNome, raio, lat, lng);
     };
 
-    document.getElementById('btn-cancelar-setor').onclick = () => {
-      editingSetorId = null;
-      document.getElementById('form-setor').reset();
-      document.getElementById('gestor-id').value = '';
-      document.getElementById('label-btn-setor').innerText = 'Inicializar Setor';
-      document.getElementById('btn-cancelar-setor').classList.add('hidden');
-      initUserLocation();
-    };
+    document.getElementById('btn-cancelar-setor').onclick = () => fecharFormSetor();
 
     window.zoomToSetor = (lat, lng, radius) => {
       map.setView([lat, lng], 17);
@@ -387,7 +783,13 @@
       UI.showLoader();
       try {
         const { error } = await supabase.from('setores').delete().eq('id', id);
-        if (error) throw error;
+        if (error) {
+          if (error.code === '23503') {
+             UI.showToast('Erro: Existem funcionários vinculados a este setor. Remova-os primeiro.', 'error');
+             return;
+          }
+          throw error;
+        }
         UI.showToast('Setor deletado!', 'success');
         loadSetores();
       } catch (err) {
@@ -400,6 +802,11 @@
 
     document.getElementById('form-setor').addEventListener('submit', async (e) => {
       e.preventDefault();
+
+      if (currentMode === 'view') {
+        document.getElementById('btn-cancelar-setor').click();
+        return;
+      }
 
       const gestorId = gestorIdInput.value;
       if (!gestorId) {
@@ -418,8 +825,8 @@
       };
 
       try {
-        if (editingSetorId) {
-          const { error } = await supabase.from('setores').update(dados).eq('id', editingSetorId);
+        if (window.editingSetorId) {
+          const { error } = await supabase.from('setores').update(dados).eq('id', window.editingSetorId);
           if (error) throw error;
           UI.showToast('Setor atualizado!', 'success');
         } else {
@@ -428,7 +835,7 @@
           UI.showToast('Setor inicializado!', 'success');
         }
 
-        document.getElementById('btn-cancelar-setor').click();
+        fecharFormSetor();
         loadSetores();
       } catch (err) {
         console.error('Erro ao salvar:', err);

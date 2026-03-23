@@ -39,7 +39,7 @@
   class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen flex flex-col">
   <header class="border-b border-primary/20 bg-background-dark/80 backdrop-blur-md sticky top-0 z-50">
     <div class="flex items-center p-4 justify-between max-w-2xl mx-auto">
-        <div onclick="window.location.href='painel_admin.html'"
+        <div id="btn-voltar"
             class="text-primary flex size-12 shrink-0 items-center justify-start cursor-pointer hover:opacity-70 transition-opacity">
             <span class="material-symbols-outlined text-2xl">arrow_back</span>
         </div>
@@ -52,11 +52,17 @@
   </header>
   <main class="flex-1 max-w-2xl mx-auto w-full p-4 space-y-8 pb-24">
     <section class="space-y-4">
-      <div class="flex items-center gap-2 px-1">
-        <span class="material-symbols-outlined text-primary text-sm">add_circle</span>
-        <h2 class="text-sm font-bold tracking-widest uppercase opacity-70">Novo Cargo</h2>
+      <div class="flex items-center justify-between px-1">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary text-sm">add_circle</span>
+          <h2 class="text-sm font-bold tracking-widest uppercase opacity-70">Novo Cargo</h2>
+        </div>
+        <button id="btn-toggle-form" class="bg-primary/20 hover:bg-primary/30 text-primary text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-lg border border-primary/30 transition-all flex items-center gap-2">
+            <span id="icon-toggle" class="material-symbols-outlined text-sm">add_circle</span>
+            <span id="txt-toggle">Criar Novo Cargo</span>
+        </button>
       </div>
-      <div class="bg-slate-900/50 border border-primary/20 rounded-xl p-6 sci-fi-gradient glow-border neon-border">
+      <div id="container-form" class="hidden bg-slate-900/50 border border-primary/20 rounded-xl p-6 sci-fi-gradient glow-border neon-border scroll-mt-24">
         <form id="form-cargo" class="space-y-5">
           <div class="space-y-2">
             <label class="text-xs font-semibold uppercase tracking-tighter opacity-60 ml-1">Identificação do Cargo</label>
@@ -84,24 +90,38 @@
             </select>
           </div>
 
-          <div class="space-y-2">
-            <label class="text-xs font-semibold uppercase tracking-tighter opacity-60 ml-1">Graduação Principal Exigida</label>
-            <div class="relative">
-              <input id="graduacao-principal"
-                class="w-full bg-slate-100 dark:bg-background-dark/50 border-slate-200 dark:border-slate-border rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent transition-all placeholder:opacity-30 text-slate-100"
-                placeholder="Ex: Engenharia Elétrica, Direito..." type="text" />
-              <span class="material-symbols-outlined absolute right-3 top-3 text-primary/40">school</span>
+          <div class="space-y-4">
+            <div class="flex items-center justify-between px-1">
+              <label class="text-xs font-semibold uppercase tracking-tighter opacity-60 flex items-center gap-2">
+                <span class="material-symbols-outlined text-[14px]">school</span> Graduação Principal Exigida
+              </label>
+              <a href="cadastro_especialidades.html?from=cadastro_cargos" class="text-[9px] text-primary hover:underline flex items-center gap-1 uppercase font-black">
+                <span class="material-symbols-outlined text-[12px]">settings</span> Configurar Catálogo
+              </a>
+            </div>
+            <div class="relative group">
+              <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <span class="material-symbols-outlined text-primary text-xl">search</span>
+              </div>
+              <input id="graduacao-principal" oninput="filtrarGraduacoesInline()"
+                class="block w-full pl-12 pr-4 py-4 bg-primary/5 border border-primary/20 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all placeholder-slate-500 text-slate-100 text-sm"
+                placeholder="Localizar graduação no catálogo..." type="text" autocomplete="off" />
+              <div id="resultados-busca-graduacoes" class="absolute z-[100] left-0 right-0 top-full mt-1 bg-slate-900 border border-white/10 rounded-xl hidden shadow-2xl max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
+                <!-- Sugestões injetadas via JS -->
+              </div>
             </div>
           </div>
 
           <!-- Especialidades (Inline Search Style) -->
           <div class="space-y-4">
-            <label class="text-xs font-semibold uppercase tracking-tighter opacity-60 ml-1 flex items-center gap-2">
-              <span class="material-symbols-outlined text-[14px]">psychology</span> Especialidades Requeridas
-              <a href="cadastro_especialidades.html?from=cadastro_cargos" class="ml-auto text-[9px] text-primary hover:underline flex items-center gap-1 uppercase font-black">
+            <div class="flex items-center justify-between px-1">
+              <label class="text-xs font-semibold uppercase tracking-tighter opacity-60 flex items-center gap-2">
+                <span class="material-symbols-outlined text-[14px]">psychology</span> Especialidades Requeridas
+              </label>
+              <a href="cadastro_especialidades.html?from=cadastro_cargos" class="text-[9px] text-primary hover:underline flex items-center gap-1 uppercase font-black">
                 <span class="material-symbols-outlined text-[12px]">settings</span> Configurar Catálogo
               </a>
-            </label>
+            </div>
             
             <div class="relative group">
               <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -141,7 +161,6 @@
         </form>
       </div>
     </section>
-    <section class="space-y-4">
       <div class="flex items-center justify-between px-1">
         <div class="flex items-center gap-2">
           <span class="material-symbols-outlined text-primary text-sm">database</span>
@@ -149,6 +168,16 @@
         </div>
         <span id="total-cargos" class="text-[10px] bg-primary/20 text-primary px-2 py-1 rounded-full font-bold">0
           REGISTROS</span>
+      </div>
+
+      <!-- Card de Pesquisa -->
+      <div class="relative group">
+        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+          <span class="material-symbols-outlined text-primary/50 group-focus-within:text-primary transition-colors text-xl">search</span>
+        </div>
+        <input id="input-busca-ativos"
+          class="block w-full pl-12 pr-4 py-4 bg-slate-900/50 border border-primary/20 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all placeholder-slate-500 text-slate-100 text-sm neon-border"
+          placeholder="Pesquisar por cargo ou descrição..." type="text" oninput="filtrarListaAtivos()" />
       </div>
       <div id="lista-cargos" class="space-y-3">
         <!-- Lista Dinâmica -->
@@ -188,6 +217,7 @@
     import { UI } from '../js/ui-utils.js';
 
     let especialidadesDisponiveis = [];
+    let graduacoesDisponiveis = []; // Lista única de nomes de graduação
     let especialidadesSelecionadasIds = [];
 
     async function carregarEspecialidadesBase() {
@@ -199,7 +229,12 @@
         }
         
         especialidadesDisponiveis = data || [];
-        console.log(`Log: ${especialidadesDisponiveis.length} especialidades carregadas.`);
+        
+        // Extrair nomes únicos de graduação
+        const gradSet = new Set(especialidadesDisponiveis.map(e => e.nome_graduacao_principal).filter(n => !!n));
+        graduacoesDisponiveis = Array.from(gradSet).sort();
+
+        console.log(`Log: ${especialidadesDisponiveis.length} especialidades e ${graduacoesDisponiveis.length} graduações carregadas.`);
       } catch (err) {
         console.error('Erro crítico ao carregar catálogo:', err);
       }
@@ -227,7 +262,7 @@
         container.innerHTML = data.map(c => {
           const especs = c.cargos_especialidades?.map(ce => ce.especialidades) || [];
           return `
-                <div class="group bg-slate-900/50 border border-primary/10 rounded-xl p-4 flex flex-col gap-3 hover:border-primary/50 transition-all neon-border">
+                <div id="card-cargo-${c.id}" class="group bg-slate-900/50 border border-primary/10 rounded-xl p-4 flex flex-col gap-3 hover:border-primary/50 transition-all neon-border scroll-mt-24">
                   <div class="flex items-center justify-between">
                     <div class="flex items-center gap-4">
                       <div class="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary border border-primary/20 shrink-0">
@@ -241,27 +276,75 @@
                         </p>
                       </div>
                     </div>
-                    <div class="flex gap-1 opacity-40 group-hover:opacity-100 transition-opacity">
-                      <button onclick='prepararEdicao(${JSON.stringify(c)})' class="p-2 hover:bg-primary/10 hover:text-primary rounded-lg transition-colors">
-                        <span class="material-symbols-outlined text-xl">edit</span>
+                    <div class="flex gap-2 opacity-40 group-hover:opacity-100 transition-opacity">
+                      <button onclick='prepararEdicaoInline(${JSON.stringify(c)})' 
+                              class="p-2.5 bg-primary/10 border border-primary/20 rounded-xl text-primary hover:bg-primary/20 hover:scale-110 shadow-lg shadow-primary/5 transition-all group/btn"
+                              title="Editar Cargo">
+                        <span class="material-symbols-outlined text-xl">edit_note</span>
                       </button>
-                      <button onclick="deletarCargo('${c.id}')" class="p-2 hover:bg-red-500/10 hover:text-red-500 rounded-lg transition-colors">
-                        <span class="material-symbols-outlined text-xl">delete</span>
+                      <button onclick="deletarCargo('${c.id}')" 
+                              class="p-2.5 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-500 hover:bg-rose-500/20 hover:scale-110 shadow-lg shadow-rose-500/5 transition-all group/btn"
+                              title="Excluir Cargo">
+                        <span class="material-symbols-outlined text-xl">delete_forever</span>
                       </button>
                     </div>
+
                   </div>
                   
-                  ${c.descricao ? `<p class="text-xs text-slate-500 line-clamp-2 px-1 border-l border-white/5 ml-1">${c.descricao}</p>` : ''}
-                  
-                  ${especs.length > 0 ? `
-                    <div class="flex flex-wrap gap-1.5 mt-1 ml-1">
-                      ${especs.map(e => `
-                        <span class="text-[9px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-white/5 font-mono">
-                          ${e.codigo} • ${e.nome}
-                        </span>
-                      `).join('')}
+                  <div id="detalhes-view-${c.id}" class="space-y-3">
+                    ${c.descricao ? `<p class="text-xs text-slate-500 line-clamp-2 px-1 border-l border-white/5 ml-1">${c.descricao}</p>` : ''}
+                    
+                    ${especs.length > 0 ? `
+                        <div class="flex flex-wrap gap-1.5 mt-1 ml-1">
+                        ${especs.map(e => `
+                            <span class="text-[9px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-white/5 font-mono">
+                            ${e.codigo} • ${e.nome}
+                            </span>
+                        `).join('')}
+                        </div>
+                    ` : ''}
+                  </div>
+
+                  <div id="detalhes-edit-${c.id}" class="hidden space-y-4 pt-4 border-t border-white/10">
+                    <div class="space-y-4">
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-bold uppercase text-slate-500">Nome do Cargo</label>
+                            <input id="edit-nome-${c.id}" value="${c.nome}" class="w-full bg-background-dark/50 border border-white/10 rounded-lg p-3 text-sm focus:ring-1 focus:ring-primary outline-none" type="text" />
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-bold uppercase text-slate-500">Nível</label>
+                                <select id="edit-nivel-${c.id}" class="w-full bg-background-dark/50 border border-white/10 rounded-lg p-3 text-sm focus:ring-1 focus:ring-primary outline-none">
+                                    <option value="Fundamental" ${c.nivel === 'Fundamental' ? 'selected' : ''}>Fundamental</option>
+                                    <option value="Médio" ${c.nivel === 'Médio' ? 'selected' : ''}>Médio</option>
+                                    <option value="Técnico" ${c.nivel === 'Técnico' ? 'selected' : ''}>Técnico</option>
+                                    <option value="Superior" ${c.nivel === 'Superior' ? 'selected' : ''}>Superior</option>
+                                </select>
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-bold uppercase text-slate-500">Graduação</label>
+                                <input id="edit-grad-${c.id}" value="${c.graduacao_principal || ''}" class="w-full bg-background-dark/50 border border-white/10 rounded-lg p-3 text-sm focus:ring-1 focus:ring-primary outline-none" type="text" oninput="filtrarGraduacoesInlineCard('${c.id}')" />
+                                <div id="res-grad-${c.id}" class="hidden absolute z-30 bg-slate-900 border border-white/10 rounded-lg w-full mt-1 shadow-2xl max-h-40 overflow-y-auto"></div>
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-bold uppercase text-slate-500">Descrição</label>
+                            <textarea id="edit-desc-${c.id}" class="w-full bg-background-dark/50 border border-white/10 rounded-lg p-3 text-xs min-h-[60px] resize-none focus:ring-1 focus:ring-primary outline-none">${c.descricao || ''}</textarea>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-bold uppercase text-slate-500">Especialidades</label>
+                            <input id="edit-esp-input-${c.id}" class="w-full bg-background-dark/50 border border-white/10 rounded-lg p-3 text-sm focus:ring-1 focus:ring-primary outline-none" placeholder="Buscar especialidade..." oninput="filtrarEspecialidadesInlineCard('${c.id}')" />
+                            <div id="res-esp-${c.id}" class="hidden absolute z-30 bg-slate-900 border border-white/10 rounded-lg w-full mt-1 shadow-2xl max-h-40 overflow-y-auto"></div>
+                            <div id="chips-esp-${c.id}" class="flex flex-wrap gap-1.5 mt-2">
+                                <!-- Chips localizados -->
+                            </div>
+                        </div>
                     </div>
-                  ` : ''}
+                    <div class="flex gap-2 pt-2">
+                        <button onclick="salvarEdicaoInline('${c.id}')" class="flex-1 bg-primary text-white text-[10px] font-black uppercase py-3 rounded-lg hover:bg-primary/80 transition-all">Salvar Alterações</button>
+                        <button onclick="cancelarEdicaoInline('${c.id}')" class="px-6 bg-slate-800 text-slate-400 text-[10px] font-black uppercase py-3 rounded-lg hover:bg-slate-700 transition-all">Cancelar</button>
+                    </div>
+                  </div>
                 </div>
             `;
         }).join('');
@@ -283,6 +366,46 @@
       };
       return icons[nivel] || 'badge';
     }
+
+    // Busca Inline de Graduações
+    window.filtrarGraduacoesInline = () => {
+        const input = document.getElementById('graduacao-principal');
+        const resultadosDiv = document.getElementById('resultados-busca-graduacoes');
+        const termo = input.value.toLowerCase().trim();
+
+        if (!termo) {
+            resultadosDiv.innerHTML = '';
+            resultadosDiv.classList.add('hidden');
+            return;
+        }
+
+        const filtradas = graduacoesDisponiveis.filter(g => g.toLowerCase().includes(termo));
+
+        if (filtradas.length > 0) {
+            resultadosDiv.innerHTML = filtradas.map(g => `
+                <div onclick="selecionarGraduacaoInline('${g}')" 
+                     class="p-4 hover:bg-primary/10 cursor-pointer flex items-center justify-between group/item transition-colors">
+                  <div class="flex items-center gap-3">
+                    <div class="size-8 rounded bg-primary/20 flex items-center justify-center text-primary text-[14px] shrink-0">
+                      <span class="material-symbols-outlined">school</span>
+                    </div>
+                    <div>
+                      <h4 class="text-[11px] font-bold uppercase text-slate-200">${g}</h4>
+                    </div>
+                  </div>
+                </div>
+            `).join('');
+            resultadosDiv.classList.remove('hidden');
+        } else {
+            resultadosDiv.innerHTML = `<p class="text-center py-4 text-[9px] text-slate-500 uppercase font-black italic">Nenhuma graduação localizada</p>`;
+            resultadosDiv.classList.remove('hidden');
+        }
+    };
+
+    window.selecionarGraduacaoInline = (nome) => {
+        document.getElementById('graduacao-principal').value = nome;
+        document.getElementById('resultados-busca-graduacoes').classList.add('hidden');
+    };
 
     // Busca Inline de Especialidades
     window.filtrarEspecialidadesInline = () => {
@@ -368,11 +491,29 @@
 
     // Fechar resultados ao clicar fora
     document.addEventListener('click', (e) => {
-        const res = document.getElementById('resultados-busca-especialidades');
-        const input = document.getElementById('input-busca-especialidade');
-        if (!res.contains(e.target) && !input.contains(e.target)) {
-            res.classList.add('hidden');
+        // Dropdowns do formulário principal
+        const resEsp = document.getElementById('resultados-busca-especialidades');
+        const inputEsp = document.getElementById('input-busca-especialidade');
+        const resGrad = document.getElementById('resultados-busca-graduacoes');
+        const inputGrad = document.getElementById('graduacao-principal');
+
+        if (resEsp && inputEsp && !resEsp.contains(e.target) && !inputEsp.contains(e.target)) {
+            resEsp.classList.add('hidden');
         }
+        if (resGrad && inputGrad && !resGrad.contains(e.target) && !inputGrad.contains(e.target)) {
+            resGrad.classList.add('hidden');
+        }
+
+        // Dropdowns inline nos cards
+        document.querySelectorAll('[id^="res-esp-"], [id^="res-grad-"]').forEach(div => {
+            const id = div.id.split('-').pop(); // Pega o ID do cargo
+            const inputId = div.id.startsWith('res-esp-') ? `edit-esp-input-${id}` : `edit-grad-${id}`;
+            const input = document.getElementById(inputId);
+            
+            if (input && !div.contains(e.target) && !input.contains(e.target)) {
+                div.classList.add('hidden');
+            }
+        });
     });
 
     window.fecharModalEspecialidades = () => {
@@ -384,31 +525,167 @@
       window.location.href = 'painel_admin.html';
     };
 
+    // Toggle Form Principal
+    document.getElementById('btn-toggle-form').onclick = () => {
+        const container = document.getElementById('container-form');
+        const isHidden = container.classList.contains('hidden');
+        if (isHidden) {
+            container.classList.remove('hidden');
+            document.getElementById('txt-toggle').innerText = 'Sair do Cadastro';
+            document.getElementById('icon-toggle').innerText = 'cancel';
+            document.getElementById('nome-cargo').focus();
+        } else {
+            fecharFormCargo();
+        }
+    };
+
+    function fecharFormCargo() {
+        document.getElementById('form-cargo').reset();
+        especialidadesSelecionadasIds = [];
+        renderSeleccionadasVisual();
+        document.getElementById('container-form').classList.add('hidden');
+        document.getElementById('txt-toggle').innerText = 'Criar Novo Cargo';
+        document.getElementById('icon-toggle').innerText = 'add_circle';
+    }
+
+    let inlineEspecIds = {}; // Controle de especialidades por card id
+
+    window.prepararEdicaoInline = (cargo) => {
+        // Fechar qualquer outra edição aberta
+        Object.keys(inlineEspecIds).forEach(id => {
+            if (id !== cargo.id) cancelarEdicaoInline(id);
+        });
+
+        const card = document.getElementById(`card-cargo-${cargo.id}`);
+        const viewDiv = document.getElementById(`detalhes-view-${cargo.id}`);
+        const editDiv = document.getElementById(`detalhes-edit-${cargo.id}`);
+
+        viewDiv.classList.add('hidden');
+        editDiv.classList.remove('hidden');
+        
+        // Inicializar especialidades do card
+        inlineEspecIds[cargo.id] = cargo.cargos_especialidades?.map(ce => ce.especialidades.id) || [];
+        renderChipsInline(cargo.id);
+
+        card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+
+    window.cancelarEdicaoInline = (id) => {
+        const viewDiv = document.getElementById(`detalhes-view-${id}`);
+        const editDiv = document.getElementById(`detalhes-edit-${id}`);
+        if(viewDiv) viewDiv.classList.remove('hidden');
+        if(editDiv) editDiv.classList.add('hidden');
+        delete inlineEspecIds[id];
+    };
+
+    function renderChipsInline(id) {
+        const container = document.getElementById(`chips-esp-${id}`);
+        const IDs = inlineEspecIds[id] || [];
+        const selecionadas = especialidadesDisponiveis.filter(e => IDs.includes(e.id));
+        
+        container.innerHTML = selecionadas.map(e => `
+          <div class="flex items-center gap-1.5 px-2 py-1 bg-primary/10 border border-primary/30 rounded text-primary">
+            <span class="text-[8px] font-bold uppercase">${e.codigo} • ${e.nome}</span>
+            <button type="button" onclick="removerEspecInline('${id}', '${e.id}')" class="flex items-center hover:text-white">
+              <span class="material-symbols-outlined text-[10px]">close</span>
+            </button>
+          </div>
+        `).join('');
+    }
+
+    window.removerEspecInline = (cargoId, especId) => {
+        inlineEspecIds[cargoId] = inlineEspecIds[cargoId].filter(id => id !== especId);
+        renderChipsInline(cargoId);
+    };
+
+    window.filtrarEspecialidadesInlineCard = (id) => {
+        const termo = document.getElementById(`edit-esp-input-${id}`).value.toLowerCase();
+        const resDiv = document.getElementById(`res-esp-${id}`);
+        if (!termo) { resDiv.classList.add('hidden'); return; }
+
+        const filtradas = especialidadesDisponiveis.filter(e => 
+            (e.nome.toLowerCase().includes(termo) || e.codigo.toLowerCase().includes(termo)) &&
+            !inlineEspecIds[id].includes(e.id)
+        );
+
+        if (filtradas.length > 0) {
+            resDiv.innerHTML = filtradas.map(e => `
+                <div onclick="selecionarEspecInline('${id}', '${e.id}')" class="p-3 hover:bg-primary/10 cursor-pointer text-[10px] uppercase font-bold text-slate-300 border-b border-white/5">
+                    ${e.codigo} • ${e.nome}
+                </div>
+            `).join('');
+            resDiv.classList.remove('hidden');
+        } else {
+            resDiv.innerHTML = '<p class="p-3 text-[8px] text-slate-500 italic">Nada encontrado</p>';
+            resDiv.classList.remove('hidden');
+        }
+    };
+
+    window.selecionarEspecInline = (cargoId, especId) => {
+        inlineEspecIds[cargoId].push(especId);
+        document.getElementById(`edit-esp-input-${cargoId}`).value = '';
+        document.getElementById(`res-esp-${cargoId}`).classList.add('hidden');
+        renderChipsInline(cargoId);
+    };
+
+    window.filtrarGraduacoesInlineCard = (id) => {
+        const termo = document.getElementById(`edit-grad-${id}`).value.toLowerCase();
+        const resDiv = document.getElementById(`res-grad-${id}`);
+        if (!termo) { resDiv.classList.add('hidden'); return; }
+
+        const filtradas = graduacoesDisponiveis.filter(g => g.toLowerCase().includes(termo));
+
+        if (filtradas.length > 0) {
+            resDiv.innerHTML = filtradas.map(g => `
+                <div onclick="document.getElementById('edit-grad-${id}').value='${g}'; document.getElementById('res-grad-${id}').classList.add('hidden');" class="p-3 hover:bg-primary/10 cursor-pointer text-[10px] uppercase font-bold text-slate-300 border-b border-white/5">
+                    ${g}
+                </div>
+            `).join('');
+            resDiv.classList.remove('hidden');
+        } else {
+            resDiv.innerHTML = '<p class="p-3 text-[8px] text-slate-500 italic">Nada encontrado</p>';
+            resDiv.classList.remove('hidden');
+        }
+    };
+
+    window.salvarEdicaoInline = async (id) => {
+        UI.showLoader();
+        const dados = {
+            nome: document.getElementById(`edit-nome-${id}`).value,
+            nivel: document.getElementById(`edit-nivel-${id}`).value,
+            descricao: document.getElementById(`edit-desc-${id}`).value,
+            graduacao_principal: document.getElementById(`edit-grad-${id}`).value
+        };
+
+        try {
+            const { error } = await supabase.from('cargos').update(dados).eq('id', id);
+            if (error) throw error;
+
+            // Especialidades
+            await supabase.from('cargos_especialidades').delete().eq('cargo_id', id);
+            if (inlineEspecIds[id].length > 0) {
+                const inserts = inlineEspecIds[id].map(eid => ({ cargo_id: id, especialidade_id: eid }));
+                await supabase.from('cargos_especialidades').insert(inserts);
+            }
+
+            UI.showToast('Cargo atualizado!', 'success');
+            loadCargos();
+        } catch (err) {
+            console.error(err);
+            UI.showToast('Erro ao atualizar cargo', 'error');
+        } finally {
+            UI.hideLoader();
+        }
+    };
+
     let editingCargoId = null;
 
     window.prepararEdicao = (cargo) => {
-      editingCargoId = cargo.id;
-      document.getElementById('nome-cargo').value = cargo.nome;
-      document.getElementById('nivel-cargo').value = cargo.nivel;
-      document.getElementById('descricao-cargo').value = cargo.descricao || '';
-      document.getElementById('graduacao-principal').value = cargo.graduacao_principal || '';
-      
-      // Especialidades do Cargo
-      especialidadesSelecionadasIds = cargo.cargos_especialidades?.map(ce => ce.especialidades.id) || [];
-      renderSeleccionadasVisual();
-
-      document.getElementById('label-submit').innerText = 'Atualizar Cargo';
-      document.getElementById('btn-cancelar-edicao').classList.remove('hidden');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      prepararEdicaoInline(cargo);
     };
 
     document.getElementById('btn-cancelar-edicao').onclick = () => {
-      editingCargoId = null;
-      document.getElementById('form-cargo').reset();
-      especialidadesSelecionadasIds = [];
-      renderSeleccionadasVisual();
-      document.getElementById('label-submit').innerText = 'Registrar Cargo';
-      document.getElementById('btn-cancelar-edicao').classList.add('hidden');
+      fecharFormCargo();
     };
 
     window.deletarCargo = async (id) => {
@@ -475,6 +752,31 @@
         UI.hideLoader();
       }
     });
+
+    window.filtrarListaAtivos = () => {
+        const termo = document.getElementById('input-busca-ativos').value.toLowerCase().trim();
+        const cards = document.querySelectorAll('#lista-cargos > div[id^="card-cargo-"]');
+        let count = 0;
+
+        cards.forEach(card => {
+            const id = card.id.replace('card-cargo-', '');
+            const h3 = card.querySelector('h3');
+            const viewDiv = document.getElementById(`detalhes-view-${id}`);
+            
+            const headerText = h3 ? h3.innerText.toLowerCase() : '';
+            const detailsText = viewDiv ? viewDiv.innerText.toLowerCase() : '';
+            const allVisibleText = headerText + " " + detailsText;
+
+            if (allVisibleText.includes(termo)) {
+                card.classList.remove('hidden');
+                count++;
+            } else {
+                card.classList.add('hidden');
+            }
+        });
+
+        document.getElementById('total-cargos').innerText = `${count} REGISTROS`;
+    };
 
     carregarEspecialidadesBase().then(() => loadCargos());
 

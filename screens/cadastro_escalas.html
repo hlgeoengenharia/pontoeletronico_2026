@@ -52,13 +52,20 @@
     </div>
   </header>
   <main class="p-4 max-w-2xl mx-auto space-y-6">
-    <!-- Create Section -->
-    <section class="sci-fi-gradient sci-fi-border rounded-xl p-6">
-      <div class="flex items-center gap-2 mb-6">
-        <span class="material-symbols-outlined text-primary">add_circle</span>
-        <h2 class="text-lg font-bold uppercase tracking-wider">Criar Nova Escala</h2>
+    <section class="space-y-4">
+      <div class="flex items-center justify-between px-1">
+        <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary text-sm">add_circle</span>
+            <h2 class="text-sm font-bold tracking-widest uppercase opacity-70">Nova Escala</h2>
+        </div>
+        <button id="btn-toggle-form" class="bg-primary/20 hover:bg-primary/30 text-primary text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-lg border border-primary/30 transition-all flex items-center gap-2">
+            <span id="icon-toggle" class="material-symbols-outlined text-sm">add_circle</span>
+            <span id="txt-toggle">Criar Nova Escala</span>
+        </button>
       </div>
-      <form id="form-escala" class="space-y-4">
+
+      <div id="container-form" class="hidden sci-fi-gradient sci-fi-border rounded-xl p-6 glow-border neon-border scroll-mt-24">
+        <form id="form-escala" class="space-y-4">
         <div>
           <label class="block text-sm font-medium mb-1 text-slate-400">Nome da Escala</label>
           <input id="nome_escala"
@@ -161,16 +168,33 @@
 
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm font-medium mb-1 text-slate-400">Entrada</label>
-            <input id="horario_entrada"
-              class="w-full bg-background-dark/50 border-primary/30 rounded-lg focus:ring-primary focus:border-primary text-slate-100 p-3"
-              type="time" required />
+            <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1.5">Entrada</label>
+            <input type="time" id="horario_entrada" required
+              class="w-full bg-background-dark/50 border border-slate-800 rounded-xl p-3 text-sm focus:border-primary/50 transition-colors outline-none">
           </div>
           <div>
-            <label class="block text-sm font-medium mb-1 text-slate-400">Saída</label>
-            <input id="horario_saida"
-              class="w-full bg-background-dark/50 border-primary/30 rounded-lg focus:ring-primary focus:border-primary text-slate-100 p-3"
-              type="time" required />
+            <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1.5">Saída (Auto)</label>
+            <input type="time" id="horario_saida" required
+              class="w-full bg-background-dark/50 border border-slate-800 rounded-xl p-3 text-sm focus:border-primary/50 transition-colors outline-none">
+          </div>
+        </div>
+
+        <!-- Mini Calendário Preview -->
+        <div id="preview-calendario" class="p-4 bg-slate-800/20 border border-white/5 rounded-xl">
+          <h3 class="text-xs font-bold text-primary uppercase tracking-widest text-center mb-3">
+            <span id="preview-month-label">Mês / Ano</span>
+          </h3>
+          <div class="grid grid-cols-7 gap-1 text-center text-[8px] text-slate-500 uppercase font-bold mb-2">
+            <span>Dom</span>
+            <span>Seg</span>
+            <span>Ter</span>
+            <span>Qua</span>
+            <span>Qui</span>
+            <span>Sex</span>
+            <span>Sáb</span>
+          </div>
+          <div id="preview-calendario-grid" class="grid grid-cols-7 gap-1">
+            <!-- Dias do calendário serão renderizados aqui -->
           </div>
         </div>
 
@@ -283,6 +307,21 @@
               </p>
             </div>
 
+            <!-- Frequência de Revisão -->
+            <div class="p-3 bg-background-dark/30 rounded-lg space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-200">Revisão Periódica da Escala</span>
+                <div class="flex items-center gap-2 shrink-0">
+                  <input id="frequencia_meses" type="number" value="0" min="0" class="w-14 bg-background-dark/50 border-primary/30 rounded p-1.5 text-xs text-primary font-bold text-center">
+                  <span class="text-[9px] font-bold text-slate-500 uppercase">Meses</span>
+                </div>
+              </div>
+              <p class="text-xs text-slate-400 leading-relaxed font-medium">
+                <strong class="text-primary/70">ATIVADO:</strong> Define o ciclo de vida da escala. Ao atingir o prazo, o sistema alerta a necessidade de reavaliação.<br>
+                <strong class="text-slate-500 font-bold">DESATIVADO (0):</strong> A escala não possui prazo de validade e nunca será solicitada a sua revisão.
+              </p>
+            </div>
+
             <!-- Intervalo de Almoço -->
             <div class="p-3 bg-background-dark/30 rounded-lg space-y-2 border border-primary/10">
               <div class="flex items-center justify-between">
@@ -325,13 +364,22 @@
     </section>
     <!-- Manage List Section -->
     <section class="space-y-4">
-      <div class="flex items-center justify-between px-2">
-        <h2 class="text-sm font-bold uppercase tracking-wider text-primary flex items-center gap-2">
-          <span class="material-symbols-outlined">dataset</span>
-          Escalas Ativas
-        </h2>
-        <span id="total-escalas" class="text-[10px] text-slate-500 font-mono bg-slate-800 px-2 py-1 rounded">03</span>
+      <div class="flex flex-col gap-4 px-1">
+        <div class="flex items-center justify-between">
+            <h2 class="text-sm font-bold uppercase tracking-wider text-primary flex items-center gap-2">
+              <span class="material-symbols-outlined">dataset</span>
+              Escalas Ativas
+            </h2>
+            <span id="total-escalas" class="text-[10px] text-slate-500 font-mono bg-slate-800 px-2 py-1 rounded">00</span>
+        </div>
+
+        <div class="relative">
+            <input id="filtro-escalas" type="text" placeholder="Filtrar por nome ou tipo de escala..." 
+                class="w-full bg-white/5 border border-white/10 rounded-xl px-10 py-3 text-xs focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-slate-200">
+            <span class="material-symbols-outlined absolute left-3 top-3 text-slate-500 text-sm">search</span>
+        </div>
       </div>
+
       <div id="lista-escalas" class="space-y-3">
         <!-- Lista Dinâmica -->
       </div>
@@ -344,8 +392,42 @@
     import { UI } from '../js/ui-utils.js';
 
     let diasSemanaSelecionados = [];
+    let editingEscalaId = null;
+    let allEscalasData = [];
 
-    // Toggle Visibilidade
+    // Toggle Form
+    document.getElementById('btn-toggle-form').onclick = () => {
+        const container = document.getElementById('container-form');
+        const isHidden = container.classList.contains('hidden');
+        const txt = document.getElementById('txt-toggle');
+        const icon = document.getElementById('icon-toggle');
+
+        if (isHidden) {
+            container.classList.remove('hidden');
+            txt.innerText = 'Sair do Cadastro';
+            icon.innerText = 'cancel';
+            document.getElementById('nome_escala').focus();
+            window.scrollTo({ top: container.offsetTop - 100, behavior: 'smooth' });
+        } else {
+            fecharFormEscala();
+        }
+    };
+
+    function fecharFormEscala() {
+        editingEscalaId = null;
+        document.getElementById('form-escala').reset();
+        document.getElementById('container-form').classList.add('hidden');
+        document.getElementById('txt-toggle').innerText = 'Criar Nova Escala';
+        document.getElementById('icon-toggle').innerText = 'add_circle';
+        document.getElementById('btn-cancelar-escala').classList.add('hidden');
+        
+        // Reset Dias
+        diasSemanaSelecionados = [];
+        document.querySelectorAll('.day-toggle').forEach(btn => btn.classList.remove('bg-primary', 'text-white', 'border-primary', 'neon-border-sm'));
+    }
+
+    document.getElementById('btn-cancelar-escala').onclick = fecharFormEscala;
+
     const tipoEscalaSel = document.getElementById('tipo_escala');
     const regimeTrabalhoSel = document.getElementById('regime_trabalho');
     const cicloInputs = document.getElementById('ciclo_inputs');
@@ -353,6 +435,93 @@
     const hibridoInputs = document.getElementById('hibrido_inputs');
     const extraHoursToggle = document.getElementById('rule_extra_hours');
     const extraHoursLimitContainer = document.getElementById('extra_hours_limit_container');
+
+    function initEscalaLogic() {
+      const inputs = ['carga_horaria', 'horario_entrada'];
+      inputs.forEach(id => {
+      ['input', 'change'].forEach(evt => {
+        document.getElementById(id).addEventListener(evt, () => {
+          calcularSaidaAutomatica();
+          renderPreview();
+        });
+      });
+      });
+
+      tipoEscalaSel.addEventListener('change', renderPreview);
+    }
+
+    function calcularSaidaAutomatica() {
+      const carga = parseFloat(document.getElementById('carga_horaria').value);
+      const entrada = document.getElementById('horario_entrada').value;
+      const tipo = tipoEscalaSel.value;
+
+      if (!carga || !entrada) return;
+
+      let dias = 5;
+      if (tipo === 'semanal') {
+        dias = diasSemanaSelecionados.length || 5;
+      }
+
+      const horasPorDia = carga / dias;
+      const h = Math.floor(horasPorDia);
+      const m = Math.round((horasPorDia - h) * 60);
+
+      const [entH, entM] = entrada.split(':').map(Number);
+      let saiH = entH + h;
+      let saiM = entM + m;
+
+      if (saiM >= 60) {
+        saiH += Math.floor(saiM / 60);
+        saiM = saiM % 60;
+      }
+
+      const format = (n) => String(n).padStart(2, '0');
+      document.getElementById('horario_saida').value = `${format(saiH % 24)}:${format(saiM)}`;
+    }
+
+    function renderPreview() {
+      const grid = document.getElementById('preview-calendario-grid');
+      const monthLabel = document.getElementById('preview-month-label');
+      if (!grid) return;
+
+      grid.innerHTML = '';
+      const now = new Date();
+      const m = now.getMonth();
+      const y = now.getFullYear();
+      
+      const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+      monthLabel.innerText = `${monthNames[m]} / ${y}`;
+
+      const firstDay = new Date(y, m, 1).getDay();
+      const daysInMonth = new Date(y, m + 1, 0).getDate();
+
+      // Projeção Simples para Preview
+      const tipo = tipoEscalaSel.value;
+      
+      for (let i = 0; i < firstDay; i++) {
+        const empty = document.createElement('div');
+        empty.className = 'h-7';
+        grid.appendChild(empty);
+      }
+
+      for (let d = 1; d <= daysInMonth; d++) {
+        const dayOfWeek = new Date(y, m, d).getDay();
+        const isWorkDay = (tipo === 'semanal' && diasSemanaSelecionados.includes(dayOfWeek));
+
+        const day = document.createElement('div');
+        day.className = `h-7 rounded-lg flex items-center justify-center text-[9px] border transition-all`;
+        
+        if (isWorkDay) {
+          day.classList.add('bg-primary/20', 'text-primary', 'border-primary/40', 'font-black');
+        } else {
+          day.classList.add('bg-slate-100', 'dark:bg-slate-800/50', 'border-transparent', 'opacity-20');
+        }
+
+        day.innerText = d;
+        grid.appendChild(day);
+      }
+    }
+
 
     const updateVisibility = () => {
       // Tipo de Escala
@@ -391,11 +560,13 @@
         const day = parseInt(btn.dataset.day);
         if (diasSemanaSelecionados.includes(day)) {
           diasSemanaSelecionados = diasSemanaSelecionados.filter(d => d !== day);
-          btn.classList.remove('bg-primary', 'text-white', 'border-primary');
+          btn.classList.remove('bg-primary', 'text-white', 'border-primary', 'neon-border-sm');
         } else {
           diasSemanaSelecionados.push(day);
-          btn.classList.add('bg-primary', 'text-white', 'border-primary');
+          btn.classList.add('bg-primary', 'text-white', 'border-primary', 'neon-border-sm');
         }
+        calcularSaidaAutomatica();
+        renderPreview();
       };
     });
 
@@ -421,111 +592,410 @@
         const { data, error } = await supabase.from('escalas').select('*').order('nome');
         if (error) throw error;
 
-        countSpan.innerText = String(data.length).padStart(2, '0');
-        container.innerHTML = data.map(e => `
-                <div class="bg-background-dark/40 border border-slate-800 p-4 rounded-xl flex items-center justify-between group hover:border-primary/50 transition-colors">
-                  <div class="flex items-center gap-4">
-                    <div class="size-12 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center">
-                      <span class="material-symbols-outlined text-primary">${e.tipo_escala === 'ciclo' ? 'sync' : 'calendar_month'}</span>
-                    </div>
-                    <div>
-                      <h3 class="font-bold uppercase text-sm tracking-tight">${e.nome}</h3>
-                      <p class="text-xs text-slate-500">
-                        ${e.tipo_escala === 'ciclo'
-            ? `Ciclo ${e.ciclo_config?.trab_total}h x ${e.ciclo_config?.folga_total}h • ${e.tipo_repeticao === 'fixa' ? 'Fixa' : 'Alternada'}`
-            : `Semanal • ${e.dias_padrao?.length || 0} dias`
-          } • ${e.horario_entrada} - ${e.horario_saida}
-                      </p>
-                    </div>
-                  </div>
-                  <div class="flex gap-2 opacity-40 group-hover:opacity-100 transition-opacity">
-                    <button onclick='prepararEdicaoEscala(${JSON.stringify(e)})' class="p-2 hover:bg-primary/10 rounded-lg text-slate-400 hover:text-primary transition-colors">
-                      <span class="material-symbols-outlined text-[20px]">edit</span>
-                    </button>
-                    <button onclick="deletarEscala('${e.id}')" class="p-2 hover:bg-red-500/20 rounded-lg text-slate-400 hover:text-red-500 transition-colors">
-                      <span class="material-symbols-outlined text-[20px]">delete</span>
-                    </button>
-                  </div>
-                </div>
-            `).join('');
+        allEscalasData = data;
+        renderEscalas(allEscalasData);
       } catch (err) {
         console.error('Erro ao carregar escalas:', err);
         container.innerHTML = '<p class="text-red-500 text-center py-4">Erro ao carregar escalas</p>';
       }
     }
 
-    let editingEscalaId = null;
 
-    window.prepararEdicaoEscala = (escala) => {
-      editingEscalaId = escala.id;
-      document.getElementById('nome_escala').value = escala.nome;
-      document.getElementById('tipo_escala').value = escala.tipo_escala;
-      document.getElementById('tipo_repeticao').value = escala.tipo_repeticao || 'alternada';
-      document.getElementById('carga_horaria').value = escala.carga_horaria_semanal;
-      document.getElementById('horario_entrada').value = escala.horario_entrada;
-      document.getElementById('horario_saida').value = escala.horario_saida;
-      document.getElementById('tol_entrada').value = escala.tolerancia_entrada_minutos || 15;
-      document.getElementById('tol_saida').value = escala.tolerancia_saida_minutos || 15;
-      document.getElementById('raio_gps').value = escala.raio_geofence_metros || 100;
+    function renderEscalas(data) {
+        const container = document.getElementById('lista-escalas');
+        const countSpan = document.getElementById('total-escalas');
+        countSpan.innerText = String(data.length).padStart(2, '0');
+        
+        if (data.length === 0) {
+            container.innerHTML = '<p class="text-center py-8 opacity-40 text-xs uppercase font-bold tracking-widest text-slate-500">Nenhuma escala encontrada</p>';
+            return;
+        }
 
-      document.getElementById('regime_trabalho').value = escala.regime || 'Presencial';
-      
-      // Regras (Toggles)
-      document.getElementById('rule_gps').checked = escala.restrito_gps !== false;
-      document.getElementById('rule_approval').checked = escala.aprovacao_excecao !== false;
-      document.getElementById('rule_forget').checked = escala.punicao_esquecimento !== false;
-      document.getElementById('rule_extra_hours').checked = escala.gestao_horas_extras === true;
-      document.getElementById('limit_extra_hours').value = escala.limite_horas_extras || 0;
-      document.getElementById('rule_tracking').checked = escala.rastreio_horario === true;
-      document.getElementById('rule_lunch').checked = escala.possui_almoco !== false;
+        container.innerHTML = data.map(e => `
+                <div id="card-escala-${e.id}" class="bg-background-dark/40 border border-slate-800 rounded-xl group hover:border-primary/50 transition-colors overflow-hidden">
+                  <!-- Modo Visualização -->
+                  <div id="view-escala-${e.id}" class="p-4 flex items-center justify-between">
+                    <div class="flex items-center gap-4">
+                      <div class="size-12 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center">
+                        <span class="material-symbols-outlined text-primary">${e.tipo_escala === 'ciclo' ? 'sync' : 'calendar_month'}</span>
+                      </div>
+                      <div>
+                        <h3 class="font-bold uppercase text-xs tracking-tight text-slate-100">${e.nome}</h3>
+                        <p class="text-[10px] text-slate-500 uppercase mt-1">
+                          ${e.tipo_escala === 'ciclo'
+            ? `Ciclo ${e.ciclo_config?.trab_total}h x ${e.ciclo_config?.folga_total}h`
+            : `Semanal • ${e.dias_padrao?.length || 0} dias`
+          } • ${e.horario_entrada} - ${e.horario_saida}
+                        </p>
+                        <div class="flex gap-2 mt-1">
+                           <span class="text-[8px] bg-primary/10 text-primary px-1.5 py-0.5 rounded uppercase font-bold border border-primary/20">${e.regime}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="flex gap-2 opacity-40 group-hover:opacity-100 transition-opacity">
+                      <button onclick='prepararEdicaoInline("${e.id}", "${e.nome}", "${e.tipo_escala}", "${e.horario_entrada}", "${e.horario_saida}", "${e.regime}")' class="p-2 hover:bg-primary/10 rounded-lg text-slate-400 hover:text-primary transition-colors">
+                        <span class="material-symbols-outlined text-[18px]">edit</span>
+                      </button>
+                      <button onclick="deletarEscala('${e.id}')" class="p-2 hover:bg-red-500/20 rounded-lg text-slate-400 hover:text-red-500 transition-colors">
+                        <span class="material-symbols-outlined text-[18px]">delete</span>
+                      </button>
+                    </div>
+                  </div>
 
-      // Reset e Aplica Visibilidade
-      updateVisibility();
-      extraHoursToggle.onchange();
+                  <!-- Modo Edição Inline (Paridade Total com Criação) -->
+                  <div id="edit-escala-${e.id}" class="hidden p-6 sci-fi-gradient sci-fi-border rounded-xl space-y-6 animate-in slide-in-from-top-2 m-2">
+                      <div class="flex items-center gap-2 mb-2 px-1">
+                          <span class="material-symbols-outlined text-primary text-sm">edit_note</span>
+                          <h2 class="text-[10px] font-bold tracking-widest uppercase opacity-70">Editando Escala: ${e.nome}</h2>
+                      </div>
 
-      if (escala.regime === 'Híbrido') {
-        diasHibridosSelecionados = escala.dias_presenciais_json || [];
-        document.querySelectorAll('.hday-toggle').forEach(btn => {
-          const day = parseInt(btn.dataset.hday);
-          if (diasHibridosSelecionados.includes(day)) {
-            btn.classList.add('bg-primary', 'text-white', 'border-primary');
-          } else {
-            btn.classList.remove('bg-primary', 'text-white', 'border-primary');
-          }
-        });
-      }
+                      <!-- 1. Nome e Carga -->
+                      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-bold uppercase opacity-50 text-slate-400">Nome da Escala</label>
+                            <input id="inline-nome-${e.id}" class="w-full bg-background-dark/50 border-primary/30 rounded-lg px-3 py-3 text-xs text-slate-100" value="${e.nome}">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-bold uppercase opacity-50 text-slate-400">Carga Semanal (h)</label>
+                            <input id="inline-carga-${e.id}" type="number" class="w-full bg-background-dark/50 border-primary/30 rounded-lg px-3 py-3 text-xs text-slate-100" value="${e.carga_horaria_semanal || 44}">
+                        </div>
+                      </div>
 
-      if (escala.tipo_escala === 'semanal') {
-        diasSemanaSelecionados = escala.dias_padrao || [];
-        document.querySelectorAll('.day-toggle').forEach(btn => {
-          const day = parseInt(btn.dataset.day);
-          if (diasSemanaSelecionados.includes(day)) {
-            btn.classList.add('bg-primary', 'text-white', 'border-primary');
-          } else {
-            btn.classList.remove('bg-primary', 'text-white', 'border-primary');
-          }
-        });
-      } else if (escala.tipo_escala === 'ciclo' && escala.ciclo_config) {
-        document.getElementById('trab_total').value = escala.ciclo_config.trab_total;
-        document.getElementById('folga_total').value = escala.ciclo_config.folga_total;
-      }
+                      <!-- 2. Tipo de Escala e Configuração Condicional -->
+                      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-bold uppercase opacity-50 text-slate-400">Tipo de Escala</label>
+                            <select id="inline-tipo-${e.id}" onchange="updateInlineVisibility('${e.id}')" class="w-full bg-background-dark/50 border-primary/30 rounded-lg px-3 py-3 text-xs text-slate-100 outline-none">
+                                <option value="semanal" ${e.tipo_escala === 'semanal' ? 'selected' : ''}>Semanal (Dias Fixos)</option>
+                                <option value="ciclo" ${e.tipo_escala === 'ciclo' ? 'selected' : ''}>Ciclo (Trabalho x Folga)</option>
+                            </select>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-bold uppercase opacity-50 text-slate-400">Tipo de Repetição</label>
+                            <select id="inline-repeticao-${e.id}" class="w-full bg-background-dark/50 border-primary/30 rounded-lg px-3 py-3 text-xs text-slate-100 outline-none">
+                                <option value="alternada" ${e.tipo_repeticao === 'alternada' ? 'selected' : ''}>Alternada (Par/Ímpar)</option>
+                                <option value="fixa" ${e.tipo_repeticao === 'fixa' ? 'selected' : ''}>Fixa (Constante)</option>
+                            </select>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-bold uppercase opacity-50 text-slate-400">Regime</label>
+                            <select id="inline-regime-${e.id}" onchange="updateInlineVisibility('${e.id}')" class="w-full bg-background-dark/50 border-primary/30 rounded-lg px-3 py-3 text-xs text-slate-100 outline-none">
+                                <option value="Presencial" ${e.regime === 'Presencial' ? 'selected' : ''}>Presencial</option>
+                                <option value="Teletrabalho" ${e.regime === 'Teletrabalho' ? 'selected' : ''}>Teletrabalho</option>
+                                <option value="Híbrido" ${e.regime === 'Híbrido' ? 'selected' : ''}>Híbrido</option>
+                                <option value="Externo" ${e.regime === 'Externo' ? 'selected' : ''}>Externo</option>
+                            </select>
+                        </div>
+                      </div>
 
-      document.getElementById('label-submit-escala').innerText = 'Atualizar Escala';
-      document.getElementById('btn-cancelar-escala').classList.remove('hidden');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+                      <!-- Ciclo Inputs -->
+                      <div id="inline-ciclo-inputs-${e.id}" class="${e.tipo_escala === 'ciclo' ? '' : 'hidden'} grid grid-cols-2 gap-4 p-4 border border-primary/20 bg-primary/5 rounded-lg border-dashed">
+                          <div>
+                              <label class="block text-xs font-bold text-primary uppercase mb-1">Horas de Trabalho</label>
+                              <input id="inline-trab-${e.id}" type="number" class="w-full bg-background-dark/30 border-primary/20 rounded p-2 text-sm" value="${e.ciclo_config?.trab_total || 12}">
+                          </div>
+                          <div>
+                              <label class="block text-xs font-bold text-primary uppercase mb-1">Horas de Folga</label>
+                              <input id="inline-folga-${e.id}" type="number" class="w-full bg-background-dark/30 border-primary/20 rounded p-2 text-sm" value="${e.ciclo_config?.folga_total || 36}">
+                          </div>
+                      </div>
+
+                      <!-- Semanal Inputs -->
+                      <div id="inline-semanal-inputs-${e.id}" class="${e.tipo_escala === 'semanal' ? '' : 'hidden'} pt-2">
+                         <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest text-center mb-3">Dias de Trabalho na Semana</label>
+                         <div class="flex justify-between gap-1">
+                            ${[0,1,2,3,4,5,6].map(d => `
+                              <button type="button" onclick="toggleInlineDay('${e.id}', ${d}, 'semanal')" id="btn-inline-day-${e.id}-${d}"
+                                class="inline-day-toggle-${e.id} size-10 rounded border border-white/10 flex items-center justify-center text-[10px] font-bold transition-all ${e.dias_padrao?.includes(d) ? 'bg-primary text-white border-primary' : 'text-slate-500'}">
+                                ${['DOM','SEG','TER','QUA','QUI','SEX','SAB'][d]}
+                              </button>
+                            `).join('')}
+                         </div>
+                      </div>
+
+                      <!-- Híbrido Inputs (Condicional) -->
+                      <div id="inline-hibrido-inputs-${e.id}" class="${e.regime === 'Híbrido' ? '' : 'hidden'} pt-4 border-t border-white/5 space-y-3">
+                         <label class="block text-xs font-bold text-primary uppercase tracking-widest text-center mb-1">Dias Obrigatoriamente Presenciais</label>
+                         <div class="flex justify-between gap-1">
+                            ${[0,1,2,3,4,5,6].map(d => `
+                              <button type="button" onclick="toggleInlineDay('${e.id}', ${d}, 'hibrido')" id="btn-inline-hday-${e.id}-${d}"
+                                class="inline-hday-toggle-${e.id} size-10 rounded border border-white/10 flex items-center justify-center text-[10px] font-bold transition-all ${e.dias_presenciais_json?.includes(d) ? 'bg-primary text-white border-primary' : 'text-slate-500'}">
+                                ${['DOM','SEG','TER','QUA','QUI','SEX','SAB'][d]}
+                              </button>
+                            `).join('')}
+                         </div>
+                         <p class="text-[10px] text-slate-400 text-center font-medium">Nos demais dias, o sistema assume automaticamente modo Home Office.</p>
+                      </div>
+
+                      <!-- 3. Horários -->
+                      <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-1">
+                            <label class="text-[10px] text-slate-500 uppercase font-bold mb-1.5">Entrada</label>
+                            <input id="inline-in-${e.id}" type="time" class="w-full bg-background-dark/50 border border-slate-800 rounded-xl p-3 text-sm focus:border-primary/50 transition-colors outline-none" value="${e.horario_entrada}">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[10px] text-slate-500 uppercase font-bold mb-1.5">Saída</label>
+                            <input id="inline-out-${e.id}" type="time" class="w-full bg-background-dark/50 border border-slate-800 rounded-xl p-3 text-sm focus:border-primary/50 transition-colors outline-none" value="${e.horario_saida}">
+                        </div>
+                      </div>
+
+                      <!-- 5. Tolerâncias e Raio -->
+                      <div class="grid grid-cols-3 gap-3 p-4 bg-slate-800/20 border border-white/5 rounded-xl">
+                        <div class="space-y-1">
+                            <label class="text-xs font-bold text-slate-400 uppercase mb-1">Tol. Entrada (min)</label>
+                            <input id="inline-tol-in-${e.id}" type="number" class="w-full bg-background-dark/30 border-white/10 rounded p-2 text-sm text-primary font-bold" value="${e.tolerancia_entrada_minutos || 15}">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-xs font-bold text-slate-400 uppercase mb-1">Tol. Saída (min)</label>
+                            <input id="inline-tol-out-${e.id}" type="number" class="w-full bg-background-dark/30 border-white/10 rounded p-2 text-sm text-primary font-bold" value="${e.tolerancia_saida_minutos || 15}">
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-xs font-bold text-slate-400 uppercase mb-1">Raio GPS (m)</label>
+                            <input id="inline-raio-${e.id}" type="number" class="w-full bg-background-dark/30 border-white/10 rounded p-2 text-sm text-primary font-bold" value="${e.raio_geofence_metros || 100}">
+                        </div>
+                      </div>
+
+                      <!-- 6. Regras de Monitoramento -->
+                      <div class="space-y-4 p-4 bg-slate-800/20 border border-white/5 rounded-xl">
+                        <h3 class="text-xs font-bold text-primary uppercase tracking-widest flex items-center gap-2">
+                          <span class="material-symbols-outlined text-sm">rule</span>
+                          Regras de Monitoramento
+                        </h3>
+                        
+                        <div class="grid grid-cols-1 gap-4">
+                          <!-- GPS -->
+                          <div class="p-3 bg-background-dark/30 rounded-lg space-y-2">
+                            <div class="flex items-center justify-between">
+                              <span class="text-xs font-bold text-slate-200">Restringir por GPS</span>
+                              <label class="relative inline-flex items-center cursor-pointer">
+                                <input id="inline-rule-gps-${e.id}" type="checkbox" ${e.restrito_gps !== false ? 'checked' : ''} class="sr-only peer">
+                                <div class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                              </label>
+                            </div>
+                            <p class="text-xs text-slate-400 leading-relaxed font-medium">
+                              <strong class="text-primary/70">ATIVADO:</strong> O sistema bloqueia o registro simples fora do raio estipulado, exigindo que o funcionário escreva uma justificativa obrigatória.<br>
+                              <strong class="text-slate-500 font-bold">DESATIVADO:</strong> Permite registros em qualquer local sem necessidade de explicações adicionais.
+                            </p>
+                          </div>
+
+                          <!-- Aprovação -->
+                          <div class="p-3 bg-background-dark/30 rounded-lg space-y-2">
+                            <div class="flex items-center justify-between">
+                              <span class="text-xs font-bold text-slate-200">Aprovação de Exceção</span>
+                              <label class="relative inline-flex items-center cursor-pointer">
+                                <input id="inline-rule-appr-${e.id}" type="checkbox" ${e.aprovacao_excecao !== false ? 'checked' : ''} class="sr-only peer">
+                                <div class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                              </label>
+                            </div>
+                            <p class="text-xs text-slate-400 leading-relaxed font-medium">
+                              <strong class="text-primary/70">ATIVADO:</strong> Marcações feitas fora do raio ou fora do horário padrão não são validadas automaticamente, gerando uma pendência no painel do gestor para auditoria.<br>
+                              <strong class="text-slate-500 font-bold">DESATIVADO:</strong> Todos os registros são aceitos como normais no banco de horas sem revisão manual.
+                            </p>
+                          </div>
+
+                          <!-- Esquecimento -->
+                          <div class="p-3 bg-background-dark/30 rounded-lg space-y-2">
+                            <div class="flex items-center justify-between">
+                              <span class="text-xs font-bold text-slate-200">Punir Esquecimento</span>
+                              <label class="relative inline-flex items-center cursor-pointer">
+                                <input id="inline-rule-forget-${e.id}" type="checkbox" ${e.punicao_esquecimento !== false ? 'checked' : ''} class="sr-only peer">
+                                <div class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                              </label>
+                            </div>
+                            <p class="text-xs text-slate-400 leading-relaxed font-medium">
+                              <strong class="text-primary/70">ATIVADO:</strong> Caso o funcionário faça o Check-in mas esqueça o Check-out, o sistema encerra o dia automaticamente contabilizando apenas 50% da jornada prevista.<br>
+                              <strong class="text-slate-500 font-bold">DESATIVADO:</strong> O sistema aguarda o registro manual ou marca o dia como inconsistente para correção posterior.
+                            </p>
+                          </div>
+
+                          <!-- Horas Extras -->
+                          <div class="group p-3 bg-background-dark/30 rounded-lg space-y-2">
+                            <div class="flex items-center justify-between">
+                              <span class="text-xs font-bold text-slate-200">Gestão de Horas Extras</span>
+                              <label class="relative inline-flex items-center cursor-pointer">
+                                <input id="inline-rule-extra-${e.id}" type="checkbox" ${e.gestao_horas_extras === true ? 'checked' : ''} onchange="document.getElementById('inline-extra-limit-cont-${e.id}').classList.toggle('hidden', !this.checked)" class="sr-only peer">
+                                <div class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                              </label>
+                            </div>
+                            <p class="text-xs text-slate-400 leading-relaxed font-medium">
+                              <strong class="text-primary/70">ATIVADO:</strong> Permite que o colaborador solicite prorrogação de jornada via aplicativo. Você deve definir o limite máximo permitido abaixo.<br>
+                              <strong class="text-slate-500 font-bold">DESATIVADO:</strong> O sistema não oferece opção de extensão, tratando qualquer tempo excedente como saldo comum ou extra não autorizada.
+                            </p>
+                            <div id="inline-extra-limit-cont-${e.id}" class="${e.gestao_horas_extras === true ? '' : 'hidden'} mt-2 pl-2 border-l border-primary/20 flex items-center justify-between">
+                              <span class="text-xs text-slate-400 uppercase font-bold tracking-tight">Limite Máximo (Minutos)</span>
+                              <input id="inline-extra-limit-${e.id}" type="number" value="${e.limite_horas_extras || 120}" class="w-20 bg-background-dark/50 border-primary/30 rounded p-1 text-xs text-primary font-bold">
+                            </div>
+                          </div>
+
+                          <!-- Rastreio -->
+                          <div class="p-3 bg-background-dark/30 rounded-lg space-y-2">
+                            <div class="flex items-center justify-between">
+                              <span class="text-xs font-bold text-slate-200">Rastreio Horário (Externos)</span>
+                              <label class="relative inline-flex items-center cursor-pointer">
+                                <input id="inline-rule-track-${e.id}" type="checkbox" ${e.rastreio_horario === true ? 'checked' : ''} class="sr-only peer">
+                                <div class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                              </label>
+                            </div>
+                            <p class="text-xs text-slate-400 leading-relaxed font-medium">
+                              <strong class="text-primary/70">ATIVADO:</strong> Para funcionários em regime 'Externo', o aplicativo capturará a localização GPS a cada 60 minutos durante o expediente para fins de log de rota.<br>
+                              <strong class="text-slate-500 font-bold">DESATIVADO:</strong> A localização só é capturada no momento exato das batidas de ponto.
+                            </p>
+                          </div>
+
+                          <!-- Revisão -->
+                          <div class="p-3 bg-background-dark/30 rounded-lg space-y-2">
+                            <div class="flex items-center justify-between">
+                              <span class="text-xs font-bold text-slate-200">Revisão Periódica da Escala</span>
+                              <div class="flex items-center gap-2 shrink-0">
+                                <input id="inline-frequencia-${e.id}" type="number" value="${e.frequencia_meses || 0}" min="0" class="w-14 bg-background-dark/50 border-primary/30 rounded p-1.5 text-xs text-primary font-bold text-center">
+                                <span class="text-[9px] font-bold text-slate-500 uppercase">Meses</span>
+                              </div>
+                            </div>
+                            <p class="text-xs text-slate-400 leading-relaxed font-medium">
+                              <strong class="text-primary/70">ATIVADO:</strong> Define o ciclo de vida da escala. Ao atingir o prazo, o sistema alerta a necessidade de reavaliação.<br>
+                              <strong class="text-slate-500 font-bold">DESATIVADO (0):</strong> A escala não possui prazo de validade e nunca será solicitada a sua revisão.
+                            </p>
+                          </div>
+
+                          <!-- Almoço -->
+                          <div class="p-3 bg-background-dark/30 rounded-lg space-y-2 border border-primary/10">
+                            <div class="flex items-center justify-between">
+                              <div class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-sm text-primary">restaurant</span>
+                                <span class="text-xs font-bold text-slate-200">Intervalo de Almoço</span>
+                              </div>
+                              <label class="relative inline-flex items-center cursor-pointer">
+                                <input id="inline-rule-lunch-${e.id}" type="checkbox" ${e.possui_almoco !== false ? 'checked' : ''} class="sr-only peer">
+                                <div class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                              </label>
+                            </div>
+                            <p class="text-xs text-slate-400 leading-relaxed font-medium">
+                              <strong class="text-primary/70">ATIVADO:</strong> O sistema deduzirá automaticamente 1 hora de intervalo da carga horária diária. O espelho de ponto exibirá campos para Entrada/Saída 1 e 2.<br>
+                              <strong class="text-slate-500 font-bold">DESATIVADO:</strong> Jornada ininterrupta. As horas são calculadas direto da entrada à saída, e o espelho de ponto mostra apenas um turno.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- 7. Botões -->
+                      <div class="flex gap-3 pt-4">
+                          <button onclick="salvarEdicaoInline('${e.id}')" class="flex-1 bg-primary text-white text-xs font-black uppercase py-4 rounded-xl shadow-[0_0_20px_rgba(13,89,242,0.3)] hover:scale-[1.02] active:scale-95 transition-all">Salvar Alterações</button>
+                          <button onclick="cancelarEdicaoInline('${e.id}')" class="px-8 bg-slate-800 text-slate-300 text-xs font-black uppercase py-4 rounded-xl hover:bg-slate-700 transition-all">Cancelar</button>
+                      </div>
+                  </div>
+                </div>
+            `).join('');
+    }
+
+    // Filtro em tempo real
+    document.getElementById('filtro-escalas').oninput = (e) => {
+        const termo = e.target.value.toLowerCase().trim();
+        const filtered = allEscalasData.filter(esc => 
+            esc.nome.toLowerCase().includes(termo) || 
+            esc.tipo_escala.toLowerCase().includes(termo)
+        );
+        renderEscalas(filtered);
     };
 
-    document.getElementById('btn-cancelar-escala').onclick = () => {
-      editingEscalaId = null;
-      document.getElementById('form-escala').reset();
-      diasSemanaSelecionados = [];
-      diasHibridosSelecionados = [];
-      document.querySelectorAll('.day-toggle, .hday-toggle').forEach(btn => btn.classList.remove('bg-primary', 'text-white', 'border-primary'));
-      document.getElementById('rule_lunch').checked = true;
-      document.getElementById('label-submit-escala').innerText = 'Confirmar Nova Escala';
-      document.getElementById('btn-cancelar-escala').classList.add('hidden');
-      updateVisibility();
-      extraHoursToggle.onchange();
+    window.prepararEdicaoInline = (id, nome, tipo, entra, sai, regime) => {
+        // Fechar outras edições
+        document.querySelectorAll('[id^="edit-escala-"]').forEach(el => el.classList.add('hidden'));
+        document.querySelectorAll('[id^="view-escala-"]').forEach(el => el.classList.remove('hidden'));
+
+        document.getElementById(`view-escala-${id}`).classList.add('hidden');
+        document.getElementById(`edit-escala-${id}`).classList.remove('hidden');
+        document.getElementById(`inline-nome-${id}`).focus();
+    };
+
+    window.cancelarEdicaoInline = (id) => {
+        document.getElementById(`view-escala-${id}`).classList.remove('hidden');
+        document.getElementById(`edit-escala-${id}`).classList.add('hidden');
+    };
+
+    // Auxiliares para Edição Inline
+    window.toggleInlineDay = (id, day, type) => {
+        const selector = type === 'semanal' ? `.inline-day-toggle-${id}` : `.inline-hday-toggle-${id}`;
+        const btnId = type === 'semanal' ? `btn-inline-day-${id}-${day}` : `btn-inline-hday-${id}-${day}`;
+        const btn = document.getElementById(btnId);
+        
+        btn.classList.toggle('bg-primary');
+        btn.classList.toggle('text-white');
+        btn.classList.toggle('border-primary');
+        btn.classList.toggle('text-slate-500', !btn.classList.contains('bg-primary'));
+    };
+
+    window.updateInlineVisibility = (id) => {
+        const tipo = document.getElementById(`inline-tipo-${id}`).value;
+        const regime = document.getElementById(`inline-regime-${id}`).value;
+
+        document.getElementById(`inline-ciclo-inputs-${id}`).classList.toggle('hidden', tipo !== 'ciclo');
+        document.getElementById(`inline-semanal-inputs-${id}`).classList.toggle('hidden', tipo !== 'semanal');
+        document.getElementById(`inline-hibrido-inputs-${id}`).classList.toggle('hidden', regime !== 'Híbrido');
+    };
+
+    window.salvarEdicaoInline = async (id) => {
+        UI.showLoader();
+        try {
+            // Coletar Dias Semana
+            const diasSemana = Array.from(document.querySelectorAll(`.inline-day-toggle-${id}`))
+                .filter(b => b.classList.contains('bg-primary'))
+                .map(b => parseInt(b.id.split('-').pop()));
+
+            // Coletar Dias Híbridos
+            const diasHibridos = Array.from(document.querySelectorAll(`.inline-hday-toggle-${id}`))
+                .filter(b => b.classList.contains('bg-primary'))
+                .map(b => parseInt(b.id.split('-').pop()));
+
+            const dados = {
+                nome: document.getElementById(`inline-nome-${id}`).value.trim(),
+                carga_horaria_semanal: parseInt(document.getElementById(`inline-carga-${id}`).value),
+                tipo_escala: document.getElementById(`inline-tipo-${id}`).value,
+                tipo_repeticao: document.getElementById(`inline-repeticao-${id}`).value,
+                horario_entrada: document.getElementById(`inline-in-${id}`).value,
+                horario_saida: document.getElementById(`inline-out-${id}`).value,
+                regime: document.getElementById(`inline-regime-${id}`).value,
+                tolerancia_entrada_minutos: parseInt(document.getElementById(`inline-tol-in-${id}`).value),
+                tolerancia_saida_minutos: parseInt(document.getElementById(`inline-tol-out-${id}`).value),
+                raio_geofence_metros: parseInt(document.getElementById(`inline-raio-${id}`).value),
+                
+                // Regras
+                restrito_gps: document.getElementById(`inline-rule-gps-${id}`).checked,
+                aprovacao_excecao: document.getElementById(`inline-rule-appr-${id}`).checked,
+                punicao_esquecimento: document.getElementById(`inline-rule-forget-${id}`).checked,
+                gestao_horas_extras: document.getElementById(`inline-rule-extra-${id}`).checked,
+                limite_horas_extras: parseInt(document.getElementById(`inline-extra-limit-${id}`).value),
+                rastreio_horario: document.getElementById(`inline-rule-track-${id}`).checked,
+                possui_almoco: document.getElementById(`inline-rule-lunch-${id}`).checked,
+                
+                // Configs Complexas
+                dias_padrao: diasSemana,
+                dias_trabalho_semana: document.getElementById(`inline-tipo-${id}`).value === 'semanal' ? diasSemana.length : 0,
+                dias_presenciais_json: diasHibridos,
+                ciclo_config: {
+                    trab_total: parseInt(document.getElementById(`inline-trab-${id}`).value),
+                    folga_total: parseInt(document.getElementById(`inline-folga-${id}`).value)
+                }
+            };
+
+            if (!dados.nome) throw new Error('O nome da escala é obrigatório!');
+            if (dados.tipo_escala === 'semanal' && dados.dias_padrao.length === 0) throw new Error('Selecione ao menos um dia de trabalho!');
+
+            const { error } = await supabase.from('escalas').update(dados).eq('id', id);
+            if (error) throw error;
+
+            UI.showToast('Escala atualizada com sucesso!', 'success');
+            loadEscalas();
+        } catch (err) {
+            console.error(err);
+            UI.showToast(err.message || 'Erro ao atualizar escala', 'error');
+        } finally {
+            UI.hideLoader();
+        }
+    };
+
+    window.prepararEdicaoEscala = (escala) => {
+        // Redireciona para o modo inline para consistência
+        prepararEdicaoInline(escala.id, escala.nome, escala.tipo_escala, escala.horario_entrada, escala.horario_saida, escala.regime);
     };
 
     window.deletarEscala = async (id) => {
@@ -611,6 +1081,7 @@
     });
 
     loadEscalas();
+    initEscalaLogic();
   </script>
 
   <!-- Bottom Navigation -->

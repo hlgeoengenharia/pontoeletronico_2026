@@ -159,12 +159,14 @@ const UI = {
             items.push({ href: 'cadastro_setores.html', icon: 'domain_add', label: 'Cadastro Setores' });
             items.push({ href: 'cadastro_escalas.html', icon: 'calendar_month', label: 'Cadastro Escalas' });
             items.push({ href: 'cadastro_cargos.html', icon: 'work', label: 'Cadastro Cargo/Função' });
-            items.push({ href: 'cadastro_especialidades.html', icon: 'psychology', label: 'Gestão Especialidades' });
+            items.push({ href: 'cadastro_especialidades.html', icon: 'school', label: 'CADASTRAR GRADUAÇÕES' });
+            items.push({ href: 'online.html', icon: 'satellite_alt', label: 'Monitoramento Online' });
             items.push({ href: 'cadastro_funcionario.html', icon: 'person_add', label: 'Cadastro Funcionários' });
         } else if (role === 'manager' || role === 'gestor' || role === 'comandante') {
             items.push({ href: 'painel_gestor.html', icon: 'dashboard', label: 'Início (Gestor)' });
             items.push({ href: 'relacao_funcionarios.html', icon: 'group', label: 'Funcionários' });
             items.push({ href: 'autorizacoes_abono.html', icon: 'pending_actions', label: 'Pendências' });
+            items.push({ href: 'online.html', icon: 'satellite_alt', label: 'Monitoramento Online' });
             items.push({ href: 'perfil_funcionario.html', icon: 'person', label: 'Meu Perfil' });
         } else {
             // Funcionário comum

@@ -43,7 +43,7 @@
   <!-- Header Section -->
   <header class="border-b border-primary/20 bg-background-dark/80 backdrop-blur-md sticky top-0 z-50">
     <div class="flex items-center p-4 justify-between max-w-2xl mx-auto">
-      <div onclick="history.back()"
+      <div onclick="voltarParaDashboard()"
         class="text-primary flex size-10 shrink-0 items-center justify-center rounded-lg border border-primary/30 bg-primary/10 cursor-pointer hover:bg-primary/20 transition-all">
         <span class="material-symbols-outlined">arrow_back</span>
       </div>
@@ -112,6 +112,10 @@
 
           if (setorId) {
             query = query.eq('setor_id', setorId);
+          } else if (userData.role && userData.role.toLowerCase() === 'gestor' && userData.setorId) {
+            // Se for gestor e NÃO tiver setor específico na URL, filtra pelo setor do gestor
+            query = query.eq('setor_id', userData.setorId);
+            console.log('[Filtro Gestor] Aplicando filtro automático para setor ID:', userData.setorId);
           }
 
           const { data: funcData, error: funcError } = await query;
@@ -237,6 +241,19 @@
       });
 
       carregarFuncionarios();
+      
+      window.voltarParaDashboard = () => {
+          const userData = Auth.getUser();
+          const role = (userData.role || '').toLowerCase();
+          
+          if (role === 'admin') {
+              window.location.href = 'painel_admin.html';
+          } else if (role === 'gestor' || role === 'manager') {
+              window.location.href = 'painel_gestor.html';
+          } else {
+              window.location.href = 'painel_funcionario.html';
+          }
+      };
 
       // Navegação dinâmica
       (async () => {

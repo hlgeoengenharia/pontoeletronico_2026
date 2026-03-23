@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html class="dark" lang="en">
+<html class="dark" lang="pt-BR">
 
 <head>
     <meta charset="utf-8">
@@ -30,10 +30,10 @@
     <header
         class="p-6 pt-8 flex flex-col items-center border-b border-primary/10 bg-background-dark/50 backdrop-blur-sm">
         <div class="flex items-center justify-between w-full mb-6">
-            <div id="sideMenuTrigger" class="cursor-pointer">
-                <span class="material-symbols-outlined text-slate-400 hover:text-primary transition-colors">menu</span>
+            <div id="sideMenuTrigger" class="cursor-pointer size-10 flex items-center justify-start">
+                <span class="material-symbols-outlined text-slate-400">menu</span>
             </div>
-            <h1 id="headerTitle" class="text-[10px] font-black tracking-[0.2em] text-slate-500 uppercase">Protocolo
+            <h1 id="headerTitle" class="text-[10px] font-black tracking-[0.2em] text-slate-500 uppercase text-center flex-1">Protocolo
                 Gestor</h1>
             <a href="autorizacoes_abono.html" id="notifLink"
                 class="size-10 flex items-center justify-end text-slate-400 hover:text-primary transition-colors relative">
@@ -59,11 +59,11 @@
             <h2 id="display-name" class="text-3xl font-black text-slate-100 tracking-tight mb-1 uppercase">GESTOR</h2>
             <div id="user-info-container" class="space-y-1 mb-6">
                 <p id="user-role-setor"
-                    class="text-[10px] font-bold text-primary uppercase tracking-[0.1em] opacity-80">
+                    class="text-[10px] font-bold text-emerald-500 uppercase tracking-[0.1em] opacity-80">
                     CARGO/FUNÇÃO: CARREGANDO...
                 </p>
                 <p id="user-setor-info"
-                    class="text-[10px] font-bold text-primary uppercase tracking-[0.1em] opacity-80">
+                    class="text-[10px] font-bold text-emerald-500 uppercase tracking-[0.1em] opacity-80">
                     SETOR: CARREGANDO...
                 </p>
             </div>
@@ -75,7 +75,7 @@
                 </div>
                 <div class="px-2">
                     <p class="text-[8px] text-slate-500 uppercase font-black mb-1 opacity-60">Nível</p>
-                    <p id="user-level-display" class="text-xs font-bold text-primary uppercase">GESTOR</p>
+                    <p id="user-level-display" class="text-xs font-bold text-emerald-500 uppercase">GESTOR</p>
                 </div>
                 <div class="px-2">
                     <p class="text-[8px] text-slate-500 uppercase font-black mb-1 opacity-60">Status</p>
@@ -141,11 +141,12 @@
                 <span class="material-symbols-outlined text-lg">task_alt</span> MISSÕES DIÁRIAS
             </h3>
             <div class="grid grid-cols-1">
+                <!-- Card 1: Diário Pessoal -->
                 <a href="diario_funcionario.html"
                     class="bg-white/5 border border-primary/20 p-6 rounded-2xl flex items-center justify-between group hover:border-primary/40 hover:bg-primary/5 transition-all shadow-lg relative">
                     <div class="flex items-center gap-4">
                         <div class="size-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                            <span class="material-symbols-outlined text-primary text-3xl">local_library</span>
+                            <span class="material-symbols-outlined text-primary text-2xl group-hover:scale-110 transition-transform">book</span>
                         </div>
                         <div>
                             <p class="text-[13px] font-black text-slate-100 uppercase tracking-widest leading-tight">Diário de Bordo</p>
@@ -169,9 +170,9 @@
                 <div class="flex justify-between items-center mb-6 px-2">
                     <p id="calendar-month" class="text-xs font-black text-slate-100 uppercase tracking-widest">...</p>
                     <div class="flex gap-4">
-                        <span
+                        <span id="btn-prev-month"
                             class="material-symbols-outlined text-sm text-slate-600 cursor-pointer hover:text-emerald-500 transition-colors">chevron_left</span>
-                        <span
+                        <span id="btn-next-month"
                             class="material-symbols-outlined text-sm text-slate-600 cursor-pointer hover:text-emerald-500 transition-colors">chevron_right</span>
                     </div>
                 </div>
@@ -206,26 +207,26 @@
     </nav>
     <!-- Sidebar Menu Overlay -->
     <div id="sidebarOverlay"
-        class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] hidden transition-opacity duration-300 opacity-0">
+        class="fixed inset-0 bg-black/80 z-[100] hidden opacity-0 transition-opacity duration-300 backdrop-blur-md">
     </div>
-
-    <!-- Sidebar Menu -->
     <aside id="sidebarMenu"
-        class="fixed top-0 left-0 h-full w-72 bg-white dark:bg-background-dark border-r border-slate-200 dark:border-primary/20 z-[70] transform -translate-x-full transition-transform duration-300 flex flex-col">
-        <div class="p-6 border-b border-slate-200 dark:border-primary/10 flex items-center justify-between">
-            <h2 class="font-bold text-primary tracking-widest uppercase">Protocolo Admin</h2>
-            <button id="closeSidebar" class="material-symbols-outlined text-slate-400 hover:text-primary">close</button>
+        class="fixed top-0 left-0 h-full w-72 bg-background-dark border-r border-white/10 z-[101] -translate-x-full transition-transform duration-300 flex flex-col shadow-2xl">
+        <div class="p-8 border-b border-white/5 flex items-center justify-between">
+            <h3 class="text-xs font-black text-emerald-500 uppercase tracking-[0.2em]">Protocolo Gestor</h3>
+            <button id="closeSidebar" class="text-slate-500 hover:text-white transition-colors">
+                <span class="material-symbols-outlined">close</span>
+            </button>
         </div>
-        <div class="flex-1 overflow-y-auto p-4 space-y-2" id="sidebarNav">
+        <div class="flex-1 overflow-y-auto p-6 space-y-3" id="sidebarNav">
             <!-- Menu dinâmico via manager-context.js / UI.initSidebar -->
             <div class="flex items-center justify-center p-8 opacity-20">
-                <span class="material-symbols-outlined animate-spin">sync</span>
+                <span class="material-symbols-outlined animate-spin text-emerald-500">sync</span>
             </div>
         </div>
-        <div class="p-6 border-t border-slate-200 dark:border-primary/10">
+        <div class="p-8 border-t border-white/5">
             <button id="logoutBtn"
-                class="flex items-center gap-3 text-slate-400 hover:text-red-500 transition-colors uppercase text-xs font-bold tracking-widest">
-                <span class="material-symbols-outlined">logout</span> Sair do Sistema
+                class="flex items-center gap-4 text-rose-500/70 hover:text-rose-500 transition-all font-black text-xs uppercase tracking-widest">
+                <span class="material-symbols-outlined text-xl">logout</span> Sair do Sistema
             </button>
         </div>
     </aside>
@@ -234,8 +235,13 @@
         import { supabase } from '../js/supabase-config.js';
         import { Auth } from '../js/auth.js';
         import { UI } from '../js/ui-utils.js';
+        import { ScalesEngine } from '../js/scales-engine.js';
 
         let currentUser = null;
+        let currentMonth = new Date().getMonth();
+        let currentYear = new Date().getFullYear();
+        let myEscalaGlobal = null;
+        let myPointsGlobal = [];
 
         async function initDashboard() {
             currentUser = Auth.getUser();
@@ -255,15 +261,18 @@
             const levelDisplay = document.getElementById('user-level-display');
             if (levelDisplay) levelDisplay.innerText = currentUser.role.toUpperCase();
 
+            // O Gestor logado é SEMPRE considerado online no próprio painel
             const statusText = document.getElementById('status-text');
-            statusText.innerText = 'OFFLINE';
-            statusText.className = 'text-[11px] font-bold text-slate-500 uppercase';
+            statusText.innerText = 'ONLINE';
+            statusText.className = 'text-[11px] font-bold text-emerald-500 uppercase';
 
             // Cache bust perfil
             const profileLink = document.getElementById('nav-perfil-link');
             if (profileLink) profileLink.href = `perfil_funcionario.html?id=${currentUser.id}&v=5`;
 
-            renderCalendar();
+            await loadMyCalendarData(currentUser.id);
+            await renderCalendar();
+            setupCalendarNavigation();
             await loadGlobalStats();
             setupPunchLogic(currentUser.id);
             updateNotificationBadge();
@@ -284,22 +293,38 @@
                     .select('*, funcionarios!inner(setor_id)', { count: 'exact', head: true })
                     .eq('status_validacao', 'pendente');
 
-                if (currentUser.role === 'Gestor' && currentUser.setorId) {
+                // 3. Diario Logs (Divergências de GPS)
+                let queryDiario = supabase
+                    .from('diario_logs')
+                    .select('*, funcionarios!inner(setor_id)', { count: 'exact', head: true })
+                    .eq('status_pendencia', 'pendente');
+
+                if (currentUser.role.toLowerCase() === 'gestor' && currentUser.setorId) {
                     queryAbono = queryAbono.eq('funcionarios.setor_id', currentUser.setorId);
                     queryGps = queryGps.eq('funcionarios.setor_id', currentUser.setorId);
+                    queryDiario = queryDiario.eq('funcionarios.setor_id', currentUser.setorId);
                 }
 
-                const [{ count: countAbono }, { count: countGps }] = await Promise.all([
-                    queryAbono,
-                    queryGps
-                ]);
+                // 4. Minhas Pendências (Pessoais)
+                const { count: myD } = await supabase
+                    .from('diario_logs')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('funcionario_id', currentUser.id)
+                    .eq('status_pendencia', 'pendente');
 
-                const totalPendencias = (countAbono || 0) + (countGps || 0);
+                const { count: myA } = await supabase
+                    .from('justificativas')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('funcionario_id', currentUser.id)
+                    .eq('status', 'pendente');
+
+                const totalPendenciasTeam = (cA || 0) + (cG || 0) + (cD || 0);
+                const totalPendenciasMe = (myD || 0) + (myA || 0);
                 const badge = document.getElementById('notifBadge');
                 const bell = document.getElementById('notifBell');
 
-                if (totalPendencias > 0) {
-                    badge.innerText = totalPendencias > 99 ? '99+' : totalPendencias;
+                if (totalPendenciasTeam > 0) {
+                    badge.innerText = totalPendenciasTeam > 99 ? '99+' : totalPendenciasTeam;
                     badge.classList.remove('hidden');
                     bell.classList.add('text-amber-500');
                     bell.classList.remove('text-slate-400');
@@ -308,27 +333,74 @@
                     bell.classList.remove('text-amber-500');
                     bell.classList.add('text-slate-400');
                 }
+
+                // Badge pessoal do Diário de Bordo
+                const bDiario = document.getElementById('badge-diario');
+                if (bDiario) {
+                    if (totalPendenciasMe > 0) {
+                        bDiario.innerText = totalPendenciasMe;
+                        bDiario.classList.remove('hidden');
+                    } else {
+                        bDiario.classList.add('hidden');
+                    }
+                }
+
+                // Badge da Gestão da Equipe
+                const bTeam = document.getElementById('badge-team');
+                if (bTeam) {
+                    if (totalPendenciasTeam > 0) {
+                        bTeam.innerText = totalPendenciasTeam;
+                        bTeam.classList.remove('hidden');
+                    } else {
+                        bTeam.classList.add('hidden');
+                    }
+                }
             } catch (err) {
                 console.error('Erro ao buscar notificações:', err);
             }
         }
 
         async function loadGlobalStats() {
+            if (!currentUser) return;
             const today = new Date().toISOString().split('T')[0];
+            const isGestor = currentUser.role?.toLowerCase() === 'gestor';
+            
             try {
+                // 1. Contagem de Funcionários e Setores
+                let queryFunc = supabase.from('funcionarios').select('*', { count: 'exact', head: true });
+                let querySetores = supabase.from('setores').select('*', { count: 'exact', head: true });
+
+                if (isGestor && currentUser.setorId) {
+                    queryFunc = queryFunc.eq('setor_id', currentUser.setorId);
+                    // Para o gestor, o número de setores que ele "vê" no card principal é o seu próprio
+                }
+
                 const [{ count: totalFunc }, { count: totalSetores }] = await Promise.all([
-                    supabase.from('funcionarios').select('*', { count: 'exact', head: true }),
-                    supabase.from('setores').select('*', { count: 'exact', head: true })
+                    queryFunc,
+                    querySetores
                 ]);
 
-                if (document.getElementById('statTotalGlobal')) document.getElementById('statTotalGlobal').innerText = totalFunc || '0';
-                if (document.getElementById('statTotalSetores')) document.getElementById('statTotalSetores').innerText = totalSetores || '0';
+                if (document.getElementById('statTotalGlobal')) {
+                    document.getElementById('statTotalGlobal').innerText = totalFunc || '0';
+                }
+                
+                if (document.getElementById('statTotalSetores')) {
+                    // Se for gestor, exibe 1 (seu setor), se for admin exibe o total global
+                    document.getElementById('statTotalSetores').innerText = isGestor ? '1' : (totalSetores || '0');
+                }
 
-                const { data: todayPoints } = await supabase
+                // 2. Funcionários Online (Filtrado por setor se for gestor)
+                let queryPoints = supabase
                     .from('pontos')
-                    .select('funcionario_id')
+                    .select('funcionario_id, funcionarios!inner(setor_id)')
                     .gte('data_hora', `${today}T00:00:00`)
                     .lte('data_hora', `${today}T23:59:59`);
+
+                if (isGestor && currentUser.setorId) {
+                    queryPoints = queryPoints.eq('funcionarios.setor_id', currentUser.setorId);
+                }
+
+                const { data: todayPoints } = await queryPoints;
 
                 let onlineCount = 0;
                 if (todayPoints) {
@@ -339,20 +411,78 @@
                     onlineCount = Object.values(counts).filter(c => c % 2 !== 0).length;
                 }
 
-                if (document.getElementById('statOnlineGlobal')) document.getElementById('statOnlineGlobal').innerText = onlineCount || '0';
+                if (document.getElementById('statOnlineGlobal')) {
+                    document.getElementById('statOnlineGlobal').innerText = onlineCount || '0';
+                }
             } catch (err) {
-                console.error('Erro global stats:', err);
+                console.error('Erro ao carregar estatísticas do painel:', err);
             }
         }
 
-        function renderCalendar() {
-            const container = document.getElementById('app-calendar');
-            const now = new Date();
-            const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-            document.getElementById('calendar-month').innerText = `${monthNames[now.getMonth()]} ${now.getFullYear()}`;
+        async function loadMyCalendarData(userId) {
+            const startDate = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-01T00:00:00`;
+            const endDate = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${new Date(currentYear, currentMonth + 1, 0).getDate()}T23:59:59`;
 
-            const firstDay = new Date(now.getFullYear(), now.getMonth(), 1).getDay();
-            const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+            try {
+                // Carregar escala
+                if (!myEscalaGlobal) {
+                    const { data: user } = await supabase.from('funcionarios').select('escala_id').eq('id', userId).single();
+                    if (user?.escala_id) {
+                        const { data: esc } = await supabase.from('escalas').select('*').eq('id', user.escala_id).single();
+                        myEscalaGlobal = esc;
+                    }
+                }
+
+                // Carregar pontos
+                const { data: pts } = await supabase.from('pontos').select('*').eq('funcionario_id', userId).gte('data_hora', startDate).lte('data_hora', endDate);
+                myPointsGlobal = pts || [];
+            } catch (e) { console.error("Erro ao carregar dados do calendário:", e); }
+        }
+
+        function setupCalendarNavigation() {
+            const prevBtn = document.getElementById('btn-prev-month');
+            const nextBtn = document.getElementById('btn-next-month');
+            if (prevBtn) prevBtn.onclick = () => navigateCalendar(-1);
+            if (nextBtn) nextBtn.onclick = () => navigateCalendar(1);
+        }
+
+        window.navigateCalendar = async (delta) => {
+            currentMonth += delta;
+            if (currentMonth < 0) {
+                currentMonth = 11;
+                currentYear--;
+            } else if (currentMonth > 11) {
+                currentMonth = 0;
+                currentYear++;
+            }
+            await loadMyCalendarData(currentUser.id);
+            await renderCalendar();
+        };
+
+        async function renderCalendar() {
+            const container = document.getElementById('app-calendar');
+            if (!container) return;
+
+            const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+            document.getElementById('calendar-month').innerText = `${monthNames[currentMonth]} ${currentYear}`;
+
+            const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+            
+            const today = new Date();
+            const todayStr = today.toISOString().split('T')[0];
+
+            // 1. Projeção da Escala
+            const workDays = myEscalaGlobal ? ScalesEngine.projectBaseDays(myEscalaGlobal, myEscalaGlobal.vigencia_inicio, currentMonth, currentYear) : [];
+            const dailyWorkloadMs = (myEscalaGlobal ? ScalesEngine.calculateDailyWorkMinutes(myEscalaGlobal) : 8 * 60) * 60000;
+
+            // 2. Agrupar pontos
+            const pointsByDay = myPointsGlobal.reduce((acc, p) => {
+                const d = p.data_hora.split('T')[0];
+                if (!acc[d]) acc[d] = [];
+                acc[d].push(p);
+                return acc;
+            }, {});
 
             container.innerHTML = '';
             for (let i = 0; i < firstDay; i++) {
@@ -360,23 +490,70 @@
             }
 
             for (let d = 1; d <= daysInMonth; d++) {
-                const isToday = d === now.getDate();
-                const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                const isToday = dateStr === todayStr;
+                const isScheduled = workDays.includes(dateStr);
+                const dayPoints = pointsByDay[dateStr] || [];
+
+                let dayWorkedMs = 0;
+                if (dayPoints.length >= 2) {
+                    for (let i = 0; i < dayPoints.length; i += 2) {
+                        const inT = new Date(dayPoints[i].data_hora).getTime();
+                        const outT = (i + 1 < dayPoints.length) ? new Date(dayPoints[i + 1].data_hora).getTime() : (isToday ? new Date().getTime() : inT);
+                        dayWorkedMs += (outT - inT);
+                    }
+                }
+
+                let colorClass = 'text-slate-400 hover:bg-white/5';
+                if (isScheduled || dayPoints.length > 0) {
+                    if (dayPoints.length > 0) {
+                        if (dayWorkedMs >= dailyWorkloadMs) {
+                            colorClass = 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 border border-emerald-400/30';
+                        } else {
+                            colorClass = 'bg-amber-500 text-white shadow-lg shadow-amber-500/20 border border-amber-400/30';
+                        }
+                    } else if (dateStr < todayStr) {
+                        colorClass = 'bg-rose-500 text-white shadow-lg shadow-rose-500/20 border border-rose-400/30';
+                    } else if (isToday) {
+                        colorClass = 'border-2 border-primary text-primary animate-pulse';
+                    } else {
+                        colorClass = 'bg-primary/10 text-primary border border-primary/20';
+                    }
+                }
+
                 container.innerHTML += `
-                    <a href="resumo_dia.html?date=${dateStr}" class="h-8 flex items-center justify-center rounded-lg text-[10px] font-bold transition-all ${isToday ? 'bg-primary text-white shadow-lg shadow-primary/30 border border-white/20' : 'text-slate-400 hover:bg-white/5'}">
+                    <div onclick="window.location.href='resumo_dia.html?date=${dateStr}'" 
+                        class="w-full aspect-[1.2/1] rounded-2xl flex items-center justify-center text-[11px] font-black cursor-pointer transition-all hover:scale-110 active:scale-95 ${colorClass}">
                         ${d}
-                    </a>
+                    </div>
                 `;
             }
         }
 
         async function setupPunchLogic(userId) {
             const btn = document.getElementById('punchButton');
-            const today = new Date().toISOString().split('T')[0];
+            const now = new Date();
+            const todayStr = now.toISOString().split('T')[0];
+            
+            // Carregar dados completos do gestor (incluindo escala e personalização)
+            let myFullData = null;
+            let myEscala = null;
+            try {
+                const { data: fData } = await supabase
+                    .from('funcionarios')
+                    .select('*, escalas!escala_id(*)')
+                    .eq('id', userId)
+                    .single();
+                
+                if (fData) {
+                    myFullData = fData;
+                    myEscala = fData.personalizacao_escala || fData.escalas;
+                }
+            } catch (e) { console.error("Erro ao carregar escala do gestor:", e); }
 
             async function refreshTodayStats() {
-                const todayStart = `${today}T00:00:00`;
-                const todayEnd = `${today}T23:59:59`;
+                const todayStart = `${todayStr}T00:00:00`;
+                const todayEnd = `${todayStr}T23:59:59`;
 
                 const { data } = await supabase
                     .from('pontos')
@@ -387,23 +564,82 @@
                     .order('data_hora', { ascending: false });
 
                 const isOnline = data && data.length > 0 && (data.length % 2 !== 0);
+                const currentPointStatus = isOnline ? 'check-out' : 'check-in';
 
+                // Mantém o status ONLINE visual para o gestor logado enquanto estiver na página
                 const statusText = document.getElementById('status-text');
                 if (statusText) {
-                    statusText.innerText = isOnline ? 'ONLINE' : 'OFFLINE';
-                    statusText.className = isOnline ? 'text-[11px] font-bold text-emerald-500 uppercase' : 'text-[11px] font-bold text-slate-500 uppercase';
+                    statusText.innerText = 'ONLINE';
+                    statusText.className = 'text-[11px] font-bold text-emerald-500 uppercase';
                 }
 
-                if (btn) {
+                if (btn && myEscala) {
+                    const isCheckin = currentPointStatus === 'check-in';
+                    const workDays = ScalesEngine.projectBaseDays(myEscala, myFullData?.data_inicio_vigencia || '2024-01-01', now.getMonth(), now.getFullYear());
+                    const isWorkingDay = workDays.includes(todayStr);
+
+                    // Validação de Janela de Horário
+                    const scheduledTime = isCheckin ? myEscala.horario_entrada : myEscala.horario_saida;
+                    const tolMin = isCheckin ? (myEscala.tolerancia_entrada_minutos || 15) : (myEscala.tolerancia_saida_minutos || 15);
+                    
+                    let isWithinWindow = true;
+                    let timeReason = "";
+
+                    if (scheduledTime) {
+                        const [sh, sm] = scheduledTime.split(':').map(Number);
+                        const sched = new Date(); sched.setHours(sh, sm, 0, 0);
+                        const diff = (new Date() - sched) / 60000;
+
+                        if (isCheckin) {
+                            if (Math.abs(diff) > tolMin) {
+                                isWithinWindow = false;
+                                timeReason = diff < 0 ? "CEDO" : "ATRASO";
+                            }
+                        } else {
+                            if (diff < -10 || diff > (tolMin + 120)) {
+                                isWithinWindow = false;
+                                timeReason = diff < 0 ? "ANTEC" : "EXPIR";
+                            }
+                        }
+                    }
+
+                    btn.classList.remove('bg-primary', 'bg-orange-500', 'bg-rose-500', 'bg-emerald-500', 'bg-slate-700', 'grayscale', 'opacity-50', 'cursor-not-allowed', 'animate-pulse', 'border-[6px]');
+                    btn.disabled = false;
+                    btn.style.boxShadow = '';
+
+                    if (!isWorkingDay || !isWithinWindow) {
+                        btn.disabled = true;
+                        btn.classList.add('bg-slate-700', 'grayscale', 'opacity-50', 'cursor-not-allowed', 'border-white/10');
+                        btn.innerHTML = `<span class="material-symbols-outlined text-4xl mb-2 text-white/40">lock</span>
+                                         <span class="text-xs font-black text-white/40 leading-tight tracking-wider uppercase">${!isWorkingDay ? 'FORA DA<br>ESCALA' : 'BLOQUEADO<br>'+timeReason}</span>`;
+                    } else {
+                        if (isCheckin) {
+                            btn.classList.add('bg-primary', 'border-primary/30', 'shadow-primary/20');
+                            btn.innerHTML = `<span class="material-symbols-outlined text-4xl mb-2 text-white">power_settings_new</span>
+                                             <span class="text-sm font-black text-white leading-tight tracking-wider uppercase">FAZER<br>CHECK-IN</span>`;
+                        } else {
+                            btn.classList.add('bg-orange-500', 'border-orange-500/30', 'shadow-orange-500/20');
+                            btn.innerHTML = `<span class="material-symbols-outlined text-4xl mb-2 text-white">power_settings_new</span>
+                                             <span class="text-sm font-black text-white leading-tight tracking-wider uppercase">FAZER<br>CHECK-OUT</span>`;
+                        }
+
+                        // Pulso na Janela Estrita
+                        if (scheduledTime) {
+                            const [sh, sm] = scheduledTime.split(':').map(Number);
+                            const sched = new Date(); sched.setHours(sh, sm, 0, 0);
+                            const diff = Math.abs((new Date() - sched) / 60000);
+                            if (diff <= 10) {
+                                btn.classList.add('animate-pulse', 'border-[6px]');
+                            }
+                        }
+                    }
+                } else if (btn) {
+                    // Sem escala definida - Comportamento padrão legado ou neutro
                     btn.innerHTML = isOnline
                         ? `<span class="material-symbols-outlined text-4xl mb-2 text-rose-500">power_settings_new</span>
                            <span class="text-sm font-black text-rose-500 leading-tight tracking-wider uppercase">ENCERRAR<br>PONTO</span>`
                         : `<span class="material-symbols-outlined text-4xl mb-2 text-white">power_settings_new</span>
                            <span class="text-sm font-black text-white leading-tight tracking-wider uppercase">REGISTRAR<br>PONTO</span>`;
-
-                    btn.className = isOnline
-                        ? "relative group w-48 h-48 rounded-full bg-rose-500/10 border-4 border-rose-500/30 flex flex-col items-center justify-center text-center p-6 shadow-xl shadow-rose-500/10 hover:scale-105 active:scale-95 transition-all"
-                        : "relative group w-48 h-48 rounded-full bg-emerald-500 border-4 border-emerald-500/30 flex flex-col items-center justify-center text-center p-6 shadow-xl shadow-emerald-500/20 hover:scale-105 active:scale-95 transition-all";
                 }
 
                 // Atualizando as Sessões Atuais
@@ -444,7 +680,7 @@
                     if (statsTotal) statsTotal.innerText = '00:00';
                 }
 
-                if (isOnline) startTimer(data[0].data_hora); else stopTimer();
+                if (isOnline && data && data.length > 0) startTimer(data[0].data_hora); else stopTimer();
             }
 
             let timerInterval;
@@ -469,14 +705,43 @@
 
             if (btn) {
                 btn.onclick = async () => {
+                if (btn.disabled) return;
+                
+                // Re-validar estado
+                await refreshTodayStats();
+                if (btn.disabled) {
+                    UI.showToast('Janela de horário expirada!', 'error');
+                    return;
+                }
                     UI.showLoader();
                     try {
-                        await supabase.from('pontos').insert([{ funcionario_id: userId, data_hora: new Date().toISOString() }]);
+                        const { data: lastPoints } = await supabase
+                            .from('pontos')
+                            .select('tipo')
+                            .eq('funcionario_id', userId)
+                            .order('data_hora', { ascending: false })
+                            .limit(1);
+
+                        const lastType = lastPoints && lastPoints.length > 0 ? lastPoints[0].tipo : 'check-out';
+                        const newType = lastType === 'check-in' ? 'check-out' : 'check-in';
+
+                        const { error } = await supabase.from('pontos').insert([{ 
+                            funcionario_id: userId, 
+                            data_hora: new Date().toISOString(),
+                            tipo: newType,
+                            modalidade: 'presencial',
+                            status_validacao: 'aprovado',
+                            dentro_do_raio: true
+                        }]);
+
+                        if (error) throw error;
+
                         UI.showToast('Ponto registrado com sucesso!', 'success');
                         await refreshTodayStats();
                         await loadGlobalStats();
                     } catch (e) {
-                        UI.showToast('Erro ao registrar ponto', 'error');
+                        console.error('Erro ao registrar:', e);
+                        UI.showToast('Erro ao registrar ponto no Supabase', 'error');
                     } finally {
                         UI.hideLoader();
                     }

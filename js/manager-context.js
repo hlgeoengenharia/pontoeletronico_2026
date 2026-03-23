@@ -67,7 +67,7 @@
             #manager-mode-bar {
                 background: rgba(10, 14, 23, 0.98);
                 border-bottom: 2px solid #f59e0b;
-                padding: 12px 16px;
+                padding: 12px 0;
                 position: fixed;
                 top: 0;
                 left: 0;
@@ -79,13 +79,23 @@
                 box-shadow: 0 8px 32px rgba(0,0,0,0.8);
                 backdrop-filter: blur(10px);
             }
+            .manager-container {
+                width: 100%;
+                padding: 0 24px;
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+            }
             /* Aumentar padding para não cobrir o conteúdo e garantir prioridade */
             body { padding-top: 140px !important; }
             #manager-mode-bar ~ header, 
             #manager-mode-bar ~ .fixed.top-0 { margin-top: 120px !important; }
             .manager-tabs {
-                display: flex; gap: 6px; background: rgba(255, 255, 255, 0.05);
+                display: flex; gap: 8px; background: rgba(255, 255, 255, 0.05);
                 padding: 4px; border-radius: 12px;
+                max-width: 500px;
+                margin: 0 auto;
+                width: 100%;
             }
             .manager-tab {
                 flex: 1; display: flex; flex-direction: column; align-items: center;
@@ -122,20 +132,22 @@
 
         const roleQuery = currentContextRole ? `&role=${currentContextRole}` : '';
         header.innerHTML = `
-            <div class="manager-info-row">
-                <div class="flex items-center gap-2">
-                    <span class="m-badge">SISTEMA GESTOR</span>
-                    <span class="m-label">Inspecionando Tripulante</span>
+            <div class="manager-container">
+                <div class="manager-info-row">
+                    <div class="flex items-center gap-2">
+                        <span class="m-badge">SISTEMA GESTOR</span>
+                        <span class="m-label">Inspecionando Tripulante</span>
+                    </div>
+                    <div class="m-close" onclick="closeInspection()">FECHAR X</div>
                 </div>
-                <div class="m-close" onclick="closeInspection()">FECHAR X</div>
-            </div>
-            <div class="manager-tabs">
-                ${tabs.map(tab => `
-                    <a href="${tab.id}?id=${employeeId}${roleQuery}" class="manager-tab ${currentPage === tab.id ? 'active' : ''}">
-                        <span class="material-symbols-outlined">${tab.icon}</span>
-                        <font>${tab.label}</font>
-                    </a>
-                `).join('')}
+                <div class="manager-tabs">
+                    ${tabs.map(tab => `
+                        <a href="${tab.id}?id=${employeeId}${roleQuery}" class="manager-tab ${currentPage === tab.id ? 'active' : ''}">
+                            <span class="material-symbols-outlined">${tab.icon}</span>
+                            <font>${tab.label}</font>
+                        </a>
+                    `).join('')}
+                </div>
             </div>
         `;
         document.body.prepend(header);

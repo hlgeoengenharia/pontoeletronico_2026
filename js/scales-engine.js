@@ -44,10 +44,11 @@ const ScalesEngine = {
         for (let d = new Date(startDay); d <= endDay; d.setDate(d.getDate() + 1)) {
             const dateStr = toLocaleISO(d);
 
-            if (escala.tipo_escala === 'semanal') {
+            if (escala.tipo_escala === 'semanal' || escala.dias_selecionados) {
                 const dayOfWeek = d.getDay();
-                const diasPadrao = (escala.dias_padrao || []).map(Number);
-                if (diasPadrao.includes(dayOfWeek)) {
+                // Suporta tanto dias_padrao (do template) quanto dias_selecionados (da personalização)
+                const diasTrabalho = (escala.dias_selecionados || escala.dias_padrao || []).map(Number);
+                if (diasTrabalho.includes(dayOfWeek)) {
                     days.push(dateStr);
                 }
             } 
