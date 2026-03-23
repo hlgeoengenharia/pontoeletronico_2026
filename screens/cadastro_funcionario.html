@@ -74,20 +74,40 @@
             
             <!-- Upload de Foto -->
             <div class="flex flex-col items-center justify-center mb-8">
-                <div class="relative group cursor-pointer" onclick="document.getElementById('avatar-input').click()">
-                    <div
-                        class="size-28 rounded-full border-4 border-primary/20 p-1 group-hover:border-primary/50 transition-all overflow-hidden bg-slate-800 flex items-center justify-center">
-                        <img id="avatar-preview" src="" class="hidden w-full h-full object-cover">
-                        <span id="avatar-placeholder"
-                            class="material-symbols-outlined text-4xl text-primary/30 group-hover:text-primary transition-colors">add_a_photo</span>
+                <div class="relative group/avatar">
+                    <div id="avatar-container" class="w-32 h-32 rounded-full border-4 border-orange-500 p-1 bg-background-dark shadow-[0_0_20px_rgba(249,115,22,0.2)] relative transition-all duration-300">
+                        <img id="avatar-preview" src="" class="w-full h-full rounded-full object-cover hidden">
+                        <div id="avatar-placeholder" class="w-full h-full rounded-full flex flex-col items-center justify-center bg-slate-800">
+                            <span class="material-symbols-outlined text-4xl text-primary/40">person_add</span>
+                        </div>
+                        
+                        <!-- Botão Excluir (CRUD) -->
+                        <button type="button" id="btn-remover-foto" class="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity hidden">
+                             <span class="material-symbols-outlined text-white text-3xl">delete</span>
+                        </button>
+
+                        <!-- Ponto de Status (Top Right) -->
+                        <div id="status-biometria-badge" class="absolute top-1 right-1 size-7 rounded-full bg-emerald-500 border-4 border-background-dark flex items-center justify-center shadow-lg hidden">
+                            <span class="material-symbols-outlined text-background-dark text-[14px] font-black">check</span>
+                        </div>
                     </div>
-                    <div
-                        class="absolute bottom-1 right-1 bg-primary text-white size-8 rounded-full flex items-center justify-center shadow-lg border-2 border-background-dark">
-                        <span class="material-symbols-outlined text-sm">edit</span>
-                    </div>
-                    <input type="file" id="avatar-input" class="hidden" accept="image/*">
+                    
+                    <!-- Botão Câmera (Bottom Right) -->
+                    <button type="button" onclick="abrirModalCamera()" class="absolute -bottom-1 -right-1 w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center shadow-xl hover:scale-110 active:scale-95 transition-all outline-none border-4 border-background-dark z-10 font-bold">
+                        <span class="material-symbols-outlined text-white text-2xl font-bold">photo_camera</span>
+                    </button>
                 </div>
-                <p class="text-[10px] text-slate-500 uppercase font-bold mt-4 tracking-widest">Foto do Tripulante</p>
+                <p class="text-[10px] text-slate-500 uppercase font-black tracking-widest mt-4">Foto do Tripulante</p>
+            </div>
+
+            <!-- Cápsula Biométrica (Tornada interativa para registro/atualização) -->
+            <div class="flex justify-center mb-8">
+                <button type="button" id="capsula-biometria" onclick="handleBiometriaClick()" class="px-8 py-3 bg-slate-950/90 border border-emerald-500/30 rounded-full flex items-center gap-4 shadow-2xl backdrop-blur-md animate-in fade-in zoom-in duration-500 hover:scale-105 active:scale-95 transition-all outline-none">
+                    <div id="capsula-icon-bg" class="size-8 rounded-lg bg-emerald-500/20 flex items-center justify-center transition-all duration-500">
+                        <span id="capsula-icon" class="material-symbols-outlined text-emerald-500 text-lg">face</span>
+                    </div>
+                    <span id="capsula-text" class="text-xs font-black text-emerald-500 uppercase tracking-[0.2em]">Biometria Cadastrada</span>
+                </button>
             </div>
 
             <!-- Nome Completo -->
@@ -145,6 +165,12 @@
                     <label class="block text-xs font-bold uppercase tracking-widest text-primary mb-3">Data de
                         Nascimento</label>
                     <input id="data_nasc"
+                        class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg py-3 px-4 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                        type="date">
+                </div>
+                <div class="group">
+                    <label class="block text-xs font-bold uppercase tracking-widest text-primary mb-3">Previsão de Início</label>
+                    <input id="data_inicio_prevista"
                         class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg py-3 px-4 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                         type="date">
                 </div>
@@ -320,18 +346,52 @@
                 </div>
             </div>
 
-            <!-- Escala Dinâmica -->
-            <div class="group">
-                <label class="block text-xs font-bold uppercase tracking-widest text-primary mb-3">Escala</label>
-                <div class="relative">
-                    <select id="escala-select"
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="group">
+                    <label class="block text-xs font-bold uppercase tracking-widest text-primary mb-3">Escala</label>
+                    <div class="relative">
+                        <select id="escala-select"
+                            class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg py-3 px-4 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all appearance-none text-sm">
+                            <option value="">Carregando escalas...</option>
+                        </select>
+                        <span
+                            class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span>
+                    </div>
+                </div>
+                <div class="group">
+                    <label class="block text-xs font-bold uppercase tracking-widest text-primary mb-3">Regime de Trabalho</label>
+                    <select id="regime_trabalho"
                         class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg py-3 px-4 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all appearance-none text-sm">
-                        <option value="">Carregando escalas...</option>
+                        <option value="Presencial">Presencial</option>
+                        <option value="Teletrabalho / Home Office">Teletrabalho / Home Office</option>
+                        <option value="Híbrido">Híbrido</option>
+                        <option value="Externo">Externo</option>
                     </select>
-                    <span
-                        class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">expand_more</span>
                 </div>
             </div>
+
+            <!-- Rastreio GPS (Individual) -->
+            <div id="container-rastreio" class="p-4 bg-primary/5 border border-primary/20 rounded-xl space-y-2">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary text-sm">location_on</span>
+                        <span class="text-xs font-bold text-slate-200 uppercase tracking-widest">Rastreio Horário (Externos)</span>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input id="rastreio_ativo" type="checkbox" class="sr-only peer">
+                        <div class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                    </label>
+                </div>
+                <p class="text-[10px] text-slate-500 leading-relaxed font-medium">
+                    Quando ativado, o sistema capturará a localização GPS a cada 60 minutos durante o expediente.
+                </p>
+            </div>
+
+            <div class="hidden">
+                <input type="hidden" id="biometria_cadastrada" value="false">
+                <input type="hidden" id="biometria_token" value="">
+            </div>
+            
 
             <!-- Card de Detalhes da Escala -->
             <div id="detalhes-escala-card" class="hidden animate-in fade-in slide-in-from-top-4 duration-300">
@@ -460,7 +520,34 @@
                 </button>
             </div>
         </form>
-    </main>
+    <!-- Modal de Câmera -->
+    <div id="modal-camera" class="fixed inset-0 bg-black/90 z-[200] hidden items-center justify-center p-6 backdrop-blur-md">
+        <div class="bg-background-dark border border-primary/30 rounded-3xl p-6 w-full max-w-lg space-y-6 shadow-2xl relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-1 bg-primary"></div>
+            <div class="text-center space-y-2">
+                <h3 class="text-lg font-black text-slate-100 uppercase italic">Captura de Foto</h3>
+                <p class="text-[10px] text-slate-400 uppercase font-bold tracking-tight">Posicione o rosto no centro da moldura</p>
+            </div>
+
+            <div class="relative rounded-2xl overflow-hidden bg-slate-900 border border-white/5 aspect-video flex items-center justify-center">
+                <video id="video-feed" autoplay playsinline class="w-full h-full object-cover"></video>
+                <div class="absolute inset-0 border-[40px] border-black/40 pointer-events-none flex items-center justify-center">
+                    <div class="size-48 rounded-full border-2 border-primary/50 border-dashed animate-pulse"></div>
+                </div>
+            </div>
+
+            <div class="flex gap-3">
+                <button type="button" onclick="fecharModalCamera()"
+                    class="flex-1 py-4 rounded-2xl border border-white/10 text-xs font-black uppercase text-slate-400 hover:bg-white/5 transition-all">Cancelar</button>
+                <button type="button" id="btn-capturar-frame"
+                    class="flex-1 py-4 rounded-2xl bg-primary text-white text-xs font-black uppercase shadow-lg shadow-primary/20 hover:bg-primary/60 transition-all flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined text-sm">photo_camera</span> Capturar Foto
+                </button>
+            </div>
+            <canvas id="canvas-snapshot" class="hidden"></canvas>
+        </div>
+    </div>
+</main>
 
     <script type="module">
         import { supabase } from '../js/supabase-config.js';
@@ -601,6 +688,162 @@
             refreshCalendar();
         };
 
+        // --- LÓGICA DE CÂMERA ---
+        let cameraStream = null;
+
+        window.abrirModalCamera = async () => {
+            const isLocked = document.getElementById('nome_completo').disabled;
+            if (isLocked) return;
+
+            const modal = document.getElementById('modal-camera');
+            const video = document.getElementById('video-feed');
+            
+            try {
+                cameraStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: "user", width: 1280, height: 720 }, 
+                    audio: false 
+                });
+                video.srcObject = cameraStream;
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            } catch (err) {
+                console.error("Erro ao acessar câmera:", err);
+                UI.showToast("Não foi possível acessar a câmera. Verifique as permissões.", "error");
+            }
+        };
+
+        window.fecharModalCamera = () => {
+            const modal = document.getElementById('modal-camera');
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+                cameraStream = null;
+            }
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        };
+
+        document.getElementById('btn-capturar-frame').onclick = () => {
+            const video = document.getElementById('video-feed');
+            const canvas = document.getElementById('canvas-snapshot');
+            const preview = document.getElementById('avatar-preview');
+            const placeholder = document.getElementById('avatar-placeholder');
+            const btnRemover = document.getElementById('btn-remover-foto');
+
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+            preview.src = dataUrl;
+            preview.classList.remove('hidden');
+            placeholder.classList.add('hidden');
+            btnRemover.classList.remove('hidden');
+            
+            // Converter DataURL para File para o upload existente
+            fetch(dataUrl)
+                .then(res => res.blob())
+                .then(blob => {
+                    selectedAvatarFile = new File([blob], "capture.jpg", { type: "image/jpeg" });
+                });
+
+            fecharModalCamera();
+            UI.showToast("Foto capturada! Deseja registrar a biometria facial agora?", "info");
+            
+            // Gatilho Unificado: Animando cápsula de biometria
+            setTimeout(() => {
+                const capsula = document.getElementById('capsula-biometria');
+                if (capsula) {
+                    capsula.scrollIntoView({ behavior: 'smooth' });
+                    capsula.classList.add('animate-bounce');
+                    setTimeout(() => capsula.classList.remove('animate-bounce'), 3000);
+                }
+            }, 1000);
+        };
+
+        // Lógica de Remoção de Foto (CRUD)
+        document.getElementById('btn-remover-foto').onclick = () => {
+            const preview = document.getElementById('avatar-preview');
+            const placeholder = document.getElementById('avatar-placeholder');
+            const btnRemover = document.getElementById('btn-remover-foto');
+
+            preview.src = "";
+            preview.classList.add('hidden');
+            placeholder.classList.remove('hidden');
+            btnRemover.classList.add('hidden');
+            selectedAvatarFile = null;
+            
+            UI.showToast("Foto removida.", "info");
+        };
+
+        // --- LÓGICA DE BIOMETRIA ---
+        window.handleBiometriaClick = async () => {
+            const isLocked = document.getElementById('nome_completo').disabled;
+            if (isLocked) return;
+
+            if (!window.PublicKeyCredential) {
+                UI.showToast("Seu navegador não suporta biometria nativa.", "error");
+                return;
+            }
+
+            UI.showLoader();
+            try {
+                const challenge = new Uint8Array(32);
+                window.crypto.getRandomValues(challenge);
+
+                const userId = currentFuncId || 'new-user';
+                const userName = document.getElementById('nickname').value || 'Usuário';
+
+                const publicKeyCredentialCreationOptions = {
+                    challenge: challenge,
+                    rp: { name: "ChronoSync System", id: window.location.hostname },
+                    user: {
+                        id: Uint8Array.from(userId, c => c.charCodeAt(0)),
+                        name: userName,
+                        displayName: userName,
+                    },
+                    pubKeyCredParams: [{ alg: -7, type: "public-key" }, { alg: -257, type: "public-key" }],
+                    authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required" },
+                    timeout: 60000,
+                    attestation: "direct"
+                };
+
+                const credential = await navigator.credentials.create({
+                    publicKey: publicKeyCredentialCreationOptions
+                });
+
+                if (credential) {
+                    document.getElementById('biometria_token').value = btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
+                    document.getElementById('biometria_cadastrada').value = "true";
+                    
+                    const badge = document.getElementById('status-biometria-badge');
+                    if (badge) {
+                        badge.classList.remove('bg-rose-500/20', 'border-rose-500/30', 'animate-pulse');
+                        badge.classList.add('bg-emerald-500/20', 'border-emerald-500/30');
+                        badge.querySelector('span').innerText = 'verified_user';
+                        badge.querySelector('span').classList.remove('text-rose-500');
+                        badge.querySelector('span').classList.add('text-emerald-500');
+                        badge.classList.remove('hidden');
+                    }
+                    
+                    const capsula = document.getElementById('capsula-biometria');
+                    if (capsula) {
+                        const capsulaText = document.getElementById('capsula-text');
+                        if (capsulaText) capsulaText.innerText = 'Biometria Cadastrada';
+                        capsula.classList.remove('border-rose-500/30');
+                        capsula.classList.add('border-emerald-500/30');
+                    }
+                    
+                    UI.showToast("Biometria registrada com sucesso!", "success");
+                }
+            } catch (err) {
+                console.error("Erro no WebAuthn:", err);
+                UI.showToast("Falha no registro biométrico. Tente novamente.", "error");
+            } finally {
+                UI.hideLoader();
+            }
+        };
+
         function refreshCalendar() {
             const display = document.getElementById('cal-month-display');
             if (display) display.innerText = `${monthNamesLong[currentMonth]} / ${currentYear}`;
@@ -722,6 +965,61 @@
                          // Novos Campos
                          document.getElementById('nivel_escolaridade').value = emp.nivel_escolaridade || 'Médio';
                          document.getElementById('graduacao_principal_select').value = emp.graduacao_principal || '';
+                         document.getElementById('regime_trabalho').value = emp.regime_trabalho || 'Presencial';
+                         document.getElementById('rastreio_ativo').checked = emp.rastreio_ativo || false;
+                         document.getElementById('data_inicio_prevista').value = emp.data_inicio_prevista || '';
+                         document.getElementById('biometria_cadastrada').value = emp.biometria_cadastrada || "false";
+                         document.getElementById('biometria_token').value = emp.biometria_token || '';
+
+                         if (emp.biometria_cadastrada) {
+                            const badge = document.getElementById('status-biometria-badge');
+                            const capsula = document.getElementById('capsula-biometria');
+                            const capsulaText = document.getElementById('capsula-text');
+                            const capsulaIcon = document.getElementById('capsula-icon');
+                            const capsulaIconBg = document.getElementById('capsula-icon-bg');
+
+                            if (badge) {
+                                badge.classList.remove('hidden', 'bg-rose-500', 'animate-pulse');
+                                badge.classList.add('bg-emerald-500');
+                                badge.querySelector('span').innerText = 'check';
+                            }
+                            if (capsula) {
+                                capsula.classList.remove('border-rose-500/30');
+                                capsula.classList.add('border-emerald-500/30');
+                                capsulaText.innerText = 'Biometria Cadastrada';
+                                capsulaText.classList.remove('text-rose-500');
+                                capsulaText.classList.add('text-emerald-500');
+                                capsulaIcon.innerText = 'face';
+                                capsulaIcon.classList.remove('text-rose-500');
+                                capsulaIcon.classList.add('text-emerald-500');
+                                capsulaIconBg.classList.remove('bg-rose-500/20');
+                                capsulaIconBg.classList.add('bg-emerald-500/20');
+                            }
+                         } else {
+                            const badge = document.getElementById('status-biometria-badge');
+                            const capsula = document.getElementById('capsula-biometria');
+                            const capsulaText = document.getElementById('capsula-text');
+                            const capsulaIcon = document.getElementById('capsula-icon');
+                            const capsulaIconBg = document.getElementById('capsula-icon-bg');
+
+                            if (badge) {
+                                badge.classList.remove('hidden', 'bg-emerald-500');
+                                badge.classList.add('bg-rose-500', 'animate-pulse');
+                                badge.querySelector('span').innerText = 'priority_high';
+                            }
+                            if (capsula) {
+                                capsula.classList.remove('border-emerald-500/30');
+                                capsula.classList.add('border-rose-500/30');
+                                capsulaText.innerText = 'Biometria Pendente';
+                                capsulaText.classList.remove('text-emerald-500');
+                                capsulaText.classList.add('text-rose-500');
+                                capsulaIcon.innerText = 'block';
+                                capsulaIcon.classList.remove('text-emerald-500');
+                                capsulaIcon.classList.add('text-rose-500');
+                                capsulaIconBg.classList.remove('bg-emerald-500/20');
+                                capsulaIconBg.classList.add('bg-rose-500/20');
+                            }
+                         }
                          
                          // Carregar Especialidades da Tabela Associativa
                          const { data: espFunc } = await supabase
@@ -794,12 +1092,15 @@
             }
         }
 
+        let setoresData = []; // Adicionar esta linha no topo do script se não existir ou garantir que seja populada
+
         async function carregarDadosIniciais() {
             UI.showLoader();
             try {
                 // Carregar Setores
                 const { data: setores, error: errorSetores } = await supabase.from('setores').select('*').order('nome');
                 if (errorSetores) throw errorSetores;
+                setoresData = setores;
 
                 const setorSelect = document.getElementById('setor-select');
                 setorSelect.innerHTML = '<option value="">Selecionar Setor...</option>';
@@ -1007,9 +1308,30 @@
             }
             card.classList.remove('hidden');
             document.getElementById('detalhe-nome').innerText = config.nome;
-            document.getElementById('detalhe-tipo').innerText = config.tipo;
+            // O Regime agora vem do funcionário
+            document.getElementById('detalhe-tipo').innerText = document.getElementById('regime_trabalho').value;
             document.getElementById('detalhe-carga').innerText = config.carga + 'h/sem';
             document.getElementById('detalhe-turno').innerText = `${config.entrada} às ${config.saida}`;
+
+            // Exibir Raio do Setor selecionado
+            const setorId = document.getElementById('setor-select').value;
+            if (setorId) {
+                const setor = setoresData.find(s => s.id === setorId);
+                if (setor) {
+                    const radiusBadge = document.createElement('div');
+                    radiusBadge.id = 'badge-raio-setor';
+                    radiusBadge.className = "mt-2 p-2 bg-primary/10 border border-primary/20 rounded-lg flex items-center gap-2";
+                    radiusBadge.innerHTML = `
+                        <span class="material-symbols-outlined text-xs text-primary">distance</span>
+                        <span class="text-[9px] font-bold text-primary uppercase">Raio de Bloqueio: ${setor.raio}m (Definido pelo Setor)</span>
+                    `;
+                    // Remover badge antigo se existir
+                    const oldBadge = document.getElementById('badge-raio-setor');
+                    if (oldBadge) oldBadge.remove();
+                    card.querySelector('div').appendChild(radiusBadge);
+                }
+            }
+
             refreshCalendar();
         }
 
@@ -1045,6 +1367,8 @@
         }
 
         document.getElementById('escala-select').addEventListener('change', atualizarDetalhesEscala);
+        document.getElementById('regime_trabalho').addEventListener('change', atualizarDetalhesEscala);
+        document.getElementById('setor-select').addEventListener('change', atualizarDetalhesEscala);
         document.getElementById('btn-personalizar').addEventListener('click', alternarPersonalizacao);
 
         // Lógica de Busca de Especialidade
@@ -1106,18 +1430,17 @@
                 // 1. Upload do Avatar (se existir)
                 if (selectedAvatarFile) {
                     const fileExt = selectedAvatarFile.name.split('.').pop();
-                    const fileName = `${Math.random()}.${fileExt}`;
-                    const filePath = `avatars/${fileName}`;
+                    const fileName = `avatars/${Math.random().toString(36).substring(2)}.${fileExt}`;
 
-                    const { error: uploadError, data: uploadData } = await supabase.storage
-                        .from('avatars')
-                        .upload(filePath, selectedAvatarFile);
+                    const { error: uploadError } = await supabase.storage
+                        .from('evidencias')
+                        .upload(fileName, selectedAvatarFile);
 
                     if (uploadError) throw uploadError;
 
                     const { data: { publicUrl } } = supabase.storage
-                        .from('avatars')
-                        .getPublicUrl(filePath);
+                        .from('evidencias')
+                        .getPublicUrl(fileName);
 
                     avatarUrl = publicUrl;
                 }
@@ -1175,6 +1498,11 @@
                     nivel_acesso: e.target.querySelector('input[name="access_level"]:checked')?.value || 'Funcionário',
                     nivel_escolaridade: nivelEscolaridade || 'Médio',
                     graduacao_principal: graduacaoPrincipal || null,
+                    regime_trabalho: document.getElementById('regime_trabalho').value,
+                    rastreio_ativo: document.getElementById('rastreio_ativo').checked,
+                    data_inicio_prevista: document.getElementById('data_inicio_prevista').value || null,
+                    biometria_cadastrada: document.getElementById('biometria_cadastrada').value === "true",
+                    biometria_token: document.getElementById('biometria_token').value || null,
                     personalizacao_escala: modoPersonalizado ? {
                         carga_horaria_semanal: parseInt(document.getElementById('pers-carga').value),
                         dias_trabalho_semana: parseInt(document.getElementById('pers-dias-semana').value),

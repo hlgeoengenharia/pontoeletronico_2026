@@ -14,7 +14,8 @@ class GPSTracker {
      * @param {Object} user 
      */
     static startTracking(user) {
-        console.log('[GPSTracker] Iniciando rastreamento para:', user?.nome_completo);
+        const displayName = user?.nome_completo || user?.name || user?.nickname || 'Usuário';
+        console.log('[GPSTracker] Iniciando rastreamento para:', displayName);
         if (this.trackingInterval) clearInterval(this.trackingInterval);
         this.checkBackgroundLocation(user); // Chamada inicial
         
@@ -59,23 +60,23 @@ class GPSTracker {
             const coordStr = `${lat},${lng}`;
             const nowTime = new Date().toLocaleTimeString('pt-BR');
 
-            // 2. Log de Pulso (sem o horário no texto)
-            const pulseMsg = `Localização registrada automaticamente pelo sistema para validar sua presença em serviço durante a jornada.`;
-            await this.logOccurrence(user.id, 'gps_pulse', pulseMsg, coordStr);
-            console.log(`[GPSTracker] Pulso de GPS enviado (${nowTime}) para funcionario_id: ${user.id}`);
+            // 2. Log de Pulso (com trava de 15min)
+            await this.logPulse(user.id, coordStr);
             
-            // 3. Rastreamento Externo (Hora em Hora)
-            if (user.modalidade === 'Externo') {
+            // 3. Rastreamento Externo (Independente de Regime, se ativado no perfil)
+            if (user.rastreio_ativo) {
                 await this.logHourlyLocation(user.id, coordStr);
             } 
+
             // 4. Geofence (Presencial / Híbrido)
-            else if (['Presencial', 'Híbrido'].includes(user.modalidade)) {
+            if (['Presencial', 'Híbrido'].includes(user.regime_trabalho)) {
                  if (user.setores && user.setores.latitude && user.setores.longitude) {
                      const distance = ScalesEngine.calculateDistance(
                          lat, lng, 
                          user.setores.latitude, user.setores.longitude
                      );
-                     const raio = user.escalas?.raio_geofence_metros || 100;
+                     // Usa o raio do setor, ou 100m como fallback
+                     const raio = user.setores.raio || 100;
                      const isInside = distance <= raio;
                      const currentStatus = isInside ? 'inside' : 'outside';
 
@@ -84,7 +85,7 @@ class GPSTracker {
                          const msg = currentStatus === 'outside' 
                             ? `O sistema detectou que você se ausentou do raio de alcance permitido para o seu local de escala/setor designado.` 
                             : `O sistema detectou o seu retorno para dentro do raio de alcance permitido do seu local de escala/setor designado.`;
-                         await this.logOccurrence(user.id, currentStatus === 'outside' ? 'geofence_out' : 'geofence_in', msg, coordStr);
+                         await this.logOccurrence(user.id, currentStatus === 'outside' ? 'geofence_out' : 'geofence_in', msg, coordStr, 'pendente');
                      }
                      
                      this.lastGeofenceStatus = currentStatus;
@@ -93,6 +94,31 @@ class GPSTracker {
         } catch (e) {
             console.error('[GPSTracker] Falha ao verificar localização em background', e);
         }
+    }
+
+    static async logPulse(userId, coordStr) {
+        // Verifica se já teve pulso nos últimos 15 min
+        const { data: latestLogs } = await supabase
+            .from('diario_logs')
+            .select('created_at')
+            .eq('funcionario_id', userId)
+            .eq('tipo', 'gps_pulse')
+            .order('created_at', { ascending: false })
+            .limit(1);
+
+        if (latestLogs && latestLogs.length > 0) {
+            const lastLog = new Date(latestLogs[0].created_at);
+            const now = new Date();
+            const diffMin = (now - lastLog) / (1000 * 60);
+            if (diffMin < 14) {
+                console.log(`[GPSTracker] Pulso ignorado: último registro há ${Math.round(diffMin)} min.`);
+                return;
+            }
+        }
+
+        const msg = `Localização registrada automaticamente pelo sistema para validar sua presença em serviço durante a jornada.`;
+        await this.logOccurrence(userId, 'gps_pulse', msg, coordStr, 'aprovado');
+        console.log(`[GPSTracker] Pulso de GPS enviado para funcionario_id: ${userId}`);
     }
 
     static async logHourlyLocation(userId, coordStr) {
@@ -112,10 +138,11 @@ class GPSTracker {
             if (diffMin < 55) return; // Não faz log se não passou aprox 1 hora
         }
 
-        await this.logOccurrence(userId, 'gps_hora', 'Registro automático de localização para fins de auditoria em jornada de trabalho sob regime externo.', coordStr);
+        const msg = 'Registro automático de localização para fins de auditoria em jornada de trabalho sob regime externo.';
+        await this.logOccurrence(userId, 'gps_hora', msg, coordStr, 'aprovado');
     }
 
-    static async logOccurrence(userId, type, message, coords) {
+    static async logOccurrence(userId, type, message, coords, status = 'pendente') {
         const payload = {
             funcionario_id: userId,
             data_hora: new Date().toISOString(),
@@ -123,7 +150,7 @@ class GPSTracker {
             mensagem_padrao: message,
             coordenadas: coords,
             lido_pelo_funcionario: false,
-            status_pendencia: 'pendente'
+            status_pendencia: status
         };
         await supabase.from('diario_logs').insert([payload]);
     }

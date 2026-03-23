@@ -402,7 +402,7 @@
 
             // 2. Funcionários e Tabelas Relacionadas (Busca Separada)
             const [fRes, cRes, eRes, pRes] = await Promise.all([
-                supabase.from('funcionarios').select('id, nome_completo, nickname, cargo_id, especialidade_id, setor_id, nivel_acesso'),
+                supabase.from('funcionarios').select('id, nome_completo, nickname, cargo_id, especialidade_id, setor_id, nivel_acesso, regime_trabalho'),
                 supabase.from('cargos').select('id, nome'),
                 supabase.from('especialidades').select('id, nome'),
                 supabase.from('perfis_tripulantes').select('funcionario_id, foto_url')
@@ -763,6 +763,10 @@
                             <div class="flex justify-between text-[8px] font-bold uppercase text-slate-500">
                                 <span>Especialidade</span>
                                 <span class="text-slate-200">${e.especialidades?.nome || 'N/A'}</span>
+                            </div>
+                            <div class="flex justify-between text-[8px] font-bold uppercase text-slate-500">
+                                <span>Regime</span>
+                                <span class="text-slate-200">${e.regime_trabalho || 'Presencial'}</span>
                             </div>
                             <div class="flex justify-between text-[8px] font-bold uppercase text-slate-500">
                                 <span>Status</span>

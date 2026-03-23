@@ -273,18 +273,27 @@
 
         window.addEventListener('load', async function () {
             const urlParams = new URLSearchParams(window.location.search);
-            const targetId = urlParams.get('id') || localStorage.getItem('userId');
+            let targetId = urlParams.get('id') || localStorage.getItem('userId');
 
             if (!targetId) {
                 console.error('Erro de Inicialização: ID ausente');
                 document.getElementById('display-name').innerText = "ERRO DE ACESSO";
-                return;
+                // Attempt to get the logged-in user's ID if targetId is missing
+                const session = await supabase.auth.getSession();
+                if (session.data.session) {
+                    targetId = session.data.session.user.id;
+                    localStorage.setItem('userId', targetId); // Store for future use
+                } else {
+                    UI.showToast('Nenhum ID de usuário encontrado. Redirecionando para login.', 'error');
+                    Auth.redirectToLogin();
+                    return;
+                }
             }
 
             try {
                 const { data: rawUser, error } = await supabase
                     .from('funcionarios')
-                    .select('*, setores!setor_id(nome), cargos(nome, nivel), escalas!escala_id(*), perfis_tripulantes(*)')
+                    .select('*, setores!setor_id(nome, latitude, longitude, raio), cargos(nome, nivel), escalas!escala_id(*), perfis_tripulantes(*)')
                     .eq('id', targetId)
                     .single();
                 if (error) throw error;
@@ -588,6 +597,19 @@
             const btn = document.getElementById('punchButton');
             if (!currentUser) return;
 
+            // Validar Data de Início Prevista
+            if (currentUser.data_inicio_prevista) {
+                const now = new Date();
+                const start = new Date(currentUser.data_inicio_prevista + 'T00:00:00');
+                if (now < start) {
+                    btn.disabled = true;
+                    btn.classList.add('opacity-50', 'bg-slate-700', 'border-white/10');
+                    btn.querySelector('span:first-child').innerText = 'event_busy';
+                    btn.querySelector('span:last-child').innerHTML = `INÍCIO EM<br>${start.toLocaleDateString('pt-BR')}`;
+                    return;
+                }
+            }
+
             // Priorizar escala personalizada se existir, senão usar a base
             const escala = currentUser.personalizacao_escala || currentUser.escalas;
             if (!escala) {
@@ -699,10 +721,44 @@
                     currentUser.setores?.longitude
                 );
 
-                const raioPermitido = currentUser.escalas?.raio_geofence_metros || 100;
+                const raioPermitido = currentUser.setores?.raio || 100;
                 const isWithinRange = distance <= raioPermitido;
 
-                if (!isWithinRange && currentUser.modalidade !== 'externo') {
+                // --- VALIDAÇÃO BIOMÉTRICA OBRIGATÓRIA ---
+                if (!currentUser.biometria_cadastrada) {
+                    UI.hideLoader();
+                    UI.showToast('BIOMETRIA NECESSÁRIA! Cadastre sua biometria no perfil para registrar o ponto.', 'error');
+                    return;
+                }
+
+                // Desafio Biométrico
+                try {
+                    const challenge = new Uint8Array(32);
+                    window.crypto.getRandomValues(challenge);
+                    
+                    const credentialId = Uint8Array.from(atob(currentUser.biometria_token), c => c.charCodeAt(0));
+
+                    const options = {
+                        challenge: challenge,
+                        allowCredentials: [{
+                            id: credentialId,
+                            type: 'public-key',
+                            transports: ['internal']
+                        }],
+                        userVerification: 'required',
+                        timeout: 60000
+                    };
+
+                    const assertion = await navigator.credentials.get({ publicKey: options });
+                    if (!assertion) throw new Error("Falha na autenticação biométrica");
+                } catch (bioErr) {
+                    UI.hideLoader();
+                    console.error("Erro biometria:", bioErr);
+                    UI.showToast('FALHA NA BIOMETRIA! Autenticação necessária para prosseguir.', 'error');
+                    return;
+                }
+
+                if (!isWithinRange && currentUser.regime_trabalho !== 'Externo') {
                     UI.hideLoader();
                     abrirModalJustificativa(position);
                 } else {
@@ -757,7 +813,7 @@
                     dentro_do_raio: noRaio,
                     justificativa_usuario: justificativa,
                     status_validacao: noRaio ? 'aprovado' : 'pendente',
-                    modalidade: currentUser.modalidade || 'presencial'
+                    modalidade: currentUser.regime_trabalho || 'Presencial'
                 };
 
                 const { error } = await supabase.from('pontos').insert([dados]);

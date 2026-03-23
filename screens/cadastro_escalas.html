@@ -72,7 +72,7 @@
             class="w-full bg-background-dark/50 border-primary/30 rounded-lg focus:ring-primary focus:border-primary text-slate-100 p-3"
             placeholder="Ex: Plantão Alfa" type="text" required />
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label class="block text-sm font-medium mb-1 text-slate-400">Tipo de Escala</label>
             <select id="tipo_escala"
@@ -87,16 +87,6 @@
               class="w-full bg-background-dark/50 border-primary/30 rounded-lg focus:ring-primary focus:border-primary text-slate-100 p-3 outline-none">
               <option value="alternada">Alternada (Par/Ímpar)</option>
               <option value="fixa">Fixa (Mesmos dias constantes)</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-sm font-medium mb-1 text-slate-400">Regime de Trabalho</label>
-            <select id="regime_trabalho"
-              class="w-full bg-background-dark/50 border-primary/30 rounded-lg focus:ring-primary focus:border-primary text-slate-100 p-3 outline-none">
-              <option value="Presencial">Presencial</option>
-              <option value="Teletrabalho">Teletrabalho / Home Office</option>
-              <option value="Híbrido">Híbrido</option>
-              <option value="Externo">Externo</option>
             </select>
           </div>
         </div>
@@ -199,7 +189,7 @@
         </div>
 
         <!-- Tolerância e Geofencing original -->
-        <div class="grid grid-cols-3 gap-3 p-4 bg-slate-800/20 border border-white/5 rounded-xl">
+        <div class="grid grid-cols-2 gap-3 p-4 bg-slate-800/20 border border-white/5 rounded-xl">
           <div>
             <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Tol. Entrada (min)</label>
             <input id="tol_entrada"
@@ -211,12 +201,6 @@
             <input id="tol_saida"
               class="w-full bg-background-dark/30 border-white/10 rounded p-2 text-sm text-primary font-bold"
               type="number" value="15">
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Raio GPS (m)</label>
-            <input id="raio_gps"
-              class="w-full bg-background-dark/30 border-white/10 rounded p-2 text-sm text-primary font-bold"
-              type="number" value="100">
           </div>
         </div>
 
@@ -292,20 +276,6 @@
               </div>
             </div>
 
-            <!-- Rastreio -->
-            <div class="p-3 bg-background-dark/30 rounded-lg space-y-2">
-              <div class="flex items-center justify-between">
-                <span class="text-xs font-bold text-slate-200">Rastreio Horário (Externos)</span>
-                <label class="relative inline-flex items-center cursor-pointer">
-                  <input id="rule_tracking" type="checkbox" class="sr-only peer">
-                  <div class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
-                </label>
-              </div>
-              <p class="text-xs text-slate-400 leading-relaxed font-medium">
-                <strong class="text-primary/70">ATIVADO:</strong> Para funcionários em regime 'Externo', o aplicativo capturará a localização GPS a cada 60 minutos durante o expediente para fins de log de rota.<br>
-                <strong class="text-slate-500 font-bold">DESATIVADO:</strong> A localização só é capturada no momento exato das batidas de ponto.
-              </p>
-            </div>
 
             <!-- Frequência de Revisão -->
             <div class="p-3 bg-background-dark/30 rounded-lg space-y-2">
@@ -429,7 +399,6 @@
     document.getElementById('btn-cancelar-escala').onclick = fecharFormEscala;
 
     const tipoEscalaSel = document.getElementById('tipo_escala');
-    const regimeTrabalhoSel = document.getElementById('regime_trabalho');
     const cicloInputs = document.getElementById('ciclo_inputs');
     const semanalInputs = document.getElementById('semanal_inputs');
     const hibridoInputs = document.getElementById('hibrido_inputs');
@@ -542,7 +511,6 @@
     };
 
     tipoEscalaSel.onchange = updateVisibility;
-    regimeTrabalhoSel.onchange = updateVisibility;
 
     extraHoursToggle.onchange = () => {
       if (extraHoursToggle.checked) {
@@ -627,9 +595,6 @@
             : `Semanal • ${e.dias_padrao?.length || 0} dias`
           } • ${e.horario_entrada} - ${e.horario_saida}
                         </p>
-                        <div class="flex gap-2 mt-1">
-                           <span class="text-[8px] bg-primary/10 text-primary px-1.5 py-0.5 rounded uppercase font-bold border border-primary/20">${e.regime}</span>
-                        </div>
                       </div>
                     </div>
                     <div class="flex gap-2 opacity-40 group-hover:opacity-100 transition-opacity">
@@ -675,15 +640,6 @@
                             <select id="inline-repeticao-${e.id}" class="w-full bg-background-dark/50 border-primary/30 rounded-lg px-3 py-3 text-xs text-slate-100 outline-none">
                                 <option value="alternada" ${e.tipo_repeticao === 'alternada' ? 'selected' : ''}>Alternada (Par/Ímpar)</option>
                                 <option value="fixa" ${e.tipo_repeticao === 'fixa' ? 'selected' : ''}>Fixa (Constante)</option>
-                            </select>
-                        </div>
-                        <div class="space-y-1">
-                            <label class="text-[11px] font-bold uppercase opacity-50 text-slate-400">Regime</label>
-                            <select id="inline-regime-${e.id}" onchange="updateInlineVisibility('${e.id}')" class="w-full bg-background-dark/50 border-primary/30 rounded-lg px-3 py-3 text-xs text-slate-100 outline-none">
-                                <option value="Presencial" ${e.regime === 'Presencial' ? 'selected' : ''}>Presencial</option>
-                                <option value="Teletrabalho" ${e.regime === 'Teletrabalho' ? 'selected' : ''}>Teletrabalho</option>
-                                <option value="Híbrido" ${e.regime === 'Híbrido' ? 'selected' : ''}>Híbrido</option>
-                                <option value="Externo" ${e.regime === 'Externo' ? 'selected' : ''}>Externo</option>
                             </select>
                         </div>
                       </div>
@@ -740,7 +696,6 @@
                       </div>
 
                       <!-- 5. Tolerâncias e Raio -->
-                      <div class="grid grid-cols-3 gap-3 p-4 bg-slate-800/20 border border-white/5 rounded-xl">
                         <div class="space-y-1">
                             <label class="text-xs font-bold text-slate-400 uppercase mb-1">Tol. Entrada (min)</label>
                             <input id="inline-tol-in-${e.id}" type="number" class="w-full bg-background-dark/30 border-white/10 rounded p-2 text-sm text-primary font-bold" value="${e.tolerancia_entrada_minutos || 15}">
@@ -748,10 +703,6 @@
                         <div class="space-y-1">
                             <label class="text-xs font-bold text-slate-400 uppercase mb-1">Tol. Saída (min)</label>
                             <input id="inline-tol-out-${e.id}" type="number" class="w-full bg-background-dark/30 border-white/10 rounded p-2 text-sm text-primary font-bold" value="${e.tolerancia_saida_minutos || 15}">
-                        </div>
-                        <div class="space-y-1">
-                            <label class="text-xs font-bold text-slate-400 uppercase mb-1">Raio GPS (m)</label>
-                            <input id="inline-raio-${e.id}" type="number" class="w-full bg-background-dark/30 border-white/10 rounded p-2 text-sm text-primary font-bold" value="${e.raio_geofence_metros || 100}">
                         </div>
                       </div>
 
@@ -953,10 +904,8 @@
                 tipo_repeticao: document.getElementById(`inline-repeticao-${id}`).value,
                 horario_entrada: document.getElementById(`inline-in-${id}`).value,
                 horario_saida: document.getElementById(`inline-out-${id}`).value,
-                regime: document.getElementById(`inline-regime-${id}`).value,
                 tolerancia_entrada_minutos: parseInt(document.getElementById(`inline-tol-in-${id}`).value),
                 tolerancia_saida_minutos: parseInt(document.getElementById(`inline-tol-out-${id}`).value),
-                raio_geofence_metros: parseInt(document.getElementById(`inline-raio-${id}`).value),
                 
                 // Regras
                 restrito_gps: document.getElementById(`inline-rule-gps-${id}`).checked,
@@ -964,7 +913,6 @@
                 punicao_esquecimento: document.getElementById(`inline-rule-forget-${id}`).checked,
                 gestao_horas_extras: document.getElementById(`inline-rule-extra-${id}`).checked,
                 limite_horas_extras: parseInt(document.getElementById(`inline-extra-limit-${id}`).value),
-                rastreio_horario: document.getElementById(`inline-rule-track-${id}`).checked,
                 possui_almoco: document.getElementById(`inline-rule-lunch-${id}`).checked,
                 
                 // Configs Complexas
@@ -1040,21 +988,17 @@
         horario_saida: document.getElementById('horario_saida').value,
         tolerancia_entrada_minutos: parseInt(document.getElementById('tol_entrada').value) || 0,
         tolerancia_saida_minutos: parseInt(document.getElementById('tol_saida').value) || 0,
-        raio_geofence_metros: parseInt(document.getElementById('raio_gps').value) || 0,
         dias_trabalho_semana: tipo === 'semanal' ? diasSemanaSelecionados.length : 0,
         dias_padrao: tipo === 'semanal' ? diasSemanaSelecionados : null,
         ciclo_config: tipo === 'ciclo' ? {
           trab_total: parseInt(document.getElementById('trab_total').value),
           folga_total: parseInt(document.getElementById('folga_total').value)
         } : null,
-        regime: document.getElementById('regime_trabalho').value,
-        dias_presenciais_json: document.getElementById('regime_trabalho').value === 'Híbrido' ? diasHibridosSelecionados : [],
         restrito_gps: document.getElementById('rule_gps').checked,
         aprovacao_excecao: document.getElementById('rule_approval').checked,
         punicao_esquecimento: document.getElementById('rule_forget').checked,
         gestao_horas_extras: document.getElementById('rule_extra_hours').checked,
         limite_horas_extras: parseInt(document.getElementById('limit_extra_hours').value) || 0,
-        rastreio_horario: document.getElementById('rule_tracking').checked,
         possui_almoco: document.getElementById('rule_lunch').checked,
         tipo_repeticao: document.getElementById('tipo_repeticao').value
       };
