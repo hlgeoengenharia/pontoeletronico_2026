@@ -1,256 +1,179 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html class="dark" lang="pt-br">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Projeto V01 - Hub de Navegação</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary: #6366f1;
-            --primary-hover: #4f46e5;
-            --bg: #0f172a;
-            --card-bg: #1e293b;
-            --text: #f8fafc;
-            --text-muted: #94a3b8;
-            --glass: rgba(255, 255, 255, 0.03);
-            --border: rgba(255, 255, 255, 0.1);
-        }
+  <meta charset="utf-8">
+  <meta content="width=device-width, initial-scale=1.0" name="viewport">
+  <title>Sistema de Ponto - Login</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap"
+    rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap"
+    rel="stylesheet">
+  <script src="js/theme.js?v=1.0"></script>
+  <style>
+    .glow-text {
+      text-shadow: 0 0 10px rgba(13, 89, 242, 0.6), 0 0 20px rgba(13, 89, 242, 0.4);
+    }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Inter', sans-serif;
-        }
+    .neon-border {
+      box-shadow: 0 0 15px rgba(13, 89, 242, 0.3);
+    }
 
-        body {
-            background-color: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 2rem;
-            overflow-x: hidden;
-        }
-
-        .container {
-            max-width: 1000px;
-            width: 100%;
-        }
-
-        header {
-            text-align: center;
-            margin-bottom: 3rem;
-            animation: fadeInDown 0.8s ease-out;
-        }
-
-        h1 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 0.5rem;
-        }
-
-        p {
-            color: var(--text-muted);
-            font-size: 1.1rem;
-        }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 1.5rem;
-            animation: fadeInUp 1s ease-out;
-        }
-
-        .card {
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 1rem;
-            padding: 1.5rem;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            text-decoration: none;
-            color: inherit;
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
-            border-color: var(--primary);
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 0 15px rgba(99, 102, 241, 0.3);
-        }
-
-        .card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, transparent 100%);
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        .card:hover::before {
-            opacity: 1;
-        }
-
-        .card h3 {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #fff;
-        }
-
-        .card span {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .main-btn {
-            display: inline-block;
-            margin-top: 2rem;
-            padding: 1rem 2rem;
-            background: var(--primary);
-            color: white;
-            border-radius: 0.5rem;
-            font-weight: 600;
-            text-decoration: none;
-            transition: background 0.2s;
-            box-shadow: 0 4px 14px 0 rgba(99, 102, 241, 0.39);
-        }
-
-        .main-btn:hover {
-            background: var(--primary-hover);
-        }
-
-        @keyframes fadeInDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: var(--bg);
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: var(--card-bg);
-            border-radius: 10px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--primary);
-        }
-    </style>
+    .bg-pattern {
+      background-image: radial-gradient(circle at 2px 2px, rgba(13, 89, 242, 0.05) 1px, transparent 0);
+      background-size: 24px 24px;
+    }
+  </style>
+  <style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
 </head>
 
-<body>
-    <div class="container">
-        <header>
-            <h1>Projeto V01</h1>
-            <p>Navegação entre Telas - Ambiente de Desenvolvimento</p>
-            <a href="screens/pagina_login_01.html" class="main-btn">Iniciar Fluxo (Login)</a>
-        </header>
-
-            <a href="screens/dashboard.html" class="card" style="border-color: var(--primary); background: rgba(99, 102, 241, 0.1);">
-                <span style="color: var(--primary);">Novo</span>
-                <h3>Dashboard Único (RBAC)</h3>
-            </a>
-
-            <a href="screens/cadastro_funcionario.html" class="card">
-                <span>Gestão</span>
-                <h3>Cadastro de Funcionário</h3>
-            </a>
-            <a href="screens/resumo_dia.html" class="card">
-                <span>Operacional</span>
-                <h3>Resumo do Dia</h3>
-            </a>
-            <a href="screens/diario_funcionario.html" class="card">
-                <span>Operacional</span>
-                <h3>Diário de Bordo</h3>
-            </a>
-            <a href="screens/historico_mensal.html" class="card">
-                <span>Relatórios</span>
-                <h3>Histórico Mensal</h3>
-            </a>
-            <a href="screens/historico_anual.html" class="card">
-                <span>Relatórios</span>
-                <h3>Histórico Anual</h3>
-            </a>
-            <a href="screens/historico_abonos.html" class="card">
-                <span>Relatórios</span>
-                <h3>Histórico de Abonos</h3>
-            </a>
-            <a href="screens/relacao_funcionarios.html" class="card">
-                <span>Gestão</span>
-                <h3>Relação de Funcionários</h3>
-            </a>
-            <a href="screens/relacao_setores.html" class="card">
-                <span>Gestão</span>
-                <h3>Relação de Setores</h3>
-            </a>
-            <a href="screens/autorizacoes_abono.html" class="card">
-                <span>Gestão</span>
-                <h3>Autorizações de Abono</h3>
-            </a>
-            <a href="screens/cadastro_setores.html" class="card">
-                <span>Configuração</span>
-                <h3>Cadastro de Setores</h3>
-            </a>
-            <a href="screens/cadastro_cargos.html" class="card">
-                <span>Configuração</span>
-                <h3>Cadastro de Cargos</h3>
-            </a>
-            <a href="screens/cadastro_escalas.html" class="card">
-                <span>Configuração</span>
-                <h3>Cadastro de Escalas</h3>
-            </a>
-            <a href="screens/estatistica_funcionario.html" class="card">
-                <span>Análise</span>
-                <h3>Estatística do Funcionário</h3>
-            </a>
-            <a href="screens/perfil_funcionario.html" class="card">
-                <span>Perfil</span>
-                <h3>Perfil do Funcionário</h3>
-            </a>
-        </div>
+<body
+  class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen flex items-center justify-center p-4 bg-pattern">
+  <div
+    class="relative w-full max-w-md flex flex-col gap-8 bg-slate-900/40 backdrop-blur-xl border border-primary/20 p-8 rounded-xl neon-border">
+    <div class="absolute -top-12 left-1/2 -translate-x-1/2 bg-primary/10 border border-primary/30 p-3 rounded-full">
+      <span class="material-symbols-outlined text-primary text-4xl">timer</span>
     </div>
+    <div class="text-center space-y-2 pt-4">
+      <h2 class="text-primary font-bold tracking-[0.2em] text-sm uppercase glow-text">PROTOCOLO DE SISTEMA</h2>
+      <h1 class="text-4xl font-bold tracking-tight text-slate-100 uppercase">LOGIN</h1>
+      <div class="h-1 w-24 bg-primary mx-auto rounded-full mt-4"></div>
+    </div>
+    <div class="space-y-6">
+      <div class="space-y-4">
+        <label class="block">
+          <span class="text-xs font-bold text-primary uppercase tracking-widest ml-1 mb-2 block">IDENTIFICADOR
+            DO usuário</span>
+          <div class="relative flex items-center group">
+            <div class="absolute left-4 text-primary/60 group-focus-within:text-primary transition-colors">
+              <span class="material-symbols-outlined">account_circle</span>
+            </div>
+            <input id="username"
+              class="w-full bg-slate-800/50 border-2 border-primary/20 rounded-lg py-4 pl-12 pr-4 focus:border-primary focus:ring-0 text-slate-100 placeholder:text-slate-500 transition-all"
+              placeholder="DIGITE O ID DO USUÁRIO..." type="text">
+          </div>
+        </label>
+        <label class="block">
+          <span class="text-xs font-bold text-primary uppercase tracking-widest ml-1 mb-2 block">CHAVE DE
+            ACESSO</span>
+          <div class="relative flex items-center group">
+            <div class="absolute left-4 text-primary/60 group-focus-within:text-primary transition-colors">
+              <span class="material-symbols-outlined">lock</span>
+            </div>
+            <input id="password"
+              class="w-full bg-slate-800/50 border-2 border-primary/20 rounded-lg py-4 pl-12 pr-4 focus:border-primary focus:ring-0 text-slate-100 placeholder:text-slate-500 transition-all"
+              placeholder="••••••••" type="password">
+          </div>
+        </label>
+      </div>
+      <div class="flex items-center justify-between px-1">
+        <label class="flex items-center gap-2 cursor-pointer group">
+          <input class="rounded border-primary/30 bg-slate-800 text-primary focus:ring-primary/20" type="checkbox">
+          <span class="text-xs font-medium text-slate-400 group-hover:text-slate-300 transition-colors">MANTER
+            CONECTADO</span>
+        </label>
+        <a class="text-xs font-medium text-primary hover:text-primary/80 transition-colors uppercase tracking-wider"
+          href="#">ESQUECEU A CHAVE?</a>
+      </div>
+      <button id="login-btn"
+        class="w-full bg-primary hover:bg-primary/90 text-white font-bold py-5 rounded-lg transition-all transform active:scale-[0.98] shadow-lg shadow-primary/20 flex items-center justify-center gap-3 group">
+        <span class="tracking-[0.15em] text-lg uppercase">INICIAR</span>
+        <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">bolt</span>
+      </button>
+    </div>
+    <div class="pt-4 border-t border-primary/10 text-center">
+      <p class="text-sm text-slate-400">
+        Novo Jogador?
+        <a class="text-primary font-bold hover:underline underline-offset-4 ml-1 uppercase tracking-tight"
+          href="#">FAZER CADASTRO</a>
+      </p>
+    </div>
+    <div class="absolute -bottom-10 left-0 w-full flex justify-center gap-8 opacity-20">
+      <div class="flex items-center gap-2 text-[10px] text-primary uppercase font-bold"><span
+          class="material-symbols-outlined text-sm">wifi</span> LINK ESTÁVEL</div>
+      <div class="flex items-center gap-2 text-[10px] text-primary uppercase font-bold"><span
+          class="material-symbols-outlined text-sm">shield</span> NÓ SEGURO</div>
+      <div class="flex items-center gap-2 text-[10px] text-primary uppercase font-bold">
+        <span class="material-symbols-outlined text-sm">memory</span> V2.4.0
+      </div>
+    </div>
+  </div>
+
+  <style>
+    /* Toast Styles */
+    .custom-toast {
+      backdrop-filter: blur(12px);
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    }
+
+    @keyframes slideDown {
+      from {
+        transform: translate(-50%, -20px);
+        opacity: 0;
+      }
+
+      to {
+        transform: translate(-50%, 0);
+        opacity: 1;
+      }
+    }
+  </style>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script type="module">
+    import { Auth } from './js/auth.js?v=6';
+    import { UI } from './js/ui-utils.js?v=6';
+
+    async function handleLogin() {
+      const user = document.getElementById('username').value;
+      const pass = document.getElementById('password').value;
+
+      if (!user || !pass) {
+        UI.showToast('Por favor, preencha todos os campos.', 'warning');
+        return;
+      }
+
+      UI.showLoader();
+      console.log('Tentando login para:', user);
+
+      try {
+        const result = await Auth.login(user, pass);
+        UI.hideLoader();
+
+        if (result.success) {
+          console.log('Login Sucesso:', result.user.nome_completo);
+          UI.showToast(`Bem-vindo, ${result.user.nome_completo}!`, 'success');
+
+          // Unificação: Todos os perfis vão para o dashboard.html em screens/
+          const finalUrl = `screens/dashboard.html?id=${result.user.id}&v=1.1`;
+          console.log('Redirecionando...', finalUrl);
+
+          // Mudança no botão para fallback visual
+          const btn = document.getElementById('login-btn');
+          btn.innerHTML = 'ENTRANDO...';
+          btn.classList.add('bg-green-600');
+
+          window.location.assign(finalUrl);
+        } else {
+          console.warn('Falha no login:', result.error);
+          UI.showToast(result.error || 'Identificador ou Chave incorretos.', 'error');
+        }
+      } catch (err) {
+        UI.hideLoader();
+        console.error('Erro crítico no script de login:', err);
+        UI.showToast('Erro no sistema de autenticação.', 'error');
+      }
+    }
+
+    document.getElementById('login-btn').addEventListener('click', handleLogin);
+    document.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleLogin(); });
+  </script>
+
 </body>
 
 </html>
