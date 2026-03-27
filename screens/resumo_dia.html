@@ -242,7 +242,7 @@
                     supabase.from('comunicados').select('*').or(`destinatario_id.eq.${targetId},tipo.eq.geral,setor_id.eq.${mySectorId || '00000000-0000-0000-0000-000000000000'}`).gte('created_at', `${dataRef}T00:00:00`).lte('created_at', `${dataRef}T23:59:59`),
                     supabase.from('diario_logs').select('*').eq('funcionario_id', targetId).gte('created_at', `${dataRef}T00:00:00`).lte('created_at', `${dataRef}T23:59:59`),
                     supabase.from('feriados_folgas').select('*').or(`funcionario_id.eq.${targetId},setor_id.eq.${mySectorId},escopo.eq.geral`).eq('data', dataRef),
-                    supabase.from('ferias').select('*').eq('funcionario_id', targetId).eq('status', 'aprovado').lte('data_inicio', dataRef).gte('data_fim', dataRef)
+                    supabase.from('ferias').select('*').eq('funcionario_id', targetId).eq('status', 'aprovado').lte('data_inicio', dataRef).gte('data_fim', dataRef).catch(e => ({ data: [] }))
                 ]);
 
                 renderResumo(ptsRes.data, anotRes.data, justRes.data, comsRes.data || [], logsRes.data || [], ferRes.data || [], vacRes.data || [], func.escalas, dataRef);

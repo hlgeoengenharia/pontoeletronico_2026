@@ -372,11 +372,17 @@
                     .or(`destinatario_id.eq.${targetId},tipo.eq.geral,setor_id.eq.${mySectorId || '00000000-0000-0000-0000-000000000000'}`);
 
                 // 4. Buscar Férias Aprovadas
-                const { data: feriasAprovadas, error: errVac } = await supabase
-                    .from('ferias')
-                    .select('*')
-                    .eq('funcionario_id', targetId)
-                    .eq('status', 'aprovado');
+                let feriasAprovadas = [];
+                let errVac = null;
+                try {
+                    const resVac = await supabase
+                        .from('ferias')
+                        .select('*')
+                        .eq('funcionario_id', targetId)
+                        .eq('status', 'aprovado');
+                    feriasAprovadas = resVac.data || [];
+                    errVac = resVac.error;
+                } catch (e) { console.warn('Tabela ferias ausente:', e); }
 
                 // 5. Buscar Feriados e Folgas e Agrupar por Evento (mesmo created_at)
                 const { data: feriadosRaw, error: errFer } = await supabase

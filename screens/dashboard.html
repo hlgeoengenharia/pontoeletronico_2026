@@ -508,14 +508,20 @@
                 const firstDayMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
                 const lastDayMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().split('T')[0];
 
-                const [{ count: totalFunc }, { count: totalSetores }, { count: emFerias }] = await Promise.all([
-                    supabase.from('funcionarios').select('*', { count: 'exact', head: true }),
-                    supabase.from('setores').select('*', { count: 'exact', head: true }),
-                    supabase.from('ferias').select('*', { count: 'exact', head: true })
-                        .eq('status', 'aprovado')
-                        .lte('data_inicio', lastDayMonth)
-                        .gte('data_fim', firstDayMonth)
-                ]);
+                let totalFunc = 0, totalSetores = 0, emFerias = 0;
+                try {
+                    const res = await Promise.all([
+                        supabase.from('funcionarios').select('*', { count: 'exact', head: true }),
+                        supabase.from('setores').select('*', { count: 'exact', head: true }),
+                        supabase.from('ferias').select('*', { count: 'exact', head: true })
+                            .eq('status', 'aprovado')
+                            .lte('data_inicio', lastDayMonth)
+                            .gte('data_fim', firstDayMonth)
+                    ]);
+                    totalFunc = res[0].count;
+                    totalSetores = res[1].count;
+                    emFerias = res[2].count;
+                } catch (e) { console.warn('Tabela ferias pode não existir ainda:', e); }
 
                 document.getElementById('stat-total-equipe').innerText = totalFunc || '0';
                 document.getElementById('stat-total-setores').innerText = totalSetores || '0';
@@ -538,17 +544,20 @@
                 const { data } = await supabase.from('pontos').select('*').eq('funcionario_id', userId).gte('data_hora', `${today}T00:00:00`).order('data_hora', { ascending: true });
                 
                 const role = currentUser.nivel_acesso || 'Funcionário';
+                const isOnline = data && data.length % 2 !== 0;
                 
                 // --- VERIFICAÇÃO DE FÉRIAS (BLOQUEIO) ---
-                const { data: emFerias } = await supabase
-                    .from('ferias')
-                    .select('*')
-                    .eq('funcionario_id', userId)
-                    .eq('status', 'aprovado')
-                    .lte('data_inicio', today)
-                    .gte('data_fim', today);
-
-                const isOnVacation = emFerias && emFerias.length > 0;
+                let isOnVacation = false;
+                try {
+                    const { data: emFerias } = await supabase
+                        .from('ferias')
+                        .select('*')
+                        .eq('funcionario_id', userId)
+                        .eq('status', 'aprovado')
+                        .lte('data_inicio', today)
+                        .gte('data_fim', today);
+                    isOnVacation = emFerias && emFerias.length > 0;
+                } catch (e) { console.warn('Erro ao checar férias:', e); }
 
                 // Reset de Classes
                 btn.classList.remove('bg-emerald-500', 'bg-rose-500', 'punch-admin', 'punch-gestor', 'punch-funcionario', 'punch-frozen', 'animate-celestial', 'opacity-30', 'grayscale', 'cursor-not-allowed');

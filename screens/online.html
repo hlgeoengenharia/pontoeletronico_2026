@@ -743,7 +743,11 @@
             });
 
             // 6. Dados de Férias
-            const { data: vData } = await supabase.from('ferias').select('*');
+            let vData = [];
+            try {
+                const resV = await supabase.from('ferias').select('*');
+                if (resV.data) vData = resV.data;
+            } catch (e) { console.warn('Tabela ferias ausente:', e); }
             const feriasInfo = vData || [];
 
             employees = (fData || []).map(f => {
