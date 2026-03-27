@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html class="dark" lang="pt-BR">
+
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Painel Unificado | ChronoSync</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+    <script src="../js/theme.js?v=1.0"></script>
+    <style>
+        .font-variation-settings-fill { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .role-hidden { display: none !important; }
+    </style>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen flex flex-col pb-24 items-center opacity-0 transition-opacity duration-500" id="main-body">
+
+    <!-- HEADER: Minimal e Funcional -->
+    <header class="w-full max-w-md p-4 flex items-center justify-between sticky top-0 bg-background-dark/80 backdrop-blur-md z-[60] border-b border-white/5">
+        <button id="openSidebar" class="size-10 flex items-center justify-center bg-white/5 rounded-xl text-slate-400 hover:text-primary transition-all">
+            <span class="material-symbols-outlined">menu</span>
+        </button>
+        
+        <h1 class="text-xs font-black text-slate-500 uppercase tracking-[0.3em]">ChronoSync</h1>
+
+        <div class="flex items-center gap-2">
+            <a href="autorizacoes_abono.html" class="size-10 flex items-center justify-center bg-white/5 rounded-xl text-slate-400 hover:text-amber-500 transition-all relative role-gestor role-hidden">
+                <span id="sino-icon" class="material-symbols-outlined">notifications</span>
+                <span id="notif-badge" class="absolute -top-1 -right-1 size-4 bg-amber-500 text-white text-[8px] font-black rounded-full flex items-center justify-center border-2 border-background-dark hidden">0</span>
+            </a>
+            <div id="status-badge" class="px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-500 text-[8px] font-black uppercase hidden border border-emerald-500/20">Online</div>
+        </div>
+    </header>
+
+    <main class="flex-1 w-full max-w-md p-6 space-y-8">
+
+        <!-- SEÇÃO: CARD DE IDENTIDADE PREMIUM v4.0 (ALTA FIDELIDADE) -->
+        <section class="relative group px-1">
+            <div class="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-2xl shadow-black/80 overflow-hidden relative transition-all duration-500 border-b-amber-500/20">
+                <!-- Efeito 3D de brilho Âmbar -->
+                <div class="absolute -top-24 -left-24 size-48 bg-amber-500/10 blur-[100px] pointer-events-none"></div>
+                
+                <div class="space-y-6 relative z-10">
+                    <!-- PARTE 1: IDENTIDADE (TOPO) -->
+                    <div class="flex gap-6 items-center">
+                        <!-- Foto 3x4 -->
+                        <div class="w-24 aspect-[3/4] rounded-2xl overflow-hidden border-2 border-white/10 bg-slate-800 shadow-xl shrink-0 group-hover:border-amber-500/50 transition-all">
+                            <img id="user-photo" src="https://ui-avatars.com/api/?name=User&background=0D59F2&color=fff" class="w-full h-full object-cover">
+                        </div>
+
+                        <!-- Info de Identidade -->
+                        <div class="flex-1 space-y-2">
+                            <div class="inline-block border-b-2 border-white pb-1 pr-8">
+                                <h2 class="text-3xl font-black text-white uppercase tracking-tighter leading-none" id="user-nickname">Usuário</h2>
+                            </div>
+                            <div class="space-y-0.5">
+                                <p class="text-[9px] font-black text-amber-500 uppercase tracking-widest">
+                                    CARGO/FUNÇÃO: <span id="user-role-label" class="text-white/80">CARGO</span>
+                                </p>
+                                <p class="text-[9px] font-black text-amber-500 uppercase tracking-widest">
+                                    SETOR: <span id="user-sector-label" class="text-white/80">SETOR</span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- DIVISOR -->
+                    <div class="h-px w-full bg-white/10"></div>
+
+                    <!-- PARTE 2: MÉTRICAS (RODAPÉ) -->
+                    <div class="grid grid-cols-3 items-center text-center">
+                        <!-- Matrícula -->
+                        <div class="space-y-1">
+                            <p class="text-[8px] font-black text-slate-500 uppercase tracking-[0.2em]">Matrícula</p>
+                            <p id="user-enrollment" class="text-sm font-black text-white tracking-widest">#--</p>
+                        </div>
+
+                        <!-- Nível (Separador Esquerdo) -->
+                        <div class="space-y-1 border-l border-white/10">
+                            <p class="text-[8px] font-black text-slate-500 uppercase tracking-[0.2em]">Nível</p>
+                            <p id="dashboard-title" class="text-sm font-black text-amber-500 tracking-widest uppercase">PERFIL</p>
+                        </div>
+
+                        <!-- Status (Separador Esquerdo) -->
+                        <div class="space-y-1 border-l border-white/10">
+                            <p class="text-[8px] font-black text-slate-500 uppercase tracking-[0.2em]">Status</p>
+                            <div id="status-badge-container" class="opacity-0 transition-opacity duration-1000">
+                                <p class="text-sm font-black text-emerald-500 tracking-widest uppercase">Online</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SEÇÃO: ESTATÍSTICAS DA EQUIPE (Resumo) -->
+        <section class="grid grid-cols-3 gap-3 px-1 role-gestor role-hidden">
+            <div class="bg-white/5 border border-white/10 rounded-2xl p-4 text-center">
+                <p class="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Equipe</p>
+                <p id="stat-total-equipe" class="text-xl font-black text-slate-100">--</p>
+            </div>
+            <a href="online.html" class="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-4 text-center transition-all hover:bg-emerald-500/10 active:scale-95 block">
+                <p class="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Monitoramento</p>
+                <p id="stat-online-equipe" class="text-xl font-black text-emerald-400">--</p>
+            </a>
+            <a href="relacao_setores.html" class="bg-primary/5 border border-primary/20 rounded-2xl p-4 text-center transition-all hover:bg-primary/10 active:scale-95 block">
+                <p class="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Setores</p>
+                <p id="stat-total-setores" class="text-xl font-black text-slate-100">--</p>
+            </a>
+        </section>
+
+        <!-- SEÇÃO: REGISTRO DE PONTO -->
+        <section class="flex flex-col items-center py-4">
+            <button id="punchButton" class="relative group size-48 rounded-full bg-emerald-500 flex flex-col items-center justify-center text-center p-6 shadow-2xl shadow-emerald-500/20 border-4 border-emerald-500/30 hover:scale-105 active:scale-95 transition-all">
+                <span class="material-symbols-outlined text-5xl mb-2 text-white font-variation-settings-fill">power_settings_new</span>
+                <span class="text-xs font-black text-white leading-tight tracking-wider uppercase">REGISTRAR<br>PONTO</span>
+                
+                <!-- Timer flutuante -->
+                <div id="user-timer" class="absolute -bottom-2 bg-background-dark border border-white/10 px-4 py-1 rounded-full text-[10px] font-black text-primary shadow-xl hidden">
+                    00
+                </div>
+            </button>
+        </section>
+
+        <!-- SEÇÃO: MINHA SESSÃO -->
+        <section class="bg-white/5 border border-white/10 rounded-2xl p-6 shadow-inner space-y-4">
+            <h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                <span class="material-symbols-outlined text-lg text-primary">timer</span> MINHA SESSÃO
+            </h3>
+            <div class="grid grid-cols-3 gap-4">
+                <div class="text-center">
+                    <p class="text-[9px] text-slate-500 uppercase font-bold mb-1">Início</p>
+                    <p id="stats-inicio" class="text-xs font-bold text-slate-100">--:--</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-[9px] text-slate-500 uppercase font-bold mb-1">Fim</p>
+                    <p id="stats-fim" class="text-xs font-bold text-slate-400">--:--</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-[9px] text-slate-500 uppercase font-bold mb-1">Duração</p>
+                    <p id="stats-total" class="text-xs font-bold text-primary">00:00</p>
+                </div>
+            </div>
+        </section>
+        
+
+        <!-- SEÇÃO: CRONOGRAMA CENTRAL (Comum a todos) -->
+        <section class="border-t border-white/5 pt-8 space-y-4">
+            <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2 px-2">
+                <span class="material-symbols-outlined text-lg text-primary">calendar_month</span> CRONOGRAMA CENTRAL
+            </h3>
+            <div class="bg-white/5 border border-white/10 rounded-3xl p-6 shadow-inner">
+                <div class="flex justify-between items-center mb-6 px-2">
+                    <p id="calendar-month" class="text-xs font-black text-slate-100 uppercase tracking-widest">Mês Exemplo</p>
+                    <div class="flex gap-2">
+                        <button id="btn-prev-month" class="w-10 h-10 flex items-center justify-center bg-white/5 rounded-xl text-slate-400 hover:text-primary active:scale-90 transition-all">
+                            <span class="material-symbols-outlined">chevron_left</span>
+                        </button>
+                        <button id="btn-next-month" class="w-10 h-10 flex items-center justify-center bg-white/5 rounded-xl text-slate-400 hover:text-primary active:scale-90 transition-all">
+                            <span class="material-symbols-outlined">chevron_right</span>
+                        </button>
+                    </div>
+                </div>
+                <!-- Cabeçalho Padronizado -->
+                <div class="grid grid-cols-7 text-center text-[9px] font-bold text-slate-500 uppercase mb-2">
+                    <span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span>
+                </div>
+                <div id="app-calendar" class="grid grid-cols-7 gap-1"></div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- MODAL: JUSTIFICATIVA GEOFENCE -->
+    <div id="modalJustificativa" class="fixed inset-0 bg-black/90 z-[2000] hidden items-center justify-center p-6 backdrop-blur-md">
+        <div class="bg-background-dark border border-primary/30 rounded-3xl p-8 w-full max-w-md space-y-6 shadow-2xl">
+            <div class="text-center space-y-2">
+                <div class="inline-flex items-center justify-center size-16 rounded-full bg-orange-500/20 text-orange-500 mb-2">
+                    <span class="material-symbols-outlined text-4xl">location_off</span>
+                </div>
+                <h3 class="text-xl font-black text-slate-100 uppercase italic">Fora do Raio Permitido</h3>
+                <p class="text-[10px] text-slate-400 uppercase font-bold tracking-tight">Detectamos que você não está no seu setor de alocação.</p>
+            </div>
+            <div class="space-y-4">
+                <label class="block">
+                    <span class="text-[10px] font-black text-primary uppercase tracking-widest ml-1 mb-2 block">Deseja justificar?</span>
+                    <textarea id="justificativaTexto" rows="3" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm text-slate-100 placeholder:text-slate-600 focus:border-primary outline-none transition-all" placeholder="Explique por que está batendo ponto neste local..."></textarea>
+                </label>
+            </div>
+            <div class="flex gap-3">
+                <button id="btnFecharModal" class="flex-1 py-4 rounded-2xl border border-white/10 text-xs font-black uppercase text-slate-400 hover:bg-white/5 transition-all">Cancelar</button>
+                <button id="btnConfirmarPontoForaRaio" class="flex-1 py-4 rounded-2xl bg-orange-500 text-white text-xs font-black uppercase shadow-lg shadow-orange-500/20 hover:bg-orange-600 transition-all">Registrar Ponto</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SIDEBAR: Apenas Admin -->
+    <aside id="sidebarMenu" class="fixed top-0 left-0 h-full w-72 bg-background-dark border-r border-white/10 z-[101] -translate-x-full transition-transform duration-300 flex flex-col shadow-2xl">
+        <div class="p-8 border-b border-white/5 flex items-center justify-between">
+            <h3 class="text-xs font-black text-primary uppercase tracking-[0.2em]">Protocolo Admin</h3>
+            <button id="closeSidebar" class="text-slate-500 hover:text-white transition-colors">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        <nav id="sidebarNav" class="flex-1 overflow-y-auto p-4 space-y-2">
+            <a href="cadastro_funcionario.html" class="flex items-center gap-3 p-4 rounded-xl hover:bg-white/5 text-slate-400 hover:text-white transition-all group">
+                <span class="material-symbols-outlined group-hover:text-primary transition-colors">person_add</span>
+                <span class="text-xs font-bold uppercase tracking-widest">Colaboradores</span>
+            </a>
+            <!-- Adicionar outros itens de admin aqui -->
+        </nav>
+        
+        <div class="p-4 border-t border-white/5">
+            <button id="logoutBtn" class="w-full flex items-center gap-4 p-4 rounded-xl hover:bg-red-500/10 text-slate-400 hover:text-red-500 transition-all group">
+                <span class="material-symbols-outlined text-slate-500 group-hover:text-red-500 transition-colors">logout</span>
+                <span class="text-xs font-black uppercase tracking-widest">Encerrar Sessão</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Bottom Navigation (Links dinâmicos) -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-background-dark/90 border-t border-white/5 py-4 z-50 flex justify-center backdrop-blur-xl">
+        <div class="flex items-center justify-around w-full max-w-md px-6">
+            <a href="dashboard.html" class="flex flex-col items-center gap-1.5 text-primary">
+                <span class="material-symbols-outlined text-2xl font-variation-settings-fill">home</span>
+                <span class="text-[9px] font-black uppercase tracking-widest text-center">Início</span>
+            </a>
+            <a href="estatistica_funcionario.html" class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+                <span class="material-symbols-outlined text-2xl">bar_chart</span>
+                <span class="text-[9px] font-black uppercase tracking-widest text-center">Estatística</span>
+            </a>
+            <a href="diario_funcionario.html" class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors relative">
+                <span class="material-symbols-outlined text-2xl">edit_note</span>
+                <span class="text-[9px] font-black uppercase tracking-widest text-center">Diário</span>
+                <span id="notif-badge-footer" class="absolute top-0 right-0 size-3.5 bg-amber-500 text-white text-[7px] font-black rounded-full flex items-center justify-center border border-background-dark hidden">0</span>
+            </a>
+            <a id="nav-perfil-link" href="perfil_funcionario.html" class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+                <span class="material-symbols-outlined text-2xl">person</span>
+                <span class="text-[9px] font-black uppercase tracking-widest text-center">Perfil</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Modal Câmera (Biometria Facial) -->
+    <div id="modal-camera" class="fixed inset-0 bg-black/95 z-[3000] hidden items-center justify-center p-4 backdrop-blur-xl">
+        <div class="bg-background-dark border border-primary/30 rounded-[3rem] w-full max-w-lg overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95 duration-300">
+            <div class="p-6 border-b border-white/5 flex justify-between items-center bg-primary/5">
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined text-primary">face</span>
+                    <h3 class="text-xs font-black uppercase tracking-[0.2em] text-primary">Biometria Facial obrigatória</h3>
+                </div>
+                <button type="button" onclick="fecharModalCamera()" class="size-10 rounded-2xl flex items-center justify-center hover:bg-white/5 transition-all">
+                    <span class="material-symbols-outlined text-slate-400">close</span>
+                </button>
+            </div>
+            <div class="relative aspect-square md:aspect-video bg-black flex items-center justify-center">
+                <video id="video-feed" autoplay playsinline class="w-full h-full object-cover"></video>
+                <!-- Guia de Enquadramento -->
+                <div class="absolute inset-0 pointer-events-none flex items-center justify-center">
+                    <div class="w-64 h-80 border-2 border-primary/40 rounded-[4rem] relative">
+                        <div class="absolute -inset-1 border-4 border-primary/10 rounded-[4.5rem] animate-pulse"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="p-8 space-y-4">
+                <button type="button" id="btn-capturar-face" class="w-full py-5 bg-primary text-white rounded-3xl text-sm font-black uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3">
+                    <span class="material-symbols-outlined text-2xl">photo_camera</span>
+                    Confirmar Identidade
+                </button>
+                <p class="text-[10px] text-slate-500 text-center uppercase font-black tracking-widest opacity-60">Posicione seu rosto dentro do guia e aguarde a estabilização</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Canvas Snapshot Oculto -->
+    <canvas id="canvas-snapshot" class="hidden"></canvas>
+
+    <div id="sidebarOverlay" class="fixed inset-0 bg-black/80 z-[100] hidden opacity-0 transition-opacity duration-300 backdrop-blur-md"></div>
+
+    <script type="module">
+        import { supabase } from '../js/supabase-config.js';
+        import { Auth } from '../js/auth.js';
+        import { UI } from '../js/ui-utils.js';
+        import { ScalesEngine } from '../js/scales-engine.js';
+        import { GPSTracker } from '../js/gps-tracker.js';
+        import { Notifications } from '../js/notifications.js';
+
+        let currentUser = null;
+        let timerInterval = null;
+        let calendarDate = new Date();
+        let cameraStream = null;
+        let isInspectionMode = false;
+
+        // --- LÓGICA DE CÂMERA (BIOMETRIA) ---
+        window.abrirModalCamera = async () => {
+            const modal = document.getElementById('modal-camera');
+            const video = document.getElementById('video-feed');
+            try {
+                cameraStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: "user", width: 720, height: 720 }, 
+                    audio: false 
+                });
+                video.srcObject = cameraStream;
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            } catch (err) {
+                console.error("Erro ao acessar câmera:", err);
+                UI.showToast("Acesso à câmera negado ou indisponível.", "error");
+            }
+        };
+
+        window.fecharModalCamera = () => {
+            const modal = document.getElementById('modal-camera');
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+                cameraStream = null;
+            }
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        };
+
+        async function init() {
+            const session = Auth.checkSession();
+            if (!session) return; 
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const employeeIdParam = urlParams.get('id');
+            const loggedUser = Auth.getUser();
+            const isAdminOrGestor = loggedUser && (loggedUser.role === 'Admin' || loggedUser.role === 'Gestor');
+
+            // Definir ID alvo: Prioridade para o parâmetro da URL se for Admin/Gestor inspecionando
+            const targetId = (employeeIdParam && isAdminOrGestor) ? employeeIdParam : session.userId;
+            isInspectionMode = (targetId !== session.userId);
+
+            console.log(`[Dashboard] Inicializando. Modo Inspeção: ${isInspectionMode}. Alvo: ${targetId}`);
+
+            const { data: funcionario } = await supabase
+                .from('funcionarios')
+                .select('*, setores!setor_id(*), escalas!escala_id(*), perfis_tripulantes(foto_url, nickname)')
+                .eq('id', targetId)
+                .single();
+            if (!funcionario) {
+                console.error('[Dashboard] Funcionário não encontrado:', targetId);
+                if (isInspectionMode) window.location.href = 'dashboard.html';
+                return;
+            }
+
+            currentUser = funcionario;
+            setupDashboard(funcionario);
+            
+            // Iniciar Rastreamento GPS Automático
+            GPSTracker.startTracking(funcionario);
+
+            // Inicializar Sidebar Unificado
+            UI.initSidebar(funcionario.nivel_acesso || 'Funcionário');
+            
+            // Lógicas Condicionais por Perfil
+            if (funcionario.nivel_acesso === 'Admin' || funcionario.nivel_acesso === 'Gestor') {
+                await loadGlobalStats();
+            }
+            Notifications.updateBadges();
+
+            await setupPunchLogic(funcionario.id);
+            
+            // Inicializar Calendário e Navegação
+            await refreshCalendar();
+            setupCalendarNavigation();
+
+            // Sincronização em Tempo Real via Evento Global
+            window.addEventListener('sync-feriados', async () => {
+                console.log('[Dashboard] Sincronizando calendário por mudança remota...');
+                await refreshCalendar();
+            });
+            
+            document.getElementById('main-body').style.opacity = '1';
+        }
+
+        async function refreshCalendar() {
+            const year = calendarDate.getFullYear();
+            const month = calendarDate.getMonth();
+            const startMonth = new Date(year, month, 1).toISOString();
+            const endMonth = new Date(year, month + 1, 0).toISOString();
+            
+            const [feriadosRes, pontosRes] = await Promise.all([
+                supabase.from('feriados_folgas')
+                    .select('*')
+                    .or(`funcionario_id.eq.${currentUser.id},setor_id.eq.${currentUser.setor_id},escopo.eq.geral`)
+                    .gte('data', startMonth.split('T')[0])
+                    .lte('data', endMonth.split('T')[0]),
+                supabase.from('pontos')
+                    .select('*')
+                    .eq('funcionario_id', currentUser.id)
+                    .gte('data_hora', startMonth)
+                    .lte('data_hora', endMonth)
+            ]);
+
+            renderCalendar(feriadosRes.data || [], pontosRes.data || [], month, year);
+        }
+
+        function setupCalendarNavigation() {
+            document.getElementById('btn-prev-month').onclick = async () => {
+                calendarDate.setMonth(calendarDate.getMonth() - 1);
+                await refreshCalendar();
+            };
+            document.getElementById('btn-next-month').onclick = async () => {
+                calendarDate.setMonth(calendarDate.getMonth() + 1);
+                await refreshCalendar();
+            };
+        }
+
+        function setupDashboard(user) {
+            const role = user.nivel_acesso || 'Funcionário';
+            const perfil = (user.perfis_tripulantes && Array.isArray(user.perfis_tripulantes)) ? user.perfis_tripulantes[0] : user.perfis_tripulantes;
+            
+            // Nickname (Grande e Sublinhado)
+            const nickname = perfil?.nickname || user.nickname || user.nome_completo.split(' ')[0];
+            const nickEl = document.getElementById('user-nickname');
+            if (nickEl) nickEl.innerText = nickname;
+            
+            // Foto de Perfil (da tabela perfis_tripulantes)
+            const fotoUrl = perfil?.foto_url || user.foto_url;
+            if (fotoUrl) {
+                document.getElementById('user-photo').src = fotoUrl;
+                document.getElementById('user-photo').onerror = function() {
+                    this.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(nickname)}&background=0D59F2&color=fff`;
+                };
+            }
+            
+            // Labels em Âmbar
+            const roleLabel = document.getElementById('user-role-label');
+            if (roleLabel) roleLabel.innerText = user.funcao || 'Colaborador';
+            
+            const sectorLabel = document.getElementById('user-sector-label');
+            if (sectorLabel) sectorLabel.innerText = user.setores?.nome || 'Geral';
+            
+            // Métricas (Rodapé)
+            const enrollEl = document.getElementById('user-enrollment');
+            if (enrollEl) enrollEl.innerText = `#${user.matricula || '---'}`;
+
+            const titleMap = { 'Admin': 'ADMIN', 'Gestor': 'GESTOR', 'Funcionário': 'FUNCIONÁRIO' };
+            const titleEl = document.getElementById('dashboard-title');
+            if (titleEl) titleEl.innerText = titleMap[role] || 'USER';
+
+            applyRBAC(role, isInspectionMode);
+            
+            // Inicializar Sidebar Global (Apenas se não estiver em inspeção)
+            if (!isInspectionMode) {
+                UI.initSidebar(role);
+                document.getElementById('openSidebar').onclick = () => UI.toggleSidebar();
+            } else {
+                // No modo inspeção, o manager-context injeta o cabeçalho flutuante
+                // e o sidebar lateral deve ficar oculto.
+                const btnSidebar = document.getElementById('openSidebar');
+                if (btnSidebar) btnSidebar.classList.add('hidden');
+            }
+            
+            // Badge Online
+            const badge = document.getElementById('status-badge-container');
+            if (badge) badge.classList.remove('opacity-0');
+        }
+
+        function applyRBAC(role, forceHideManagement = false) {
+            // Se estiver em modo inspeção, ocultamos blocos de gestão independente do cargo do usuário logado
+            if (forceHideManagement) {
+                document.querySelectorAll('.role-gestor').forEach(el => el.classList.add('role-hidden'));
+                return;
+            }
+
+            if (role === 'Admin') {
+                document.querySelectorAll('.role-admin').forEach(el => el.classList.remove('role-hidden'));
+                document.querySelectorAll('.role-gestor').forEach(el => el.classList.remove('role-hidden'));
+            } else if (role === 'Gestor') {
+                document.querySelectorAll('.role-gestor').forEach(el => el.classList.remove('role-hidden'));
+            }
+        }
+
+        // --- ESTATÍSTICAS GLOBAIS ---
+        async function loadGlobalStats() {
+            try {
+                const today = new Date().toISOString().split('T')[0];
+                const [{ count: totalFunc }, { count: totalSetores }] = await Promise.all([
+                    supabase.from('funcionarios').select('*', { count: 'exact', head: true }),
+                    supabase.from('setores').select('*', { count: 'exact', head: true })
+                ]);
+
+                document.getElementById('stat-total-equipe').innerText = totalFunc || '0';
+                document.getElementById('stat-total-setores').innerText = totalSetores || '0';
+
+                const [ptsRes, pulseRes] = await Promise.all([
+                    supabase.from('pontos').select('funcionario_id').gte('data_hora', `${today}T00:00:00`),
+                    supabase.from('diario_logs').select('funcionario_id').eq('tipo', 'gps_pulse').gte('data_hora', new Date(Date.now() - 20 * 60 * 1000).toISOString())
+                ]);
+
+                const onlineSet = new Set();
+                if (ptsRes.data) {
+                    const counts = {};
+                    ptsRes.data.forEach(p => { counts[p.funcionario_id] = (counts[p.funcionario_id] || 0) + 1; });
+                    Object.keys(counts).forEach(id => { if (counts[id] % 2 !== 0) onlineSet.add(id); });
+                }
+                if (pulseRes.data) pulseRes.data.forEach(p => onlineSet.add(p.funcionario_id));
+                onlineSet.add(currentUser.id);
+                document.getElementById('stat-online-equipe').innerText = onlineSet.size || '0';
+            } catch (err) { console.error('Erro ao carregar estatísticas:', err); }
+        }
+
+        // --- NOTIFICAÇÕES ---
+        async function updateNotificationBadge() {
+            Notifications.updateBadges();
+        }
+
+        // --- LÓGICA DE PONTO E SESSÃO ---
+        async function setupPunchLogic(userId) {
+            const btn = document.getElementById('punchButton');
+            const timerEl = document.getElementById('user-timer');
+
+            async function refreshStatus() {
+                const today = new Date().toISOString().split('T')[0];
+                const { data } = await supabase.from('pontos').select('*').eq('funcionario_id', userId).gte('data_hora', `${today}T00:00:00`).order('data_hora', { ascending: true });
+                
+                const isOnline = data && data.length % 2 !== 0;
+                btn.className = isOnline ? btn.className.replace('bg-emerald-500', 'bg-rose-500').replace('border-emerald-500/30', 'border-rose-500/30') : btn.className.replace('bg-rose-500', 'bg-emerald-500').replace('border-rose-500/30', 'border-emerald-500/30');
+                const label = btn.querySelector('span.text-xs');
+                if (label) label.innerHTML = isOnline ? 'FINALIZAR<br>TURNO' : 'REGISTRAR<br>PONTO';
+                
+                // Atualizar Stats de Sessão
+                if (data && data.length > 0) {
+                    document.getElementById('stats-inicio').innerText = new Date(data[0].data_hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                    if (!isOnline && data.length >= 2) {
+                        document.getElementById('stats-fim').innerText = new Date(data[data.length - 1].data_hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                    } else {
+                        document.getElementById('stats-fim').innerText = '--:--';
+                    }
+
+                    // Calcular Duração Total
+                    let totalMs = 0;
+                    for (let i = 0; i < data.length; i += 2) {
+                        const inT = new Date(data[i].data_hora).getTime();
+                        const outT = (i + 1 < data.length) ? new Date(data[i + 1].data_hora).getTime() : Date.now();
+                        totalMs += (outT - inT);
+                    }
+                    const h = Math.floor(totalMs / 3600000);
+                    const m = Math.floor((totalMs % 3600000) / 60000);
+                    document.getElementById('stats-total').innerText = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+                }
+
+                if (isOnline) {
+                    timerEl.classList.remove('hidden');
+                    startTimer(data[data.length - 1].data_hora);
+                } else {
+                    timerEl.classList.add('hidden');
+                    stopTimer();
+                }
+
+                // Desativar botão de ponto se for modo inspeção
+                if (isInspectionMode) {
+                    btn.disabled = true;
+                    btn.classList.add('opacity-30', 'grayscale', 'cursor-not-allowed');
+                    btn.onclick = null;
+                    const label = btn.querySelector('span.text-xs');
+                    if (label) label.innerText = 'MODO INSPEÇÃO';
+                }
+            }
+
+            btn.onclick = async () => {
+                const { data: lastPoints } = await supabase.from('pontos').select('tipo, hora_extra_liberada').eq('funcionario_id', userId).order('data_hora', { ascending: false }).limit(1);
+                const lastPoint = lastPoints && lastPoints.length > 0 ? lastPoints[0] : null;
+                const lastType = lastPoint ? lastPoint.tipo : 'check-out';
+                const nextType = lastType === 'check-in' ? 'check-out' : 'check-in';
+
+                // --- VALIDAÇÃO DE CHECK-OUT (HORA EXTRA / BLOQUEIO) ---
+                if (nextType === 'check-out') {
+                    const escala = currentUser.escalas;
+                    if (escala && escala.horario_saida) {
+                        const now = new Date();
+                        const [hS, mS] = escala.horario_saida.split(':').map(Number);
+                        const exitTime = new Date();
+                        exitTime.setHours(hS, mS, 0, 0);
+                        
+                        const tolerance = escala.tolerancia_saida_minutos || 15;
+                        const extraLimit = (escala.gestao_horas_extras && escala.limite_horas_extras) ? escala.limite_horas_extras : 0;
+                        
+                        const maxAllowed = new Date(exitTime.getTime() + (tolerance + extraLimit) * 60000);
+                        
+                        // Se passou do limite permitido e NÃO tem liberação de Hora Extra
+                        if (now > maxAllowed && !lastPoint?.hora_extra_liberada) {
+                            UI.showToast('Check-out bloqueado por excesso de jornada. Solicite liberação ao gestor.', 'error');
+                            return;
+                        }
+                    }
+                }
+
+                // VALIDAR GEOFENCE (Somente na Entrada)
+                if (nextType === 'check-in' && ['Presencial', 'Híbrido'].includes(currentUser.regime_trabalho)) {
+                    if (currentUser.setores && currentUser.setores.latitude) {
+                        try {
+                            const pos = await GPSTracker.getCurrentPosition();
+                            const dist = ScalesEngine.calculateDistance(pos.coords.latitude, pos.coords.longitude, currentUser.setores.latitude, currentUser.setores.longitude);
+                            const raio = currentUser.setores.raio || 100;
+                            
+                            if (dist > raio) {
+                                showGeofenceModal(pos.coords.latitude, pos.coords.longitude);
+                                return;
+                            }
+                        } catch (e) {
+                            UI.showToast('Erro ao validar localização. Verifique o GPS.', 'warning');
+                            return;
+                        }
+                    }
+                }
+
+                if (currentUser.biometria_cadastrada) {
+                    await abrirModalCamera();
+                } else {
+                    await executePunch(nextType);
+                }
+            };
+
+            // Listener para Captura de Face
+            document.getElementById('btn-capturar-face').onclick = async () => {
+                const video = document.getElementById('video-feed');
+                const canvas = document.getElementById('canvas-snapshot');
+                
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                canvas.getContext('2d').drawImage(video, 0, 0);
+                
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+                const blob = await (await fetch(dataUrl)).blob();
+                const file = new File([blob], `biometria_${userId}_${Date.now()}.jpg`, { type: 'image/jpeg' });
+                
+                fecharModalCamera();
+                
+                // Determinar o próximo tipo novamente para segurança
+                const { data: lastPoints } = await supabase.from('pontos').select('tipo').eq('funcionario_id', userId).order('data_hora', { ascending: false }).limit(1);
+                const nextType = (lastPoints && lastPoints[0]?.tipo === 'check-in') ? 'check-out' : 'check-in';
+                
+                await executePunch(nextType, null, null, null, file);
+            };
+
+            async function executePunch(tipo, justificativa = null, lat = null, lng = null, photoFile = null) {
+                UI.showLoader();
+                try {
+                    let evidênciaUrl = null;
+
+                    // 1. Upload da Foto se fornecida
+                    if (photoFile) {
+                        const filePath = `biometria/${photoFile.name}`;
+                        const { error: uploadError } = await supabase.storage.from('evidencias').upload(filePath, photoFile);
+                        if (!uploadError) {
+                            const { data: pub } = supabase.storage.from('evidencias').getPublicUrl(filePath);
+                            evidênciaUrl = pub.publicUrl;
+                        }
+                    }
+
+                    // Se a biometria estiver ativa mas não foi fornecida foto (fluxo cancelado ou erro)
+                    if (currentUser.biometria_cadastrada && !photoFile && !justificativa) {
+                        fecharModalCamera();
+                        await abrirModalCamera();
+                        UI.hideLoader();
+                        return;
+                    }
+
+                    const { error } = await supabase.from('pontos').insert([{ 
+                        funcionario_id: userId, 
+                        data_hora: new Date().toISOString(), 
+                        tipo: tipo, 
+                        status_validacao: justificativa ? 'pendente' : 'aprovado', 
+                        dentro_do_raio: !justificativa,
+                        justificativa_usuario: justificativa,
+                        latitude: lat,
+                        longitude: lng,
+                        evidencia_url: evidênciaUrl
+                    }]);
+
+                    if (error) throw error;
+
+                    UI.showToast('Ponto registrado com sucesso!', 'success');
+                    await refreshStatus();
+                    if (currentUser.nivel_acesso !== 'Funcionário') await loadGlobalStats();
+                } catch (e) {
+                    console.error('Erro no registro de ponto:', e);
+                    UI.showToast('Erro ao processar o registro.', 'error');
+                } finally { UI.hideLoader(); }
+            }
+
+            // Lógica do Modal de Justificativa
+            const modal = document.getElementById('modalJustificativa');
+            function showGeofenceModal(lat, lng) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                document.getElementById('btnConfirmarPontoForaRaio').onclick = async () => {
+                    const text = document.getElementById('justificativaTexto').value;
+                    if (!text) { UI.showToast('Escreva uma justificativa', 'warning'); return; }
+                    modal.classList.add('hidden');
+                    await executePunch('check-in', text, lat, lng);
+                };
+                document.getElementById('btnFecharModal').onclick = () => modal.classList.add('hidden');
+            }
+
+            await refreshStatus();
+        }
+
+        function startTimer(startTime) {
+            if (timerInterval) clearInterval(timerInterval);
+            const start = new Date(startTime).getTime();
+            timerInterval = setInterval(() => {
+                const diff = Date.now() - start;
+                const h = Math.floor(diff / 3600000);
+                const m = Math.floor((diff % 3600000) / 60000);
+                const s = Math.floor((diff % 60000) / 1000);
+                document.getElementById('user-timer').innerText = `+${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+            }, 1000);
+        }
+
+        function stopTimer() { if (timerInterval) clearInterval(timerInterval); }
+
+        async function checkMonthlyReminder() {
+            // Lógica legada mantida no admin se necessário futuramente
+        }
+
+
+
+        function renderCalendar(feriadosData = [], pontosData = [], month, year) {
+            const grid = document.getElementById('app-calendar');
+            if (!grid) return;
+
+            const now = new Date();
+            const displayDate = new Date(year, month, 1);
+            
+            document.getElementById('calendar-month').innerText = displayDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }).toUpperCase();
+            grid.innerHTML = '';
+            
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const firstDay = new Date(year, month, 1).getDay();
+            
+            // Projetar escala futura
+            const currentScale = currentUser.escalas || currentUser;
+            const futureScale = ScalesEngine.projectBaseDays(currentScale, currentUser.data_inicio_vigencia || currentScale.data_inicio_vigencia, month, year);
+            
+            // Jornada Diária Teórica (em minutos)
+            const jornadaDiariaMin = ScalesEngine.calculateDailyWorkMinutes(currentScale);
+
+            for (let i = 0; i < firstDay; i++) grid.innerHTML += '<div></div>';
+            
+            for (let d = 1; d <= daysInMonth; d++) {
+                const date = new Date(year, month, d);
+                const dateStr = date.toISOString().split('T')[0];
+                const isToday = d === now.getDate() && month === now.getMonth() && year === now.getFullYear();
+                const todayZero = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                const isPast = date < todayZero;
+                const isFuture = date > todayZero;
+
+                // 1. Identificar Eventos (Feriado/Folga)
+                const event = feriadosData.find(f => f.data === dateStr);
+                
+                // 2. Calcular Saldo (Se passado ou hoje)
+                let balanceClass = '';
+                if (isPast || isToday) {
+                    const pontosDia = pontosData.filter(p => p.data_hora.startsWith(dateStr));
+                    let workedMin = 0;
+                    for (let i = 0; i < pontosDia.length; i += 2) {
+                        const inT = new Date(pontosDia[i].data_hora).getTime();
+                        const outT = pontosDia[i+1] ? new Date(pontosDia[i+1].data_hora).getTime() : (isToday ? Date.now() : inT);
+                        workedMin += (outT - inT) / 60000;
+                    }
+                    
+                    if (workedMin > 0 || (isPast && !event)) {
+                        balanceClass = workedMin >= jornadaDiariaMin ? 'bg-emerald-500' : 'bg-rose-500';
+                    }
+                }
+
+                // 3. Escala Futura
+                let futureClass = '';
+                if (isFuture && futureScale.includes(dateStr)) {
+                    futureClass = 'bg-white/10 border border-white/5 text-slate-400';
+                }
+
+                // Estilos de Círculo
+                let circleClass = 'h-10 w-10 flex flex-col items-center justify-center text-xs font-black rounded-full transition-all relative cursor-pointer active:scale-95 hover:brightness-110 ';
+                
+                if (event) {
+                    const type = event.tipo.toLowerCase();
+                    if (type === 'feriado_nacional') {
+                        circleClass += 'bg-amber-600 text-white shadow-xl shadow-amber-600/30';
+                    } else if (type === 'feriado_regional') {
+                        circleClass += 'bg-orange-600 text-white shadow-xl shadow-orange-600/30';
+                    } else {
+                        circleClass += 'bg-purple-600 text-white shadow-xl shadow-purple-600/30';
+                    }
+                } else if (isToday) {
+                    circleClass += 'bg-white text-slate-900 shadow-xl shadow-white/20 scale-110 z-10';
+                } else if (balanceClass) {
+                    // Preenchimento sólido para saldos (Solicitação User)
+                    circleClass += balanceClass + ' text-white shadow-lg';
+                } else {
+                    circleClass += `text-slate-500 ${futureClass}`;
+                }
+
+                // Indicador de Ponto (Dot)
+                let indicators = '';
+                if (event) {
+                    const type = event.tipo.toLowerCase();
+                    const dotColor = type === 'feriado_nacional' ? 'bg-amber-600' : (type === 'feriado_regional' ? 'bg-orange-600' : 'bg-purple-600');
+                    indicators = `<span class="absolute -bottom-1.5 size-1 rounded-full ${dotColor}"></span>`;
+                }
+
+                const dayDiv = document.createElement('div');
+                dayDiv.className = 'flex items-center justify-center p-1';
+                dayDiv.innerHTML = `<div class="${circleClass}">${d}${indicators}</div>`;
+                dayDiv.onclick = () => window.location.assign(`resumo_dia.html?id=${currentUser.id}&date=${dateStr}`);
+                
+                grid.appendChild(dayDiv);
+            }
+
+            // --- LEGENDA E LISTA DE EVENTOS ---
+            renderCalendarLegend(feriadosData);
+        }
+
+        function renderCalendarLegend(feriadosData) {
+            const container = document.getElementById('app-calendar').parentNode;
+            let legendSection = document.getElementById('calendar-footer-section');
+            
+            if (!legendSection) {
+                legendSection = document.createElement('div');
+                legendSection.id = 'calendar-footer-section';
+                legendSection.className = 'mt-6 pt-6 border-t border-white/5 space-y-4';
+                container.appendChild(legendSection);
+            }
+
+            // Ordenar eventos por data
+            const sortedEvents = [...feriadosData].sort((a,b) => a.data.localeCompare(b.data));
+
+            legendSection.innerHTML = `
+                <!-- Legenda de Cores -->
+                <div class="flex justify-center gap-4 flex-wrap">
+                    <div class="flex items-center gap-2">
+                        <span class="size-2.5 rounded-full bg-amber-600 shadow-lg shadow-amber-600/20"></span>
+                        <span class="text-[8px] font-black text-slate-500 uppercase tracking-widest">Nacional</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="size-2.5 rounded-full bg-orange-600 shadow-lg shadow-orange-600/20"></span>
+                        <span class="text-[8px] font-black text-slate-500 uppercase tracking-widest">Regional</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="size-2.5 rounded-full bg-purple-600 shadow-lg shadow-purple-600/20"></span>
+                        <span class="text-[8px] font-black text-slate-500 uppercase tracking-widest">Folga</span>
+                    </div>
+                </div>
+
+                <!-- Lista de Detalhes -->
+                <div class="space-y-2 mt-4">
+                    ${sortedEvents.length > 0 ? sortedEvents.map(ev => {
+                        const dateObj = new Date(ev.data + 'T12:00:00');
+                        const type = ev.tipo.toLowerCase();
+                        let typeColor = 'text-purple-400';
+                        if (type === 'feriado_nacional') typeColor = 'text-amber-500';
+                        else if (type === 'feriado_regional') typeColor = 'text-orange-500';
+
+                        return `
+                            <div class="flex items-center gap-3 bg-white/5 p-3 rounded-xl border border-white/5">
+                                <span class="text-[10px] font-black text-slate-100 whitespace-nowrap">${dateObj.toLocaleDateString('pt-BR')}</span>
+                                <span class="h-3 w-px bg-white/10"></span>
+                                <span class="text-[9px] font-black uppercase tracking-tighter ${typeColor} shrink-0">${ev.tipo.replace('_', ' ')}</span>
+                                <span class="h-3 w-px bg-white/10"></span>
+                                <span class="text-[10px] text-slate-400 italic truncate font-medium">${ev.descricao || '---'}</span>
+                            </div>
+                        `;
+                    }).join('') : `
+                        <p class="text-[9px] text-center text-slate-600 uppercase font-black tracking-widest py-4">Nenhum evento programado para este mês</p>
+                    `}
+                </div>
+            `;
+        }
+
+        init();
+    </script>
+    <!-- Sidebar Menu Overlay -->
+    <aside id="sidebarMenu" class="fixed top-0 left-0 h-full w-80 bg-background-dark border-r border-primary/20 z-[160] -translate-x-full transition-all duration-500 ease-out shadow-[20px_0_50px_rgba(0,0,0,0.5)]">
+        <div class="flex flex-col h-full">
+            <div class="p-8 border-b border-primary/10">
+                <h3 class="text-primary font-black italic text-2xl tracking-tighter">CHRONOSYNC</h3>
+                <p class="text-[10px] text-slate-500 uppercase font-bold tracking-[0.3em]">Console de Navegação</p>
+            </div>
+            <nav id="sidebarNav" class="flex-1 overflow-y-auto p-4 space-y-2">
+                <!-- Injetado via UI.initSidebar() -->
+            </nav>
+            <div class="p-4 border-t border-primary/10 bg-black/20">
+                <button id="logoutBtn" class="w-full flex items-center gap-3 px-4 py-3 text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all font-bold text-xs uppercase">
+                    <span class="material-symbols-outlined">logout</span> Sair do Sistema
+                </button>
+            </div>
+        </div>
+    </aside>
+    <div id="sidebarOverlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[150] hidden opacity-0 transition-all duration-300"></div>
+
+    <script type="module" src="../js/manager-context.js?v=3.0"></script>
+</body>
+</html>

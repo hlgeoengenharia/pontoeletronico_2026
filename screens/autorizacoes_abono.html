@@ -45,7 +45,7 @@
     <!-- Header -->
     <header class="border-b border-primary/20 bg-background-dark/80 backdrop-blur-md sticky top-0 z-50">
       <div class="flex items-center p-4 justify-between max-w-2xl mx-auto">
-        <div onclick="window.location.href='painel_admin.html'"
+        <div onclick="window.location.href='dashboard.html'"
           class="text-primary flex size-10 shrink-0 items-center justify-center rounded-lg border border-primary/30 bg-primary/10 cursor-pointer hover:bg-primary/20 transition-all">
           <span class="material-symbols-outlined">arrow_back</span>
         </div>
@@ -96,9 +96,14 @@
           let queryLogs = supabase
             .from('diario_logs')
             .select('*, funcionarios!inner(nome_completo, matricula, setor_id, funcao)')
-            .eq('status_pendencia', 'pendente');
+            .eq('status_pendencia', 'pendente')
+            .neq('tipo', 'comunicado')
+            .neq('tipo', 'aviso_ferias');
 
-          if (user.role.toLowerCase() === 'gestor' || user.role.toLowerCase() === 'manager') {
+          const role = (user.role || '').toLowerCase();
+          const isGestorOnly = ['manager', 'gestor', 'comandante'].includes(role);
+
+          if (isGestorOnly) {
             if (user.setorId) {
               queryJust = queryJust.eq('funcionarios.setor_id', user.setorId);
               queryGps = queryGps.eq('funcionarios.setor_id', user.setorId);
@@ -116,9 +121,16 @@
 
           // Normalizar e Unificar
           const allPendencies = [
-            ...(dataJust || []).map(j => ({ ...j, itemType: 'ABONO' })),
-            ...(dataGps || []).map(g => ({ ...g, itemType: 'GPS', data_incidente: g.data_hora, tipo_divergencia: 'SOLICITAÇÃO DE PONTO FORA DO RAIO', descricao: g.justificativa_usuario })),
-            ...(dataLogs || []).map(l => ({ ...l, itemType: 'SISTEMA', data_incidente: l.data_hora, tipo_divergencia: 'SOLICITAÇÃO DE PONTO FORA DO RAIO', descricao: l.justificativa_colaborador }))
+            ...(dataJust || []).map(j => ({ ...j, itemType: 'ABONO', file_url: j.evidencia_url })),
+            ...(dataGps || []).map(g => ({ ...g, itemType: 'GPS', data_incidente: g.data_hora, tipo_divergencia: 'SOLICITAÇÃO DE PONTO FORA DO RAIO', descricao: g.justificativa_usuario, file_url: g.evidencia_url || g.arquivo_url })),
+            ...(dataLogs || []).map(l => ({ 
+              ...l, 
+              itemType: 'SISTEMA', 
+              data_incidente: l.data_hora || l.created_at, 
+              tipo_divergencia: l.tipo === 'aviso_ferias' ? 'LEMBRETE MENSAL' : (l.tipo_original || 'OCORRÊNCIA DE SISTEMA'), 
+              descricao: l.conteudo || l.justificativa_colaborador,
+              file_url: l.evidencia_url || l.arquivo_url || l.foto_url
+            }))
           ].sort((a, b) => new Date(b.data_incidente || b.created_at) - new Date(a.data_incidente || a.created_at));
 
           if (allPendencies.length === 0) {
@@ -146,9 +158,15 @@
                                             <span class="material-symbols-outlined text-primary text-2xl">person</span>
                                         </div>
                                     </div>
+                                    ${item.file_url ? `
+                                    <a href="${item.file_url}" target="_blank" class="absolute -bottom-1 -right-1 bg-amber-500 rounded-full p-1 shadow-lg hover:scale-110 transition-transform flex items-center justify-center border-2 border-[#0f172a]">
+                                        <span class="material-symbols-outlined text-[14px] text-white">attach_file</span>
+                                    </a>
+                                    ` : `
                                     <div class="absolute -bottom-1 -right-1 bg-background-dark rounded-full p-0.5">
                                         <span class="material-symbols-outlined text-[12px] ${isGps ? 'text-orange-500' : 'text-amber-500'}">${icon}</span>
                                     </div>
+                                    `}
                                 </div>
                                 <div class="flex flex-col">
                                     <h2 class="text-slate-100 font-bold text-base">${item.funcionarios.nome_completo}</h2>
@@ -169,25 +187,37 @@
                             </div>
                             <p class="text-slate-400 text-[10px] mt-2 italic leading-relaxed">${item.descricao || (isGps || item.itemType === 'SISTEMA' ? 'Localização registrada automaticamente pelo sistema para validar sua presença em serviço durante a jornada.' : 'Sem descrição detalhada.')}</p>
                             
+                            <div class="flex flex-wrap gap-3 mt-4">
+                                ${item.file_url ? `
+                                <a href="${item.file_url}" target="_blank" class="inline-flex items-center gap-2 px-4 py-2 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-500 hover:bg-amber-500/20 transition-all font-black min-h-[44px]">
+                                    <span class="material-symbols-outlined text-lg">attach_file</span>
+                                    <span class="text-[10px] uppercase tracking-widest">Ver Anexo</span>
+                                </a>
+                                ` : ''}
+
+                                ${item.coordenadas || (item.latitude && item.longitude) ? `
+                                <button onclick="toggleMap('${item.id}', '${item.coordenadas || (item.latitude + ',' + item.longitude)}', this)" class="inline-flex items-center gap-2 px-4 py-2 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-500 hover:bg-rose-500/20 transition-all font-black min-h-[44px]">
+                                    <span class="material-symbols-outlined text-lg">map</span>
+                                    <span class="text-[10px] uppercase tracking-widest label-map">Ver Mapa</span>
+                                </button>
+                                ` : ''}
+                            </div>
+                            
                             ${item.coordenadas || (item.latitude && item.longitude) ? `
-                            <button onclick="toggleMap('${item.id}', '${item.coordenadas || (item.latitude + ',' + item.longitude)}', this)" class="mt-4 inline-flex items-center gap-2 px-3 py-1.5 bg-rose-500/10 border border-rose-500/20 rounded-lg text-rose-500 hover:bg-rose-500/20 transition-all font-black">
-                                <span class="material-symbols-outlined text-sm">map</span>
-                                <span class="text-[9px] uppercase tracking-widest label-map">Ver Localização no Mapa</span>
-                            </button>
                             <div id="map-container-${item.id}" class="hidden mt-4 w-full h-64 rounded-xl overflow-hidden border border-white/10 shadow-2xl animate-in zoom-in-95 duration-500">
                                 <iframe id="iframe-map-${item.id}" width="100%" height="100%" frameborder="0" style="border:0; filter: invert(90%) hue-rotate(180deg) brightness(0.9) contrast(1.2);" allowfullscreen></iframe>
                             </div>
                             ` : ''}
                         </div>
 
-                        <div class="grid grid-cols-2 gap-2.5">
+                        <div class="grid grid-cols-2 gap-3 mt-2">
                             <button onclick="processarPendencia('${item.id}', 'rejeitado', '${item.itemType}')"
-                                class="flex items-center justify-center gap-1.5 h-11 rounded-lg bg-neon-red/10 hover:bg-neon-red/20 text-neon-red text-[10px] font-bold transition-all border border-neon-red/20">
-                                <span class="material-symbols-outlined text-sm">block</span> REJEITAR
+                                class="flex items-center justify-center gap-2 h-[44px] rounded-xl bg-neon-red/10 hover:bg-neon-red/20 text-neon-red text-[11px] font-black tracking-widest transition-all border border-neon-red/20 uppercase">
+                                <span class="material-symbols-outlined text-lg">block</span> REJEITAR
                             </button>
                             <button onclick="processarPendencia('${item.id}', 'aprovado', '${item.itemType}')"
-                                class="flex items-center justify-center gap-1.5 h-11 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-bold transition-all shadow-[0_4px_12px_rgba(16,185,129,0.3)]">
-                                <span class="material-symbols-outlined text-sm">verified</span> ABONAR
+                                class="flex items-center justify-center gap-2 h-[44px] rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-[11px] font-black tracking-widest transition-all shadow-lg uppercase">
+                                <span class="material-symbols-outlined text-lg">verified</span> ABONAR
                             </button>
                         </div>
                     </div>
@@ -262,7 +292,7 @@
     <nav
       class="fixed bottom-0 left-0 right-0 bg-background-dark/90 border-t border-white/5 py-4 z-50 flex justify-center backdrop-blur-xl">
       <div class="flex items-center justify-around w-full max-w-md px-6">
-        <a id="nav-inicio" href="painel_admin.html"
+        <a id="nav-inicio" href="dashboard.html"
           class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
           <span class="material-symbols-outlined text-2xl">home</span>
           <span class="text-[9px] font-black uppercase tracking-widest text-center">Início</span>
@@ -272,11 +302,10 @@
           <span class="material-symbols-outlined text-2xl">bar_chart</span>
           <span class="text-[9px] font-black uppercase tracking-widest text-center">Estatística</span>
         </a>
-        <a href="historico_anual.html"
-          class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
-          <span class="material-symbols-outlined text-2xl">history</span>
-          <span class="text-[9px] font-black uppercase tracking-widest text-center">Histórico</span>
-        </a>
+            <a href="diario_funcionario.html" class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+                <span class="material-symbols-outlined text-2xl">edit_note</span>
+                <span class="text-[9px] font-black uppercase tracking-widest">Diário</span>
+            </a>
         <a id="nav-perfil-link" href="perfil_funcionario.html"
           class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
           <span class="material-symbols-outlined text-2xl font-variation-settings-fill">person</span>

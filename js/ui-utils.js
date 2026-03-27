@@ -84,23 +84,15 @@ const UI = {
      * Atualiza os links de navegação do rodapé baseado no cargo do usuário
      */
     updateFooterNavigation(userRole) {
-        const role = String(userRole || '').toLowerCase();
         const urlParams = new URLSearchParams(window.location.search);
         const employeeId = urlParams.get('id');
         const roleParam = urlParams.get('role');
 
         const navInicios = document.querySelectorAll('#nav-inicio');
         navInicios.forEach(navInicio => {
-            let href = '';
-            if (role === 'admin') href = 'painel_admin.html';
-            else if (role === 'gestor' || role === 'manager') href = 'painel_gestor.html';
-            else href = 'painel_funcionario.html';
-
-            // Preserve context if in inspection mode
+            let href = 'dashboard.html';
             if (employeeId) {
-                const separator = href.includes('?') ? '&' : '?';
-                const roleQuery = roleParam ? `&role=${roleParam}` : '';
-                href = `${href}${separator}id=${employeeId}${roleQuery}`;
+                href += `?id=${employeeId}${roleParam ? `&role=${roleParam}` : ''}`;
             }
             navInicio.href = href;
         });
@@ -113,18 +105,8 @@ const UI = {
         const urlParams = new URLSearchParams(window.location.search);
         const employeeId = urlParams.get('id');
         const roleParam = urlParams.get('role');
-        const role = String(localStorage.getItem('userRole') || '').toLowerCase();
-
-        // Se estamos inspecionando e clicar em voltar, volta para o PAINEL do funcionário
-        if (employeeId && (role === 'admin' || role === 'manager' || role === 'gestor')) {
-            const roleQuery = roleParam ? `&role=${roleParam}` : '';
-            window.location.href = `painel_funcionario.html?id=${employeeId}${roleQuery}`;
-            return;
-        }
-
-        if (role === 'admin') window.location.href = 'painel_admin.html';
-        else if (role === 'gestor' || role === 'manager') window.location.href = 'painel_gestor.html';
-        else window.location.href = 'painel_funcionario.html';
+        const finalUrl = `dashboard.html${employeeId ? `?id=${employeeId}${roleParam ? `&role=${roleParam}` : ''}` : ''}`;
+        window.location.href = finalUrl;
     },
 
     /**
@@ -153,26 +135,22 @@ const UI = {
 
         // Itens Básicos (Comuns a todos no menu lateral se logados)
         if (role === 'admin') {
-            items.push({ href: 'painel_admin.html', icon: 'dashboard', label: 'Painel Admin' });
-            items.push({ href: 'relacao_setores.html', icon: 'group', label: 'Relação Funcionários' });
-            items.push({ href: 'autorizacoes_abono.html', icon: 'pending_actions', label: 'Pendências' });
+            items.push({ href: 'dashboard.html', icon: 'dashboard', label: 'Painel Admin' });
             items.push({ href: 'cadastro_setores.html', icon: 'domain_add', label: 'Cadastro Setores' });
             items.push({ href: 'cadastro_escalas.html', icon: 'calendar_month', label: 'Cadastro Escalas' });
             items.push({ href: 'cadastro_cargos.html', icon: 'work', label: 'Cadastro Cargo/Função' });
             items.push({ href: 'cadastro_especialidades.html', icon: 'school', label: 'CADASTRAR GRADUAÇÕES' });
-            items.push({ href: 'online.html', icon: 'satellite_alt', label: 'Monitoramento Online' });
             items.push({ href: 'cadastro_funcionario.html', icon: 'person_add', label: 'Cadastro Funcionários' });
         } else if (role === 'manager' || role === 'gestor' || role === 'comandante') {
-            items.push({ href: 'painel_gestor.html', icon: 'dashboard', label: 'Início (Gestor)' });
-            items.push({ href: 'relacao_funcionarios.html', icon: 'group', label: 'Funcionários' });
-            items.push({ href: 'autorizacoes_abono.html', icon: 'pending_actions', label: 'Pendências' });
-            items.push({ href: 'online.html', icon: 'satellite_alt', label: 'Monitoramento Online' });
+            items.push({ href: 'dashboard.html', icon: 'dashboard', label: 'Início (Gestor)' });
+            items.push({ href: 'cadastro_escalas.html', icon: 'calendar_month', label: 'Gestão de Escalas' });
             items.push({ href: 'perfil_funcionario.html', icon: 'person', label: 'Meu Perfil' });
         } else {
-            // Funcionário comum
-            items.push({ href: 'painel_funcionario.html', icon: 'home', label: 'Início' });
+            // Funcionário comum - Extamente igual ao Footer (5 Itens)
+            items.push({ href: 'dashboard.html', icon: 'home', label: 'Início' });
+            items.push({ href: 'estatistica_funcionario.html', icon: 'bar_chart', label: 'Estatística' });
+            items.push({ href: 'diario_funcionario.html', icon: 'edit_note', label: 'Diário' });
             items.push({ href: 'perfil_funcionario.html', icon: 'person', label: 'Meu Perfil' });
-            items.push({ href: 'historico_anual.html', icon: 'history', label: 'Meu Histórico' });
         }
 
         menuHtml = items.map(item => {
@@ -198,6 +176,32 @@ const UI = {
                 Auth.logout();
             });
             logoutBtn.dataset.listenerAdded = 'true';
+        }
+    },
+
+    /**
+     * Alterna a visibilidade do menu lateral e overlay
+     */
+    toggleSidebar(show) {
+        const sidebar = document.getElementById('sidebarMenu');
+        const overlay = document.getElementById('sidebarOverlay');
+        if (!sidebar || !overlay) return;
+
+        const isCurrentlyHidden = sidebar.classList.contains('-translate-x-full');
+        const shouldShow = show !== undefined ? show : isCurrentlyHidden;
+
+        if (shouldShow) {
+            sidebar.classList.remove('-translate-x-full');
+            overlay.classList.remove('hidden');
+            setTimeout(() => {
+                overlay.classList.remove('opacity-0');
+                overlay.classList.add('opacity-100');
+            }, 10);
+        } else {
+            sidebar.classList.add('-translate-x-full');
+            overlay.classList.remove('opacity-100');
+            overlay.classList.add('opacity-0');
+            setTimeout(() => overlay.classList.add('hidden'), 300);
         }
     }
 };

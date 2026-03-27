@@ -14,6 +14,7 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
     rel="stylesheet" />
+  <script src="../js/ui-utils.js"></script>
   <script src="../js/theme.js?v=1.0"></script>
   <style>
     body {
@@ -40,7 +41,7 @@
   <!-- Header -->
   <header class="border-b border-primary/20 bg-background-dark/80 backdrop-blur-md sticky top-0 z-50">
     <div class="flex items-center p-4 justify-between max-w-2xl mx-auto">
-      <div onclick="history.back()"
+      <div id="btn-voltar" onclick="UI.toggleSidebar()"
         class="text-primary flex size-10 shrink-0 items-center justify-center rounded-lg border border-primary/30 bg-primary/10 cursor-pointer hover:bg-primary/20 transition-all">
         <span class="material-symbols-outlined">arrow_back</span>
       </div>
@@ -55,10 +56,10 @@
     <section class="space-y-4">
       <div class="flex items-center justify-between px-1">
         <div class="flex items-center gap-2">
-            <span class="material-symbols-outlined text-primary text-sm">add_circle</span>
-            <h2 class="text-sm font-bold tracking-widest uppercase opacity-70">Nova Escala</h2>
+            <span class="material-symbols-outlined text-primary text-sm">rule</span>
+            <h2 class="text-sm font-bold tracking-widest uppercase opacity-70">Gerenciamento</h2>
         </div>
-        <button id="btn-toggle-form" class="bg-primary/20 hover:bg-primary/30 text-primary text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-lg border border-primary/30 transition-all flex items-center gap-2">
+        <button id="btn-toggle-form" class="bg-primary/20 hover:bg-primary/30 text-primary text-[10px] font-black uppercase tracking-widest px-4 py-2 rounded-lg border border-primary/30 transition-all flex items-center gap-2 shadow-lg shadow-primary/5">
             <span id="icon-toggle" class="material-symbols-outlined text-sm">add_circle</span>
             <span id="txt-toggle">Criar Nova Escala</span>
         </button>
@@ -91,6 +92,16 @@
           </div>
         </div>
 
+          <div>
+            <label class="block text-sm font-medium mb-1 text-slate-400">Regime de Trabalho</label>
+            <select id="regime_trabalho"
+              class="w-full bg-background-dark/50 border-primary/30 rounded-lg focus:ring-primary focus:border-primary text-slate-100 p-3 outline-none">
+              <option value="Escritório">Presencial (Escritório)</option>
+              <option value="Externo">Externo (Rastreio Ativo)</option>
+              <option value="Híbrido">Híbrido (App Decide)</option>
+            </select>
+          </div>
+        
         <div>
           <label class="block text-sm font-medium mb-1 text-slate-400">Carga Semanal (h)</label>
           <input id="carga_horaria"
@@ -331,39 +342,53 @@
           </button>
         </div>
       </form>
-    </section>
+    </div>
+</section>
     <!-- Manage List Section -->
     <section class="space-y-4">
-      <div class="flex flex-col gap-4 px-1">
-        <div class="flex items-center justify-between">
-            <h2 class="text-sm font-bold uppercase tracking-wider text-primary flex items-center gap-2">
-              <span class="material-symbols-outlined">dataset</span>
-              Escalas Ativas
-            </h2>
-            <span id="total-escalas" class="text-[10px] text-slate-500 font-mono bg-slate-800 px-2 py-1 rounded">00</span>
+      <div class="flex items-center justify-between mb-4 px-1">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary">dataset</span>
+          <h2 class="text-xl font-bold tracking-tight">Escalas Ativas</h2>
         </div>
-
-        <div class="relative">
-            <input id="filtro-escalas" type="text" placeholder="Filtrar por nome ou tipo de escala..." 
-                class="w-full bg-white/5 border border-white/10 rounded-xl px-10 py-3 text-xs focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-slate-200">
-            <span class="material-symbols-outlined absolute left-3 top-3 text-slate-500 text-sm">search</span>
-        </div>
+        <span id="total-escalas"
+          class="bg-primary/20 text-primary text-xs font-bold px-2 py-1 rounded-full border border-primary/30">00
+          ATIVOS</span>
       </div>
 
-      <div id="lista-escalas" class="space-y-3">
+      <!-- Card de Pesquisa -->
+      <div class="relative group mb-6 px-1">
+        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+          <span class="material-symbols-outlined text-primary/50 group-focus-within:text-primary transition-colors text-xl">search</span>
+        </div>
+        <input id="filtro-escalas"
+          class="block w-full pl-12 pr-4 py-4 bg-slate-900/50 border border-primary/20 rounded-xl focus:ring-2 focus:ring-primary focus:border-transparent transition-all placeholder-slate-500 text-slate-100 text-sm neon-border"
+          placeholder="Pesquisar por nome ou tipo de escala..." type="text" oninput="filtrarListaEscalas()" />
+      </div>
+
+      <div id="lista-escalas" class="space-y-3 pb-8">
         <!-- Lista Dinâmica -->
       </div>
     </section>
   </main>
-  </main>
+  
+
 
   <script type="module">
     import { supabase } from '../js/supabase-config.js';
     import { UI } from '../js/ui-utils.js';
+    import { Auth } from '../js/auth.js';
+
+    // Bloqueio de Segurança
+    Auth.checkSession(['Admin', 'Gestor', 'Manager', 'Comandante']);
+    
+    const user = Auth.getUser();
+    console.log(`[Escalas] Perfil: ${user?.role}`);
 
     let diasSemanaSelecionados = [];
     let editingEscalaId = null;
     let allEscalasData = [];
+    let inlineDiasSelecionados = {}; // Estado para previews inline
 
     // Toggle Form
     document.getElementById('btn-toggle-form').onclick = () => {
@@ -399,6 +424,7 @@
     document.getElementById('btn-cancelar-escala').onclick = fecharFormEscala;
 
     const tipoEscalaSel = document.getElementById('tipo_escala');
+    const regimeTrabalhoSel = document.getElementById('regime_trabalho');
     const cicloInputs = document.getElementById('ciclo_inputs');
     const semanalInputs = document.getElementById('semanal_inputs');
     const hibridoInputs = document.getElementById('hibrido_inputs');
@@ -572,7 +598,7 @@
     function renderEscalas(data) {
         const container = document.getElementById('lista-escalas');
         const countSpan = document.getElementById('total-escalas');
-        countSpan.innerText = String(data.length).padStart(2, '0');
+        countSpan.innerText = `${String(data.length).padStart(2, '0')} ATIVOS`;
         
         if (data.length === 0) {
             container.innerHTML = '<p class="text-center py-8 opacity-40 text-xs uppercase font-bold tracking-widest text-slate-500">Nenhuma escala encontrada</p>';
@@ -580,39 +606,42 @@
         }
 
         container.innerHTML = data.map(e => `
-                <div id="card-escala-${e.id}" class="bg-background-dark/40 border border-slate-800 rounded-xl group hover:border-primary/50 transition-colors overflow-hidden">
-                  <!-- Modo Visualização -->
-                  <div id="view-escala-${e.id}" class="p-4 flex items-center justify-between">
+                <div id="card-escala-${e.id}" class="glass-panel rounded-xl border-l-4 border-l-primary group hover:bg-primary/5 transition-all overflow-hidden mb-3 shadow-lg">
+                  <!-- Modo Visualização (Cabeçalho do Card) -->
+                  <div onclick="prepararEdicaoInline('${e.id}')" class="p-4 flex items-center justify-between cursor-pointer">
                     <div class="flex items-center gap-4">
-                      <div class="size-12 rounded-lg bg-primary/10 border border-primary/30 flex items-center justify-center">
+                      <div class="w-12 h-12 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
                         <span class="material-symbols-outlined text-primary">${e.tipo_escala === 'ciclo' ? 'sync' : 'calendar_month'}</span>
                       </div>
-                      <div>
+                      <div id="header-info-${e.id}">
                         <h3 class="font-bold uppercase text-xs tracking-tight text-slate-100">${e.nome}</h3>
-                        <p class="text-[10px] text-slate-500 uppercase mt-1">
+                        <p class="text-[9px] text-slate-500 uppercase mt-0.5">
                           ${e.tipo_escala === 'ciclo'
             ? `Ciclo ${e.ciclo_config?.trab_total}h x ${e.ciclo_config?.folga_total}h`
             : `Semanal • ${e.dias_padrao?.length || 0} dias`
-          } • ${e.horario_entrada} - ${e.horario_saida}
+          }
+                        </p>
+                        <p class="text-[9px] text-primary font-mono mt-1 uppercase tracking-tight">
+                            Jornada: ${e.horario_entrada} - ${e.horario_saida}
                         </p>
                       </div>
                     </div>
                     <div class="flex gap-2 opacity-40 group-hover:opacity-100 transition-opacity">
-                      <button onclick='prepararEdicaoInline("${e.id}", "${e.nome}", "${e.tipo_escala}", "${e.horario_entrada}", "${e.horario_saida}", "${e.regime}")' class="p-2 hover:bg-primary/10 rounded-lg text-slate-400 hover:text-primary transition-colors">
-                        <span class="material-symbols-outlined text-[18px]">edit</span>
+                      <button onclick="event.stopPropagation(); prepararEdicaoInline('${e.id}')" 
+                              class="p-2.5 bg-primary/10 border border-primary/20 rounded-xl text-primary hover:bg-primary/20 hover:scale-110 shadow-lg shadow-primary/5 transition-all group/btn"
+                              title="Editar Escala">
+                        <span class="material-symbols-outlined text-lg">edit_note</span>
                       </button>
-                      <button onclick="deletarEscala('${e.id}')" class="p-2 hover:bg-red-500/20 rounded-lg text-slate-400 hover:text-red-500 transition-colors">
-                        <span class="material-symbols-outlined text-[18px]">delete</span>
+                      <button onclick="event.stopPropagation(); deletarEscala('${e.id}')" 
+                              class="p-2.5 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-500 hover:bg-rose-500/20 hover:scale-110 shadow-lg shadow-rose-500/5 transition-all group/btn"
+                              title="Excluir Escala">
+                        <span class="material-symbols-outlined text-lg">delete</span>
                       </button>
                     </div>
                   </div>
 
-                  <!-- Modo Edição Inline (Paridade Total com Criação) -->
-                  <div id="edit-escala-${e.id}" class="hidden p-6 sci-fi-gradient sci-fi-border rounded-xl space-y-6 animate-in slide-in-from-top-2 m-2">
-                      <div class="flex items-center gap-2 mb-2 px-1">
-                          <span class="material-symbols-outlined text-primary text-sm">edit_note</span>
-                          <h2 class="text-[10px] font-bold tracking-widest uppercase opacity-70">Editando Escala: ${e.nome}</h2>
-                      </div>
+                  <!-- Modo Edição Inline (Expansível - CLONE DO FORM PRINCIPAL) -->
+                  <div id="edit-escala-${e.id}" class="hidden p-6 border-t border-white/5 bg-background-dark/30 space-y-6 animate-in slide-in-from-top-2 duration-300">
 
                       <!-- 1. Nome e Carga -->
                       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -633,6 +662,14 @@
                             <select id="inline-tipo-${e.id}" onchange="updateInlineVisibility('${e.id}')" class="w-full bg-background-dark/50 border-primary/30 rounded-lg px-3 py-3 text-xs text-slate-100 outline-none">
                                 <option value="semanal" ${e.tipo_escala === 'semanal' ? 'selected' : ''}>Semanal (Dias Fixos)</option>
                                 <option value="ciclo" ${e.tipo_escala === 'ciclo' ? 'selected' : ''}>Ciclo (Trabalho x Folga)</option>
+                            </select>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[11px] font-bold uppercase opacity-50 text-slate-400">Regime de Trabalho</label>
+                            <select id="inline-regime-${e.id}" onchange="updateInlineVisibility('${e.id}')" class="w-full bg-background-dark/50 border-primary/30 rounded-lg px-3 py-3 text-xs text-slate-100 outline-none">
+                                <option value="Escritório" ${e.regime === 'Escritório' ? 'selected' : ''}>Presencial</option>
+                                <option value="Externo" ${e.regime === 'Externo' ? 'selected' : ''}>Externo</option>
+                                <option value="Híbrido" ${e.regime === 'Híbrido' ? 'selected' : ''}>Híbrido</option>
                             </select>
                         </div>
                         <div class="space-y-1">
@@ -683,26 +720,48 @@
                          <p class="text-[10px] text-slate-400 text-center font-medium">Nos demais dias, o sistema assume automaticamente modo Home Office.</p>
                       </div>
 
-                      <!-- 3. Horários -->
-                      <div class="grid grid-cols-2 gap-4">
-                        <div class="space-y-1">
-                            <label class="text-[10px] text-slate-500 uppercase font-bold mb-1.5">Entrada</label>
-                            <input id="inline-in-${e.id}" type="time" class="w-full bg-background-dark/50 border border-slate-800 rounded-xl p-3 text-sm focus:border-primary/50 transition-colors outline-none" value="${e.horario_entrada}">
+                      <!-- 3. Horários e Preview -->
+                      <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                          <div class="space-y-1">
+                              <label class="text-[10px] text-slate-500 uppercase font-bold mb-1.5">Entrada</label>
+                              <input id="inline-in-${e.id}" type="time" oninput="renderInlinePreview('${e.id}')" class="w-full bg-background-dark/50 border border-slate-800 rounded-xl p-3 text-sm focus:border-primary/50 transition-colors outline-none" value="${e.horario_entrada}">
+                          </div>
+                          <div class="space-y-1">
+                              <label class="text-[10px] text-slate-500 uppercase font-bold mb-1.5">Saída (Calculada)</label>
+                              <input id="inline-out-${e.id}" type="time" class="w-full bg-background-dark/50 border border-slate-800 rounded-xl p-3 text-sm focus:border-primary/50 transition-colors outline-none" value="${e.horario_saida}">
+                          </div>
                         </div>
-                        <div class="space-y-1">
-                            <label class="text-[10px] text-slate-500 uppercase font-bold mb-1.5">Saída</label>
-                            <input id="inline-out-${e.id}" type="time" class="w-full bg-background-dark/50 border border-slate-800 rounded-xl p-3 text-sm focus:border-primary/50 transition-colors outline-none" value="${e.horario_saida}">
+
+                        <!-- Mini Calendário Preview Inline -->
+                        <div id="inline-preview-calendario-${e.id}" class="p-4 bg-slate-800/20 border border-white/5 rounded-xl">
+                          <h3 class="text-xs font-bold text-primary uppercase tracking-widest text-center mb-3">
+                            <span id="inline-preview-month-label-${e.id}">Mês / Ano</span>
+                          </h3>
+                          <div class="grid grid-cols-7 gap-1 text-center text-[8px] text-slate-500 uppercase font-bold mb-2">
+                            <span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span>
+                          </div>
+                          <div id="inline-preview-grid-${e.id}" class="grid grid-cols-7 gap-1"></div>
                         </div>
                       </div>
 
-                      <!-- 5. Tolerâncias e Raio -->
-                        <div class="space-y-1">
-                            <label class="text-xs font-bold text-slate-400 uppercase mb-1">Tol. Entrada (min)</label>
-                            <input id="inline-tol-in-${e.id}" type="number" class="w-full bg-background-dark/30 border-white/10 rounded p-2 text-sm text-primary font-bold" value="${e.tolerancia_entrada_minutos || 15}">
-                        </div>
-                        <div class="space-y-1">
-                            <label class="text-xs font-bold text-slate-400 uppercase mb-1">Tol. Saída (min)</label>
-                            <input id="inline-tol-out-${e.id}" type="number" class="w-full bg-background-dark/30 border-white/10 rounded p-2 text-sm text-primary font-bold" value="${e.tolerancia_saida_minutos || 15}">
+                      <div class="h-px bg-white/5 w-full"></div>
+
+                      <!-- 5. Tolerâncias -->
+                      <div class="space-y-4 pt-2">
+                        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                          <span class="material-symbols-outlined text-sm">timer</span>
+                          Tolerâncias e Geofencing
+                        </h3>
+                        <div class="grid grid-cols-2 gap-3 p-4 bg-slate-800/20 border border-white/5 rounded-xl">
+                          <div class="space-y-1">
+                              <label class="text-xs font-bold text-slate-400 uppercase mb-1">Tol. Entrada (min)</label>
+                              <input id="inline-tol-in-${e.id}" type="number" class="w-full bg-background-dark/30 border-white/10 rounded p-2 text-sm text-primary font-bold" value="${e.tolerancia_entrada_minutos || 15}">
+                          </div>
+                          <div class="space-y-1">
+                              <label class="text-xs font-bold text-slate-400 uppercase mb-1">Tol. Saída (min)</label>
+                              <input id="inline-tol-out-${e.id}" type="number" class="w-full bg-background-dark/30 border-white/10 rounded p-2 text-sm text-primary font-bold" value="${e.tolerancia_saida_minutos || 15}">
+                          </div>
                         </div>
                       </div>
 
@@ -829,50 +888,158 @@
                       </div>
 
                       <!-- 7. Botões -->
-                      <div class="flex gap-3 pt-4">
-                          <button onclick="salvarEdicaoInline('${e.id}')" class="flex-1 bg-primary text-white text-xs font-black uppercase py-4 rounded-xl shadow-[0_0_20px_rgba(13,89,242,0.3)] hover:scale-[1.02] active:scale-95 transition-all">Salvar Alterações</button>
-                          <button onclick="cancelarEdicaoInline('${e.id}')" class="px-8 bg-slate-800 text-slate-300 text-xs font-black uppercase py-4 rounded-xl hover:bg-slate-700 transition-all">Cancelar</button>
+                      <div class="flex gap-3 pt-4 border-t border-white/10 mt-6">
+                          <button onclick="salvarEdicaoInline('${e.id}')" class="flex-1 bg-primary hover:bg-primary/80 text-white text-xs font-black uppercase py-5 rounded-2xl shadow-[0_0_20px_rgba(13,89,242,0.3)] hover:scale-[1.01] active:scale-95 transition-all tracking-widest">Salvar Alterações</button>
+                          <button onclick="cancelarEdicaoInline('${e.id}')" class="px-8 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-black uppercase py-5 rounded-2xl transition-all border border-white/5 active:scale-95 tracking-widest">Cancelar</button>
                       </div>
                   </div>
                 </div>
             `).join('');
     }
 
-    // Filtro em tempo real
-    document.getElementById('filtro-escalas').oninput = (e) => {
-        const termo = e.target.value.toLowerCase().trim();
-        const filtered = allEscalasData.filter(esc => 
-            esc.nome.toLowerCase().includes(termo) || 
-            esc.tipo_escala.toLowerCase().includes(termo)
-        );
-        renderEscalas(filtered);
+    window.filtrarListaEscalas = () => {
+        const termo = document.getElementById('filtro-escalas').value.toLowerCase().trim();
+        const cards = document.querySelectorAll('#lista-escalas > div[id^="card-escala-"]');
+        let count = 0;
+
+        cards.forEach(card => {
+            const id = card.id.replace('card-escala-', '');
+            const headerText = document.getElementById(`header-info-${id}`)?.innerText.toLowerCase() || '';
+            
+            if (headerText.includes(termo)) {
+                card.classList.remove('hidden');
+                count++;
+            } else {
+                card.classList.add('hidden');
+            }
+        });
+
+        document.getElementById('total-escalas').innerText = `${String(count).padStart(2, '0')} ATIVOS`;
     };
 
-    window.prepararEdicaoInline = (id, nome, tipo, entra, sai, regime) => {
-        // Fechar outras edições
-        document.querySelectorAll('[id^="edit-escala-"]').forEach(el => el.classList.add('hidden'));
-        document.querySelectorAll('[id^="view-escala-"]').forEach(el => el.classList.remove('hidden'));
+    window.prepararEdicaoInline = (id) => {
+        const editDiv = document.getElementById(`edit-escala-${id}`);
+        const isHidden = editDiv.classList.contains('hidden');
 
-        document.getElementById(`view-escala-${id}`).classList.add('hidden');
-        document.getElementById(`edit-escala-${id}`).classList.remove('hidden');
-        document.getElementById(`inline-nome-${id}`).focus();
+        if (isHidden) {
+            // Fecha outras escalas abertas (comportamento accordion)
+            document.querySelectorAll('[id^="edit-escala-"]').forEach(el => el.classList.add('hidden'));
+            
+            // Inicializar estado de dias para esta escala
+            const esc = allEscalasData.find(x => x.id === id);
+            if (esc) {
+                inlineDiasSelecionados[id] = {
+                    semanal: [...(esc.dias_padrao || [])],
+                    hibrido: [...(esc.dias_presenciais_json || [])]
+                };
+            }
+
+            editDiv.classList.remove('hidden');
+            renderInlinePreview(id);
+            document.getElementById(`inline-nome-${id}`).focus();
+            // Scroll suave para o card
+            document.getElementById(`card-escala-${id}`).scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else {
+            editDiv.classList.add('hidden');
+        }
     };
 
     window.cancelarEdicaoInline = (id) => {
-        document.getElementById(`view-escala-${id}`).classList.remove('hidden');
         document.getElementById(`edit-escala-${id}`).classList.add('hidden');
     };
 
     // Auxiliares para Edição Inline
     window.toggleInlineDay = (id, day, type) => {
-        const selector = type === 'semanal' ? `.inline-day-toggle-${id}` : `.inline-hday-toggle-${id}`;
+        if (!inlineDiasSelecionados[id]) inlineDiasSelecionados[id] = { semanal: [], hibrido: [] };
+        
+        const list = inlineDiasSelecionados[id][type];
+        const idx = list.indexOf(day);
+        
+        if (idx > -1) {
+            list.splice(idx, 1);
+        } else {
+            list.push(day);
+        }
+
+        // Update UI
         const btnId = type === 'semanal' ? `btn-inline-day-${id}-${day}` : `btn-inline-hday-${id}-${day}`;
         const btn = document.getElementById(btnId);
         
-        btn.classList.toggle('bg-primary');
-        btn.classList.toggle('text-white');
-        btn.classList.toggle('border-primary');
-        btn.classList.toggle('text-slate-500', !btn.classList.contains('bg-primary'));
+        if (list.includes(day)) {
+            btn.classList.add('bg-primary', 'text-white', 'border-primary');
+        } else {
+            btn.classList.remove('bg-primary', 'text-white', 'border-primary');
+        }
+
+        renderInlinePreview(id);
+    };
+
+    window.updateInlineVisibility = (id) => {
+        const tipo = document.getElementById(`inline-tipo-${id}`).value;
+        const regime = document.getElementById(`inline-regime-${id}`).value;
+
+        document.getElementById(`inline-ciclo-inputs-${id}`).classList.toggle('hidden', tipo !== 'ciclo');
+        document.getElementById(`inline-semanal-inputs-${id}`).classList.toggle('hidden', tipo !== 'semanal');
+        document.getElementById(`inline-hibrido-inputs-${id}`).classList.toggle('hidden', regime !== 'Híbrido');
+        
+        renderInlinePreview(id);
+    };
+
+    window.renderInlinePreview = (id) => {
+        const tipo = document.getElementById(`inline-tipo-${id}`).value;
+        const carga = parseFloat(document.getElementById(`inline-carga-${id}`).value) || 0;
+        const entrada = document.getElementById(`inline-in-${id}`).value;
+        const grid = document.getElementById(`inline-preview-grid-${id}`);
+        const label = document.getElementById(`inline-preview-month-label-${id}`);
+
+        if (!grid || !label) return;
+
+        const now = new Date();
+        label.innerText = now.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }).toUpperCase();
+
+        const year = now.getFullYear();
+        const month = now.getMonth();
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        grid.innerHTML = '';
+        for (let i = 0; i < firstDay; i++) grid.appendChild(document.createElement('div'));
+
+        const diasTrab = inlineDiasSelecionados[id]?.semanal || [];
+        
+        for (let d = 1; d <= daysInMonth; d++) {
+            const date = new Date(year, month, d);
+            const weekDay = date.getDay();
+            const isWork = tipo === 'semanal' ? diasTrab.includes(weekDay) : true;
+
+            const div = document.createElement('div');
+            div.className = `h-6 flex items-center justify-center text-[9px] rounded-md border ${
+                isWork ? 'bg-primary/20 border-primary/40 text-primary font-bold shadow-[0_0_10px_rgba(13,89,242,0.1)]' : 'border-white/5 text-slate-600'
+            }`;
+            div.innerText = d;
+            grid.appendChild(div);
+        }
+
+        // Auto-calculo Saída Inline
+        if (carga && entrada) {
+            let dias = 5;
+            if (tipo === 'semanal') dias = diasTrab.length || 5;
+            const horasPorDia = carga / dias;
+            const h = Math.floor(horasPorDia);
+            const m = Math.round((horasPorDia - h) * 60);
+
+            const [entH, entM] = entrada.split(':').map(Number);
+            let saiH = entH + h;
+            let saiM = entM + m;
+
+            if (saiM >= 60) {
+                saiH += Math.floor(saiM / 60);
+                saiM = saiM % 60;
+            }
+
+            const format = (n) => String(n).padStart(2, '0');
+            document.getElementById(`inline-out-${id}`).value = `${format(saiH % 24)}:${format(saiM)}`;
+        }
     };
 
     window.updateInlineVisibility = (id) => {
@@ -899,20 +1066,23 @@
 
             const dados = {
                 nome: document.getElementById(`inline-nome-${id}`).value.trim(),
-                carga_horaria_semanal: parseInt(document.getElementById(`inline-carga-${id}`).value),
+                carga_horaria_semanal: parseInt(document.getElementById(`inline-carga-${id}`).value) || 44,
                 tipo_escala: document.getElementById(`inline-tipo-${id}`).value,
+                regime: document.getElementById(`inline-regime-${id}`).value,
                 tipo_repeticao: document.getElementById(`inline-repeticao-${id}`).value,
                 horario_entrada: document.getElementById(`inline-in-${id}`).value,
                 horario_saida: document.getElementById(`inline-out-${id}`).value,
-                tolerancia_entrada_minutos: parseInt(document.getElementById(`inline-tol-in-${id}`).value),
-                tolerancia_saida_minutos: parseInt(document.getElementById(`inline-tol-out-${id}`).value),
+                tolerancia_entrada_minutos: parseInt(document.getElementById(`inline-tol-in-${id}`).value) || 15,
+                tolerancia_saida_minutos: parseInt(document.getElementById(`inline-tol-out-${id}`).value) || 15,
                 
                 // Regras
                 restrito_gps: document.getElementById(`inline-rule-gps-${id}`).checked,
                 aprovacao_excecao: document.getElementById(`inline-rule-appr-${id}`).checked,
                 punicao_esquecimento: document.getElementById(`inline-rule-forget-${id}`).checked,
                 gestao_horas_extras: document.getElementById(`inline-rule-extra-${id}`).checked,
-                limite_horas_extras: parseInt(document.getElementById(`inline-extra-limit-${id}`).value),
+                limite_horas_extras: parseInt(document.getElementById(`inline-extra-limit-${id}`).value) || 0,
+                rastreio_horario: document.getElementById(`inline-rule-track-${id}`).checked,
+                frequencia_meses: parseInt(document.getElementById(`inline-frequencia-${id}`).value) || 0,
                 possui_almoco: document.getElementById(`inline-rule-lunch-${id}`).checked,
                 
                 // Configs Complexas
@@ -920,9 +1090,10 @@
                 dias_trabalho_semana: document.getElementById(`inline-tipo-${id}`).value === 'semanal' ? diasSemana.length : 0,
                 dias_presenciais_json: diasHibridos,
                 ciclo_config: {
-                    trab_total: parseInt(document.getElementById(`inline-trab-${id}`).value),
-                    folga_total: parseInt(document.getElementById(`inline-folga-${id}`).value)
-                }
+                    trab_total: parseInt(document.getElementById(`inline-trab-${id}`).value) || 12,
+                    folga_total: parseInt(document.getElementById(`inline-folga-${id}`).value) || 36
+                },
+                updated_at: new Date().toISOString()
             };
 
             if (!dados.nome) throw new Error('O nome da escala é obrigatório!');
@@ -934,8 +1105,8 @@
             UI.showToast('Escala atualizada com sucesso!', 'success');
             loadEscalas();
         } catch (err) {
-            console.error(err);
-            UI.showToast(err.message || 'Erro ao atualizar escala', 'error');
+            console.error('Erro ao salvar escala:', err);
+            UI.showToast(err.message || 'Erro ao salvar alterações', 'error');
         } finally {
             UI.hideLoader();
         }
@@ -983,6 +1154,7 @@
       const dados = {
         nome: document.getElementById('nome_escala').value,
         tipo_escala: tipo,
+        regime: regimeTrabalhoSel.value,
         carga_horaria_semanal: parseInt(document.getElementById('carga_horaria').value) || 0,
         horario_entrada: document.getElementById('horario_entrada').value,
         horario_saida: document.getElementById('horario_saida').value,
@@ -1026,13 +1198,18 @@
 
     loadEscalas();
     initEscalaLogic();
+
+    // Iniciar Sidebar
+    if (user) {
+        UI.initSidebar(user.role);
+    }
   </script>
 
   <!-- Bottom Navigation -->
   <nav
     class="fixed bottom-0 left-0 right-0 bg-background-dark/90 border-t border-white/5 py-4 z-50 flex justify-center backdrop-blur-xl">
     <div class="flex items-center justify-around w-full max-w-md px-6">
-      <a id="nav-inicio" href="painel_admin.html"
+      <a id="nav-inicio" href="dashboard.html"
         class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
         <span class="material-symbols-outlined text-2xl">home</span>
         <span class="text-[9px] font-black uppercase tracking-widest text-center">Início</span>
@@ -1042,10 +1219,10 @@
         <span class="material-symbols-outlined text-2xl">bar_chart</span>
         <span class="text-[9px] font-black uppercase tracking-widest text-center">Estatística</span>
       </a>
-      <a href="historico_anual.html"
+      <a href="diario_funcionario.html"
         class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
-        <span class="material-symbols-outlined text-2xl">history</span>
-        <span class="text-[9px] font-black uppercase tracking-widest text-center">Histórico</span>
+        <span class="material-symbols-outlined text-2xl">edit_note</span>
+        <span class="text-[9px] font-black uppercase tracking-widest text-center">Diário</span>
       </a>
       <a id="nav-perfil-link" href="perfil_funcionario.html"
         class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
@@ -1064,6 +1241,25 @@
     });
   </script>
   <script type="module" src="../js/manager-context.js?v=2.7"></script>
+
+  <!-- Sidebar Menu Overlay -->
+  <aside id="sidebarMenu" class="fixed top-0 left-0 h-full w-80 bg-background-dark border-r border-primary/20 z-[160] -translate-x-full transition-all duration-500 ease-out shadow-[20px_0_50px_rgba(0,0,0,0.5)]">
+      <div class="flex flex-col h-full">
+          <div class="p-8 border-b border-primary/10">
+              <h3 class="text-primary font-black italic text-2xl tracking-tighter">CHRONOSYNC</h3>
+              <p class="text-[10px] text-slate-500 uppercase font-bold tracking-[0.3em]">Console de Navegação</p>
+          </div>
+          <nav id="sidebarNav" class="flex-1 overflow-y-auto p-4 space-y-2">
+              <!-- Injetado via UI.initSidebar() -->
+          </nav>
+          <div class="p-4 border-t border-primary/10 bg-black/20">
+              <button onclick="Auth.logout()" class="w-full flex items-center gap-3 px-4 py-3 text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all font-bold text-xs uppercase">
+                  <span class="material-symbols-outlined">logout</span> Sair do Sistema
+              </button>
+          </div>
+      </div>
+  </aside>
+  <div id="sidebarOverlay" onclick="UI.toggleSidebar()" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[150] hidden opacity-0 transition-all duration-300"></div>
 </body>
 
 </html>

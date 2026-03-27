@@ -58,12 +58,47 @@
     // Always intercept links to pass ID/Role context
     interceptAllEmployeeLinks();
 
-    function injectManagerHeader() {
+    async function injectManagerHeader() {
         if (!document.body || document.getElementById('manager-mode-bar')) return;
+
+        // Fetch Employee Data for Header
+        let employeeName = 'Carregando...';
+        let employeePhoto = 'https://ui-avatars.com/api/?name=User&background=020617&color=fff';
+        
+        try {
+            // Check if supabase instance is available, otherwise import it
+            let supabaseClient = window.supabase;
+            if (!supabaseClient || typeof supabaseClient.from !== 'function') {
+                const config = await import('./supabase-config.js');
+                supabaseClient = config.supabase;
+            }
+
+            if (supabaseClient && employeeId) {
+                const { data, error } = await supabaseClient
+                    .from('perfis_tripulantes')
+                    .select('nickname, foto_url')
+                    .eq('funcionario_id', employeeId)
+                    .single();
+                
+                if (!error && data) {
+                    employeeName = data.nickname || 'Tripulante';
+                    if (data.foto_url) employeePhoto = data.foto_url;
+                }
+            }
+        } catch (e) {
+            console.warn('[ManagerContext] Erro ao buscar dados do funcionário:', e);
+        }
 
         const style = document.createElement('style');
         style.id = 'manager-context-styles';
         style.textContent = `
+            nav.fixed.bottom-0,
+            header,
+            #openSidebar,
+            #sidebarMenu,
+            #sidebarOverlay {
+                ${isInspecting ? 'display: none !important;' : ''}
+            }
             #manager-mode-bar {
                 background: rgba(10, 14, 23, 0.98);
                 border-bottom: 2px solid #f59e0b;
@@ -86,10 +121,9 @@
                 flex-direction: column;
                 gap: 12px;
             }
-            /* Aumentar padding para não cobrir o conteúdo e garantir prioridade */
-            body { padding-top: 140px !important; }
-            #manager-mode-bar ~ header, 
-            #manager-mode-bar ~ .fixed.top-0 { margin-top: 120px !important; }
+            /* Garantir que o conteúdo não seja coberto e esconder elementos nativos */
+            body { padding-top: ${isInspecting ? '140px !important' : '0'}; }
+            
             .manager-tabs {
                 display: flex; gap: 8px; background: rgba(255, 255, 255, 0.05);
                 padding: 4px; border-radius: 12px;
@@ -107,15 +141,17 @@
             .manager-tab font { font-size: 8px; text-transform: uppercase; font-weight: 800; letter-spacing: 0.05em; }
             .manager-info-row { display: flex; justify-content: space-between; align-items: center; }
             .m-badge { background: #f59e0b; color: #000; font-size: 8px; font-weight: 950; padding: 3px 10px; border-radius: 4px; text-transform: uppercase; }
-            .m-label { color: rgba(255,255,255,0.5); font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.5px; }
+            .m-label { color: rgba(255,255,255,0.5); font-size: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+            .m-name { color: #f59e0b; font-size: 10px; font-weight: 900; text-transform: uppercase; }
+            .m-photo { width: 24px; height: 24px; border-radius: 6px; border: 1px solid #f59e0b; object-cover: cover; }
             .m-close { color: #ef4444; font-size: 10px; font-weight: 900; cursor: pointer; background: rgba(239, 68, 68, 0.1); padding: 5px 12px; border-radius: 6px; border: 1px solid rgba(239, 68, 68, 0.2); }
-            
-            nav.fixed.bottom-0 {
-                border-top: 2px solid #f59e0b !important;
-                background: #0a0e17 !important;
-                z-index: 9999 !important;
-                overflow: visible !important;
-                ${isInspecting ? 'display: none !important;' : ''}
+            .m-pdf-btn { color: #fff; background: rgba(255, 255, 255, 0.1); padding: 5px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255, 255, 255, 0.2); }
+            .m-pdf-btn:hover { background: rgba(255, 255, 255, 0.2); }
+
+            @media print {
+                #manager-mode-bar { display: none !important; }
+                body { padding-top: 0 !important; }
+                .no-print { display: none !important; }
             }
         `;
         document.head.appendChild(style);
@@ -124,9 +160,9 @@
         header.id = 'manager-mode-bar';
         const currentPage = window.location.pathname.split('/').pop() || 'index.html';
         const tabs = [
-            { id: 'painel_funcionario.html', label: 'Painel', icon: 'dashboard' },
+            { id: 'dashboard.html', label: 'Painel', icon: 'dashboard' },
             { id: 'estatistica_funcionario.html', label: 'Stats', icon: 'bar_chart' },
-            { id: 'historico_anual.html', label: 'Histórico', icon: 'history' },
+            { id: 'diario_funcionario.html', label: 'Diário', icon: 'edit_note' },
             { id: 'perfil_funcionario.html', label: 'Perfil', icon: 'person' }
         ];
 
@@ -134,11 +170,21 @@
         header.innerHTML = `
             <div class="manager-container">
                 <div class="manager-info-row">
-                    <div class="flex items-center gap-2">
-                        <span class="m-badge">SISTEMA GESTOR</span>
-                        <span class="m-label">Inspecionando Tripulante</span>
+                    <div class="flex items-center gap-3">
+                        <img src="${employeePhoto}" class="m-photo" alt="Avatar">
+                        <div class="flex flex-col">
+                            <span class="m-label">INSPECIONANDO</span>
+                            <span class="m-name">${employeeName}</span>
+                        </div>
                     </div>
-                    <div class="m-close" onclick="closeInspection()">FECHAR X</div>
+                    <div class="flex items-center gap-2">
+                        ${(currentPage === 'estatistica_funcionario.html' || currentPage === 'historico_mensal.html') ? `
+                            <div class="m-pdf-btn" onclick="window.print()" title="Gerar PDF">
+                                <span class="material-symbols-outlined !text-lg">picture_as_pdf</span>
+                            </div>
+                        ` : ''}
+                        <div class="m-close" onclick="closeInspection()">FECHAR X</div>
+                    </div>
                 </div>
                 <div class="manager-tabs">
                     ${tabs.map(tab => `
@@ -160,7 +206,7 @@
             } else if (role === 'manager' || role === 'gestor' || role === 'comandante') {
                 window.location.href = 'relacao_funcionarios.html';
             } else {
-                window.location.href = 'painel_funcionario.html';
+                window.location.href = 'dashboard.html';
             }
         };
     }
@@ -182,9 +228,7 @@
                 // Se for #, tentamos inferir pelo ID do elemento
                 // ALWAYS override specific links based on logged-in role
                 if (link.id === 'nav-inicio' || (link.querySelector('span:last-child') && link.querySelector('span:last-child').textContent.trim().toUpperCase() === 'INÍCIO')) {
-                    if (loggedInRole === 'admin') href = 'painel_admin.html';
-                    else if (loggedInRole === 'manager' || loggedInRole === 'gestor') href = 'painel_gestor.html';
-                    else href = 'painel_funcionario.html';
+                    href = 'dashboard.html';
                 } else if (href === '#') {
                     // Fallback for other icons if still #
                     if (link.id === 'nav-perfil-link' || link.innerText.toLowerCase().includes('perfil')) {
@@ -192,7 +236,7 @@
                     } else if (link.innerText.toLowerCase().includes('estatística')) {
                         href = 'estatistica_funcionario.html';
                     } else if (link.innerText.toLowerCase().includes('histórico')) {
-                        href = 'historico_anual.html';
+                        href = 'diario_funcionario.html';
                     }
                 }
 
@@ -214,9 +258,9 @@
 
     function interceptAllEmployeeLinks() {
         const employeePages = [
-            'painel_funcionario.html',
+            'dashboard.html',
             'estatistica_funcionario.html',
-            'historico_anual.html',
+            'diario_funcionario.html',
             'historico_mensal.html',
             'perfil_funcionario.html',
             'justificativa.html',

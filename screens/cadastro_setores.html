@@ -12,6 +12,7 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
     rel="stylesheet" />
+  <script src="../js/ui-utils.js"></script>
   <!-- Leaflet Map CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="../js/theme.js?v=1.0"></script>
@@ -57,7 +58,7 @@
   <!-- Header -->
   <header class="border-b border-primary/20 bg-background-dark/80 backdrop-blur-md sticky top-0 z-50">
     <div class="flex items-center p-4 justify-between max-w-2xl mx-auto">
-      <div id="btn-voltar" onclick="window.location.href='painel_admin.html'"
+      <div id="btn-voltar" onclick="UI.toggleSidebar()"
         class="text-primary flex size-10 shrink-0 items-center justify-center rounded-lg border border-primary/30 bg-primary/10 cursor-pointer hover:bg-primary/20 transition-all">
         <span class="material-symbols-outlined">arrow_back</span>
       </div>
@@ -174,7 +175,7 @@
   <nav
     class="fixed bottom-0 left-0 right-0 bg-background-dark/90 border-t border-white/5 py-4 z-50 flex justify-center backdrop-blur-xl">
     <div class="flex items-center justify-around w-full max-w-md px-6">
-      <a id="nav-inicio" href="painel_admin.html"
+      <a id="nav-inicio" href="dashboard.html"
         class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
         <span class="material-symbols-outlined text-2xl">home</span>
         <span class="text-[9px] font-black uppercase tracking-widest text-center">Início</span>
@@ -184,11 +185,10 @@
         <span class="material-symbols-outlined text-2xl">bar_chart</span>
         <span class="text-[9px] font-black uppercase tracking-widest text-center">Estatística</span>
       </a>
-      <a href="historico_anual.html"
-        class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
-        <span class="material-symbols-outlined text-2xl">history</span>
-        <span class="text-[9px] font-black uppercase tracking-widest text-center">Histórico</span>
-      </a>
+            <a href="diario_funcionario.html" class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+                <span class="material-symbols-outlined text-2xl">edit_note</span>
+                <span class="text-[9px] font-black uppercase tracking-widest text-center">Diário</span>
+            </a>
       <a id="nav-perfil-link" href="perfil_funcionario.html"
         class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
         <span class="material-symbols-outlined text-2xl">person</span>
@@ -854,10 +854,32 @@
       const { Auth } = await import('../js/auth.js');
       const { UI } = await import('../js/ui-utils.js');
       const currentUser = Auth.getUser();
-      if (currentUser) UI.updateFooterNavigation(currentUser.role);
+      if (currentUser) {
+        UI.updateFooterNavigation(currentUser.role);
+        UI.initSidebar(currentUser.role);
+      }
     })();
   </script>
   <script type="module" src="../js/manager-context.js?v=2.7"></script>
+
+  <!-- Sidebar Menu Overlay -->
+  <aside id="sidebarMenu" class="fixed top-0 left-0 h-full w-80 bg-background-dark border-r border-primary/20 z-[160] -translate-x-full transition-all duration-500 ease-out shadow-[20px_0_50px_rgba(0,0,0,0.5)]">
+      <div class="flex flex-col h-full">
+          <div class="p-8 border-b border-primary/10">
+              <h3 class="text-primary font-black italic text-2xl tracking-tighter">CHRONOSYNC</h3>
+              <p class="text-[10px] text-slate-500 uppercase font-bold tracking-[0.3em]">Console de Navegação</p>
+          </div>
+          <nav id="sidebarNav" class="flex-1 overflow-y-auto p-4 space-y-2">
+              <!-- Injetado via UI.initSidebar() -->
+          </nav>
+          <div class="p-4 border-t border-primary/10 bg-black/20">
+              <button onclick="Auth.logout()" class="w-full flex items-center gap-3 px-4 py-3 text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all font-bold text-xs uppercase">
+                  <span class="material-symbols-outlined">logout</span> Sair do Sistema
+              </button>
+          </div>
+      </div>
+  </aside>
+  <div id="sidebarOverlay" onclick="UI.toggleSidebar()" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[150] hidden opacity-0 transition-all duration-300"></div>
 </body>
 
 </html>

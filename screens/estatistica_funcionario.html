@@ -23,6 +23,25 @@
             .bg-background-dark, .bg-\[\#0f172a\] { background: #f8fafc !important; border: 1px solid #e2e8f0 !important; }
             .text-slate-100, .text-slate-300 { color: #0f172a !important; }
         }
+        /* Audit Slim Card Styles */
+        .audit-card { transition: all 0.3s ease; }
+        @media print {
+            .no-print { display: none !important; }
+            .audit-card {
+                background: white !important;
+                border: 2px solid #334155 !important;
+                border-radius: 12px !important;
+                padding: 1.5rem !important;
+                margin-bottom: 2rem !important;
+                box-shadow: none !important;
+                width: 100% !important;
+                color: black !important;
+            }
+            .audit-card img { filter: grayscale(1) contrast(1.2); border-color: #334155 !important; }
+            .audit-card h3 { color: black !important; border-bottom: 2px solid #334155 !important; }
+            .audit-card .text-primary { color: black !important; font-weight: 800 !important; }
+            .audit-card .text-slate-500 { color: #64748b !important; }
+        }
     </style>
 </head>
 
@@ -33,27 +52,45 @@
                 class="no-print text-primary flex size-10 items-center justify-center rounded-lg border border-primary/30 bg-primary/10 cursor-pointer hover:bg-primary/20 transition-all">
                 <span class="material-symbols-outlined">arrow_back</span>
             </div>
-            <h2 class="text-white text-lg font-black tracking-widest uppercase italic flex-1 text-center">Estatísticas</h2>
-            <button onclick="window.print()" class="no-print text-slate-400 hover:text-white transition-all">
-                <span class="material-symbols-outlined italic">picture_as_pdf</span>
-            </button>
+            <h2 class="text-white text-lg font-black tracking-widest uppercase italic flex-1 text-center font-['Space_Grotesk']">Estatísticas</h2>
+            <div class="flex items-center gap-2 no-print">
+                <button onclick="window.print()" class="size-10 flex items-center justify-center text-slate-400 hover:text-white transition-all">
+                    <span class="material-symbols-outlined">picture_as_pdf</span>
+                </button>
+                <button id="openSidebar" onclick="UI.toggleSidebar()" class="size-10 flex items-center justify-center bg-primary/10 border border-primary/30 rounded-lg text-primary hover:bg-primary/20 transition-all">
+                    <span class="material-symbols-outlined">menu</span>
+                </button>
+            </div>
         </div>
     </header>
 
     <main class="max-w-2xl mx-auto p-6 md:p-8 space-y-8">
-        <!-- Perfil Resumido (Padrão historico_anual) -->
-        <section class="flex flex-col items-center gap-4 text-center">
-            <div class="w-24 h-24 rounded-full border-2 border-primary p-1 bg-slate-800 shadow-xl shadow-primary/10">
-                <img id="user-photo" src="https://ui-avatars.com/api/?name=User&background=0D59F2&color=fff" class="w-full h-full rounded-full object-cover">
+        <div class="audit-card bg-slate-900 border border-white/5 rounded-3xl p-5 flex items-center gap-6 shadow-2xl relative group">
+            <div class="relative w-24 h-24 rounded-2xl border-4 border-amber-500/30 overflow-hidden shrink-0 shadow-2xl transition-all group-hover:border-amber-500/50">
+                <img id="user-photo-audit" src="https://ui-avatars.com/api/?name=User&background=020617&color=fff" 
+                     class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent pointer-events-none"></div>
             </div>
-            <div>
-                <h3 id="userNome" class="text-xl font-black text-slate-100 uppercase italic leading-tight">CARREGANDO...</h3>
-                <div class="space-y-1 mt-1">
-                    <p id="userCargo" class="text-primary text-[10px] font-black uppercase tracking-widest">CARGO/FUNÇÃO: ---</p>
-                    <p id="userSetor" class="text-primary text-[10px] font-black uppercase tracking-widest leading-none">SETOR: ---</p>
+            <div class="flex-1 min-w-0 text-left">
+                <h3 id="user-nome-audit" class="text-xl font-black text-slate-100 uppercase italic truncate leading-tight border-b border-amber-500/20 pb-2 mb-2">
+                    CARREGANDO...
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-1 gap-x-4">
+                    <div class="flex items-center gap-2">
+                        <span class="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none">Cargo:</span>
+                        <span id="user-cargo-audit" class="text-[9px] font-bold text-amber-500 uppercase truncate leading-none">---</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none">Setor:</span>
+                        <span id="user-setor-audit" class="text-[9px] font-bold text-amber-500 uppercase truncate leading-none">---</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none">Matrícula:</span>
+                        <span id="user-matricula-audit" class="text-[9px] font-bold text-amber-500 uppercase truncate leading-none">#---</span>
+                    </div>
                 </div>
             </div>
-        </section>
+        </div>
 
         <!-- Seletor de Ano (Padrão historico_anual) -->
         <div class="no-print flex items-center justify-between bg-primary/5 p-4 rounded-3xl border border-primary/20 shadow-lg">
@@ -115,21 +152,22 @@
 
     <nav class="fixed bottom-0 left-0 right-0 no-print bg-background-dark/90 border-t border-white/5 py-4 z-50 flex justify-center backdrop-blur-xl">
         <div class="flex items-center justify-around w-full max-w-md px-6">
-            <a href="painel_funcionario.html" class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors hover:scale-110">
+            <a id="nav-inicio" href="dashboard.html" class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
                 <span class="material-symbols-outlined text-2xl">home</span>
-                <span class="text-[9px] font-black uppercase tracking-widest">Início</span>
+                <span class="text-[9px] font-black uppercase tracking-widest text-center">Início</span>
             </a>
             <a href="estatistica_funcionario.html" class="flex flex-col items-center gap-1.5 text-primary scale-110">
                 <span class="material-symbols-outlined text-2xl font-variation-settings-fill">bar_chart</span>
-                <span class="text-[9px] font-black uppercase tracking-widest">Estatística</span>
+                <span class="text-[9px] font-black uppercase tracking-widest text-center">Estatística</span>
             </a>
-            <a href="historico_anual.html" class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors hover:scale-110">
-                <span class="material-symbols-outlined text-2xl">history</span>
-                <span class="text-[9px] font-black uppercase tracking-widest">Histórico</span>
+            <a href="diario_funcionario.html" class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors relative">
+                <span class="material-symbols-outlined text-2xl">edit_note</span>
+                <span class="text-[9px] font-black uppercase tracking-widest text-center">Diário</span>
+                <span id="notif-badge-footer" class="absolute top-0 right-0 size-3.5 bg-amber-500 text-white text-[7px] font-black rounded-full flex items-center justify-center border border-background-dark hidden">0</span>
             </a>
-            <a href="perfil_funcionario.html" class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors hover:scale-110">
+            <a id="nav-perfil-link" href="perfil_funcionario.html" class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
                 <span class="material-symbols-outlined text-2xl">person</span>
-                <span class="text-[9px] font-black uppercase tracking-widest">Perfil</span>
+                <span class="text-[9px] font-black uppercase tracking-widest text-center">Perfil</span>
             </a>
         </div>
     </nav>
@@ -139,6 +177,7 @@
         import { Auth } from '../js/auth.js';
         import { UI } from '../js/ui-utils.js';
         import { ScalesEngine } from '../js/scales-engine.js';
+        import { Notifications } from '../js/notifications.js';
 
         const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
         let currentUserData = null;
@@ -146,6 +185,9 @@
 
         async function init() {
             UI.showLoader();
+            const logged = Auth.getUser();
+            if (logged) UI.initSidebar(logged.role);
+
             const urlParams = new URLSearchParams(window.location.search);
             const targetId = urlParams.get('id') || localStorage.getItem('userId');
 
@@ -153,19 +195,47 @@
             document.getElementById('next-year').onclick = () => { curYear++; loadStats(); };
 
             try {
-                const { data: func, error } = await supabase
-                    .from('funcionarios')
-                    .select('*, escalas(*), setores!setor_id(nome)')
-                    .eq('id', targetId)
+                const { data: perfil, error: errPerfil } = await supabase
+                    .from('perfis_tripulantes')
+                    .select('*, funcionarios!inner(*, escalas(*), setores!setor_id(nome))')
+                    .eq('funcionario_id', targetId)
                     .single();
                 
-                if (error) throw error;
+                if (errPerfil) throw errPerfil;
+                const func = { ...perfil.funcionarios, foto_url: perfil.foto_url };
                 currentUserData = func;
 
-                document.getElementById('userNome').innerText = func.nome_completo.toUpperCase();
-                document.getElementById('userCargo').innerText = `CARGO/FUNÇÃO: ${(func.funcao || 'TRIPULANTE').toUpperCase()}`;
-                document.getElementById('userSetor').innerText = `SETOR: ${(func.setores?.nome || 'N/A').toUpperCase()}`;
-                if (func.foto_url) document.getElementById('user-photo').src = func.foto_url;
+                // This block seems to be from ui-utils.js, but it's placed here.
+                // Assuming it's a conceptual instruction for ui-utils.js,
+                // but if it's meant to be *in this file*, it's syntactically incorrect here.
+                // I will keep the original structure of this file and only apply the HTML change.
+                // If this JS snippet was intended to be *added* to this file, please clarify its context.
+                /*
+                } else {
+                    // Funcionário comum - Unificado com Footer
+                    items.push({ href: 'dashboard.html', icon: 'home', label: 'Início' });
+                    items.push({ href: 'estatistica_funcionario.html', icon: 'bar_chart', label: 'Estatística' });
+                    items.push({ href: 'diario_funcionario.html', icon: 'edit_note', label: 'Diário' });
+                    items.push({ href: 'perfil_funcionario.html', icon: 'person', label: 'Meu Perfil' });
+                    items.push({ href: 'historico_mensal.html', icon: 'history', label: 'Espelho de Ponto' });
+                }
+                */
+
+                document.getElementById('user-nome-audit').innerText = func.nome_completo.toUpperCase();
+                document.getElementById('user-cargo-audit').innerText = (func.funcao || 'TRIPULANTE').toUpperCase();
+                document.getElementById('user-setor-audit').innerText = (func.setores?.nome || 'N/A').toUpperCase();
+                document.getElementById('user-matricula-audit').innerText = `#${func.matricula || '---'}`;
+                
+                // Photo Sync Logic with Error Fallback
+                const photoImg = document.getElementById('user-photo-audit');
+                if (func.foto_url) {
+                    photoImg.src = func.foto_url;
+                } else {
+                    photoImg.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(func.nome_completo)}&background=020617&color=fbbf24&bold=true`;
+                }
+                photoImg.onerror = () => {
+                    photoImg.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(func.nome_completo)}&background=020617&color=fbbf24&bold=true`;
+                };
 
                 await loadStats();
             } catch (err) {
@@ -195,6 +265,14 @@
                 .lte('data_hora', endYear)
                 .order('data_hora', { ascending: true });
 
+            // Buscar Férias, Folgas e Feriados
+            const { data: feriadosAno } = await supabase
+                .from('feriados_folgas')
+                .select('*')
+                .or(`funcionario_id.eq.${targetId},setor_id.eq.${currentUserData.setor_id},escopo.eq.geral`)
+                .gte('data', `${year}-01-01`)
+                .lte('data', `${year}-12-31`);
+
             const monthlyData = [];
             let totalYearMins = 0;
             let totalYearFaltas = 0;
@@ -205,7 +283,11 @@
                 if (year === now.getFullYear() && m > now.getMonth()) break;
 
                 const monthPoints = (pontosAno || []).filter(p => p.data_hora.startsWith(`${year}-${(m+1).toString().padStart(2, '0')}`));
-                const plannedDays = ScalesEngine.projectBaseDays(currentUserData.escalas, currentUserData.escalas.vigencia_inicio, m, year);
+                const specialMonthDays = (feriadosAno || []).filter(f => f.data.startsWith(`${year}-${(m+1).toString().padStart(2, '0')}`)).map(f => f.data);
+                
+                let plannedDays = ScalesEngine.projectBaseDays(currentUserData.escalas, currentUserData.escalas.vigencia_inicio, m, year);
+                // Excluir dias especiais (feriados/folgas) do planejamento
+                plannedDays = plannedDays.filter(d => !specialMonthDays.includes(d));
                 
                 let workedMins = 0;
                 monthPoints.forEach((p, i) => {
@@ -290,6 +372,26 @@
 
         init();
     </script>
+    <!-- Sidebar Menu Overlay -->
+    <aside id="sidebarMenu" class="fixed top-0 left-0 h-full w-80 bg-background-dark border-r border-primary/20 z-[160] -translate-x-full transition-all duration-500 ease-out shadow-[20px_0_50px_rgba(0,0,0,0.5)]">
+        <div class="flex flex-col h-full">
+            <div class="p-8 border-b border-primary/10">
+                <h3 class="text-primary font-black italic text-2xl tracking-tighter">CHRONOSYNC</h3>
+                <p class="text-[10px] text-slate-500 uppercase font-bold tracking-[0.3em]">Console de Navegação</p>
+            </div>
+            <nav id="sidebarNav" class="flex-1 overflow-y-auto p-4 space-y-2">
+                <!-- Injetado via UI.initSidebar() -->
+            </nav>
+            <div class="p-4 border-t border-primary/10 bg-black/20">
+                <button id="logoutBtn" class="w-full flex items-center gap-3 px-4 py-3 text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all font-bold text-xs uppercase">
+                    <span class="material-symbols-outlined">logout</span> Sair do Sistema
+                </button>
+            </div>
+        </div>
+    </aside>
+    <div id="sidebarOverlay" onclick="UI.toggleSidebar()" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[150] hidden opacity-0 transition-all duration-300"></div>
+
+    <script type="module" src="../js/manager-context.js?v=3.0"></script>
 </body>
 
 </html>

@@ -152,14 +152,8 @@
           console.log('Login Sucesso:', result.user.nome_completo);
           UI.showToast(`Bem-vindo, ${result.user.nome_completo}!`, 'success');
 
-          let targetPage = 'painel_funcionario.html';
-          const role = result.user.nivel_acesso;
-
-          if (role === 'Admin') targetPage = 'painel_admin.html';
-          else if (role === 'Gestor') targetPage = 'painel_gestor.html';
-
-          // Forçar redirecionamento
-          const finalUrl = `${targetPage}?id=${result.user.id}&role=${role}&v=5`;
+          // Unificação: Todos os perfis vão para o dashboard.html
+          const finalUrl = `dashboard.html?id=${result.user.id}&v=1.1`;
           console.log('Redirecionando...', finalUrl);
 
           // Mudança no botão para fallback visual

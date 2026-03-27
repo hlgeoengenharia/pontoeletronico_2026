@@ -18,6 +18,25 @@
         .font-variation-settings-fill {
             font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
         }
+        /* Audit Slim Card Styles */
+        .audit-card { transition: all 0.3s ease; }
+        @media print {
+            .no-print { display: none !important; }
+            .audit-card {
+                background: white !important;
+                border: 2px solid #334155 !important;
+                border-radius: 12px !important;
+                padding: 1.5rem !important;
+                margin-bottom: 2rem !important;
+                box-shadow: none !important;
+                width: 100% !important;
+                color: black !important;
+            }
+            .audit-card img { filter: grayscale(1) contrast(1.2); border-color: #334155 !important; }
+            .audit-card h3 { color: black !important; border-bottom: 2px solid #334155 !important; }
+            .audit-card .text-primary { color: black !important; font-weight: 800 !important; }
+            .audit-card .text-slate-500 { color: #64748b !important; }
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="module" src="../js/supabase-config.js"></script>
@@ -38,49 +57,56 @@
             class="text-slate-900 dark:text-slate-100 text-lg font-bold leading-tight tracking-tight flex-1 text-center pr-12 uppercase tracking-widest">
             PERFIL DO USUÁRIO</h2>
     </div>
-    <!-- Profile Header Section -->
-    <section class="p-6 pt-8 flex flex-col items-center bg-background-dark/50 border-b border-primary/10">
-        <div class="relative mb-4 group/avatar">
-            <!-- Anel Laranja e Container da Foto -->
-            <div id="avatar-container"
-                class="w-32 h-32 rounded-full border-4 border-orange-500 p-1 bg-background-dark shadow-[0_0_20px_rgba(249,115,22,0.2)] relative transition-all duration-300">
-                <img id="user-photo-profile" src="https://ui-avatars.com/api/?name=User&background=020617&color=fff"
-                    class="w-full h-full rounded-full object-cover">
-                
-                <!-- Botão Excluir (CRUD) -->
-                <button type="button" id="btn-remover-foto" class="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity hidden">
-                     <span class="material-symbols-outlined text-white text-3xl">delete</span>
+    <!-- Audit Slim Card Section -->
+    <section class="p-6 max-w-lg mx-auto w-full">
+        <div class="audit-card bg-slate-900/50 border border-primary/20 rounded-3xl p-5 flex items-center gap-5 shadow-2xl backdrop-blur-sm">
+            <!-- Avatar Container -->
+            <div class="relative shrink-0 group/avatar">
+                <input type="file" id="avatar-input" class="hidden" accept="image/*">
+                <div id="avatar-container" onclick="document.getElementById('avatar-input').click()" class="w-24 h-24 rounded-2xl border-4 border-amber-500/30 overflow-hidden relative transition-all duration-300 shadow-2xl cursor-pointer">
+                    <img id="user-photo-profile" src="https://ui-avatars.com/api/?name=User&background=020617&color=fff"
+                        class="w-full h-full object-cover">
+                    
+                    <!-- Botão Excluir -->
+                    <button type="button" id="btn-remover-foto" class="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity hidden">
+                         <span class="material-symbols-outlined text-white text-2xl">delete</span>
+                    </button>
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent pointer-events-none"></div>
+                </div>
+                <!-- Botão Câmera Slim -->
+                <button type="button" onclick="abrirModalCamera()" class="no-print absolute -bottom-2 -right-2 w-12 h-12 bg-orange-500 rounded-xl flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-all border-4 border-background-dark z-10">
+                    <span class="material-symbols-outlined text-white text-xl">photo_camera</span>
                 </button>
-                
-                <!-- Ponto de Status (Top Right) -->
-                <div id="status-biometria-badge" class="absolute top-1 right-1 size-7 rounded-full bg-emerald-500 border-4 border-background-dark flex items-center justify-center shadow-lg hidden">
-                    <span class="material-symbols-outlined text-background-dark text-[14px] font-black">check</span>
+            </div>
+
+            <!-- Info Container -->
+            <div class="flex-1 min-w-0">
+                <h3 id="display-name-profile" class="text-xl font-black text-slate-100 uppercase italic truncate leading-tight border-b border-amber-500/20 pb-2 mb-2">
+                    CARREGANDO...
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-1 gap-x-4">
+                    <div class="flex items-center gap-2">
+                        <span class="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none">Cargo:</span>
+                        <span id="user-role-profile" class="text-[9px] font-bold text-amber-500 uppercase truncate leading-none">...</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none">Setor:</span>
+                        <span id="user-setor-profile" class="text-[9px] font-bold text-amber-500 uppercase truncate leading-none">...</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none">Matrícula:</span>
+                        <span id="display-matricula-profile" class="text-[9px] font-bold text-amber-500 uppercase truncate leading-none">#...</span>
+                    </div>
                 </div>
             </div>
-            
-            <!-- Botão Câmera (Bottom Right) -->
-            <button type="button" onclick="abrirModalCamera()" class="absolute -bottom-1 -right-1 w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center shadow-xl hover:scale-110 active:scale-95 transition-all outline-none border-4 border-background-dark z-10">
-                <span class="material-symbols-outlined text-white text-2xl">photo_camera</span>
-            </button>
         </div>
 
-        <!-- Cápsula Biométrica (Tornada interativa para registro/atualização) -->
-        <button type="button" id="capsula-biometria" onclick="handleBiometriaClick()" class="mb-8 px-8 py-3 bg-slate-950/90 border border-emerald-500/30 rounded-full flex items-center gap-4 shadow-2xl backdrop-blur-md animate-in fade-in zoom-in duration-500 hover:scale-105 active:scale-95 transition-all outline-none">
-            <div id="capsula-icon-bg" class="size-8 rounded-lg bg-emerald-500/20 flex items-center justify-center transition-all duration-500">
-                <span id="capsula-icon" class="material-symbols-outlined text-emerald-500 text-lg">face</span>
-            </div>
-            <span id="capsula-text" class="text-xs font-black text-emerald-500 uppercase tracking-[0.2em]">Biometria Cadastrada</span>
-        </button>
-
-        <h3 id="display-name-profile" class="text-2xl font-black text-slate-100 tracking-tight mb-1 uppercase">
-            CARREGANDO...</h3>
-        <div id="user-info-container" class="space-y-1 text-center">
-            <p id="user-role-profile" class="text-[10px] font-bold text-primary uppercase tracking-[0.1em] opacity-80">
-                CARGO/FUNÇÃO: ...
-            </p>
-            <p id="user-setor-profile" class="text-[10px] font-bold text-primary uppercase tracking-[0.1em] opacity-80">
-                SETOR: ...
-            </p>
+        <!-- Bio Badge Slim -->
+        <div class="flex justify-center mt-4">
+            <button type="button" id="capsula-biometria" onclick="handleBiometriaClick()" class="px-4 py-1.5 bg-slate-950/40 border border-emerald-500/20 rounded-full flex items-center gap-2 hover:scale-105 active:scale-95 transition-all outline-none">
+                <span id="capsula-icon" class="material-symbols-outlined text-emerald-500 text-sm">face</span>
+                <span id="capsula-text" class="text-[8px] font-black text-emerald-500 uppercase tracking-widest">Biometria Ativa</span>
+            </button>
         </div>
     </section>
 
@@ -108,6 +134,9 @@
         </div>
 
         <form id="profile-form" class="space-y-6">
+            <!-- Campos de Controle de Biometria (Ocultos) -->
+            <input type="hidden" id="biometria_cadastrada" value="false">
+            <input type="hidden" id="biometria_token" value="">
             <!-- Nome Completo -->
             <div class="group">
                 <label class="block text-xs font-bold uppercase tracking-widest text-primary mb-3">Nome Completo</label>
@@ -166,13 +195,6 @@
                         <input id="data_nasc"
                             class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg py-3 px-4 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                             type="date" readonly>
-                    </div>
-                    <!-- Data de Início -->
-                    <div class="group">
-                        <label class="block text-xs font-bold uppercase tracking-widest text-primary mb-3">Início das Atividades</label>
-                        <input id="data_inicio_prevista"
-                            class="w-full bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-lg py-3 px-4 text-slate-500 cursor-not-allowed outline-none"
-                            type="date" readonly title="Campo definido pelo RH">
                     </div>
                 <!-- Sexo/Gênero -->
                 <div class="group">
@@ -317,6 +339,7 @@
                     </label>
                 </div>
 
+
                 <div id="lembrete_config"
                     class="flex items-center justify-between pt-2 border-t border-primary/10 transition-all">
                     <span class="text-[10px] font-bold text-slate-400 uppercase">Antecedência (Minutos)</span>
@@ -328,94 +351,81 @@
                         <option value="30">30 Minutos</option>
                     </select>
                 </div>
-            </div>
-
-            <hr class="border-primary/10 my-8">
-
-            <!-- Matrícula -->
-            <div class="group">
-                <label class="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">Matrícula
-                    (Imutável)</label>
-                <div class="relative">
-                    <span
-                        class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">fingerprint</span>
-                    <input id="campo-matricula"
-                        class="w-full bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-lg py-3 pl-10 pr-4 outline-none cursor-not-allowed text-slate-500"
-                        readonly type="text" value="CR-2024-0042">
-                </div>
-            </div>
-
-            <!-- Regime e Rastreio -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <div class="group">
-                    <label class="block text-xs font-bold uppercase tracking-widest text-primary mb-3">Regime de Trabalho</label>
-                    <select id="regime_trabalho"
-                        class="w-full bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-lg py-3 px-4 text-sm text-slate-500 cursor-not-allowed outline-none" disabled>
-                        <option value="Presencial">Presencial</option>
-                        <option value="Teletrabalho / Home Office">Teletrabalho / Home Office</option>
-                        <option value="Híbrido">Híbrido</option>
-                        <option value="Externo">Externo</option>
-                    </select>
-                </div>
-                <div class="group flex flex-col justify-end">
-                    <div class="p-3 bg-primary/5 border border-primary/20 rounded-xl flex items-center justify-between opacity-60">
-                        <div class="flex items-center gap-2">
-                             <span class="material-symbols-outlined text-primary text-sm">location_on</span>
-                             <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Rastreio Ativo</span>
-                        </div>
-                        <label class="relative inline-flex items-center cursor-not-allowed">
-                            <input id="rastreio_ativo" type="checkbox" class="sr-only peer" disabled>
-                            <div class="w-9 h-5 bg-slate-700 rounded-full peer peer-checked:bg-primary"></div>
-                        </label>
-                    </div>
-                </div>
-            </div>
-
-            <div class="hidden">
-                <input type="hidden" id="biometria_cadastrada" value="false">
-                <input type="hidden" id="biometria_token" value="">
-            </div>
-            
-
-            <!-- Nível de Acesso -->
-            <div class="group space-y-3">
-                <label class="block text-xs font-bold uppercase tracking-widest text-primary">Nível de Acesso ao Sistema</label>
-                <div id="access-level-choices" class="grid grid-cols-3 gap-2 bg-slate-100 dark:bg-slate-800 p-1.5 rounded-xl border border-slate-200 dark:border-slate-800 transition-all">
-                    <label class="relative flex flex-col items-center justify-center py-4 px-2 cursor-pointer rounded-lg border border-transparent has-[:checked]:border-primary/50 has-[:checked]:bg-primary/10 has-[:checked]:text-primary text-slate-500 dark:text-slate-400 transition-all group/level">
-                        <input class="hidden" name="access_level" type="radio" value="Funcionário">
-                        <span class="material-symbols-outlined mb-1 group-has-[:checked]/level:text-primary">shield</span>
-                        <span class="text-[10px] font-bold uppercase tracking-tighter">Funcionário</span>
-                    </label>
-                    <label class="relative flex flex-col items-center justify-center py-4 px-2 cursor-pointer rounded-lg border border-transparent has-[:checked]:border-primary/50 has-[:checked]:bg-primary/10 has-[:checked]:text-primary text-slate-500 dark:text-slate-400 transition-all group/level">
-                        <input class="hidden" name="access_level" type="radio" value="Gestor">
-                        <span class="material-symbols-outlined mb-1 group-has-[:checked]/level:text-primary">military_tech</span>
-                        <span class="text-[10px] font-bold uppercase tracking-tighter">Gestor</span>
-                    </label>
-                    <label class="relative flex flex-col items-center justify-center py-4 px-2 cursor-pointer rounded-lg border border-transparent has-[:checked]:border-primary/50 has-[:checked]:bg-primary/10 has-[:checked]:text-primary text-slate-500 dark:text-slate-400 transition-all group/level">
-                        <input class="hidden" name="access_level" type="radio" value="Admin">
-                        <span class="material-symbols-outlined mb-1 group-has-[:checked]/level:text-primary">workspace_premium</span>
-                        <span class="text-[10px] font-bold uppercase tracking-tighter">Admin</span>
-                    </label>
-                </div>
-            </div>
-
-
-
             <!-- Função e Setor (Somente Leitura para o Funcionário) -->
-            <div class="grid grid-cols-2 gap-4">
-                <div class="group">
-                    <label class="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">Função</label>
-                    <div id="user-funcao-field"
-                        class="w-full bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-lg py-3 px-4 text-sm text-slate-500 cursor-not-allowed">
-                        Carregando...
+            <div id="restricted-management-fields" class="space-y-6 pt-6 border-t border-primary/20 bg-primary/5 p-4 rounded-2xl mb-8">
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="material-symbols-outlined text-primary text-sm">admin_panel_settings</span>
+                    <h3 class="text-xs font-black uppercase tracking-widest text-primary/80">Controle Administrativo</h3>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="group">
+                        <label class="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">Matrícula (Imutável)</label>
+                        <div class="relative">
+                            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-500">fingerprint</span>
+                            <input id="campo-matricula"
+                                class="w-full bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-lg py-3 pl-10 pr-4 outline-none cursor-not-allowed text-slate-500"
+                                readonly type="text">
+                        </div>
+                    </div>
+                    <div class="group">
+                        <label class="block text-xs font-bold uppercase tracking-widest text-primary mb-3">Nível de Acesso Ao Sistema</label>
+                        <div id="access-level-choices-select" class="grid grid-cols-1 gap-2 bg-slate-100 dark:bg-slate-800 p-1.5 rounded-xl border border-slate-200 dark:border-slate-800 transition-all">
+                            <select id="nivel_acesso_select" class="w-full bg-transparent border-none text-xs font-bold uppercase tracking-widest outline-none text-slate-900 dark:text-white">
+                                <option value="Funcionário" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Funcionário</option>
+                                <option value="Gestor" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Gestor</option>
+                                <option value="Admin" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">Admin</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
-                <div class="group">
-                    <label class="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">Setor</label>
-                    <div
-                        class="w-full bg-slate-100 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-lg py-3 px-4 text-sm text-slate-500 cursor-not-allowed">
-                        Operações Temporais
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="group">
+                        <label class="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">Função</label>
+                        <select id="funcao-select" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg py-3 px-4 text-sm outline-none transition-all">
+                            <option value="">Carregando...</option>
+                        </select>
                     </div>
+                    <div class="group">
+                        <label class="block text-xs font-bold uppercase tracking-widest text-slate-500 mb-3">Setor</label>
+                        <select id="setor-select" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg py-3 px-4 text-sm outline-none transition-all">
+                            <option value="">Carregando...</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="group">
+                        <label class="block text-xs font-bold uppercase tracking-widest text-primary mb-3">Regime de Trabalho</label>
+                        <select id="regime_trabalho" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg py-3 px-4 text-sm outline-none transition-all">
+                            <option value="Presencial">Presencial</option>
+                            <option value="Teletrabalho / Home Office">Teletrabalho / Home Office</option>
+                            <option value="Híbrido">Híbrido</option>
+                            <option value="Externo">Externo</option>
+                        </select>
+                    </div>
+                    <div class="group">
+                        <label class="block text-xs font-bold uppercase tracking-widest text-primary mb-3">Previsão de Início</label>
+                        <input id="data_inicio_prevista" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg py-3 px-4 text-sm outline-none transition-all" type="date">
+                    </div>
+                </div>
+
+                <!-- Campo: Rastreio Ativo (Habilitado/Desabilitado) -->
+                <div id="container-rastreio-management" class="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-2xl group transition-all">
+                    <div class="flex items-center gap-4">
+                        <div class="size-10 rounded-xl bg-rose-500/10 flex items-center justify-center text-rose-500 group-hover:bg-rose-500 group-hover:text-white transition-all">
+                            <span class="material-symbols-outlined text-xl">location_on</span>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-black text-slate-100 uppercase tracking-widest">Rastreio Ativo</p>
+                            <p class="text-[8px] text-slate-500 font-bold uppercase">Monitoramento GPS Contínuo</p>
+                        </div>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="rastreio_ativo" class="sr-only peer">
+                        <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-rose-500"></div>
+                    </label>
                 </div>
             </div>
             <!-- ESCALA & JORNADA -->
@@ -547,93 +557,143 @@
                     </div>
                 </div>
             </div>
-         </div>
-                    </div>
-                </div>
-            </div>
-
             <script type="module">
                 import { supabase } from '../js/supabase-config.js?v=2';
                 import { ScalesEngine } from '../js/scales-engine.js';
                 import { Auth } from '../js/auth.js';
                 import { UI } from '../js/ui-utils.js';
 
-                // Controle de Travamento do Formulário (Modo de Segurança)
                 function setFormLocked(locked) {
                     const form = document.getElementById('profile-form');
                     const inputs = form.querySelectorAll('input, select, textarea');
-                    const submitBtn = form.querySelector('button[type="submit"]');
-                    const editControl = document.getElementById('edit-control-container');
+                    const btnSalvar = document.getElementById('btn-salvar-perfil');
+                    const btnUnlock = document.getElementById('btn-unlock-edit');
+                    
+                    const loggedUser = Auth.getUser();
+                    const isEmployee = loggedUser && loggedUser.role === 'Funcionário';
 
+                    // Ocultar Rastreio Ativo para Funcionários (Visualização do Funcionário)
+                    const containerRastreio = document.getElementById('container-rastreio');
+                    if (containerRastreio && isEmployee) {
+                        containerRastreio.classList.add('hidden');
+                    }
+                    
+                    // Ocultar Rastreio Ativo para Funcionários (Visualização Gestor)
+                    const containerRastreioMgmt = document.getElementById('container-rastreio-management');
+                    if (containerRastreioMgmt && isEmployee) {
+                        containerRastreioMgmt.classList.add('hidden');
+                    }
+
+                    // Bloquear/Desbloquear inputs
                     inputs.forEach(input => {
-                        // Impedir que matrícula e campos imutáveis sejam desbloqueados
-                        if (input.id === 'campo-matricula') return;
-                        
-                        // Restrição do Nível de Acesso: Só Admin/Gestor em inspeção podem alterar
-                        if (input.name === 'access_level') {
-                            const urlParams = new URLSearchParams(window.location.search);
-                            const loggedUser = Auth.getUser();
-                            const isInspection = urlParams.get('id') && loggedUser && (loggedUser.role === 'Admin' || loggedUser.role === 'Gestor');
-                            input.disabled = locked || !isInspection;
+                        // Campos que NUNCA podem ser editados (apenas por Admin em situações específicas, mas aqui congelamos)
+                        const isForbidden = ['campo-matricula', 'biometria_cadastrada', 'biometria_token'].includes(input.id);
+                        if (isForbidden) {
+                            input.readOnly = true;
+                            input.disabled = true;
                         } else {
-                            input.disabled = locked;
-                            input.readOnly = locked;
-                        }
-                        
-                        // Estilo visual para campos travados
-                        if (input.disabled) {
-                            input.classList.add('opacity-60', 'cursor-not-allowed', 'bg-slate-100/50', 'dark:bg-slate-800/50');
-                        } else {
-                            input.classList.remove('opacity-60', 'cursor-not-allowed', 'bg-slate-100/50', 'dark:bg-slate-800/50');
+                            if (input.type === 'checkbox' || input.tagName === 'SELECT') {
+                                input.disabled = locked;
+                            } else {
+                                input.readOnly = locked;
+                            }
                         }
                     });
 
-                    // Bloquear calendário
-                    const calendar = document.getElementById('mini-calendario');
-                    if (calendar) {
-                        if (locked) calendar.classList.add('pointer-events-none', 'opacity-80');
-                        else calendar.classList.remove('pointer-events-none', 'opacity-80');
+                    if (btnSalvar) {
+                        btnSalvar.classList.toggle('hidden', locked);
+                    }
+                    if (btnUnlock) {
+                        btnUnlock.innerText = locked ? 'Ativar Edição' : 'Encerrar Edição';
+                        btnUnlock.classList.toggle('bg-amber-500', locked);
+                        btnUnlock.classList.toggle('bg-rose-500', !locked);
                     }
 
-                    if (submitBtn) {
-                        if (locked) submitBtn.classList.add('hidden');
-                        else submitBtn.classList.remove('hidden');
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const employeeIdParam = urlParams.get('id');
+                    const isInspecting = employeeIdParam && employeeIdParam !== loggedUser?.id;
+                    const loggedRole = String(loggedUser?.role || '').toLowerCase();
+                    const isAdmin = loggedRole === 'admin';
+                    const isGestor = loggedRole === 'gestor' || loggedRole === 'manager' || loggedRole === 'comandante' || isAdmin;
+
+                    // 1. REGRAS RÍGIDAS DE PERMISSÃO (Independente de 'locked')
+                    // --------------------------------------------------------
+                    
+                    // BIOMETRIA E SENHA: Em nenhuma hipótese Admin/Gestor podem alterar de outro funcionário
+                    if (isInspecting) {
+                        const capsulaBio = document.getElementById('capsula-biometria');
+                        if (capsulaBio) capsulaBio.classList.add('hidden'); // Ocultar para não gerar confusão
+                        
+                        const inputSenha = document.getElementById('nova_senha');
+                        if (inputSenha) {
+                            inputSenha.disabled = true;
+                            inputSenha.parentElement.parentElement.classList.add('hidden'); // Ocultar campo de senha
+                        }
+                        
+                        const btnRemoverFoto = document.getElementById('btn-remover-foto');
+                        if (btnRemoverFoto) btnRemoverFoto.classList.add('hidden');
+                        
+                        const btnCamera = document.querySelector('button[onclick="abrirModalCamera()"]');
+                        if (btnCamera) btnCamera.classList.add('hidden');
                     }
 
-                    const btnRemover = document.getElementById('btn-remover-especialidade');
-                    if (btnRemover) {
-                        if (locked) btnRemover.classList.add('hidden');
-                        else if (document.getElementById('especialidade_id')?.value) btnRemover.classList.remove('hidden');
+                    // RESTRIÇÕES POR NÍVEL DE ACESSO
+                    // -----------------------------
+                    inputs.forEach(input => {
+                        // Admin Only: Matrícula, Nível de Acesso, Previsão de Início
+                        const isAdminOnly = (input.id === 'campo-matricula' || input.id === 'nivel_acesso_select' || input.id === 'data_inicio_prevista');
+                        
+                        // Admin & Gestor Only: Função, Setor, Regime, Rastreio, Escala
+                        const isManagementField = (input.id === 'funcao-select' || input.id === 'setor-select' || input.id === 'regime_trabalho' || input.id === 'rastreio_ativo' || input.id === 'btn-personalizar' || input.id === 'escala-select');
+
+                        if (isAdminOnly && !isAdmin) {
+                            input.disabled = true;
+                            input.classList.add('cursor-not-allowed', 'opacity-50');
+                        } else if (isManagementField && !isGestor) {
+                            input.disabled = true;
+                            input.classList.add('cursor-not-allowed', 'opacity-50');
+                        } else {
+                            // Aplicar tranca geral (Safety Lock)
+                            input.disabled = locked;
+                            if (locked) input.classList.add('opacity-80');
+                            else input.classList.remove('opacity-80');
+                        }
+                    });
+
+                    // Botão de Personalizar Escala
+                    const btnPers = document.getElementById('btn-personalizar');
+                    if (btnPers) {
+                        if (!isGestor || locked) {
+                            btnPers.classList.add('hidden');
+                        } else {
+                            btnPers.classList.remove('hidden');
+                        }
                     }
 
+                    // 2. CONTROLES DE BOTÕES E UI
+                    // -----------------------------
+                    if (btnSalvar) {
+                        if (locked) btnSalvar.classList.add('hidden');
+                        else btnSalvar.classList.remove('hidden');
+                    }
 
-                    // Atualizar o botão de desbloqueio
+                    // Ajustar o botão de desbloqueio
                     const unlockBtn = document.getElementById('btn-unlock-edit');
                     if (unlockBtn) {
                         if (!locked) {
                             unlockBtn.innerHTML = 'Parar Edição';
                             unlockBtn.classList.replace('bg-amber-500', 'bg-slate-700');
-                            unlockBtn.classList.replace('hover:bg-amber-600', 'hover:bg-slate-800');
                         } else {
                             unlockBtn.innerHTML = 'Ativar Edição';
                             unlockBtn.classList.replace('bg-slate-700', 'bg-amber-500');
-                            unlockBtn.classList.replace('hover:bg-slate-800', 'hover:bg-amber-600');
                         }
                     }
 
-                    // Ajustar textos informativos se estiver no modo de segurança (isOwner/isInspection)
-                    const controlBox = document.getElementById('edit-control-container');
-                    if (controlBox && !controlBox.classList.contains('hidden')) {
-                        const labels = controlBox.querySelectorAll('p');
-                        if (labels.length >= 2) {
-                            if (!locked) {
-                                labels[0].innerText = 'Modo de Edição Ativo';
-                                labels[1].innerText = 'Lembre-se de salvar suas alterações antes de sair';
-                            } else {
-                                // Os textos padrão de "congelado" já são definidos no preencherDados dependendo de quem vê
-                                // mas podemos reforçar aqui se necessário. No entanto, o preencherDados já lida com isOwner vs isInspection
-                            }
-                        }
+                    // Ajustar cursor do avatar conforme estado de bloqueio
+                    const avatarContainer = document.getElementById('avatar-container');
+                    if (avatarContainer) {
+                        avatarContainer.style.pointerEvents = locked ? 'none' : 'auto';
+                        avatarContainer.classList.toggle('opacity-80', locked);
                     }
                 }
 
@@ -689,6 +749,24 @@
                     modal.classList.add('hidden');
                     modal.classList.remove('flex');
                 };
+
+                // --- LÓGICA DE UPLOAD DE ARQUIVO (Sincronizado) ---
+                const avatarInput = document.getElementById('avatar-input');
+                if (avatarInput) {
+                    avatarInput.addEventListener('change', function(e) {
+                        const file = e.target.files[0];
+                        if (file) {
+                            const reader = new FileReader();
+                            reader.onload = function(e) {
+                                document.getElementById('user-photo-profile').src = e.target.result;
+                                document.getElementById('btn-remover-foto').classList.remove('hidden');
+                                selectedAvatarFile = file;
+                                UI.showToast("Imagem selecionada com sucesso!", "success");
+                            };
+                            reader.readAsDataURL(file);
+                        }
+                    });
+                }
 
                 document.getElementById('btn-capturar-frame').onclick = () => {
                     const video = document.getElementById('video-feed');
@@ -895,6 +973,51 @@
                     }
                 };
 
+                async function carregarDadosIniciais() {
+                    try {
+                        // Carregar Setores
+                        const { data: setores } = await supabase.from('setores').select('*').order('nome');
+                        const setorSelect = document.getElementById('setor-select');
+                        if (setorSelect) {
+                            setorSelect.innerHTML = '<option value="">Selecionar...</option>';
+                            setores.forEach(s => {
+                                const opt = document.createElement('option');
+                                opt.value = s.id;
+                                opt.textContent = s.nome;
+                                setorSelect.appendChild(opt);
+                            });
+                        }
+
+                        // Carregar Cargos
+                        const { data: cargos } = await supabase.from('cargos').select('*').order('nome');
+                        const funcaoSelect = document.getElementById('funcao-select');
+                        if (funcaoSelect) {
+                            funcaoSelect.innerHTML = '<option value="">Selecionar...</option>';
+                            cargos.forEach(c => {
+                                const opt = document.createElement('option');
+                                opt.value = c.id;
+                                opt.textContent = c.nome;
+                                funcaoSelect.appendChild(opt);
+                            });
+                        }
+
+                        // Carregar Escalas
+                        const { data: escalas } = await supabase.from('escalas').select('*').order('nome');
+                        const escalaSelect = document.getElementById('escala-select');
+                        if (escalaSelect) {
+                            escalaSelect.innerHTML = '<option value="">Selecionar...</option>';
+                            escalas.forEach(e => {
+                                const opt = document.createElement('option');
+                                opt.value = e.id;
+                                opt.textContent = e.nome;
+                                escalaSelect.appendChild(opt);
+                            });
+                        }
+                    } catch (error) {
+                        console.error('Erro ao carregar dados iniciais:', error);
+                    }
+                }
+
                 async function initProfile() {
                     const urlParams = new URLSearchParams(window.location.search);
                     let funcionarioId = urlParams.get('id') || localStorage.getItem('userId');
@@ -906,6 +1029,9 @@
                         console.error('Erro: ID do funcionário não fornecido.');
                         return;
                     }
+
+                    // Carregar dados auxiliares (Setores, Cargos, etc)
+                    await carregarDadosIniciais();
 
                     const { data: especialidades, error: errorEsp } = await supabase.from('especialidades').select('*').order('nome');
                     if (!errorEsp) {
@@ -951,13 +1077,13 @@
                         const { data: perfilData, error } = await supabase
                             .from('perfis_tripulantes')
                             .select(`
-                                *,
-                                funcionarios!inner (
-                                    *,
-                                    setores!setor_id(nome, raio),
-                                    cargos!cargo_id(nome, nivel)
-                                )
-                            `)
+                        *,
+                        funcionarios!inner (
+                            *,
+                            setores!setor_id (nome, raio),
+                            cargos!cargo_id (nome, nivel)
+                        )
+                    `)
                             .eq('funcionario_id', funcionarioId)
                             .single();
 
@@ -1021,136 +1147,124 @@
                 }
 
                 function preencherDados(func) {
-                    const userData = Auth.getUser();
-                    UI.updateFooterNavigation(userData.role);
+                    const el = (id) => document.getElementById(id);
+                    const loggedUser = Auth.getUser();
+                    
+                    if (el('nome_completo')) el('nome_completo').value = func.nome_completo || '';
+                    if (el('nickname')) el('nickname').value = func.nickname || '';
+                    if (el('cpf')) el('cpf').value = func.cpf || '';
+                    if (el('rg')) el('rg').value = func.rg || '';
+                    if (el('data_nasc')) el('data_nasc').value = func.data_nascimento || '';
+                    if (el('email')) el('email').value = func.email || '';
+                    if (el('whatsapp')) el('whatsapp').value = func.telefone || '';
+                    if (el('campo-matricula')) el('campo-matricula').value = func.matricula || '';
+                    if (el('nivel_acesso_select')) el('nivel_acesso_select').value = func.nivel_acesso || 'Funcionário';
+                    if (el('funcao-select')) el('funcao-select').value = func.cargo_id || '';
+                    if (el('setor-select')) el('setor-select').value = func.setor_id || '';
+                    if (el('escala-select')) el('escala-select').value = func.escala_id || '';
+                    if (el('regime_trabalho')) el('regime_trabalho').value = func.regime_trabalho || 'Presencial';
+                    if (el('rastreio_ativo')) el('rastreio_ativo').checked = func.rastreio_ativo || false;
+                    if (el('data_inicio_prevista')) el('data_inicio_prevista').value = func.data_inicio_prevista || '';
+                    if (el('nivel_escolaridade')) el('nivel_escolaridade').value = func.nivel_escolaridade || 'Médio';
+                    if (el('graduacao_principal_select')) {
+                        el('graduacao_principal_select').value = func.graduacao_principal || '';
+                    }
 
-                    document.getElementById('nome_completo').value = func.nome_completo || '';
-                    document.getElementById('nickname').value = func.nickname || '';
-                    document.getElementById('cpf').value = func.cpf || '';
-                    document.getElementById('rg').value = func.rg || '';
-                    document.getElementById('data_nasc').value = func.data_nascimento || '';
-                    document.getElementById('email').value = func.email || '';
-                    document.getElementById('whatsapp').value = func.telefone || '';
-                    document.getElementById('campo-matricula').value = func.matricula || '';
-                    document.getElementById('regime_trabalho').value = func.regime_trabalho || 'Presencial';
-                    document.getElementById('rastreio_ativo').checked = func.rastreio_ativo || false;
-                    document.getElementById('data_inicio_prevista').value = func.data_inicio_prevista || '';
-                    document.getElementById('biometria_cadastrada').value = func.biometria_cadastrada || "false";
-                    document.getElementById('biometria_token').value = func.biometria_token || '';
+                    if (el('lembrete_ativo')) el('lembrete_ativo').checked = func.lembrete_ponto_ativo || false;
+                    if (el('lembrete_minutos')) el('lembrete_minutos').value = func.lembrete_ponto_minutos || 10;
 
-                    const badge = document.getElementById('status-biometria-badge');
-                    const capsula = document.getElementById('capsula-biometria');
-                    const capsulaText = document.getElementById('capsula-text');
-                    const capsulaIcon = document.getElementById('capsula-icon');
-                    const capsulaIconBg = document.getElementById('capsula-icon-bg');
+                    // Biometria
+                    if (el('biometria_cadastrada')) el('biometria_cadastrada').value = func.biometria_cadastrada ? "true" : "false";
+                    if (el('biometria_token')) el('biometria_token').value = func.biometria_token || '';
 
-                    if (func.biometria_cadastrada) {
-                        if (badge) {
-                            badge.classList.remove('hidden', 'bg-rose-500', 'animate-pulse');
-                            badge.classList.add('bg-emerald-500');
-                            badge.querySelector('span').innerText = 'check';
+                    // UI Updates
+                    if (el('display-name-profile')) el('display-name-profile').innerText = (func.nome_completo || func.nickname || 'Tripulante').toUpperCase();
+                    if (el('user-role-profile')) el('user-role-profile').innerText = (func.cargos?.nome || func.funcao || 'Tripulante').toUpperCase();
+                    if (el('user-setor-profile')) el('user-setor-profile').innerText = (func.setores?.nome || 'Não Definido').toUpperCase();
+                    if (el('display-matricula-profile')) el('display-matricula-profile').innerText = `#${func.matricula || '---'}`;
+
+                    const avatarImg = el('user-photo-profile');
+                    if (avatarImg) {
+                        avatarImg.src = func.foto_url || `https://ui-avatars.com/api/?name=${func.nickname || 'User'}&background=0D59F2&color=fff`;
+                        if (func.foto_url && el('btn-remover-foto')) el('btn-remover-foto').classList.remove('hidden');
+                    }
+                    
+                    const badge = el('status-biometria-badge');
+                    if (badge) {
+                        if (func.biometria_cadastrada) {
+                            badge.classList.remove('bg-rose-500/20', 'border-rose-500/30', 'animate-pulse');
+                            badge.classList.add('bg-emerald-500/20', 'border-emerald-500/30');
+                            badge.querySelector('span').innerText = 'verified_user';
+                            badge.querySelector('span').classList.remove('text-rose-500');
+                            badge.querySelector('span').classList.add('text-emerald-500');
+                        } else {
+                            badge.classList.add('bg-rose-500/20', 'border-rose-500/30', 'animate-pulse');
+                            badge.querySelector('span').innerText = 'fingerprint';
+                            badge.querySelector('span').classList.add('text-rose-500');
                         }
-                        if (capsula) {
-                            capsula.classList.remove('border-rose-500/30');
-                            capsula.classList.add('border-emerald-500/30');
-                            capsulaText.innerText = 'Biometria Cadastrada';
+                    }
+
+                    const capsula = el('capsula-biometria');
+                    const capsulaText = el('capsula-text');
+                    const capsulaIcon = el('capsula-icon');
+                    if (capsula && capsulaText && capsulaIcon) {
+                        if (func.biometria_cadastrada) {
+                            capsula.classList.remove('border-rose-500/20');
+                            capsula.classList.add('border-emerald-500/20');
+                            capsulaText.innerText = 'Biometria Ativa';
                             capsulaText.classList.remove('text-rose-500');
                             capsulaText.classList.add('text-emerald-500');
                             capsulaIcon.innerText = 'face';
                             capsulaIcon.classList.remove('text-rose-500');
                             capsulaIcon.classList.add('text-emerald-500');
-                            capsulaIconBg.classList.remove('bg-rose-500/20');
-                            capsulaIconBg.classList.add('bg-emerald-500/20');
-                        }
-                    } else {
-                        if (badge) {
-                            badge.classList.remove('hidden', 'bg-emerald-500');
-                            badge.classList.add('bg-rose-500', 'animate-pulse');
-                            badge.querySelector('span').innerText = 'priority_high';
-                        }
-                        if (capsula) {
-                            capsula.classList.remove('border-emerald-500/30');
-                            capsula.classList.add('border-rose-500/30');
+                        } else {
+                            capsula.classList.remove('border-emerald-500/20');
+                            capsula.classList.add('border-rose-500/20');
                             capsulaText.innerText = 'Biometria Pendente';
                             capsulaText.classList.remove('text-emerald-500');
                             capsulaText.classList.add('text-rose-500');
                             capsulaIcon.innerText = 'block';
                             capsulaIcon.classList.remove('text-emerald-500');
                             capsulaIcon.classList.add('text-rose-500');
-                            capsulaIconBg.classList.remove('bg-emerald-500/20');
-                            capsulaIconBg.classList.add('bg-rose-500/20');
                         }
                     }
-                    
+
                     if (func.sexo) {
                         const genderInput = document.querySelector(`input[name="gender"][value="${func.sexo}"]`);
                         if (genderInput) genderInput.checked = true;
                     }
 
-                    document.getElementById('display-name-profile').innerText = (func.nickname || func.nome_completo || 'Tripulante').toUpperCase();
-                    document.getElementById('user-role-profile').innerText = `CARGO/FUNÇÃO: ${(func.cargos?.nome || func.funcao || 'Tripulante').toUpperCase()} (${func.cargos?.nivel || 'N/A'})`;
-                    document.getElementById('user-funcao-field').innerText = func.cargos?.nome || func.funcao || 'Não Definido';
-                    document.getElementById('user-setor-profile').innerText = `SETOR: ${(func.setores?.nome || 'Não Definido').toUpperCase()}`;
-                    if (func.foto_url) {
-                        document.getElementById('user-photo-profile').src = func.foto_url;
-                        document.getElementById('btn-remover-foto').classList.remove('hidden');
-                    }
-
-                    // Preencher Nível de Acesso
-                    if (func.nivel_acesso) {
-                        const radio = document.querySelector(`input[name="access_level"][value="${func.nivel_acesso}"]`);
-                        if (radio) radio.checked = true;
-                    }
-
-                    // Preencher Formação
-                    document.getElementById('nivel_escolaridade').value = func.nivel_escolaridade || 'Médio';
-                    document.getElementById('graduacao_principal_select').value = func.graduacao_principal || '';
-                    
-                    renderEspecialidades();
-
-                    // Preencher Personalização de Escala (se existir)
+                    // Personalização de Escala
                     if (func.personalizacao_escala) {
                         modoPersonalizado = true;
-                        document.getElementById('view-escala-padrao').classList.add('hidden');
-                        document.getElementById('edit-escala-personalizada').classList.remove('hidden');
-                        document.getElementById('aviso-personalizacao').classList.remove('hidden');
+                        if (el('view-escala-padrao')) el('view-escala-padrao').classList.add('hidden');
+                        if (el('edit-escala-personalizada')) el('edit-escala-personalizada').classList.remove('hidden');
+                        if (el('aviso-personalizacao')) el('aviso-personalizacao').classList.remove('hidden');
                         
-                        document.getElementById('pers-carga').value = func.personalizacao_escala.carga_horaria_semanal || '';
-                        document.getElementById('pers-dias-semana').value = func.personalizacao_escala.dias_trabalho_semana || '';
-                        document.getElementById('pers-entrada').value = func.personalizacao_escala.horario_entrada || '';
-                        document.getElementById('pers-saida').value = func.personalizacao_escala.horario_saida || '';
-                        document.getElementById('frequencia_confirmacao_meses').value = func.personalizacao_escala.frequencia_confirmacao_meses || '';
+                        if (el('pers-carga')) el('pers-carga').value = func.personalizacao_escala.carga_horaria_semanal || '';
+                        if (el('pers-dias-semana')) el('pers-dias-semana').value = func.personalizacao_escala.dias_trabalho_semana || '';
+                        if (el('pers-entrada')) el('pers-entrada').value = func.personalizacao_escala.horario_entrada || '';
+                        if (el('pers-saida')) el('pers-saida').value = func.personalizacao_escala.horario_saida || '';
+                        if (el('frequencia_confirmacao_meses')) el('frequencia_confirmacao_meses').value = func.personalizacao_escala.frequencia_confirmacao_meses || '';
                         diasSelecionadosPers = func.personalizacao_escala.dias_selecionados || [];
                     }
 
-                    // Configurações de Edição e Modo de Segurança
-                    const loggedUser = Auth.getUser();
+                    // Security & Mode Control
                     const urlParams = new URLSearchParams(window.location.search);
                     const isInspection = urlParams.get('id') && loggedUser && (loggedUser.role === 'Admin' || loggedUser.role === 'Gestor');
                     const isOwner = !urlParams.get('id') || (urlParams.get('id') === loggedUser?.id);
 
                     if (isInspection || isOwner) {
-                        document.getElementById('edit-control-container').classList.remove('hidden');
-                        
-                        // Ocultar personalização para o próprio usuário (só Admin/Gestor em inspeção pode ver)
-                        const btnPersonalizar = document.getElementById('btn-personalizar');
+                        if (el('edit-control-container')) el('edit-control-container').classList.remove('hidden');
+                        const btnPersonalizar = el('btn-personalizar');
                         if (btnPersonalizar) {
                             if (isInspection) btnPersonalizar.classList.remove('hidden');
                             else btnPersonalizar.classList.add('hidden');
                         }
-
-                        if (isOwner && !isInspection) {
-                            // Ajustar textos para o funcionário
-                            const controlBox = document.getElementById('edit-control-container');
-                            const labels = controlBox.querySelectorAll('p');
-                            if (labels.length >= 2) {
-                                labels[0].innerText = 'Seus dados estão protegidos';
-                                labels[1].innerText = 'Ative a edição para atualizar suas informações pessoais';
-                            }
-                        }
-                        setFormLocked(true);
                     }
 
+                    renderEspecialidades();
+                    UI.updateFooterNavigation(loggedUser?.role);
                     refreshCalendar();
                 }
 
@@ -1530,7 +1644,10 @@
                             rg: document.getElementById('rg').value || null,
                             data_nascimento: document.getElementById('data_nasc').value || null,
                             sexo: document.querySelector('input[name="gender"]:checked')?.value || null,
-                            nivel_acesso: document.querySelector('input[name="access_level"]:checked')?.value || 'Funcionário',
+                            nivel_acesso: document.getElementById('nivel_acesso_select')?.value || 'Funcionário',
+                            funcao_id: document.getElementById('funcao-select')?.value || null,
+                            setor_id: document.getElementById('setor-select')?.value || null,
+                            data_inicio_prevista: document.getElementById('data_inicio_prevista')?.value || null,
                             nivel_escolaridade: document.getElementById('nivel_escolaridade').value,
                             graduacao_principal: document.getElementById('graduacao_principal_select').value || null,
                             regime_trabalho: document.getElementById('regime_trabalho').value,
@@ -1621,6 +1738,55 @@
                     atualizarBuscaEspecialidade(e.target.value);
                 };
 
+                // --- LÓGICA DE EXCLUSÃO SEGURA (CRUD) ---
+                window.confirmarExclusao = async () => {
+                    const isAdmin = Auth.getUser()?.role === 'Admin';
+                    if (!isAdmin) {
+                        UI.showToast("Apenas Administradores podem excluir cadastros.", "error");
+                        return;
+                    }
+
+                    const confirmacao = confirm(`ATENÇÃO: Você está prestes a excluir PERMANENTEMENTE o cadastro de ${globalFunc.nome_completo}.\n\nEsta ação não pode ser desfeita. Deseja prosseguir?`);
+                    if (!confirmacao) return;
+
+                    const senhaAdmin = prompt("Para confirmar a exclusão, digite sua senha de ADMINISTRADOR:");
+                    if (!senhaAdmin) return;
+
+                    UI.showLoader();
+                    try {
+                        // Validar senha do Admin logado
+                        const currentAdmin = Auth.getUser();
+                        const { data: perfilAdmin, error: authError } = await supabase
+                            .from('perfis_tripulantes')
+                            .select('senha')
+                            .eq('funcionario_id', currentAdmin.id)
+                            .single();
+
+                        if (authError || perfilAdmin.senha !== senhaAdmin) {
+                            throw new Error("Senha de administrador incorreta.");
+                        }
+
+                        // Executar Deleção
+                        // Nota: A deleção do funcionário deve disparar deleções em cascata nas tabelas relacionadas se configurado no DB,
+                        // caso contrário, precisamos deletar manualmente aqui ou via RPC.
+                        const { error: deleteError } = await supabase
+                            .from('funcionarios')
+                            .delete()
+                            .eq('id', globalFunc.id);
+
+                        if (deleteError) throw deleteError;
+
+                        UI.showToast("Cadastro excluído com sucesso.", "success");
+                        setTimeout(() => window.location.href = 'relacao_setores.html', 1500);
+
+                    } catch (error) {
+                        console.error("Erro na exclusão:", error);
+                        UI.showToast(error.message || "Falha ao excluir cadastro.", "error");
+                    } finally {
+                        UI.hideLoader();
+                    }
+                };
+
                 document.getElementById('btn-unlock-edit').onclick = () => {
                     const isReadOnly = document.getElementById('nome_completo').readOnly;
                     if (isReadOnly) {
@@ -1665,26 +1831,22 @@
         <span class="material-symbols-outlined text-[120px]">radar</span>
     </div>
     <!-- Bottom Navigation -->
-    <nav
-        class="fixed bottom-0 left-0 right-0 bg-background-dark/90 border-t border-white/5 py-4 z-50 flex justify-center backdrop-blur-xl">
+    <nav class="fixed bottom-0 left-0 right-0 bg-background-dark/90 border-t border-white/5 py-4 z-50 flex justify-center backdrop-blur-xl">
         <div class="flex items-center justify-around w-full max-w-md px-6">
-            <a id="nav-inicio" href="painel_funcionario.html"
-                class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+            <a id="nav-inicio" href="dashboard.html" class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
                 <span class="material-symbols-outlined text-2xl">home</span>
                 <span class="text-[9px] font-black uppercase tracking-widest text-center">Início</span>
             </a>
-            <a href="estatistica_funcionario.html"
-                class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+            <a href="estatistica_funcionario.html" class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
                 <span class="material-symbols-outlined text-2xl">bar_chart</span>
                 <span class="text-[9px] font-black uppercase tracking-widest text-center">Estatística</span>
             </a>
-            <a href="historico_anual.html"
-                class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
-                <span class="material-symbols-outlined text-2xl">history</span>
-                <span class="text-[9px] font-black uppercase tracking-widest text-center">Histórico</span>
+            <a href="diario_funcionario.html" class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors relative">
+                <span class="material-symbols-outlined text-2xl">edit_note</span>
+                <span class="text-[9px] font-black uppercase tracking-widest text-center">Diário</span>
+                <span id="notif-badge-footer" class="absolute top-0 right-0 size-3.5 bg-amber-500 text-white text-[7px] font-black rounded-full flex items-center justify-center border border-background-dark hidden">0</span>
             </a>
-            <a id="nav-perfil-link" href="perfil_funcionario.html"
-                class="flex flex-col items-center gap-1.5 text-primary">
+            <a id="nav-perfil-link" href="perfil_funcionario.html" class="flex flex-col items-center gap-1.5 text-primary">
                 <span class="material-symbols-outlined text-2xl font-variation-settings-fill">person</span>
                 <span class="text-[9px] font-black uppercase tracking-widest text-center">Perfil</span>
             </a>
@@ -1720,6 +1882,10 @@
     <!-- Canvas Oculto para Snapshot -->
     <canvas id="canvas-snapshot" class="hidden"></canvas>
 
+    <script type="module">
+        import { Notifications } from '../js/notifications.js';
+        // Auto-init já ocorre no notifications.js
+    </script>
     <script type="module" src="../js/manager-context.js?v=4.5"></script>
 </body>
 

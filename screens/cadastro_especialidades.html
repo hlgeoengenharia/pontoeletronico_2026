@@ -10,6 +10,8 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
     rel="stylesheet" />
+  <script src="../js/ui-utils.js"></script>
+  <script type="module" src="../js/manager-context.js?v=2.7"></script>
   <script src="../js/theme.js?v=1.0"></script>
   <style>
     .sci-fi-gradient {
@@ -27,7 +29,7 @@
   <header class="border-b border-primary/20 bg-background-dark/80 backdrop-blur-md sticky top-0 z-50">
     <div
         class="flex items-center bg-background-light dark:bg-background-dark p-4 pb-2 justify-between border-b border-white/5 backdrop-blur-xl sticky top-0 z-50">
-        <div id="btn-voltar"
+        <div id="btn-voltar" onclick="history.back()"
             class="text-primary flex size-12 shrink-0 items-center justify-start cursor-pointer hover:opacity-70 transition-opacity">
             <span class="material-symbols-outlined text-2xl">arrow_back</span>
         </div>
@@ -141,11 +143,35 @@
       </div>
     </section>
   </main>
+  
+  <!-- Bottom Navigation -->
+  <nav class="fixed bottom-0 left-0 right-0 no-print bg-background-dark/90 border-t border-white/5 py-4 z-50 flex justify-center backdrop-blur-xl">
+      <div class="flex items-center justify-around w-full max-w-md px-6">
+          <a id="nav-inicio" href="dashboard.html" class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+              <span class="material-symbols-outlined text-2xl">home</span>
+              <span class="text-[9px] font-black uppercase tracking-widest text-center">Início</span>
+          </a>
+          <a href="estatistica_funcionario.html" class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+              <span class="material-symbols-outlined text-2xl">bar_chart</span>
+              <span class="text-[9px] font-black uppercase tracking-widest text-center">Estatística</span>
+          </a>
+          <a href="diario_funcionario.html" class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors relative">
+              <span class="material-symbols-outlined text-2xl">edit_note</span>
+              <span class="text-[9px] font-black uppercase tracking-widest text-center">Diário</span>
+              <span id="notif-badge-footer" class="absolute top-0 right-0 size-3.5 bg-amber-500 text-white text-[7px] font-black rounded-full flex items-center justify-center border border-background-dark hidden">0</span>
+          </a>
+          <a id="nav-perfil-link" href="perfil_funcionario.html" class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+              <span class="material-symbols-outlined text-2xl">person</span>
+              <span class="text-[9px] font-black uppercase tracking-widest text-center">Perfil</span>
+          </a>
+      </div>
+  </nav>
 
   <script type="module">
     import { supabase } from '../js/supabase-config.js';
     import { UI } from '../js/ui-utils.js';
     import { Auth } from '../js/auth.js';
+    import { Notifications } from '../js/notifications.js';
 
     Auth.checkSession(['Gestor', 'Admin']);
     let editingId = null;
@@ -553,15 +579,34 @@
       }
     });
 
-    document.getElementById('btn-voltar').onclick = () => {
-       const urlParams = new URLSearchParams(window.location.search);
-       const de = urlParams.get('from');
-       if (de) window.location.href = `${de}.html`;
-       else window.location.href = 'painel_admin.html';
-    };
+    // Inicialização
+    const currentUser = Auth.getUser();
+    if (currentUser) {
+        UI.updateFooterNavigation(currentUser.role);
+        UI.initSidebar(currentUser.role);
+        Notifications.updateBadges();
+    }
 
     loadEspecialidades();
   </script>
+  <!-- Sidebar Menu Overlay -->
+  <aside id="sidebarMenu" class="fixed top-0 left-0 h-full w-80 bg-background-dark border-r border-primary/20 z-[160] -translate-x-full transition-all duration-500 ease-out shadow-[20px_0_50px_rgba(0,0,0,0.5)]">
+      <div class="flex flex-col h-full">
+          <div class="p-8 border-b border-primary/10">
+              <h3 class="text-primary font-black italic text-2xl tracking-tighter">CHRONOSYNC</h3>
+              <p class="text-[10px] text-slate-500 uppercase font-bold tracking-[0.3em]">Console de Navegação</p>
+          </div>
+          <nav id="sidebarNav" class="flex-1 overflow-y-auto p-4 space-y-2">
+              <!-- Injetado via UI.initSidebar() -->
+          </nav>
+          <div class="p-4 border-t border-primary/10 bg-black/20">
+              <button onclick="window.Auth.logout()" class="w-full flex items-center gap-3 px-4 py-3 text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all font-bold text-xs uppercase">
+                  <span class="material-symbols-outlined">logout</span> Sair do Sistema
+              </button>
+          </div>
+      </div>
+  </aside>
+  <div id="sidebarOverlay" onclick="UI.toggleSidebar()" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[150] hidden opacity-0 transition-all duration-300"></div>
 </body>
 
 </html>

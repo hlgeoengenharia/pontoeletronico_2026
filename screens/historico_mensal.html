@@ -18,37 +18,38 @@
     <title>ChronoSync - Espelho de Ponto</title>
     <style>
         @media print {
-            .no-print {
-                display: none !important;
-            }
-            body {
-                background: white !important;
-                color: black !important;
-                padding-bottom: 0 !important;
-            }
-            main {
-                max-width: 100% !important;
-                padding: 0 !important;
-                margin: 0 !important;
-            }
+            .no-print { display: none !important; }
+            body { background: white !important; color: black !important; padding-bottom: 0 !important; }
+            main { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
+            header { border-bottom: 2px solid #eee !important; }
+            #espelhoBody tr { page-break-inside: avoid !important; }
+            .bg-background-dark, .bg-\[\#0f172a\] { background: #f8fafc !important; border: 1px solid #e2e8f0 !important; }
+            .text-slate-100, .text-slate-300 { color: #0f172a !important; }
+
+            /* Grid de Estatísticas em 3 Colunas na Impressão */
             .stats-grid {
                 display: grid !important;
                 grid-template-columns: repeat(3, 1fr) !important;
-                gap: 1rem !important;
+                gap: 12px !important;
+                width: 100% !important;
+                margin-top: 2rem !important;
+                margin-bottom: 2rem !important;
             }
-            header {
-                border-bottom: 2px solid #eee !important;
+
+            .audit-card {
+                background: white !important;
+                border: 2px solid #334155 !important;
+                border-radius: 12px !important;
+                padding: 1.5rem !important;
+                margin-bottom: 2rem !important;
+                box-shadow: none !important;
+                width: 100% !important;
+                color: black !important;
             }
-            #espelhoBody tr {
-                page-break-inside: avoid !important;
-            }
-            .bg-background-dark, .bg-\[\#0f172a\] {
-                background: #f8fafc !important;
-                border: 1px solid #e2e8f0 !important;
-            }
-            .text-slate-100, .text-slate-300 {
-                color: #0f172a !important;
-            }
+            .audit-card img { filter: grayscale(1) contrast(1.2); border-color: #334155 !important; }
+            .audit-card h3 { color: black !important; border-bottom: 2px solid #334155 !important; }
+            .audit-card .text-primary { color: black !important; font-weight: 800 !important; }
+            .audit-card .text-slate-500 { color: #64748b !important; }
         }
         /* Estilos do Novo Card de Histórico */
         .card-history {
@@ -107,7 +108,7 @@
     </style>
 </head>
 
-<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen pb-24">
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen pb-32">
     <header class="border-b border-primary/20 bg-background-dark/80 backdrop-blur-md sticky top-0 z-50 px-4">
         <div class="flex items-center p-4 justify-between max-w-4xl mx-auto">
             <div id="btn-voltar" onclick="history.back()"
@@ -133,29 +134,36 @@
     </header>
 
     <main class="max-w-4xl mx-auto p-4 md:p-8 space-y-8">
-        <!-- Informações do Usuário -->
-        <section class="flex flex-col items-center gap-4 text-center">
-            <div class="relative">
-                <div class="w-24 h-24 rounded-full border-2 border-primary p-1 bg-slate-800 shadow-xl shadow-primary/10">
-                    <img id="user-photo" src="https://ui-avatars.com/api/?name=User&background=0D59F2&color=fff"
-                        class="w-full h-full rounded-full object-cover">
-                </div>
-                <div id="user-badge" class="absolute -bottom-1 -right-1 bg-primary p-1.5 rounded-full border-2 border-background-dark shadow-xl">
-                    <span class="material-symbols-outlined text-white text-xs font-variation-settings-fill">verified_user</span>
+        <div class="audit-card bg-slate-900 border border-white/5 rounded-3xl p-5 flex items-center gap-6 shadow-2xl relative group">
+            <div class="relative w-24 h-24 rounded-2xl border-4 border-amber-500/30 overflow-hidden shrink-0 shadow-2xl transition-all group-hover:border-amber-500/50">
+                <img id="user-photo-audit" src="https://ui-avatars.com/api/?name=User&background=020617&color=fff" 
+                     class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent pointer-events-none"></div>
+            </div>
+            <div class="flex-1 min-w-0">
+                <h3 id="user-nome-audit" class="text-xl font-black text-slate-100 uppercase italic truncate leading-tight border-b border-amber-500/20 pb-2 mb-2">
+                    CARREGANDO...
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-1 gap-x-4 text-left">
+                    <div class="flex items-center gap-2">
+                        <span class="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none">Cargo:</span>
+                        <span id="user-cargo-audit" class="text-[9px] font-bold text-amber-500 uppercase truncate leading-none">---</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none">Setor:</span>
+                        <span id="user-setor-audit" class="text-[9px] font-bold text-amber-500 uppercase truncate leading-none">---</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none">Matrícula:</span>
+                        <span id="user-matricula-audit" class="text-[9px] font-bold text-amber-500 uppercase truncate leading-none">#---</span>
+                    </div>
                 </div>
             </div>
-            <div>
-                <h3 id="funcNome" class="text-xl font-black text-slate-100 uppercase italic leading-tight">CARREGANDO...</h3>
-                <div class="space-y-1 mt-1">
-                    <p id="funcMatricula" class="text-primary text-[10px] font-black uppercase tracking-widest">Matrícula: #---</p>
-                    <p id="funcSetor" class="text-primary text-[10px] font-black uppercase tracking-widest leading-none">Setor: ---</p>
-                </div>
-            </div>
-        </section>
+        </div>
 
-        <!-- Estatísticas Básicas do Mês -->
-        <div class="stats-grid grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="bg-primary/5 border border-primary/10 p-5 rounded-3xl group transition-all border-l-4 border-l-primary">
+        <!-- SEÇÃO: RESUMO MENSAL INDIVIDUAL -->
+        <section class="stats-grid grid grid-cols-1 md:grid-cols-3 gap-3 px-1">
+            <div class="bg-white/5 border border-white/10 p-5 rounded-3xl group transition-all border-l-4 border-l-primary">
                 <div class="flex items-center gap-3 mb-2">
                     <span class="material-symbols-outlined text-primary text-xl">schedule</span>
                     <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Carga Acumulada</p>
@@ -179,7 +187,7 @@
                 <p id="percentualFrequencia" class="text-3xl font-black text-emerald-400 italic">0%</p>
                 <p class="text-[8px] text-slate-600 font-bold uppercase mt-1">Aproveitamento mensal</p>
             </div>
-        </div>
+        </section>
 
         <!-- Tabela do Espelho -->
         <div class="overflow-hidden bg-[#0f172a] border border-white/5 rounded-3xl shadow-xl">
@@ -188,8 +196,7 @@
                     <thead>
                         <tr class="bg-white/5 border-b border-white/5">
                             <th class="p-4 text-[10px] font-black uppercase text-slate-500 tracking-widest">Data</th>
-                            <th class="p-4 text-[10px] font-black uppercase text-slate-500 tracking-widest">Entrada</th>
-                            <th class="p-4 text-[10px] font-black uppercase text-slate-500 tracking-widest">Saída</th>
+                            <th colspan="2" class="p-4 text-[10px] font-black uppercase text-slate-500 tracking-widest text-center">Registros de Ponto (E / S)</th>
                             <th class="p-4 text-[10px] font-black uppercase text-slate-500 tracking-widest">Saldo</th>
                             <th class="p-4 text-[10px] font-black uppercase text-slate-500 tracking-widest text-center">Status</th>
                         </tr>
@@ -223,6 +230,29 @@
             </div>
         </div>
     </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-background-dark/90 border-t border-white/5 py-4 z-50 flex justify-center backdrop-blur-xl no-print">
+        <div class="flex items-center justify-around w-full max-w-md px-6">
+            <a href="dashboard.html" class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+                <span class="material-symbols-outlined text-2xl">home</span>
+                <span class="text-[9px] font-black uppercase tracking-widest text-center">Início</span>
+            </a>
+            <a href="estatistica_funcionario.html" class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+                <span class="material-symbols-outlined text-2xl">bar_chart</span>
+                <span class="text-[9px] font-black uppercase tracking-widest text-center">Estatística</span>
+            </a>
+            <a href="diario_funcionario.html" class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors relative">
+                <span class="material-symbols-outlined text-2xl">edit_note</span>
+                <span class="text-[9px] font-black uppercase tracking-widest text-center">Diário</span>
+                <span id="notif-badge-footer" class="absolute top-0 right-0 size-3.5 bg-amber-500 text-white text-[7px] font-black rounded-full flex items-center justify-center border border-background-dark hidden">0</span>
+            </a>
+            <a id="nav-perfil-link" href="perfil_funcionario.html" class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+                <span class="material-symbols-outlined text-2xl">person</span>
+                <span class="text-[9px] font-black uppercase tracking-widest text-center">Perfil</span>
+            </a>
+        </div>
+    </nav>
 
     <script type="module">
         import { supabase } from '../js/supabase-config.js';
@@ -305,7 +335,9 @@
         };
 
         window.salvarEdicaoCard = async (id, type) => {
-            const newContent = document.getElementById(`edit-text-${id}`).value;
+            const newTextElement = document.getElementById(`edit-text-${id}`);
+            if (!newTextElement) return;
+            const newContent = newTextElement.value;
             if (!newContent.trim()) {
                 UI.showToast('O conteúdo não pode estar vazio.', 'warning');
                 return;
@@ -321,10 +353,11 @@
                     const res = await supabase.from('diario_logs').update({ justificativa_colaborador: newContent, status_pendencia: 'em_analise' }).eq('id', id);
                     error = res.error;
                 }
+                if (error) throw error;
 
                 UI.showToast('Registrado com sucesso!', 'success');
                 window.toggleEditCard(id);
-                loadData(); // Recarrega os dados do mês
+                loadData(); 
             } catch (err) {
                 console.error(err);
                 UI.showToast('Erro ao salvar alteração.', 'error');
@@ -336,18 +369,15 @@
         window.marcarComunicadoLido = async (id) => {
             UI.showLoader();
             try {
-                const { error } = await supabase
-                    .from('comunicados')
-                    .update({ lido: true })
-                    .eq('id', id);
-
+                localStorage.setItem(`ciente_${id}`, 'true');
+                const { error } = await supabase.from('comunicados').update({ lido: true }).eq('id', id);
                 if (error) throw error;
-
                 UI.showToast('Registrado com sucesso!', 'success');
                 await loadData();
             } catch (err) {
                 console.error(err);
-                UI.showToast('Erro ao atualizar comunicado.', 'error');
+                UI.showToast('Erro ao atualizar comunicado.', 'warning');
+                await loadData();
             } finally {
                 UI.hideLoader();
             }
@@ -356,88 +386,73 @@
         const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
         let targetId, month, year;
 
-        async function init() {
-            const urlParams = new URLSearchParams(window.location.search);
-            targetId = urlParams.get('id') || localStorage.getItem('userId');
-            let m = urlParams.get('month') || urlParams.get('m');
-            let y = urlParams.get('year') || urlParams.get('y');
-
-            const now = new Date();
-            month = m !== null ? parseInt(m) : now.getMonth();
-            year = y !== null ? parseInt(y) : now.getFullYear();
-
-            await loadData();
-        }
-
         async function loadData() {
+            if (!targetId) return;
             document.getElementById('periodoHeader').innerText = `${monthNames[month].toUpperCase()} / ${year}`;
             UI.showLoader();
 
             try {
-                const { data: func, error: errFunc } = await supabase
-                    .from('funcionarios')
-                    .select('*, escalas(*), setores!setor_id(nome)')
-                    .eq('id', targetId)
+                const { data: perfil, error: errPerfil } = await supabase
+                    .from('perfis_tripulantes')
+                    .select('*, funcionarios!inner(*, escalas(*), setores!setor_id(nome))')
+                    .eq('funcionario_id', targetId)
                     .single();
                 
-                if (errFunc) throw errFunc;
+                if (errPerfil) throw errPerfil;
+                const func = { ...perfil.funcionarios, foto_url: perfil.foto_url };
 
-                document.getElementById('funcNome').innerText = func.nome_completo.toUpperCase();
-                document.getElementById('funcMatricula').innerText = `Matrícula: #${func.matricula || '---'}`;
-                document.getElementById('funcSetor').innerText = `Setor: ${func.setores?.nome || 'N/A'}`;
-                if (func.foto_url) document.getElementById('user-photo').src = func.foto_url;
+                document.getElementById('user-nome-audit').innerText = func.nome_completo.toUpperCase();
+                document.getElementById('user-cargo-audit').innerText = (func.funcao || 'N/A').toUpperCase();
+                document.getElementById('user-setor-audit').innerText = (func.setores?.nome || 'N/A').toUpperCase();
+                document.getElementById('user-matricula-audit').innerText = `#${func.matricula || '---'}`;
+                
+                const photoImg = document.getElementById('user-photo-audit');
+                if (func.foto_url) {
+                    photoImg.src = func.foto_url;
+                } else {
+                    photoImg.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(func.nome_completo)}&background=020617&color=fbbf24&bold=true`;
+                }
 
-                // Ajuste de fuso horário local para busca: início e fim do mês
                 const startMonth = new Date(year, month, 1, 0, 0, 0).toISOString();
                 const endMonth = new Date(year, month + 1, 0, 23, 59, 59).toISOString();
 
-                const [ptsRes, anotRes, justRes, comsRes, logsRes] = await Promise.all([
+                const mySectorId = func.setor_id;
+                const [ptsRes, anotRes, justRes, comsRes, logsRes, ferRes] = await Promise.all([
                     supabase.from('pontos').select('*').eq('funcionario_id', targetId).gte('data_hora', startMonth).lte('data_hora', endMonth).order('data_hora', { ascending: true }),
                     supabase.from('anotacoes').select('*').eq('funcionario_id', targetId).gte('data', startMonth.split('T')[0]).lte('data', endMonth.split('T')[0]),
                     supabase.from('justificativas').select('*').eq('funcionario_id', targetId).gte('data_incidente', startMonth.split('T')[0]).lte('data_incidente', endMonth.split('T')[0]),
-                    supabase.from('comunicados').select('*').eq('funcionario_id', targetId).gte('created_at', startMonth).lte('created_at', endMonth),
-                    supabase.from('diario_logs').select('*').eq('funcionario_id', targetId).gte('created_at', startMonth).lte('created_at', endMonth)
+                    supabase.from('comunicados').select('*').or(`destinatario_id.eq.${targetId},tipo.eq.geral,setor_id.eq.${mySectorId || '00000000-0000-0000-0000-000000000000'}`).gte('created_at', startMonth).lte('created_at', endMonth),
+                    supabase.from('diario_logs').select('*').eq('funcionario_id', targetId).gte('created_at', startMonth).lte('created_at', endMonth),
+                    supabase.from('feriados_folgas').select('*').or(`funcionario_id.eq.${targetId},setor_id.eq.${mySectorId},escopo.eq.geral`).gte('data', startMonth.split('T')[0]).lte('data', endMonth.split('T')[0])
                 ]);
 
-                if (ptsRes.error) throw ptsRes.error;
-
-                renderEspelho(ptsRes.data, anotRes.data || [], justRes.data || [], comsRes.data || [], logsRes.data || [], func.escalas, month, year);
+                renderEspelho(ptsRes.data || [], anotRes.data || [], justRes.data || [], comsRes.data || [], logsRes.data || [], ferRes.data || [], func.escalas, month, year);
 
             } catch (err) {
                 console.error(err);
-                UI.showToast('Erro ao carregar histórico.', 'error');
+                UI.showToast('Erro ao carregar dados.', 'error');
             } finally {
                 UI.hideLoader();
             }
         }
 
-        window.navigateMonth = async (delta) => {
+        window.navigateMonth = (delta) => {
             month += delta;
-            if (month < 0) {
-                month = 11;
-                year--;
-            } else if (month > 11) {
-                month = 0;
-                year++;
-            }
-
-            // Atualiza URL sem recarregar
+            if (month < 0) { month = 11; year--; }
+            else if (month > 11) { month = 0; year++; }
             const url = new URL(window.location);
-            url.searchParams.set('month', month);
-            url.searchParams.set('year', year);
+            url.searchParams.set('m', month);
+            url.searchParams.set('y', year);
             window.history.pushState({}, '', url);
-
-            await loadData();
+            loadData();
         };
 
-        function renderEspelho(pontos, anotacoes, justificativas, comunicados, logs, escala, month, year) {
+        function renderEspelho(pontos, anotacoes, justificativas, comunicados, logs, feriados, escala, mParam, yParam) {
+            const month = parseInt(mParam);
+            const year = parseInt(yParam);
             const body = document.getElementById('espelhoBody');
             const daysInMonth = new Date(year, month + 1, 0).getDate();
-            
-            // Segurança: Se não há escala, retornamos lista vazia
-            const plannedDays = (escala) 
-                ? ScalesEngine.projectBaseDays(escala, escala.vigencia_inicio, month, year)
-                : [];
+            const plannedDays = (escala) ? ScalesEngine.projectBaseDays(escala, escala.vigencia_inicio, month, year) : [];
 
             let totalWorkedMinutes = 0;
             let totalPlannedMinutes = 0;
@@ -446,55 +461,63 @@
 
             let html = '';
             for (let d = 1; d <= daysInMonth; d++) {
-                const dateHeader = new Date(year, month, d);
+                try {
+                    const dateHeader = new Date(year, month, d);
                 const dateStr = `${dateHeader.getFullYear()}-${String(dateHeader.getMonth() + 1).padStart(2, '0')}-${String(dateHeader.getDate()).padStart(2, '0')}`;
+                
                 const dayPoints = pontos.filter(p => p.data_hora.startsWith(dateStr));
-                const GPS_TITLES = {
-                    'PONTO_FORA_RAIO': { title: 'PONTO FORA DO RAIO', color: 'premium-border-rose', msg: 'Solicitação de registro de ponto realizada fora do raio de geofence permitido.' },
-                    'QUEBRA_PERIMETRO_ENTRADA': { title: 'QUEBRA DE PERÍMETRO (ENTRADA)', color: 'premium-border-rose', msg: 'Registro de entrada detectado em zona de monitoramento restrita.' },
-                    'QUEBRA_PERIMETRO_SAIDA': { title: 'QUEBRA DE PERÍMETRO (SAÍDA)', color: 'premium-border-rose', msg: 'Registro de saída detectado em zona de monitoramento restrita.' },
-                    'CHECKPOINT_PULSO': { title: 'CHECK-POINT DE LOCALIZAÇÃO (PULSO)', color: 'premium-border-rose', msg: 'Pulso de localização automática enviado pelo sistema para rastreio de rota.' },
-                    'RASTREIO_EXTERNO': { title: 'RASTREIO DE REGIME EXTERNO', color: 'premium-border-rose', msg: 'Monitoramento contínuo de posição para funcionários em regime de trabalho externo.' }
-                };
-
                 const dayAnotacoes = anotacoes.filter(a => a.data === dateStr);
                 const dayJustificativas = justificativas.filter(j => j.data_incidente === dateStr);
                 const dayComunicados = (comunicados || []).filter(c => c.created_at.startsWith(dateStr));
                 const dayLogs = (logs || []).filter(l => l.created_at.startsWith(dateStr));
+                const daySpecial = (feriados || []).find(f => f.data === dateStr);
 
-                const dayWorkedMinutes = calculateWorkedMinutes(dayPoints);
-                const isPlanned = plannedDays.includes(dateStr);
+                let dayWorkedMinutes = calculateWorkedMinutes(dayPoints);
+                const isPlanned = plannedDays.includes(dateStr) && !daySpecial;
                 const isFinished = ScalesEngine.isDayFinished(dateStr, escala);
-                
                 const shouldCharge = isPlanned && (dayPoints.length > 0 || isFinished);
                 const dailyPlannedMinutes = shouldCharge ? ScalesEngine.calculateDailyWorkMinutes(escala) : 0;
 
+                // --- NOVA REGRA DE ABONO ---
+                const activeJustif = dayJustificativas[0]; // Pega a primeira justificativa do dia se existir
+                const isAbonado = activeJustif?.status === 'aprovado';
+                const isRejeitado = activeJustif?.status === 'rejeitado';
+                
+                if (isAbonado && isPlanned) {
+                    dayWorkedMinutes = dailyPlannedMinutes; // Abona a jornada completa
+                }
+
                 totalWorkedMinutes += dayWorkedMinutes;
                 totalPlannedMinutes += dailyPlannedMinutes;
-
-                const isMissing = isPlanned && isFinished && dayPoints.length === 0;
-                if (!isMissing && dayPoints.length > 0) daysPresent++;
+                
+                const isMissing = isPlanned && isFinished && dayPoints.length === 0 && !isAbonado;
+                if (!isMissing && (dayPoints.length > 0 || isAbonado)) daysPresent++;
 
                 const balance = dayWorkedMinutes - dailyPlannedMinutes;
                 let balanceClass = 'text-slate-500';
                 if (balance > 0) balanceClass = 'text-emerald-400';
                 else if (balance < 0 && shouldCharge) balanceClass = 'text-rose-400';
 
-                // Status UI
                 let statusHtml = '';
-                if (!isPlanned) {
+                if (daySpecial) {
+                    statusHtml = `<span class="px-2 py-1 rounded bg-purple-500/10 text-purple-500 text-[9px] font-black uppercase border border-purple-500/20">${daySpecial.tipo.replace('_', ' ')}</span>`;
+                } else if (isAbonado) {
+                    statusHtml = '<span class="px-2 py-1 rounded bg-emerald-500/20 text-emerald-400 text-[9px] font-black uppercase border border-emerald-500/40">Abonado</span>';
+                } else if (isRejeitado) {
+                    statusHtml = '<span class="px-2 py-1 rounded bg-rose-500/20 text-rose-400 text-[9px] font-black uppercase border border-rose-500/40">Rejeitado</span>';
+                } else if (activeJustif?.status === 'pendente') {
+                    statusHtml = '<span class="px-2 py-1 rounded bg-amber-500/20 text-amber-400 text-[9px] font-black uppercase border border-amber-500/40">Pendente</span>';
+                } else if (!isPlanned) {
                     statusHtml = '<span class="text-[9px] text-slate-700 font-black uppercase tracking-widest">Folga</span>';
                 } else if (dayPoints.length > 0) {
                     statusHtml = '<span class="px-2 py-1 rounded bg-emerald-500/10 text-emerald-500 text-[9px] font-black uppercase border border-emerald-500/20">Presente</span>';
                 } else if (isMissing) {
                     statusHtml = '<span class="px-2 py-1 rounded bg-rose-500/10 text-rose-500 text-[9px] font-black uppercase border border-rose-500/20">Ausente</span>';
                 } else {
-                    statusHtml = '<span class="text-[9px] text-slate-500 font-black uppercase tracking-widest">Aguardando</span>';
+                    statusHtml = '<span class="text-[9px] text-slate-500 font-black uppercase tracking-widest italic opacity-50">Escala</span>';
                 }
 
-                const hasDetails = dayAnotacoes.length > 0 || dayJustificativas.length > 0 || dayComunicados.length > 0 || dayLogs.length > 0;
-                
-                // Zebra toggling
+                const hasDetails = dayAnotacoes.length > 0 || dayJustificativas.length > 0 || dayComunicados.length > 0 || dayLogs.length > 0 || !!daySpecial;
                 const rowBgClass = d % 2 === 0 ? 'bg-white/[0.04]' : 'bg-transparent';
 
                 html += `
@@ -504,20 +527,39 @@
                                 <p class="text-sm font-black text-slate-100">${d.toString().padStart(2, '0')}</p>
                                 <p class="text-[9px] font-bold text-slate-500 uppercase">${dateHeader.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '')}</p>
                             </div>
-                            <!-- Connector -->
-                            ${hasDetails ? '<div class="absolute bottom-0 left-[2.4rem] top-12 w-[2px] bg-primary/20 rounded-full z-0 h-full"></div>' : ''}
                         </td>
-                        <td class="p-4 align-top text-xs font-bold text-slate-300">
-                             <div class="flex flex-col gap-1">
-                                <span>${formatTime(dayPoints[0])}</span>
-                                ${dayPoints.length > 2 ? `<span class="text-[10px] text-slate-600">${formatTime(dayPoints[2])}</span>` : ''}
+                        <td colspan="2" class="p-4 align-top min-w-[260px]">
+                             <div class="grid grid-cols-2 gap-x-6 gap-y-4">
+                                <!-- Coluna de Entradas -->
+                                <div class="space-y-3">
+                                    ${dayPoints.filter((_, i) => i % 2 === 0).map((p, i) => `
+                                        <div class="flex items-center gap-3 group/batida">
+                                            <div class="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shrink-0 transition-transform group-hover/batida:scale-110">
+                                                <span class="material-symbols-outlined text-emerald-500 text-sm">login</span>
+                                            </div>
+                                            <div class="min-w-0">
+                                                <p class="text-[7px] font-black text-slate-500 uppercase tracking-tighter leading-none mb-1">Entrada ${i + 1}</p>
+                                                <p class="text-xs font-black text-slate-100 italic leading-none">${formatTime(p)}</p>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                                <!-- Coluna de Saídas -->
+                                <div class="space-y-3">
+                                    ${dayPoints.filter((_, i) => i % 2 !== 0).map((p, i) => `
+                                        <div class="flex items-center gap-3 group/batida">
+                                            <div class="w-8 h-8 rounded-full bg-rose-500/10 flex items-center justify-center border border-rose-500/20 shrink-0 transition-transform group-hover/batida:scale-110">
+                                                <span class="material-symbols-outlined text-rose-500 text-sm">logout</span>
+                                            </div>
+                                            <div class="min-w-0">
+                                                <p class="text-[7px] font-black text-slate-500 uppercase tracking-tighter leading-none mb-1">Saída ${i + 1}</p>
+                                                <p class="text-xs font-black text-slate-100 italic leading-none">${formatTime(p)}</p>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
                              </div>
-                        </td>
-                        <td class="p-4 align-top text-xs font-bold text-slate-300">
-                             <div class="flex flex-col gap-1">
-                                <span>${formatTime(dayPoints[dayPoints.length - 1])}</span>
-                                ${dayPoints.length > 2 ? `<span class="text-[10px] text-slate-600">${formatTime(dayPoints[1])}</span>` : ''}
-                             </div>
+                             ${dayPoints.length === 0 ? '<div class="text-center py-2 text-[10px] text-slate-700 font-bold uppercase italic opacity-40 tracking-widest">Sem Registros</div>' : ''}
                         </td>
                         <td class="p-4 align-top text-xs font-black italic ${balanceClass}">${formatBalance(balance)}</td>
                         <td class="p-4 align-top text-center">${statusHtml}</td>
@@ -525,183 +567,207 @@
                 `;
 
                 if (hasDetails) {
+                    const titleDict = {
+                        'gps_pulse': 'CHECK-POINT DE LOCALIZAÇÃO (PULSO)',
+                        'gps_hora': 'RASTREIO DE REGIME EXTERNO',
+                        'geofence_out': 'QUEBRA DE PERÍMETRO (SAÍDA)',
+                        'geofence_in': 'QUEBRA DE PERÍMETRO (ENTRADA)',
+                        'ponto_fora_raio': 'SOLICITAÇÃO DE PONTO FORA DO RAIO'
+                    };
+
                     const dayItems = [
                         ...dayComunicados.map(c => ({ 
-                            id: c.id, 
+                            id: c.id,
                             type: 'COMUNICADO', 
-                            content: c.mensagem, 
+                            content: c.conteudo || c.mensagem, 
                             time: c.created_at, 
                             color: c.subtipo === 'hora_extra' ? 'premium-border-amber' : 'premium-border-green', 
-                            label: c.subtipo === 'hora_extra' ? 'Solicitação de Hora Extra' : 'Comunicado Oficial',
-                            lido: c.lido,
-                            subtipo: c.subtipo
+                            label: c.subtipo === 'hora_extra' ? 'SOLICITAÇÃO DE HORA EXTRA' : 'COMUNICADO OFICIAL',
+                            subtipo: c.subtipo,
+                            lido: c.lido || localStorage.getItem(`ciente_${c.id}`) === 'true'
                         })),
-                        ...dayAnotacoes.map(a => ({ id: a.id, type: 'ATIVIDADE', content: a.content || a.conteudo, time: a.created_at, color: 'premium-border-blue', label: 'Anotação do Dia' })),
-                        ...dayJustificativas.map(j => ({ id: j.id, type: 'JUSTIFICATIVA', content: j.descricao, time: j.created_at, color: 'premium-border-amber', label: 'Justificativa de Ponto', status: j.status, motivo: j.tipo_divergencia, file: j.evidencia_url })),
-                        ...dayLogs.map(l => {
-                            const mDict = {
-                                'Pulso de localização automática': 'Localização registrada automaticamente pelo sistema para validar sua presença em serviço durante a jornada.',
-                                'Log Automático de Rastreio (Regime Externo)': 'Registro automático de localização para fins de auditoria em jornada de trabalho sob regime externo.',
-                                'Funcionário saiu do local de trabalho': 'O sistema detectou que você se ausentou do raio de alcance permitido para o seu local de escala/setor designado.',
-                                'Funcionário retornou ao local de trabalho': 'O sistema detectou o seu retorno para dentro do raio de alcance permitido do seu local de escala/setor designado.',
-                                'Solicitação de ponto fora do raio': 'Sua tentativa de registro de ponto foi bloqueada ou sinalizada por estar fora do raio de geofence permitido para o seu setor.'
-                            };
-
-                            const defaultMessages = {
-                                'gps_pulse': 'Localização registrada automaticamente pelo sistema para validar sua presença em serviço durante a jornada.',
-                                'gps_hora': 'Registro automático de localização para fins de auditoria em jornada de trabalho sob regime externo.',
-                                'geofence_out': 'O sistema detectou que você se ausentou do raio de alcance permitido para o seu local de escala/setor designado.',
-                                'geofence_in': 'O sistema detectou o seu retorno para dentro do raio de alcance permitido do seu local de escala/setor designado.',
-                                'ponto_fora_raio': 'Sua tentativa de registro de ponto foi bloqueada ou sinalizada por estar fora do raio de geofence permitido para o seu setor.'
-                            };
-                            const tDict = {
-                                'gps_pulse': 'CHECK-POINT DE LOCALIZAÇÃO (PULSO)',
-                                'gps_hora': 'RASTREIO DE REGIME EXTERNO',
-                                'geofence_out': 'QUEBRA DE PERÍMETRO (SAÍDA)',
-                                'geofence_in': 'QUEBRA DE PERÍMETRO (ENTRADA)',
-                                'ponto_fora_raio': 'SOLICITAÇÃO DE PONTO FORA DO RAIO'
-                            };
-                            return { id: l.id, type: 'GPS', content: mDict[l.conteudo] || l.conteudo || defaultMessages[l.tipo] || 'Registro automático de posição.', time: l.created_at, color: 'premium-border-rose', label: tDict[l.tipo] || 'OCORRÊNCIA DE SISTEMA', coordenadas: l.coordenadas, status_pendencia: l.status_pendencia, justificativa_colaborador: l.justificativa_colaborador, tipo_raw: l.tipo };
-                        })
+                        ...dayAnotacoes.map(a => ({ 
+                            id: a.id, 
+                            type: 'ATIVIDADE', 
+                            content: a.content || a.conteudo, 
+                            time: a.created_at, 
+                            color: 'premium-border-blue', 
+                            label: 'ATIVIDADE DO DIA' 
+                        })),
+                        ...dayJustificativas.map(j => ({ 
+                            id: j.id, 
+                            type: 'JUSTIFICATIVA', 
+                            content: j.descricao, 
+                            time: j.created_at, 
+                            color: 'premium-border-amber', 
+                            label: 'JUSTIFICATIVA',
+                            status: j.status,
+                            evidencia_url: j.evidencia_url
+                        })),
+                        ...dayLogs.filter(l => !l.mensagem_padrao?.includes('FERIADOS/FOLGAS AGENDADO')).map(l => ({ 
+                            type: l.tipo === 'comunicado' ? 'COMUNICADO_LOG' : 'GPS', 
+                            content: l.conteudo || l.mensagem_padrao, 
+                            time: l.created_at, 
+                            color: l.tipo === 'comunicado' ? 'premium-border-green' : 'premium-border-rose', 
+                            label: l.tipo === 'comunicado' ? 'COMUNICADO OFICIAL' : (titleDict[l.tipo] || 'REGISTRO DE GPS')
+                        })),
+                        ...(daySpecial ? [{ type: 'FERIAS_FOLGA', content: daySpecial.descricao, time: daySpecial.data + 'T07:00:00', color: 'premium-border-purple', label: 'FERIADOS E FOLGAS AGENDADOS' }] : [])
                     ].sort((a, b) => new Date(a.time) - new Date(b.time));
 
                     html += `
                         <tr class="${rowBgClass} border-b-0">
-                            <td class="relative">
-                                <div class="absolute top-0 left-[2.4rem] bottom-4 w-[2px] bg-primary/20 rounded-full"></div>
-                            </td>
-                            <td colspan="4" class="py-4 pr-4 pl-0 space-y-4">
-                                ${dayItems.map(item => {
-                                    const isJustif = item.type === 'JUSTIFICATIVA';
-                                    const isSystem = item.type === 'GPS';
-                                    const statusMap = {
-                                        'pendente': 'bg-amber-500/10 text-amber-500 border-amber-500/20',
-                                        'em_analise': 'bg-primary/10 text-primary border-primary/20',
-                                        'aprovado': 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
-                                        'rejeitado': 'bg-rose-500/10 text-rose-500 border-rose-500/20',
-                                        'aprovada': 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
-                                        'rejeitada': 'bg-rose-500/10 text-rose-500 border-rose-500/20'
-                                    };
+                            <td></td>
+                            <td colspan="4" class="p-2">
+                                <div class="space-y-2">
+                                    ${dayItems.map(item => {
+                                        const createdAt = new Date(item.time);
+                                        const now = new Date();
+                                        const diffHours = (now - createdAt) / (1000 * 60 * 60);
+                                        const canEdit = diffHours < 24 && (item.type === 'ATIVIDADE' || (item.type === 'JUSTIFICATIVA' && item.status === 'pendente'));
+                                        
+                                        let statusLabel = '';
+                                        let statusClass = '';
+                                        if (item.type === 'JUSTIFICATIVA') {
+                                            const s = item.status?.toLowerCase();
+                                            if (s === 'aprovado') { statusLabel = 'ABONADO'; statusClass = 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20'; }
+                                            else if (s === 'rejeitado') { statusLabel = 'REJEITADO'; statusClass = 'text-rose-400 bg-rose-500/10 border-rose-500/20'; }
+                                            else { statusLabel = 'PENDENTE'; statusClass = 'text-amber-400 bg-amber-500/10 border-amber-500/20'; }
+                                        } else if (item.type === 'COMUNICADO') {
+                                            if (item.subtipo === 'hora_extra') {
+                                                const isLido = !!item.lido || localStorage.getItem(`ciente_${item.id}`) === 'true';
+                                                statusLabel = isLido ? 'CIENTE' : 'PENDENTE';
+                                                statusClass = isLido ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : 'text-amber-400 bg-amber-500/10 border-amber-500/20';
+                                            } else {
+                                                statusLabel = ''; statusClass = 'hidden';
+                                                // Auto-leitura para comunicados comuns
+                                                if (!localStorage.getItem(`ciente_${item.id}`)) {
+                                                    localStorage.setItem(`ciente_${item.id}`, 'true');
+                                                }
+                                            }
+                                        } else if (item.type === 'FERIAS_FOLGA' || item.type === 'COMUNICADO_LOG') {
+                                            statusLabel = ''; statusClass = 'hidden';
+                                            // Auto-leitura para feriados e logs informativos
+                                            const logId = item.id || (item.time + item.content);
+                                            if (!localStorage.getItem(`visto_${logId}`)) {
+                                                localStorage.setItem(`visto_${logId}`, 'true');
+                                            }
+                                        } else {
+                                            statusLabel = ''; statusClass = 'hidden';
+                                        }
 
-                                    let statusClass = '';
-                                    let statusLabel = '';
-                                    
-                                    if (isJustif) {
-                                        statusClass = statusMap[item.status?.toLowerCase()] || statusMap['pendente'];
-                                        statusLabel = item.status?.toUpperCase() || 'PENDENTE';
-                                    } else if (isSystem) {
-                                        statusClass = statusMap[item.status_pendencia?.toLowerCase()] || statusMap['pendente'];
-                                        statusLabel = item.status_pendencia?.toUpperCase() || 'PENDENTE';
-                                    } else if (item.itemType === 'COMUNICADO') {
-                                        statusClass = item.lido ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-amber-500/10 text-amber-500 border-amber-500/20';
-                                        statusLabel = 'CIENTE';
-                                    }
-
-                                    return `
-                                        <div class="card-history ${item.color} animate-in fade-in slide-in-from-bottom-4 duration-500 ml-2 mb-4">
-                                            <div class="flex items-start justify-between mb-2">
-                                                    <div class="flex items-center gap-2">
-                                                        <span class="material-symbols-outlined text-[12px]" style="color: currentColor">
-                                                            ${item.type === 'COMUNICADO' ? 'campaign' : item.type === 'ATIVIDADE' ? 'edit_note' : item.type === 'JUSTIFICATIVA' ? 'warning' : 'location_on'}
-                                                        </span>
-                                                        <p class="text-[9px] font-black uppercase tracking-widest" style="color: currentColor">${item.label}</p>
-                                                        <span class="text-[8px] text-slate-500 font-bold ml-1">
-                                                            ${new Date(item.time).toLocaleDateString('pt-BR')} | ${new Date(item.time).toLocaleTimeString('pt-BR')}
-                                                        </span>
+                                        return `
+                                        <div class="card-history ${item.color} ml-2 mb-2 p-3 rounded-xl bg-slate-800/20 border border-white/5 flex flex-col gap-2 group/card">
+                                            <div class="flex items-center justify-between">
+                                                <div class="flex items-center gap-2">
+                                                    <span class="material-symbols-outlined text-xs" style="color: currentColor">
+                                                        ${item.type === 'COMUNICADO' ? 'campaign' : item.type === 'ATIVIDADE' ? 'edit_note' : item.type === 'JUSTIFICATIVA' ? 'warning' : item.type === 'FERIAS_FOLGA' ? 'event_note' : 'location_on'}
+                                                    </span>
+                                                    <p class="text-[9px] font-black uppercase tracking-widest text-slate-400">${item.label}</p>
+                                                    ${statusLabel ? `<span class="px-1.5 py-0.5 rounded border ${statusClass} text-[7px] font-black">${statusLabel}</span>` : ''}
+                                                </div>
+                                                <div class="flex items-center gap-2">
+                                                    <span class="text-[8px] text-slate-500 font-bold">${new Date(item.time).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                                                    
+                                                    <!-- BOTÕES 24H -->
+                                                    ${canEdit ? `
+                                                    <div class="flex items-center gap-2 ml-2">
+                                                        <button onclick="window.editarItem('${item.id}', '${item.type}', \`${item.content.replace(/"/g, '&quot;')}\`)" class="p-2.5 rounded-lg bg-white/5 text-slate-400 hover:text-white transition-colors border border-white/5 flex items-center justify-center min-w-[40px] min-h-[40px]">
+                                                            <span class="material-symbols-outlined text-lg">brush</span>
+                                                        </button>
+                                                        <button onclick="window.excluirItem('${item.id}', '${item.type}')" class="p-2.5 rounded-lg bg-white/5 text-slate-400 hover:text-rose-400 transition-colors border border-white/5 flex items-center justify-center min-w-[40px] min-h-[40px]">
+                                                            <span class="material-symbols-outlined text-lg">delete</span>
+                                                        </button>
                                                     </div>
-                                                    <p class="text-[11px] text-slate-300 leading-relaxed italic">"${item.content}"</p>
-                                                <div class="flex flex-col items-end gap-1.5">
-                                                    ${(isJustif || isSystem) ? `
-                                                        <span class="${statusClass} text-[7px] px-1.5 py-0.5 rounded-full border border-current font-black uppercase tracking-widest shrink-0">${statusLabel}</span>
                                                     ` : ''}
                                                 </div>
                                             </div>
-
-                                            ${item.motivo ? `<p class="text-[9px] font-black text-slate-100 uppercase mb-1">${item.motivo}</p>` : ''}
-
-                                            <div class="flex flex-wrap gap-2 mt-2">
-                                                 <div class="flex gap-2">
-                                                    ${((item) => {
-                                                        if (item.type === 'ATIVIDADE' && (new Date() - new Date(item.time) < 24 * 60 * 60 * 1000)) {
-                                                            return `
-                                                                <button onclick="window.toggleEditCard('${item.id}', 'atividade', \`${item.content.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)" 
-                                                                        class="p-1.5 bg-white/5 border border-white/10 rounded-lg text-slate-400 hover:text-primary transition-all shadow-sm">
-                                                                    <span class="material-symbols-outlined text-[14px]">edit</span>
-                                                                </button>`;
-                                                        } else if (isSystem && item.status_pendencia === 'pendente' && (new Date() - new Date(item.time) < 24 * 60 * 60 * 1000)) {
-                                                            return `
-                                                                <button onclick="window.toggleEditCard('${item.id}', '${item.tipo_raw}', \`${(item.content || '').replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)" 
-                                                                        class="px-2 py-1 bg-primary/10 border border-primary/20 rounded-lg text-primary hover:bg-primary/20 transition-all flex items-center gap-1 text-[8px] font-black uppercase tracking-widest"
-                                                                        title="Justificar">
-                                                                    <span class="material-symbols-outlined text-xs">edit_note</span>
-                                                                    <span>Justificar</span>
-                                                                </button>`;
-                                                        } else if (item.type === 'COMUNICADO') {
-                                                            const btnClass = item.lido 
-                                                                ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-500" 
-                                                                : "bg-amber-500/10 border-amber-500/20 text-amber-500 hover:bg-amber-500/20";
-                                                            const icon = item.lido ? "done_all" : "done";
-                                                            return `
-                                                                <button ${item.lido ? 'disabled' : `onclick="window.marcarComunicadoLido('${item.id}')"`} 
-                                                                        class="px-2 py-1 ${btnClass} border rounded-lg transition-all flex items-center gap-1 text-[8px] font-black uppercase tracking-widest ${item.lido ? 'opacity-80' : ''}">
-                                                                    <span class="material-symbols-outlined text-xs">${icon}</span>
-                                                                    <span>CIENTE</span>
-                                                                </button>`;
-                                                        }
-                                                        return '';
-                                                    })(item)}
-                                                 </div>
-
-                                                 <div class="flex gap-2">
-                                                    ${item.file ? `
-                                                        <a href="${item.file}" target="_blank" class="inline-flex items-center gap-1 px-2 py-1 bg-white/5 border border-white/10 rounded-lg text-slate-400 hover:text-white transition-all text-[8px] font-black uppercase tracking-widest">
-                                                            <span class="material-symbols-outlined text-xs">attach_file</span>
-                                                            <span>Anexo</span>
-                                                        </a>
-                                                    ` : ''}
-                                                    ${item.coordenadas ? `
-                                                        <button id="btn-map-${item.id}" onclick="window.toggleMapaCard('${item.id}', '${item.coordenadas}')" 
-                                                                class="inline-flex items-center gap-1 px-2 py-1 bg-rose-500/10 border border-rose-500/20 rounded-lg text-rose-400 hover:bg-rose-500/20 transition-all text-[8px] font-black uppercase tracking-widest">
-                                                            <span id="icon-map-${item.id}" class="material-symbols-outlined text-xs">map</span>
-                                                            <span id="txt-map-${item.id}">Ver Localização</span>
+                                            <p class="text-[11px] text-slate-200 italic leading-relaxed">"${item.content}"</p>
+                                            
+                                            <div class="flex flex-wrap gap-2 mt-1">
+                                                ${item.evidencia_url ? `
+                                                <a href="${item.evidencia_url}" target="_blank" class="px-2 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[8px] font-black uppercase rounded flex items-center gap-1 hover:bg-amber-500/20 transition-all">
+                                                    <span class="material-symbols-outlined text-xs">attach_file</span> VER ANEXO
+                                                </a>
+                                                ` : ''}
+                                                
+                                                ${item.type === 'COMUNICADO' && item.subtipo === 'hora_extra' ? `
+                                                    <div class="w-full flex justify-end">
+                                                        <button ${item.lido ? 'disabled' : `onclick="window.marcarComunicadoLido('${item.id}')"`} 
+                                                                class="px-3 py-1.5 ${item.lido ? 'bg-emerald-500/30 border-emerald-500/60 text-emerald-400 cursor-default' : 'bg-amber-500/10 border-amber-500/20 text-amber-500 hover:bg-amber-500/20'} border rounded-lg transition-all flex items-center gap-1.5 text-[8px] font-black uppercase tracking-widest">
+                                                            <span class="material-symbols-outlined text-sm">${item.lido ? 'done_all' : 'done'}</span>
+                                                            <span>CIENTE</span>
                                                         </button>
-                                                    ` : ''}
-                                                 </div>
+                                                    </div>
+                                                ` : ''}
                                             </div>
-
-                                            <div id="map-card-${item.id}" class="map-container-card"></div>
-                                            <div id="edit-card-${item.id}" class="edit-container-card"></div>
-
-                                            ${item.justificativa_colaborador ? `
-                                            <div class="mt-2 bg-white/5 border border-white/5 p-2 rounded-lg text-[10px] text-slate-400 italic">
-                                                <span class="text-primary font-bold mr-1 not-italic tracking-tighter uppercase">Justificativa:</span> ${item.justificativa_colaborador}
-                                            </div>
-                                            ` : ''}
                                         </div>
-                                    `;
-                                }).join('')}
+                                        `;
+                                    }).join('')}
+                                </div>
                             </td>
                         </tr>
                     `;
                 }
+            } catch (errDay) {
+                console.error(`Erro ao renderizar dia ${d}:`, errDay);
+                html += `<tr class="bg-rose-500/5"><td colspan="5" class="p-2 text-[10px] text-rose-500 font-bold uppercase text-center">Erro no registro do dia ${d}</td></tr>`;
             }
-
-            body.innerHTML = html;
-
+        }
+        body.innerHTML = html;
             document.getElementById('totalTrabalhado').innerText = formatMinutes(totalWorkedMinutes);
             document.getElementById('totalEsperado').innerText = formatMinutes(totalPlannedMinutes);
-            
             const totalFaltas = daysBusinessTotal - daysPresent;
             document.getElementById('totalFaltas').innerText = totalFaltas > 0 ? totalFaltas : 0;
-
             const finalFreq = daysBusinessTotal > 0 ? Math.round((daysPresent / daysBusinessTotal) * 100) : 0;
             document.getElementById('percentualFrequencia').innerText = `${finalFreq}%`;
-
             const totalBalance = totalWorkedMinutes - totalPlannedMinutes;
             const balanceLabel = document.getElementById('totalSaldo');
             balanceLabel.innerText = formatBalance(totalBalance);
             balanceLabel.className = `text-xl font-black italic ${totalBalance >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
         }
+
+        window.marcarComunicadoLido = async (comId) => {
+            try {
+                localStorage.setItem(`ciente_${comId}`, 'true');
+                await supabase.from('comunicados').update({ lido: true }).eq('id', comId);
+                loadData(); // Atualizar UI
+            } catch (err) {
+                console.error('Erro ao marcar como lido:', err);
+            }
+        };
+
+        window.excluirItem = async (id, type) => {
+            if (!confirm('Deseja excluir permanentemente este registro?')) return;
+            UI.showLoader();
+            try {
+                let table = type === 'ATIVIDADE' ? 'anotacoes' : 'justificativas';
+                const { error } = await supabase.from(table).delete().eq('id', id);
+                if (error) throw error;
+                UI.showToast('Excluído com sucesso!', 'success');
+                await loadData();
+            } catch (err) {
+                console.error(err);
+                UI.showToast('Erro ao excluir.', 'error');
+            } finally { UI.hideLoader(); }
+        };
+
+        window.editarItem = async (id, type, currentContent) => {
+            let field = type === 'ATIVIDADE' ? 'content' : 'descricao';
+            let table = type === 'ATIVIDADE' ? 'anotacoes' : 'justificativas';
+            const newText = prompt(`Editar ${type.toLowerCase()}:`, currentContent);
+            if (newText === null || newText === currentContent) return;
+            
+            UI.showLoader();
+            try {
+                const { error } = await supabase.from(table).update({ [field]: newText }).eq('id', id);
+                if (error) throw error;
+                UI.showToast('Atualizado!', 'success');
+                await loadData();
+            } catch (err) {
+                console.error(err);
+                UI.showToast('Erro ao atualizar.', 'error');
+            } finally { UI.hideLoader(); }
+        };
 
         function calculateWorkedMinutes(points) {
             let mins = 0;
@@ -728,6 +794,17 @@
             const h = Math.floor(absMins / 60);
             const m = absMins % 60;
             return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+        }
+
+        async function init() {
+            const urlParams = new URLSearchParams(window.location.search);
+            targetId = urlParams.get('id') || localStorage.getItem('userId');
+            let m = urlParams.get('month') || urlParams.get('m');
+            let y = urlParams.get('year') || urlParams.get('y');
+            const now = new Date();
+            month = m !== null ? parseInt(m) : now.getMonth();
+            year = y !== null ? parseInt(y) : now.getFullYear();
+            await loadData();
         }
 
         init();

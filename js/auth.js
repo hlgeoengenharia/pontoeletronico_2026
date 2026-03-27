@@ -65,7 +65,14 @@ const Auth = {
      * Finaliza a sessão atual
      */
     logout() {
-        localStorage.clear();
+        // Limpar apenas chaves de sessão, preservando preferências e marcadores de leitura (ciente_, visto_)
+        const sessionKeys = [
+            'userId', 'userRole', 'userName', 'userNickname', 
+            'userMatricula', 'userSetor', 'userSetorId', 
+            'userFuncao', 'userCargoNivel', 'force_password_change'
+        ];
+        sessionKeys.forEach(key => localStorage.removeItem(key));
+        
         window.location.href = 'pagina_login_01.html';
     },
 
@@ -95,10 +102,8 @@ const Auth = {
             // Se o usuário não tiver permissão para a tela atual
             alert('Acesso negado: Nível de autorização insuficiente.');
 
-            // Redireciona para o respectivo painel baseado no novo padrão
-            if (userRole === 'Admin') window.location.href = 'painel_admin.html';
-            else if (userRole === 'Gestor') window.location.href = 'painel_gestor.html';
-            else window.location.href = 'painel_funcionario.html';
+            // Redireciona para o Dashboard Único
+            window.location.href = 'dashboard.html';
         }
 
         return { userId, userRole };
@@ -123,3 +128,4 @@ const Auth = {
 };
 
 export { Auth };
+window.Auth = Auth;
