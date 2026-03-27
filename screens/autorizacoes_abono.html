@@ -122,13 +122,20 @@
           // Normalizar e Unificar
           const allPendencies = [
             ...(dataJust || []).map(j => ({ ...j, itemType: 'ABONO', file_url: j.evidencia_url })),
-            ...(dataGps || []).map(g => ({ ...g, itemType: 'GPS', data_incidente: g.data_hora, tipo_divergencia: 'SOLICITAÇÃO DE PONTO FORA DO RAIO', descricao: g.justificativa_usuario, file_url: g.evidencia_url || g.arquivo_url })),
+            ...(dataGps || []).map(g => ({ 
+                ...g, 
+                itemType: 'GPS', 
+                data_incidente: g.data_hora, 
+                tipo_divergencia: g.status === 'automatico_50' ? 'ESQUECIMENTO DE SAÍDA (PROPOSTA 50%)' : 'SOLICITAÇÃO DE PONTO FORA DO RAIO', 
+                descricao: g.status === 'automatico_50' ? (g.justificativa_usuario || 'O sistema propôs 50% da jornada por falta de check-out.') : g.justificativa_usuario, 
+                file_url: g.evidencia_url || g.arquivo_url 
+            })),
             ...(dataLogs || []).map(l => ({ 
               ...l, 
               itemType: 'SISTEMA', 
               data_incidente: l.data_hora || l.created_at, 
-              tipo_divergencia: l.tipo === 'aviso_ferias' ? 'LEMBRETE MENSAL' : (l.tipo_original || 'OCORRÊNCIA DE SISTEMA'), 
-              descricao: l.conteudo || l.justificativa_colaborador,
+              tipo_divergencia: l.tipo === 'esquecimento_ponto' ? 'ALERTA DE ESQUECIMENTO' : (l.tipo_original || 'OCORRÊNCIA DE SISTEMA'), 
+              descricao: l.mensagem_padrao || l.conteudo || l.justificativa_colaborador,
               file_url: l.evidencia_url || l.arquivo_url || l.foto_url
             }))
           ].sort((a, b) => new Date(b.data_incidente || b.created_at) - new Date(a.data_incidente || a.created_at));
@@ -239,6 +246,13 @@
             error = result.error;
           } else if (type === 'ABONO') {
             const result = await supabase.from('justificativas').update({ status: status }).eq('id', id);
+            error = result.error;
+          } else if (type === 'GPS') {
+            // Se for rejeição de 50% por esquecimento, invalida o ponto
+            const result = await supabase.from('pontos').update({ 
+                status_validacao: status,
+                justificativa_admin: status === 'rejeitado' ? 'REJEITADO PELO GESTOR: GERA FALTA.' : 'ABONADO PELO GESTOR.'
+            }).eq('id', id);
             error = result.error;
           } else {
             const result = await supabase.from('pontos').update({ status_validacao: status }).eq('id', id);

@@ -199,17 +199,23 @@
           </div>
         </div>
 
-        <!-- Tolerância e Geofencing original -->
-        <div class="grid grid-cols-2 gap-3 p-4 bg-slate-800/20 border border-white/5 rounded-xl">
+        <!-- Janela de Ativação e Tolerância de Entrada -->
+        <div class="grid grid-cols-3 gap-3 p-4 bg-slate-800/20 border border-white/5 rounded-xl">
           <div>
-            <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Tol. Entrada (min)</label>
-            <input id="tol_entrada"
+            <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Janela Antes (min)</label>
+            <input id="janela_ativa_antes"
               class="w-full bg-background-dark/30 border-white/10 rounded p-2 text-sm text-primary font-bold"
-              type="number" value="15">
+              type="number" value="30">
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Tol. Saída (min)</label>
-            <input id="tol_saida"
+            <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Janela Depois (min)</label>
+            <input id="janela_ativa_depois"
+              class="w-full bg-background-dark/30 border-white/10 rounded p-2 text-sm text-primary font-bold"
+              type="number" value="30">
+          </div>
+          <div>
+            <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Tol. Entrada (min)</label>
+            <input id="tol_entrada"
               class="w-full bg-background-dark/30 border-white/10 rounded p-2 text-sm text-primary font-bold"
               type="number" value="15">
           </div>
@@ -747,20 +753,24 @@
 
                       <div class="h-px bg-white/5 w-full"></div>
 
-                      <!-- 5. Tolerâncias -->
+                      <!-- 5. Janelas e Tolerâncias -->
                       <div class="space-y-4 pt-2">
                         <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
                           <span class="material-symbols-outlined text-sm">timer</span>
-                          Tolerâncias e Geofencing
+                          Janelas de Ativação e Tolerâncias
                         </h3>
-                        <div class="grid grid-cols-2 gap-3 p-4 bg-slate-800/20 border border-white/5 rounded-xl">
+                        <div class="grid grid-cols-3 gap-3 p-4 bg-slate-800/20 border border-white/5 rounded-xl">
                           <div class="space-y-1">
-                              <label class="text-xs font-bold text-slate-400 uppercase mb-1">Tol. Entrada (min)</label>
-                              <input id="inline-tol-in-${e.id}" type="number" class="w-full bg-background-dark/30 border-white/10 rounded p-2 text-sm text-primary font-bold" value="${e.tolerancia_entrada_minutos || 15}">
+                              <label class="text-[9px] font-bold text-slate-400 uppercase mb-1">Antes (min)</label>
+                              <input id="inline-janela-antes-${e.id}" type="number" class="w-full bg-background-dark/30 border-white/10 rounded p-2 text-sm text-primary font-bold" value="${e.janela_ativa_antes_minutos || 30}">
                           </div>
                           <div class="space-y-1">
-                              <label class="text-xs font-bold text-slate-400 uppercase mb-1">Tol. Saída (min)</label>
-                              <input id="inline-tol-out-${e.id}" type="number" class="w-full bg-background-dark/30 border-white/10 rounded p-2 text-sm text-primary font-bold" value="${e.tolerancia_saida_minutos || 15}">
+                              <label class="text-[9px] font-bold text-slate-400 uppercase mb-1">Depois (min)</label>
+                              <input id="inline-janela-depois-${e.id}" type="number" class="w-full bg-background-dark/30 border-white/10 rounded p-2 text-sm text-primary font-bold" value="${e.janela_ativa_depois_minutos || 30}">
+                          </div>
+                          <div class="space-y-1">
+                              <label class="text-[9px] font-bold text-slate-400 uppercase mb-1">Tol. Ent. (min)</label>
+                              <input id="inline-tol-in-${e.id}" type="number" class="w-full bg-background-dark/30 border-white/10 rounded p-2 text-sm text-primary font-bold" value="${e.tolerancia_entrada_minutos || 15}">
                           </div>
                         </div>
                       </div>
@@ -1072,8 +1082,10 @@
                 tipo_repeticao: document.getElementById(`inline-repeticao-${id}`).value,
                 horario_entrada: document.getElementById(`inline-in-${id}`).value,
                 horario_saida: document.getElementById(`inline-out-${id}`).value,
+                janela_ativa_antes_minutos: parseInt(document.getElementById(`inline-janela-antes-${id}`).value) || 30,
+                janela_ativa_depois_minutos: parseInt(document.getElementById(`inline-janela-depois-${id}`).value) || 30,
                 tolerancia_entrada_minutos: parseInt(document.getElementById(`inline-tol-in-${id}`).value) || 15,
-                tolerancia_saida_minutos: parseInt(document.getElementById(`inline-tol-out-${id}`).value) || 15,
+                // tolerancia_saida_minutos desativada conforme regra de negócio
                 
                 // Regras
                 restrito_gps: document.getElementById(`inline-rule-gps-${id}`).checked,
@@ -1158,8 +1170,10 @@
         carga_horaria_semanal: parseInt(document.getElementById('carga_horaria').value) || 0,
         horario_entrada: document.getElementById('horario_entrada').value,
         horario_saida: document.getElementById('horario_saida').value,
+        janela_ativa_antes_minutos: parseInt(document.getElementById('janela_ativa_antes').value) || 30,
+        janela_ativa_depois_minutos: parseInt(document.getElementById('janela_ativa_depois').value) || 30,
         tolerancia_entrada_minutos: parseInt(document.getElementById('tol_entrada').value) || 0,
-        tolerancia_saida_minutos: parseInt(document.getElementById('tol_saida').value) || 0,
+        // tolerancia_saida_minutos desativada
         dias_trabalho_semana: tipo === 'semanal' ? diasSemanaSelecionados.length : 0,
         dias_padrao: tipo === 'semanal' ? diasSemanaSelecionados : null,
         ciclo_config: tipo === 'ciclo' ? {

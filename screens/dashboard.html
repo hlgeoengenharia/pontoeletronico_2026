@@ -12,6 +12,31 @@
     <style>
         .font-variation-settings-fill { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
         .role-hidden { display: none !important; }
+        
+        /* Animação de Pulsação Celestial (Glow) */
+        @keyframes celestial-glow {
+            0% { box-shadow: 0 0 5px rgba(224, 242, 254, 0.2); transform: scale(1); }
+            50% { box-shadow: 0 0 25px rgba(224, 242, 254, 0.6); transform: scale(1.02); }
+            100% { box-shadow: 0 0 5px rgba(224, 242, 254, 0.2); transform: scale(1); }
+        }
+        .animate-celestial {
+            animation: celestial-glow 2s infinite ease-in-out;
+            border-color: rgba(224, 242, 254, 0.5) !important;
+        }
+        
+        /* Cores por Perfil (Fundo do Botão) */
+        .punch-admin { background-color: #0D59F2 !important; border-color: rgba(13, 89, 242, 0.3) !important; }
+        .punch-gestor { background-color: #10B981 !important; border-color: rgba(16, 185, 129, 0.3) !important; }
+        .punch-funcionario { background-color: #334155 !important; border-color: rgba(51, 65, 85, 0.3) !important; }
+        
+        /* Estado Congelado */
+        .punch-frozen { 
+            opacity: 0.4 !important; 
+            filter: grayscale(0.8); 
+            cursor: not-allowed !important; 
+            pointer-events: none;
+            transform: scale(0.95);
+        }
     </style>
 </head>
 
@@ -113,7 +138,7 @@
 
         <!-- SEÇÃO: REGISTRO DE PONTO -->
         <section class="flex flex-col items-center py-4">
-            <button id="punchButton" class="relative group size-48 rounded-full bg-emerald-500 flex flex-col items-center justify-center text-center p-6 shadow-2xl shadow-emerald-500/20 border-4 border-emerald-500/30 hover:scale-105 active:scale-95 transition-all">
+            <button id="punchButton" class="relative group size-48 rounded-full flex flex-col items-center justify-center text-center p-6 shadow-2xl transition-all duration-500">
                 <span class="material-symbols-outlined text-5xl mb-2 text-white font-variation-settings-fill">power_settings_new</span>
                 <span class="text-xs font-black text-white leading-tight tracking-wider uppercase">REGISTRAR<br>PONTO</span>
                 
@@ -520,9 +545,27 @@
                 const { data } = await supabase.from('pontos').select('*').eq('funcionario_id', userId).gte('data_hora', `${today}T00:00:00`).order('data_hora', { ascending: true });
                 
                 const isOnline = data && data.length % 2 !== 0;
-                btn.className = isOnline ? btn.className.replace('bg-emerald-500', 'bg-rose-500').replace('border-emerald-500/30', 'border-rose-500/30') : btn.className.replace('bg-rose-500', 'bg-emerald-500').replace('border-rose-500/30', 'border-emerald-500/30');
-                const label = btn.querySelector('span.text-xs');
-                if (label) label.innerHTML = isOnline ? 'FINALIZAR<br>TURNO' : 'REGISTRAR<br>PONTO';
+                const role = currentUser.nivel_acesso || 'Funcionário';
+                
+                // Reset de Classes
+                btn.classList.remove('bg-emerald-500', 'bg-rose-500', 'punch-admin', 'punch-gestor', 'punch-funcionario', 'punch-frozen', 'animate-celestial');
+                
+                if (isOnline) {
+                    btn.classList.add('bg-rose-500'); // Check-out é sempre Rose para destaque
+                    const label = btn.querySelector('span.text-xs');
+                    if (label) label.innerHTML = 'FINALIZAR<br>TURNO';
+                } else {
+                    // Aplicar Cor por Perfil
+                    if (role === 'Admin') btn.classList.add('punch-admin');
+                    else if (role === 'Gestor') btn.classList.add('punch-gestor');
+                    else btn.classList.add('punch-funcionario');
+
+                    const label = btn.querySelector('span.text-xs');
+                    if (label) label.innerHTML = 'REGISTRAR<br>PONTO';
+
+                    // Lógica de Janela de Ativação e Congelamento
+                    await checkButtonWindow(btn);
+                }
                 
                 // Atualizar Stats de Sessão
                 if (data && data.length > 0) {
@@ -561,6 +604,42 @@
                     const label = btn.querySelector('span.text-xs');
                     if (label) label.innerText = 'MODO INSPEÇÃO';
                 }
+            }
+
+            async function checkButtonWindow(btn) {
+                const escala = currentUser.escalas;
+                if (!escala || !escala.horario_entrada) {
+                    btn.classList.add('animate-celestial'); // Fallback
+                    return;
+                }
+
+                const now = new Date();
+                const [h, m] = escala.horario_entrada.split(':').map(Number);
+                const scheduled = new Date();
+                scheduled.setHours(h, m, 0, 0);
+
+                const janelaAntes = escala.janela_ativa_antes_minutos || 30;
+                const janelaDepois = escala.janela_ativa_depois_minutos || 30;
+                const tolEntrada = escala.tolerancia_entrada_minutos || 15;
+
+                const startWindow = new Date(scheduled.getTime() - janelaAntes * 60000);
+                const endWindow = new Date(scheduled.getTime() + janelaDepois * 60000);
+                const limitTolerance = new Date(scheduled.getTime() + tolEntrada * 60000);
+
+                // 1. Fora da Janela -> Congelado
+                if (now < startWindow || now > endWindow) {
+                    btn.classList.add('punch-frozen');
+                    return;
+                }
+
+                // 2. Após Tolerância -> Congelado
+                if (now > limitTolerance) {
+                    btn.classList.add('punch-frozen');
+                    return;
+                }
+
+                // 3. Ativo -> Pulsar
+                btn.classList.add('animate-celestial');
             }
 
             btn.onclick = async () => {

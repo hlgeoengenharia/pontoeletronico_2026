@@ -605,6 +605,9 @@
                             } else if (item.itemType === 'COMUNICADO' && item.subtipo === 'hora_extra') {
                                 colorClass = 'text-amber-500';
                                 title = 'SOLICITAÇÃO DE HORA EXTRA';
+                             } else if (item.tipo === 'esquecimento_ponto') {
+                                 colorClass = 'text-amber-600 font-bold';
+                                 title = 'ESQUECIMENTO DE PONTO';
                              } else if (isSystem) {
                                  const type = item.tipo || '';
                                  const contentLower = (item.conteudo || '').toLowerCase();

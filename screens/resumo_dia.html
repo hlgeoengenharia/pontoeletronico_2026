@@ -256,7 +256,8 @@
 
         function renderResumo(pontos, anotacoes, justificativas, comunicados, logs, feriados, escala, dataRef) {
             // 1. Cálculos de Tempo
-            const workedMins = calculateWorkedMinutes(pontos);
+            const possuiAlmoco = escala?.possui_almoco !== false;
+            const workedMins = calculateWorkedMinutes(pontos, possuiAlmoco);
             const plannedMins = ScalesEngine.calculateDailyWorkMinutes(escala);
             const balance = workedMins - plannedMins;
 
@@ -512,12 +513,19 @@
             }
         }
 
-        function calculateWorkedMinutes(points) {
+        function calculateWorkedMinutes(points, possuiAlmoco = true) {
             let mins = 0;
-            for (let i = 0; i < points.length; i += 2) {
-                if (points[i + 1]) mins += (new Date(points[i + 1].data_hora) - new Date(points[i].data_hora)) / 60000;
+            // Filtrar apenas batidas aprovadas ou pendentes (ignorar rejeitadas)
+            const activePoints = points.filter(p => p.status_validacao !== 'rejeitado');
+            
+            for (let i = 0; i < activePoints.length; i += 2) {
+                if (activePoints[i + 1]) mins += (new Date(activePoints[i + 1].data_hora) - new Date(activePoints[i].data_hora)) / 60000;
             }
-            return mins;
+
+            // Dedução automática de 1h se configurado e jornada > 6h
+            if (possuiAlmoco && mins > 360) mins -= 60;
+            
+            return Math.max(0, mins);
         }
 
         function formatTime(point) {

@@ -60,11 +60,9 @@ class GPSTracker {
             const coordStr = `${lat},${lng}`;
             const nowTime = new Date().toLocaleTimeString('pt-BR');
 
-            // 2. Log de Pulso (com trava de 15min)
-            await this.logPulse(user.id, coordStr);
-            
-            // 3. Rastreamento Externo (Independente de Regime, se ativado no perfil)
-            if (user.rastreio_ativo) {
+            // 3. Rastreamento Externo (Baseado na Escala)
+            const escala = user.escalas || {};
+            if (escala.rastreio_horario) {
                 await this.logHourlyLocation(user.id, coordStr);
             } 
 
@@ -81,11 +79,20 @@ class GPSTracker {
                      const currentStatus = isInside ? 'inside' : 'outside';
 
                      if (this.lastGeofenceStatus !== null && this.lastGeofenceStatus !== currentStatus) {
-                         // Quebra de Perímetro Detectada (sem o horário no texto)
-                         const msg = currentStatus === 'outside' 
+                         // Quebra de Perímetro Detectada
+                         const isOut = currentStatus === 'outside';
+                         const msg = isOut 
                             ? `O sistema detectou que você se ausentou do raio de alcance permitido para o seu local de escala/setor designado.` 
                             : `O sistema detectou o seu retorno para dentro do raio de alcance permitido do seu local de escala/setor designado.`;
-                         await this.logOccurrence(user.id, currentStatus === 'outside' ? 'geofence_out' : 'geofence_in', msg, coordStr, 'pendente');
+                         
+                         await this.logOccurrence(
+                             user.id, 
+                             isOut ? 'geofence_out' : 'geofence_in', 
+                             msg, 
+                             coordStr, 
+                             isOut ? 'pendente' : 'aprovado',
+                             isOut ? 'FORA DO RAIO PERMITIDO' : 'RETORNO AO POSTO'
+                         );
                      }
                      
                      this.lastGeofenceStatus = currentStatus;
@@ -142,11 +149,12 @@ class GPSTracker {
         await this.logOccurrence(userId, 'gps_hora', msg, coordStr, 'aprovado');
     }
 
-    static async logOccurrence(userId, type, message, coords, status = 'pendente') {
+    static async logOccurrence(userId, type, message, coords, status = 'pendente', typeOriginal = null) {
         const payload = {
             funcionario_id: userId,
             data_hora: new Date().toISOString(),
             tipo: type,
+            tipo_original: typeOriginal || type.toUpperCase(),
             mensagem_padrao: message,
             coordenadas: coords,
             lido_pelo_funcionario: false,

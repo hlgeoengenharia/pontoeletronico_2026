@@ -21,13 +21,15 @@ export const PointLogic = {
                 .order('data_hora', { ascending: true });
 
             if (error) throw error;
+            console.log(`[PointLogic] Analisando batidas de ${dateStr} para funcionário ${funcionarioId}...`);
 
             // Se houver apenas 1 ponto (Check-in), falta o Check-out
-            if (pts && pts.length === 1 && pts[0].tipo === 'check-in') {
-                await this.applyForgetfulnessRule(funcionarioId, pts[0], dateStr);
+            if (points && points.length === 1 && points[0].tipo === 'check-in') {
+                console.log(`[PointLogic] Esquecimento detectado em ${dateStr}.`);
+                await this.applyForgetfulnessRule(funcionarioId, points[0], dateStr);
             }
         } catch (err) {
-            console.error('Erro ao checar esquecimento:', err);
+            console.error('[PointLogic] Falha ao checar esquecimento:', err);
         }
     },
 
@@ -43,29 +45,46 @@ export const PointLogic = {
 
         if (!func || !func.escalas) return;
 
-        const weeklyHours = func.escalas.carga_horaria_semanal || 44;
-        const dailyPlannedMinutes = (weeklyHours / 5) * 60; // Simplificado
+        const escala = func.escalas;
+        const weeklyHours = escala.carga_horaria_semanal || 44;
+        const dailyPlannedMinutes = (weeklyHours / 5) * 60; 
         const penaltyMinutes = dailyPlannedMinutes * 0.5;
 
-        const fakeCheckOut = new Date(checkIn.data_hora);
-        fakeCheckOut.setMinutes(fakeCheckOut.getMinutes() + penaltyMinutes);
+        const checkInDate = new Date(checkIn.data_hora);
+        const fakeCheckOut = new Date(checkInDate.getTime() + penaltyMinutes * 60000);
 
-        await supabase.from('pontos').insert([{
+        // 1. Inserir Ponto Automático com status Pendente
+        const { error: pError } = await supabase.from('pontos').insert([{
             funcionario_id: funcionarioId,
             tipo: 'check-out',
             data_hora: fakeCheckOut.toISOString(),
             status: 'automatico_50',
+            status_validacao: 'pendente',
             modalidade: checkIn.modalidade,
-            saldo_horas_dia: `PT${Math.floor(penaltyMinutes / 60)}H${penaltyMinutes % 60}M`
+            justificativa_usuario: 'Registro automático por esquecimento de check-out (Regra 50% da jornada).',
+            geolocalizacao_json: checkIn.geolocalizacao_json
         }]);
 
-        console.log('Regra de 50% aplicada para:', funcionarioId);
+        if (pError) throw pError;
+
+        // 2. Registrar no Diário de Bordo
+        const msg = `O sistema detectou que você esqueceu de registrar sua saída no dia ${new Date(dateStr).toLocaleDateString('pt-BR')}. Um registro automático de 50% da sua jornada foi criado e aguarda análise do seu gestor para ser efetivado no histórico.`;
+        
+        await supabase.from('diario_logs').insert([{
+            funcionario_id: funcionarioId,
+            data_hora: new Date().toISOString(),
+            tipo: 'esquecimento_ponto',
+            mensagem_padrao: msg,
+            status_pendencia: 'pendente'
+        }]);
+
+        console.log(`[PointLogic] Regra de 50% aplicada e pendente para: ${funcionarioId}`);
     },
 
     /**
      * Calcula o saldo de horas de um dia específico
      */
-    calculateDailyBalance(points, plannedHours) {
+    calculateDailyBalance(points, plannedHours, possuiAlmoco = true) {
         if (!points || points.length < 2) return 0;
 
         let totalMinutes = 0;
@@ -77,8 +96,10 @@ export const PointLogic = {
             }
         }
 
-        // Subtrai 1h de almoço se jornada > 6h (Regra genérica)
-        if (totalMinutes > 360) totalMinutes -= 60;
+        // Subtrai 1h de almoço se jornada > 6h e estiver configurado
+        if (possuiAlmoco && totalMinutes > 360) {
+            totalMinutes -= 60;
+        }
 
         const plannedMinutes = plannedHours * 60;
         return totalMinutes - plannedMinutes;
