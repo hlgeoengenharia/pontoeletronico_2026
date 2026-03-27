@@ -235,16 +235,17 @@
                 };
 
                 const mySectorId = func.setor_id;
-                const [ptsRes, anotRes, justRes, comsRes, logsRes, ferRes] = await Promise.all([
+                const [ptsRes, anotRes, justRes, comsRes, logsRes, ferRes, vacRes] = await Promise.all([
                     supabase.from('pontos').select('*').eq('funcionario_id', targetId).gte('data_hora', `${dataRef}T00:00:00`).lte('data_hora', `${dataRef}T23:59:59`).order('data_hora', { ascending: true }),
                     supabase.from('anotacoes').select('*').eq('funcionario_id', targetId).eq('data', dataRef),
                     supabase.from('justificativas').select('*').eq('funcionario_id', targetId).eq('data_incidente', dataRef),
                     supabase.from('comunicados').select('*').or(`destinatario_id.eq.${targetId},tipo.eq.geral,setor_id.eq.${mySectorId || '00000000-0000-0000-0000-000000000000'}`).gte('created_at', `${dataRef}T00:00:00`).lte('created_at', `${dataRef}T23:59:59`),
                     supabase.from('diario_logs').select('*').eq('funcionario_id', targetId).gte('created_at', `${dataRef}T00:00:00`).lte('created_at', `${dataRef}T23:59:59`),
-                    supabase.from('feriados_folgas').select('*').or(`funcionario_id.eq.${targetId},setor_id.eq.${mySectorId},escopo.eq.geral`).eq('data', dataRef)
+                    supabase.from('feriados_folgas').select('*').or(`funcionario_id.eq.${targetId},setor_id.eq.${mySectorId},escopo.eq.geral`).eq('data', dataRef),
+                    supabase.from('ferias').select('*').eq('funcionario_id', targetId).eq('status', 'aprovado').lte('data_inicio', dataRef).gte('data_fim', dataRef)
                 ]);
 
-                renderResumo(ptsRes.data, anotRes.data, justRes.data, comsRes.data || [], logsRes.data || [], ferRes.data || [], func.escalas, dataRef);
+                renderResumo(ptsRes.data, anotRes.data, justRes.data, comsRes.data || [], logsRes.data || [], ferRes.data || [], vacRes.data || [], func.escalas, dataRef);
 
             } catch (err) {
                 console.error(err);
@@ -254,15 +255,26 @@
             }
         }
 
-        function renderResumo(pontos, anotacoes, justificativas, comunicados, logs, feriados, escala, dataRef) {
+        function renderResumo(pontos, anotacoes, justificativas, comunicados, logs, feriados, ferias, escala, dataRef) {
+            const isFerias = ferias && ferias.length > 0;
+            
             // 1. Cálculos de Tempo
             const possuiAlmoco = escala?.possui_almoco !== false;
             const workedMins = calculateWorkedMinutes(pontos, possuiAlmoco);
-            const plannedMins = ScalesEngine.calculateDailyWorkMinutes(escala);
+            let plannedMins = ScalesEngine.calculateDailyWorkMinutes(escala);
+            
+            if (isFerias) {
+                plannedMins = 0; // Se está em férias, não há carga prevista para o dia
+            }
+
             const balance = workedMins - plannedMins;
 
             document.getElementById('totalTrabalhado').innerText = formatMinutes(workedMins);
-            document.getElementById('totalEsperado').innerText = formatMinutes(plannedMins);
+            document.getElementById('totalEsperado').innerText = isFerias ? 'FÉRIAS' : formatMinutes(plannedMins);
+            
+            if (isFerias) {
+                document.getElementById('user-nome-audit').innerHTML += ` <span class="ml-2 px-3 py-1 bg-blue-500 text-white text-[10px] font-black rounded-full italic shadow-lg shadow-blue-500/20">EM REPOUSO</span>`;
+            }
             
             const horarioEl = document.getElementById('horarioPrevisto');
             if (pontos && pontos.length > 0) {

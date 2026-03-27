@@ -417,16 +417,17 @@
                 const endMonth = new Date(year, month + 1, 0, 23, 59, 59).toISOString();
 
                 const mySectorId = func.setor_id;
-                const [ptsRes, anotRes, justRes, comsRes, logsRes, ferRes] = await Promise.all([
+                const [ptsRes, anotRes, justRes, comsRes, logsRes, ferRes, vacRes] = await Promise.all([
                     supabase.from('pontos').select('*').eq('funcionario_id', targetId).gte('data_hora', startMonth).lte('data_hora', endMonth).order('data_hora', { ascending: true }),
                     supabase.from('anotacoes').select('*').eq('funcionario_id', targetId).gte('data', startMonth.split('T')[0]).lte('data', endMonth.split('T')[0]),
                     supabase.from('justificativas').select('*').eq('funcionario_id', targetId).gte('data_incidente', startMonth.split('T')[0]).lte('data_incidente', endMonth.split('T')[0]),
                     supabase.from('comunicados').select('*').or(`destinatario_id.eq.${targetId},tipo.eq.geral,setor_id.eq.${mySectorId || '00000000-0000-0000-0000-000000000000'}`).gte('created_at', startMonth).lte('created_at', endMonth),
                     supabase.from('diario_logs').select('*').eq('funcionario_id', targetId).gte('created_at', startMonth).lte('created_at', endMonth),
-                    supabase.from('feriados_folgas').select('*').or(`funcionario_id.eq.${targetId},setor_id.eq.${mySectorId},escopo.eq.geral`).gte('data', startMonth.split('T')[0]).lte('data', endMonth.split('T')[0])
+                    supabase.from('feriados_folgas').select('*').or(`funcionario_id.eq.${targetId},setor_id.eq.${mySectorId},escopo.eq.geral`).gte('data', startMonth.split('T')[0]).lte('data', endMonth.split('T')[0]),
+                    supabase.from('ferias').select('*').eq('funcionario_id', targetId).eq('status', 'aprovado').lte('data_inicio', endMonth.split('T')[0]).gte('data_fim', startMonth.split('T')[0])
                 ]);
 
-                renderEspelho(ptsRes.data || [], anotRes.data || [], justRes.data || [], comsRes.data || [], logsRes.data || [], ferRes.data || [], func.escalas, month, year);
+                renderEspelho(ptsRes.data || [], anotRes.data || [], justRes.data || [], comsRes.data || [], logsRes.data || [], ferRes.data || [], vacRes.data || [], func.escalas, month, year);
 
             } catch (err) {
                 console.error(err);
@@ -447,7 +448,7 @@
             loadData();
         };
 
-        function renderEspelho(pontos, anotacoes, justificativas, comunicados, logs, feriados, escala, mParam, yParam) {
+        function renderEspelho(pontos, anotacoes, justificativas, comunicados, logs, feriados, ferias, escala, mParam, yParam) {
             const month = parseInt(mParam);
             const year = parseInt(yParam);
             const body = document.getElementById('espelhoBody');
@@ -471,10 +472,11 @@
                 const dayComunicados = (comunicados || []).filter(c => c.created_at.startsWith(dateStr));
                 const dayLogs = (logs || []).filter(l => l.created_at.startsWith(dateStr));
                 const daySpecial = (feriados || []).find(f => f.data === dateStr);
+                const dayFerias = (ferias || []).find(f => f.data_inicio <= dateStr && f.data_fim >= dateStr);
 
                 const possuiAlmoco = escala?.possui_almoco !== false;
                 let dayWorkedMinutes = calculateWorkedMinutes(dayPoints, possuiAlmoco);
-                const isPlanned = plannedDays.includes(dateStr) && !daySpecial;
+                const isPlanned = plannedDays.includes(dateStr) && !daySpecial && !dayFerias;
                 const isFinished = ScalesEngine.isDayFinished(dateStr, escala);
                 const shouldCharge = isPlanned && (dayPoints.length > 0 || isFinished);
                 const dailyPlannedMinutes = shouldCharge ? ScalesEngine.calculateDailyWorkMinutes(escala) : 0;
@@ -502,6 +504,8 @@
                 let statusHtml = '';
                 if (daySpecial) {
                     statusHtml = `<span class="px-2 py-1 rounded bg-purple-500/10 text-purple-500 text-[9px] font-black uppercase border border-purple-500/20">${daySpecial.tipo.replace('_', ' ')}</span>`;
+                } else if (dayFerias) {
+                    statusHtml = `<span class="px-2 py-1 rounded bg-blue-500/20 text-blue-400 text-[9px] font-black uppercase border border-blue-500/40">FÉRIAS</span>`;
                 } else if (isAbonado) {
                     statusHtml = '<span class="px-2 py-1 rounded bg-emerald-500/20 text-emerald-400 text-[9px] font-black uppercase border border-emerald-500/40">Abonado</span>';
                 } else if (isRejeitado) {

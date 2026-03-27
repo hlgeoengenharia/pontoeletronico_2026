@@ -93,6 +93,9 @@
 
     .status-online { background-color: #10B981; box-shadow: 0 0 8px #10B981; }
     .status-offline { background-color: #EF4444; box-shadow: 0 0 8px #EF4444; }
+    .status-repouso { background-color: #60A5FA; box-shadow: 0 0 8px #60A5FA; } /* Azul Sereno */
+    .status-aprovado { background-color: #10B981; box-shadow: 0 0 8px #10B981; } /* Verde Esmeralda */
+    .status-pendente { background-color: #F59E0B; box-shadow: 0 0 8px #F59E0B; } /* Amarelo */
 
     /* Popups */
     .leaflet-popup-content-wrapper {
@@ -248,8 +251,8 @@
         <div class="flex items-center gap-3 mb-4">
             <span class="material-symbols-outlined text-primary text-3xl">satellite_alt</span>
             <div>
-                <h2 class="text-sm font-black tracking-widest uppercase">Rede Neural</h2>
-                <p class="text-[9px] text-slate-500 font-bold uppercase tracking-tight">Monitoramento em Tempo Real</p>
+                <h2 id="neural-title" class="text-sm font-black tracking-widest uppercase">Rede Neural</h2>
+                <p id="neural-subtitle" class="text-[9px] text-slate-500 font-bold uppercase tracking-tight">Monitoramento em Tempo Real</p>
             </div>
         </div>
         <!-- Busca Rápida -->
@@ -269,10 +272,11 @@
         </div>
     </div>
 
-    <!-- Botão de Transmissão Geral -->
+    <!-- Botão de Regras Gerais / Comunicação -->
     <div class="p-4 bg-background-dark/50 border-t border-white/5">
-        <button onclick="abrirModalComunicado('geral')" class="w-full py-3 bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2">
-            <span class="material-symbols-outlined text-sm">campaign</span> COMUNICAÇÃO
+        <button id="btn-main-action" onclick="abrirModalComunicado('geral')" class="w-full py-3 bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2">
+            <span id="icon-main-action" class="material-symbols-outlined text-sm">campaign</span> 
+            <span id="label-main-action">COMUNICAÇÃO</span>
         </button>
     </div>
   </aside>
@@ -455,6 +459,118 @@
               </div>
           </div>
       </div>
+  <!-- MODAL: CARD DE FÉRIAS INDIVIDUAL -->
+  <div id="modal-card-ferias" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center p-6 z-[2500]">
+      <div class="glass-panel w-full max-w-lg rounded-3xl p-8 relative overflow-y-auto max-h-[90dvh] custom-scrollbar neon-border">
+          <div class="absolute top-0 left-0 w-full h-1 bg-blue-500"></div>
+          
+          <div class="flex justify-between items-center mb-8">
+              <div class="flex items-center gap-4">
+                  <div id="ferias-foto-container" class="size-14 rounded-full border-2 border-blue-500/30 overflow-hidden bg-slate-800">
+                      <img id="ferias-foto" src="" class="w-full h-full object-cover">
+                  </div>
+                  <div>
+                      <h3 id="ferias-nome" class="text-lg font-black uppercase tracking-tight text-white mb-0.5">NOME DO FUNCIONÁRIO</h3>
+                      <p id="ferias-cargo" class="text-[10px] text-blue-400 font-bold uppercase tracking-widest">CARGO / FOCO TÉCNICO</p>
+                  </div>
+              </div>
+              <button onclick="fecharCardFerias()" class="text-slate-500 hover:text-white transition-colors">
+                  <span class="material-symbols-outlined">close</span>
+              </button>
+          </div>
+
+          <!-- Grid de Status -->
+          <div class="grid grid-cols-2 gap-4 mb-8">
+              <div class="bg-white/5 border border-white/10 rounded-2xl p-4">
+                  <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Saldo Total</p>
+                  <p id="ferias-saldo" class="text-2xl font-black text-white">30 <span class="text-[10px] text-slate-500">DIAS</span></p>
+              </div>
+              <div class="bg-white/5 border border-white/10 rounded-2xl p-4">
+                  <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Status Atual</p>
+                  <span id="ferias-status-badge" class="px-3 py-1 bg-emerald-500/20 text-emerald-500 text-[10px] font-black rounded-full inline-block mt-1 uppercase">Disponível</span>
+              </div>
+          </div>
+
+          <!-- Seção de Solicitação -->
+          <div class="space-y-6">
+              <div class="bg-blue-500/5 border border-blue-500/20 rounded-2xl p-6">
+                  <h4 class="text-xs font-black text-blue-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                       <span class="material-symbols-outlined text-sm">event_repeat</span> Solicitar Período
+                  </h4>
+                  <div class="grid grid-cols-2 gap-4 mb-4">
+                      <div class="space-y-2">
+                          <label class="text-[9px] font-black text-slate-500 uppercase ml-1">Início</label>
+                          <input id="input-ferias-inicio" type="date" class="w-full bg-background-dark/50 border border-white/10 rounded-xl p-3 text-xs text-white outline-none focus:border-blue-500">
+                      </div>
+                      <div class="space-y-2">
+                          <label class="text-[9px] font-black text-slate-500 uppercase ml-1">Fim</label>
+                          <input id="input-ferias-fim" type="date" class="w-full bg-background-dark/50 border border-white/10 rounded-xl p-3 text-xs text-white outline-none focus:border-blue-500">
+                      </div>
+                  </div>
+                  
+                  <button id="btn-salvar-ferias" class="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-black uppercase tracking-[0.2em] rounded-2xl shadow-lg transition-all">
+                      Confirmar Solicitação
+                  </button>
+              </div>
+
+              <!-- Histórico do Funcionário -->
+              <div class="space-y-3">
+                  <h4 class="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">Períodos Registrados</h4>
+                  <div id="lista-ferias-emp" class="space-y-2">
+                      <p class="text-[10px] text-slate-600 italic text-center py-4 uppercase">Nenhum período solicitado</p>
+                  </div>
+              </div>
+          </div>
+      </div>
+  </div>
+
+  <!-- MODAL: REGRAS GERAIS (ADMIN) -->
+  <div id="modal-regras-gerais" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center p-6 z-[2500]">
+      <div class="glass-panel w-full max-w-2xl rounded-3xl p-8 relative overflow-y-auto max-h-[90dvh] custom-scrollbar neon-border">
+          <div class="absolute top-0 left-0 w-full h-1 bg-primary"></div>
+          
+          <div class="flex justify-between items-center mb-8">
+              <div class="flex items-center gap-3">
+                  <span class="material-symbols-outlined text-primary text-3xl">policy</span>
+                  <div>
+                      <h3 class="text-sm font-black uppercase tracking-widest">Governança de Férias</h3>
+                      <p class="text-[9px] text-slate-500 font-bold uppercase">Diretrizes de Sobreposição e Escalas</p>
+                  </div>
+              </div>
+              <button onclick="fecharModalRegrasGerais()" class="text-slate-500 hover:text-white transition-colors">
+                  <span class="material-symbols-outlined">close</span>
+              </button>
+          </div>
+
+          <div class="space-y-8">
+              <!-- Meta de Sobreposição -->
+              <section class="space-y-4">
+                  <div class="flex justify-between items-center">
+                      <h4 class="text-[10px] font-black text-primary uppercase tracking-widest">Metas por Foco Técnico</h4>
+                      <button class="text-[9px] font-black text-primary uppercase border border-primary/30 px-3 py-1.5 rounded-lg hover:bg-primary/10">Adicionar Meta</button>
+                  </div>
+                  <div class="overflow-hidden rounded-2xl border border-white/5 bg-white/5">
+                      <table class="w-full text-left text-[11px]">
+                          <thead class="bg-white/5 text-slate-500 font-black uppercase tracking-widest">
+                              <tr>
+                                  <th class="p-4">Setor</th>
+                                  <th class="p-4">Foco Técnico</th>
+                                  <th class="p-4 text-center">Limite Simultâneo</th>
+                                  <th class="p-4"></th>
+                              </tr>
+                          </thead>
+                          <tbody id="lista-regras-sobreposicao" class="divide-y divide-white/5 text-slate-300">
+                              <!-- Dinâmico -->
+                          </tbody>
+                      </table>
+                  </div>
+              </section>
+
+              <button class="w-full py-4 bg-primary text-white text-[11px] font-black uppercase tracking-widest rounded-2xl shadow-lg shadow-primary/20 hover:scale-[1.01] transition-all">
+                  Salvar Diretrizes Globais
+              </button>
+          </div>
+      </div>
   </div>
 
   <!-- Leaflet JS -->
@@ -496,9 +612,23 @@
     let feriasCalendarYear = new Date().getFullYear();
     let selectedSpecialDays = []; // { data, tipo, descricao }
 
+    // Modo Férias
+    const urlParams = new URLSearchParams(window.location.search);
+    const isFeriasMode = urlParams.get('mode') === 'ferias';
+
     // --- INICIALIZAÇÃO ---
     async function init() {
         UI.showLoader();
+
+        if (isFeriasMode) {
+            document.getElementById('neural-title').innerText = 'CRONOGRAMA';
+            document.getElementById('neural-subtitle').innerText = 'Gestão de Férias e Repouso';
+            document.getElementById('label-main-action').innerText = 'REGRAS GERAIS';
+            document.getElementById('icon-main-action').innerText = 'settings';
+            document.getElementById('btn-main-action').onclick = () => abrirModalRegrasGerais();
+            document.title = 'Gestão de Férias - Admin Console';
+        }
+
         await fetchData();
         renderSidebar();
         renderMapLayers();
@@ -612,6 +742,10 @@
                 heMap[he.destinatario_id].push(he);
             });
 
+            // 6. Dados de Férias
+            const { data: vData } = await supabase.from('ferias').select('*');
+            const feriasInfo = vData || [];
+
             employees = (fData || []).map(f => {
                 const punches = statusMap[f.id] || [];
                 const hasActivePunch = punches.length > 0 && punches[punches.length - 1] === 'check-in';
@@ -629,21 +763,29 @@
                 // Mapear Horas Extras do Funcionário
                 const myHEs = heMap[f.id] || [];
                 const nowLocal = new Date();
-                const localYear = nowLocal.getFullYear();
-                const localMonth = String(nowLocal.getMonth() + 1).padStart(2, '0');
-                const localDay = String(nowLocal.getDate()).padStart(2, '0');
-                const localToday = `${localYear}-${localMonth}-${localDay}`;
+                const todayStr = nowLocal.toISOString().split('T')[0];
                 
-                const hasHEtoday = myHEs.some(he => he.created_at.startsWith(localToday));
+                const hasHEtoday = myHEs.some(he => he.created_at.startsWith(todayStr));
 
-                // Regra Refinada:
-                // 1. Check-in ativo hoje OU atividade recente de GPS (20 min) -> Online para TODOS.
-                // 2. Se for EU (usuário logado), estou Online enquanto estiver na página (mesmo sem ponto).
-                // 3. Removida a regra de Admin/Gestor sempre online para outros, para evitar falsos positivos no mapa.
+                // Processar Status de Férias
+                const myFerias = feriasInfo.filter(v => v.funcionario_id === f.id);
+                let vacationStatus = 'nenhum'; // nenhum, repouso, aprovado, pendente
+
+                myFerias.forEach(v => {
+                    if (v.status === 'aprovado') {
+                        if (todayStr >= v.data_inicio && todayStr <= v.data_fim) {
+                            vacationStatus = 'repouso';
+                        } else if (v.data_inicio > todayStr && vacationStatus !== 'repouso') {
+                            vacationStatus = 'aprovado';
+                        }
+                    } else if (v.status === 'pendente' && vacationStatus === 'nenhum') {
+                        vacationStatus = 'pendente';
+                    }
+                });
+
                 const isOnline = hasActivePunch || isRecentActivity || isMe;
                 const loc = lastLocs[f.id];
                 
-                // Priorizar a localização de GPS (Pulse) sobre a localização da última batida
                 let finalLat = loc?.latitude || null;
                 let finalLng = loc?.longitude || null;
 
@@ -658,6 +800,7 @@
                 return {
                     ...f,
                     status: isOnline ? 'online' : 'offline',
+                    vacationStatus,
                     last_lat: finalLat,
                     last_lng: finalLng,
                     hasHEtoday,
@@ -711,22 +854,26 @@
                         ${sectorEmployees.map(e => {
                             const isMe = e.id === Auth.getUser()?.id;
                             return `
-                                <div onclick="focarFuncionario('${e.id}')" 
+                                <div onclick="${isFeriasMode ? `abrirCardFerias('${e.id}')` : `focarFuncionario('${e.id}')`}" 
                                      class="flex items-center justify-between p-2 rounded-lg cursor-pointer group/func transition-all 
                                             ${e.status === 'online' ? 'bg-emerald-500/10 border border-emerald-500/20' : 'bg-rose-500/10 border border-rose-500/20'} 
-                                            ${e.hasHEtoday ? '!border-amber-500/50' : ''}">
+                                            ${e.hasHEtoday ? '!border-amber-500/50' : ''}
+                                            ${isFeriasMode && e.vacationStatus === 'repouso' ? '!bg-blue-500/10 !border-blue-500/30' : ''}">
                                     <div class="flex items-center gap-2">
                                         <div class="relative flex items-center justify-center w-4 h-4">
-                                            ${e.hasHEtoday ? 
-                                                '<span class="material-symbols-outlined text-[14px] text-emerald-400 font-variation-settings-fill">schedule</span>' : 
-                                                `<span class="status-dot ${e.status === 'online' ? 'status-online' : 'status-offline'} !w-1.5 !h-1.5"></span>`
+                                            ${isFeriasMode ? 
+                                                `<span class="status-dot ${e.vacationStatus === 'repouso' ? 'status-repouso' : (e.vacationStatus === 'aprovado' ? 'status-aprovado' : (e.vacationStatus === 'pendente' ? 'status-pendente' : 'opacity-20 bg-slate-500'))} !w-1.5 !h-1.5"></span>` :
+                                                (e.hasHEtoday ? 
+                                                    '<span class="material-symbols-outlined text-[14px] text-emerald-400 font-variation-settings-fill">schedule</span>' : 
+                                                    `<span class="status-dot ${e.status === 'online' ? 'status-online' : 'status-offline'} !w-1.5 !h-1.5"></span>`)
                                             }
                                         </div>
-                                        <span class="text-[9px] font-bold ${e.status === 'online' ? 'text-emerald-500' : 'text-rose-500'} uppercase group-hover/func:text-slate-100 transition-colors">
+                                        <span class="text-[9px] font-bold ${isFeriasMode ? (e.vacationStatus === 'repouso' ? 'text-blue-400' : 'text-slate-400') : (e.status === 'online' ? 'text-emerald-500' : 'text-rose-500')} uppercase group-hover/func:text-slate-100 transition-colors">
                                             ${e.nickname || (e.nome_completo ? e.nome_completo.split(' ')[0] : 'N/A')}
                                         </span>
                                     </div>
-                                    ${e.hasHEtoday ? '<span class="text-[10px] animate-pulse">⚡</span>' : ''}
+                                    ${!isFeriasMode && e.hasHEtoday ? '<span class="text-[10px] animate-pulse">⚡</span>' : ''}
+                                    ${isFeriasMode && e.vacationStatus !== 'nenhum' ? `<span class="text-[8px] font-black uppercase ${e.vacationStatus === 'repouso' ? 'text-blue-400' : 'text-slate-500'}">${e.vacationStatus}</span>` : ''}
                                 </div>
                             `;
                         }).join('')}
@@ -740,6 +887,14 @@
     function renderMapLayers() {
         sectorsGroup.clearLayers();
         employeesGroup.clearLayers();
+
+        if (isFeriasMode) {
+            // No modo férias, não mostramos os pins de funcionários individuais no mapa global, 
+            // apenas os agrupamentos por setor (para focar na sobreposição de funções).
+            employeesGroup.removeFrom(map);
+        } else {
+            employeesGroup.addTo(map);
+        }
 
         // Renderizar Setores (Geofences + Pins de Gota)
         sectors.forEach(s => {
@@ -1604,14 +1759,162 @@
         }
     };
 
-    window.editarHoraExtra = (id, funcId, conteudo) => {
-        const emp = employees.find(e => e.id === funcId);
-        activeComunicado.editId = id;
-        abrirModalComunicado('individual', funcId, emp?.nickname || emp?.nome_completo);
-        setComunicadoSubtipo('hora_extra');
-        document.getElementById('comunicado-texto').value = conteudo;
-        document.getElementById('label-tipo-comunicado').innerText = 'EDITAR HORA EXTRA';
+    // --- LÓGICA DE FÉRIAS INDIVIDUAL ---
+    window.abrirCardFerias = async (userId) => {
+        const emp = employees.find(e => e.id === userId);
+        if (!emp) return;
+
+        const modal = document.getElementById('modal-card-ferias');
+        document.getElementById('ferias-nome').innerText = emp.nome_completo;
+        document.getElementById('ferias-cargo').innerText = `${emp.cargos?.nome} | ${emp.especialidades?.nome}`;
+        document.getElementById('ferias-foto').src = emp.foto_url || `https://ui-avatars.com/api/?name=${emp.nome_completo}&background=101622&color=60A5FA`;
+        
+        const badge = document.getElementById('ferias-status-badge');
+        badge.innerText = emp.vacationStatus.toUpperCase();
+        badge.className = `px-3 py-1 text-[10px] font-black rounded-full inline-block mt-1 uppercase ${
+            emp.vacationStatus === 'repouso' ? 'bg-blue-500/20 text-blue-500' : 
+            (emp.vacationStatus === 'aprovado' ? 'bg-emerald-500/20 text-emerald-500' : 
+            (emp.vacationStatus === 'pendente' ? 'bg-amber-500/20 text-amber-500' : 'bg-white/10 text-slate-500'))
+        }`;
+
+        // Carregar Saldos e Solicitações
+        await carregarDadosFeriasFunc(userId);
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+
+        // Setup salvar
+        document.getElementById('btn-salvar-ferias').onclick = () => solicitarFerias(userId);
     };
+
+    window.fecharCardFerias = () => {
+        const modal = document.getElementById('modal-card-ferias');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    };
+
+    async function carregarDadosFeriasFunc(userId) {
+        const { data } = await supabase.from('ferias').select('*').eq('funcionario_id', userId).order('data_inicio', { ascending: false });
+        const listContainer = document.getElementById('lista-ferias-emp');
+        
+        if (!data || data.length === 0) {
+            listContainer.innerHTML = `<p class="text-[10px] text-slate-600 italic text-center py-4 uppercase">Nenhum período solicitado</p>`;
+            return;
+        }
+
+        listContainer.innerHTML = data.map(v => `
+            <div class="bg-white/5 border border-white/5 rounded-xl p-3 flex justify-between items-center transition-all hover:bg-white/10">
+                <div>
+                    <p class="text-[10px] font-black text-slate-100 uppercase">
+                        ${new Date(v.data_inicio).toLocaleDateString()} - ${new Date(v.data_fim).toLocaleDateString()}
+                    </p>
+                    <p class="text-[8px] text-slate-500 font-bold uppercase mt-0.5">${Math.ceil((new Date(v.data_fim) - new Date(v.data_inicio)) / (1000*60*60*24)) + 1} DIAS</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="text-[8px] font-black px-2 py-0.5 rounded uppercase ${
+                        v.status === 'aprovado' ? 'bg-emerald-500/20 text-emerald-500' : 
+                        (v.status === 'rejeitado' ? 'bg-rose-500/20 text-rose-500' : 'bg-amber-500/20 text-amber-500')
+                    }">${v.status}</span>
+                    <button onclick="excluirFerias('${v.id}', '${userId}')" class="text-rose-500 hover:scale-110 transition-transform"><span class="material-symbols-outlined text-sm">delete</span></button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    async function solicitarFerias(userId) {
+        const start = document.getElementById('input-ferias-inicio').value;
+        const end = document.getElementById('input-ferias-fim').value;
+
+        if (!start || !end) return UI.showToast('Preencha as datas.', 'warning');
+        
+        // Verificação de Conflito (Simples)
+        const emp = employees.find(e => e.id === userId);
+        const conflitos = employees.filter(e => 
+            e.setor_id === emp.setor_id && 
+            e.especialidade_id === emp.especialidade_id &&
+            e.vacationStatus !== 'nenhum' &&
+            e.id !== userId
+        );
+
+        if (conflitos.length >= 2) {
+            const containerAlerta = document.getElementById('conflito-alerta');
+            const msgAlerta = document.getElementById('conflito-msg');
+            msgAlerta.innerText = `Atenção: Já existem ${conflitos.length} profissionais de ${emp.especialidades?.nome || 'mesma área'} com férias/folgas registradas.`;
+            containerAlerta.classList.remove('hidden');
+            if (!confirm('O limite de segurança para este foco técnico foi atingido. Deseja prosseguir mesmo assim?')) {
+                return;
+            }
+        }
+
+        UI.showLoader();
+        try {
+            const { error } = await supabase.from('ferias').insert([{
+                funcionario_id: userId,
+                data_inicio: start,
+                data_fim: end,
+                status: 'pendente'
+            }]);
+            if (error) throw error;
+            UI.showToast('Solicitação enviada!', 'success');
+            document.getElementById('conflito-alerta').classList.add('hidden');
+            carregarDadosFeriasFunc(userId);
+            await fetchData(); // Atualizar dados globais
+            renderSidebar();
+        } catch (err) {
+            console.error(err);
+            UI.showToast('Erro ao solicitar.', 'error');
+        } finally {
+            UI.hideLoader();
+        }
+    }
+
+    window.excluirFerias = async (id, userId) => {
+        if (!confirm('Deseja excluir esta solicitação?')) return;
+        UI.showLoader();
+        try {
+            const { error } = await supabase.from('ferias').delete().eq('id', id);
+            if (error) throw error;
+            UI.showToast('Registro removido.', 'success');
+            carregarDadosFeriasFunc(userId);
+            await fetchData();
+            renderSidebar();
+        } catch (err) {
+            console.error(err);
+            UI.showToast('Erro ao excluir.', 'error');
+        } finally {
+            UI.hideLoader();
+        }
+    };
+
+    // --- REGRAS GERAIS (METAS) ---
+    window.abrirModalRegrasGerais = () => {
+        const modal = document.getElementById('modal-regras-gerais');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        carregarRegrasSobreposicao();
+    };
+
+    window.fecharModalRegrasGerais = () => {
+        const modal = document.getElementById('modal-regras-gerais');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    };
+
+    async function carregarRegrasSobreposicao() {
+        const container = document.getElementById('lista-regras-sobreposicao');
+        // Simulação enquanto não temos a tabela 'metas_ferias'
+        // Na prática, buscaríamos de uma tabela.
+        container.innerHTML = `
+            <tr>
+                <td class="p-4">TODOS</td>
+                <td class="p-4">ENG. SOFTWARE</td>
+                <td class="p-4 text-center font-black">2</td>
+                <td class="p-4 text-right">
+                    <button class="text-rose-500"><span class="material-symbols-outlined text-sm">delete</span></button>
+                </td>
+            </tr>
+        `;
+    }
 
     init();
   </script>

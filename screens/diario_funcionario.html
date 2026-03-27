@@ -371,7 +371,14 @@
                     .select('*, remetente:funcionarios!remetente_id(nickname, nome_completo)')
                     .or(`destinatario_id.eq.${targetId},tipo.eq.geral,setor_id.eq.${mySectorId || '00000000-0000-0000-0000-000000000000'}`);
 
-                // 4. Buscar Feriados e Folgas e Agrupar por Evento (mesmo created_at)
+                // 4. Buscar Férias Aprovadas
+                const { data: feriasAprovadas, error: errVac } = await supabase
+                    .from('ferias')
+                    .select('*')
+                    .eq('funcionario_id', targetId)
+                    .eq('status', 'aprovado');
+
+                // 5. Buscar Feriados e Folgas e Agrupar por Evento (mesmo created_at)
                 const { data: feriadosRaw, error: errFer } = await supabase
                     .from('feriados_folgas')
                     .select('*')
@@ -396,7 +403,7 @@
                     };
                 });
 
-                if (errAnot || errJust || errLogs || errCom || errFer) throw (errAnot || errJust || errLogs || errCom || errFer);
+                if (errAnot || errJust || errLogs || errCom || errFer || errVac) throw (errAnot || errJust || errLogs || errCom || errFer || errVac);
                 
                 // --- LEITURA EM MASSA (AUTO-CLEAN) ---
                 // Feriados/Folgas
@@ -438,6 +445,13 @@
                         itemType: 'SISTEMA', 
                         data_item: (l.data_hora || "").split('T')[0], 
                         conteudo: l.mensagem_padrao
+                    })),
+                    ...(feriasAprovadas || []).map(v => ({
+                        ...v,
+                        itemType: 'SISTEMA',
+                        subtipo: 'ferias_aprovada',
+                        data_item: v.data_inicio,
+                        conteudo: `Início do período de férias aprovado: ${v.data_inicio.split('-').reverse().join('/')} até ${v.data_fim.split('-').reverse().join('/')}.`
                     })),
                     ...feriados
                 ].sort((a, b) => (new Date(b.data_item) - new Date(a.data_item)) || (new Date(b.created_at || b.data_hora || b.data_item) - new Date(a.created_at || a.data_hora || a.data_item)));

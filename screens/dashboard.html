@@ -120,15 +120,15 @@
             </div>
         </section>
 
-        <!-- SEÇÃO: ESTATÍSTICAS DA EQUIPE (Resumo) -->
+        <!-- SEÇÃO: ESTATÍSTICAS DE FÉRIAS (Gestor/Admin) -->
         <section class="grid grid-cols-3 gap-3 px-1 role-gestor role-hidden">
             <div class="bg-white/5 border border-white/10 rounded-2xl p-4 text-center">
-                <p class="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Equipe</p>
+                <p class="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Total Equipe</p>
                 <p id="stat-total-equipe" class="text-xl font-black text-slate-100">--</p>
             </div>
-            <a href="online.html" class="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-4 text-center transition-all hover:bg-emerald-500/10 active:scale-95 block">
-                <p class="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Monitoramento</p>
-                <p id="stat-online-equipe" class="text-xl font-black text-emerald-400">--</p>
+            <a href="online.html?mode=ferias" class="bg-blue-500/5 border border-blue-500/20 rounded-2xl p-4 text-center transition-all hover:bg-blue-500/10 active:scale-95 block">
+                <p class="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Férias (Mês)</p>
+                <p id="stat-ferias-mes" class="text-xl font-black text-blue-400">0</p>
             </a>
             <a href="relacao_setores.html" class="bg-primary/5 border border-primary/20 rounded-2xl p-4 text-center transition-all hover:bg-primary/10 active:scale-95 block">
                 <p class="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Setores</p>
@@ -505,28 +505,21 @@
         async function loadGlobalStats() {
             try {
                 const today = new Date().toISOString().split('T')[0];
-                const [{ count: totalFunc }, { count: totalSetores }] = await Promise.all([
+                const firstDayMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
+                const lastDayMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().split('T')[0];
+
+                const [{ count: totalFunc }, { count: totalSetores }, { count: emFerias }] = await Promise.all([
                     supabase.from('funcionarios').select('*', { count: 'exact', head: true }),
-                    supabase.from('setores').select('*', { count: 'exact', head: true })
+                    supabase.from('setores').select('*', { count: 'exact', head: true }),
+                    supabase.from('ferias').select('*', { count: 'exact', head: true })
+                        .eq('status', 'aprovado')
+                        .lte('data_inicio', lastDayMonth)
+                        .gte('data_fim', firstDayMonth)
                 ]);
 
                 document.getElementById('stat-total-equipe').innerText = totalFunc || '0';
                 document.getElementById('stat-total-setores').innerText = totalSetores || '0';
-
-                const [ptsRes, pulseRes] = await Promise.all([
-                    supabase.from('pontos').select('funcionario_id').gte('data_hora', `${today}T00:00:00`),
-                    supabase.from('diario_logs').select('funcionario_id').eq('tipo', 'gps_pulse').gte('data_hora', new Date(Date.now() - 20 * 60 * 1000).toISOString())
-                ]);
-
-                const onlineSet = new Set();
-                if (ptsRes.data) {
-                    const counts = {};
-                    ptsRes.data.forEach(p => { counts[p.funcionario_id] = (counts[p.funcionario_id] || 0) + 1; });
-                    Object.keys(counts).forEach(id => { if (counts[id] % 2 !== 0) onlineSet.add(id); });
-                }
-                if (pulseRes.data) pulseRes.data.forEach(p => onlineSet.add(p.funcionario_id));
-                onlineSet.add(currentUser.id);
-                document.getElementById('stat-online-equipe').innerText = onlineSet.size || '0';
+                document.getElementById('stat-ferias-mes').innerText = emFerias || '0';
             } catch (err) { console.error('Erro ao carregar estatísticas:', err); }
         }
 
@@ -544,13 +537,30 @@
                 const today = new Date().toISOString().split('T')[0];
                 const { data } = await supabase.from('pontos').select('*').eq('funcionario_id', userId).gte('data_hora', `${today}T00:00:00`).order('data_hora', { ascending: true });
                 
-                const isOnline = data && data.length % 2 !== 0;
                 const role = currentUser.nivel_acesso || 'Funcionário';
                 
+                // --- VERIFICAÇÃO DE FÉRIAS (BLOQUEIO) ---
+                const { data: emFerias } = await supabase
+                    .from('ferias')
+                    .select('*')
+                    .eq('funcionario_id', userId)
+                    .eq('status', 'aprovado')
+                    .lte('data_inicio', today)
+                    .gte('data_fim', today);
+
+                const isOnVacation = emFerias && emFerias.length > 0;
+
                 // Reset de Classes
-                btn.classList.remove('bg-emerald-500', 'bg-rose-500', 'punch-admin', 'punch-gestor', 'punch-funcionario', 'punch-frozen', 'animate-celestial');
-                
-                if (isOnline) {
+                btn.classList.remove('bg-emerald-500', 'bg-rose-500', 'punch-admin', 'punch-gestor', 'punch-funcionario', 'punch-frozen', 'animate-celestial', 'opacity-30', 'grayscale', 'cursor-not-allowed');
+                btn.disabled = false;
+
+                if (isOnVacation) {
+                    btn.disabled = true;
+                    btn.classList.add('punch-frozen', 'opacity-30', 'grayscale');
+                    const label = btn.querySelector('span.text-xs');
+                    if (label) label.innerHTML = 'EM GOZO<br>DE FÉRIAS';
+                    btn.onclick = null;
+                } else if (isOnline) {
                     btn.classList.add('bg-rose-500'); // Check-out é sempre Rose para destaque
                     const label = btn.querySelector('span.text-xs');
                     if (label) label.innerHTML = 'FINALIZAR<br>TURNO';
@@ -588,7 +598,7 @@
                     document.getElementById('stats-total').innerText = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
                 }
 
-                if (isOnline) {
+                if (isOnline && !isOnVacation) {
                     timerEl.classList.remove('hidden');
                     startTimer(data[data.length - 1].data_hora);
                 } else {
