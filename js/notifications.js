@@ -1,4 +1,5 @@
 import { supabase } from './supabase-config.js';
+import { EventManager } from './event-manager.js';
 
 /**
  * Módulo Notifications - Projeto V01
@@ -11,72 +12,81 @@ export const Notifications = {
         if (!userId) return;
 
         try {
-            // 1. Justificativas e Pendências (Badge Sino)
+            // A. Justificativas e Pendências (Badge Sino)
             let sinoCount = 0;
             const role = (userRole || '').toLowerCase();
-            if (role === 'admin' || role === 'gestor' || role === 'manager') {
-                const { count } = await supabase.from('justificativas').select('id', { count: 'exact', head: true }).eq('status', 'pendente');
-                sinoCount = count || 0;
-            } else {
-                const { count: cJustif } = await supabase.from('justificativas').select('id', { count: 'exact', head: true }).eq('funcionario_id', userId).eq('status', 'pendente');
-                // Sincronizar com outros logs que vão para o sino (ex: geofence incidente se houver)
-                const { count: cLogsSino } = await supabase.from('diario_logs')
-                    .select('id', { count: 'exact', head: true })
-                    .eq('funcionario_id', userId)
-                    .eq('status_pendencia', 'pendente')
-                    .neq('tipo', 'comunicado')
-                    .neq('tipo', 'aviso_ferias');
-                sinoCount = (cJustif || 0) + (cLogsSino || 0);
-            }
-
-            // 2. Comunicados e Feriados (Badge Diário)
-            const { data: user } = await supabase.from('funcionarios').select('setor_id').eq('id', userId).single();
-            const sectorId = user?.setor_id || '00000000-0000-0000-0000-000000000000';
-
-            // Buscar comunicados oficiais
-            const { data: coms } = await supabase.from('comunicados')
-                .select('id, subtipo, lido')
-                .or(`destinatario_id.eq.${userId},tipo.eq.geral,setor_id.eq.${sectorId}`);
             
-            // Buscar logs informativos
-            const { data: logs } = await supabase.from('diario_logs')
-                .select('id')
-                .eq('funcionario_id', userId)
-                .in('tipo', ['comunicado', 'aviso_ferias'])
-                .eq('status_pendencia', 'pendente');
+            try {
+                if (role === 'admin' || role === 'gestor' || role === 'manager') {
+                    const { count } = await supabase.from('justificativas').select('id', { count: 'exact', head: true }).eq('status', 'pendente');
+                    sinoCount = count || 0;
+                } else {
+                    const [resJust, resLogs] = await Promise.all([
+                        supabase.from('justificativas').select('id', { count: 'exact', head: true }).eq('funcionario_id', userId).eq('status', 'pendente'),
+                        supabase.from('diario_logs').select('id', { count: 'exact', head: true }).eq('funcionario_id', userId).eq('status_pendencia', 'pendente')
+                            .not('tipo', 'in', '("comunicado","aviso_ferias")')
+                    ]);
+                    sinoCount = (resJust.count || 0) + (resLogs.count || 0);
+                }
+            } catch (e) { console.warn('[Notifications] Erro ao carregar contagem do Sino:', e); }
 
-            // Buscar feriados/folgas individuais ou do setor
-            const { data: feriados } = await supabase.from('feriados_folgas')
-                .select('id')
-                .or(`funcionario_id.eq.${userId},setor_id.eq.${sectorId},escopo.eq.geral`);
+            // B. Comunicados e Feriados (Badge Diário)
+            let diarioCount = 0;
+            try {
+                const { data: user } = await supabase.from('funcionarios').select('setor_id').eq('id', userId).maybeSingle();
+                const sectorId = user?.setor_id || '00000000-0000-0000-0000-000000000000';
 
-            // Filtros de leitura no localStorage
-            const cC = (coms || []).filter(c => !c.lido && !localStorage.getItem(`ciente_${c.id}`)).length;
-            const cL = (logs || []).filter(l => !localStorage.getItem(`visto_${l.id}`)).length;
-            const cF = (feriados || []).filter(f => !localStorage.getItem(`visto_feriado_${f.id}`)).length;
-            
-            const diarioCount = cC + cL + cF;
+                const [resComs, resLogs, resFer, resJustProcessed] = await Promise.all([
+                    supabase.from('comunicados').select('id, subtipo, lido').or(`destinatario_id.eq.${userId},tipo.eq.geral,setor_id.eq.${sectorId}`),
+                    supabase.from('diario_logs').select('id, tipo').eq('funcionario_id', userId).in('tipo', ['comunicado', 'aviso_ferias']).eq('status_pendencia', 'pendente'),
+                    supabase.from('feriados_folgas').select('id').or(`funcionario_id.eq.${userId},setor_id.eq.${sectorId},escopo.eq.geral`),
+                    supabase.from('justificativas').select('id, status').eq('funcionario_id', userId).neq('status', 'pendente')
+                ]);
 
-            // Injetar na UI (Suporta diversos IDs usados nas páginas)
+                const itemsCC = (resComs.data || []).filter(c => {
+                    const isSeen = c.lido || localStorage.getItem(`ciente_${c.id}`);
+                    const config = EventManager.getConfig({ itemType: 'COMUNICADO', ...c });
+                    return !isSeen || !config.autoClear;
+                });
+                const cC = itemsCC.length;
+
+                const itemsCL = (resLogs.data || []).filter(l => {
+                    const isSeen = localStorage.getItem(`visto_${l.id}`);
+                    const config = EventManager.getConfig({ itemType: 'SISTEMA', ...l });
+                    return !isSeen || !config.autoClear;
+                });
+                const cL = itemsCL.length;
+
+                const itemsCF = (resFer.data || []).filter(f => {
+                    const isSeen = localStorage.getItem(`visto_feriado_${f.id}`);
+                    return !isSeen;
+                });
+                const cF = itemsCF.length;
+
+                const itemsCJ = (resJustProcessed.data || []).filter(j => {
+                    const isSeen = localStorage.getItem(`visto_justificativa_${j.id}`);
+                    return !isSeen;
+                });
+                const cJ = itemsCJ.length;
+
+                diarioCount = cC + cL + cF + cJ;
+                console.log(`[Notifications] Badge Diário: ${diarioCount} (Comums:${cC}, Logs:${cL}, Fers:${cF}, Just:${cJ})`);
+                if (cC > 0) console.log('[Notifications] IDs Comunicados Pendentes:', itemsCC.map(i => i.id + ' (' + i.subtipo + ')'));
+            } catch (e) { console.warn('[Notifications] Erro ao carregar contagem do Diário:', e); }
+
+            // C. Atualização da UI
             this.setBadge('notif-badge', sinoCount);
             this.setBadge('notif-badge-footer', diarioCount);
             this.setBadge('badge-sino', sinoCount);
             this.setBadge('badge-diario', diarioCount);
 
-            // 3. Feedback Visual: Cor do Sino
             const sinoIcon = document.getElementById('sino-icon');
             if (sinoIcon) {
-                if (sinoCount > 0) {
-                    sinoIcon.classList.add('text-amber-500');
-                    sinoIcon.classList.remove('text-slate-400');
-                } else {
-                    sinoIcon.classList.remove('text-amber-500');
-                    sinoIcon.classList.add('text-slate-400');
-                }
+                if (sinoCount > 0) sinoIcon.classList.add('text-amber-500'), sinoIcon.classList.remove('text-slate-400');
+                else sinoIcon.classList.remove('text-amber-500'), sinoIcon.classList.add('text-slate-400');
             }
-
         } catch (err) {
-            console.error('[Notifications] Erro ao atualizar badges:', err);
+            console.error('[Notifications] Falha crítica no processamento de badges:', err);
         }
     },
 

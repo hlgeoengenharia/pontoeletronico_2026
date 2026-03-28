@@ -177,6 +177,31 @@
     }
     .status-filter { transition: all 0.3s ease; }
     .status-filter.active { background: #3b82f6; color: white; border-color: #3b82f6; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); }
+
+    /* Custom Leaflet Popups */
+    .leaflet-popup-content-wrapper {
+      background: rgba(16, 22, 34, 0.95) !important;
+      backdrop-filter: blur(10px);
+      color: #f1f5f9 !important;
+      border: 1px solid rgba(59, 130, 246, 0.3) !important;
+      border-radius: 1.5rem !important;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5) !important;
+      padding: 0 !important;
+    }
+    .leaflet-popup-content {
+      margin: 0 !important;
+      width: auto !important;
+    }
+    .leaflet-popup-tip {
+      background: rgba(16, 22, 34, 0.95) !important;
+      border: 1px solid rgba(59, 130, 246, 0.3) !important;
+    }
+    .leaflet-popup-close-button {
+      color: #94a3b8 !important;
+      top: 14px !important;
+      right: 14px !important;
+      z-index: 2000 !important;
+    }
   </style>
 </head>
 
@@ -193,8 +218,8 @@
         <div class="flex items-center gap-3 mb-4">
             <span class="material-symbols-outlined text-blue-500 text-3xl">beach_access</span>
             <div>
-                <h2 class="text-sm font-black tracking-widest uppercase">Cronograma</h2>
-                <p class="text-[9px] text-slate-500 font-bold uppercase tracking-tight">Gestão de Férias e Repouso</p>
+                <h2 id="sidebar-title" class="text-sm font-black tracking-widest uppercase">GESTÃO DE FÉRIAS</h2>
+                <p id="regra-salva-display" class="text-[9px] text-blue-400 font-bold uppercase tracking-tight">Regra: Carregando...</p>
             </div>
         </div>
         <div class="relative">
@@ -540,6 +565,20 @@
 
             updateFilterIndicators();
         } catch (err) { console.error('Erro fetchData:', err); }
+        updateSidebarHeader();
+    }
+
+    function updateSidebarHeader() {
+        const display = document.getElementById('regra-salva-display');
+        if (!display) return;
+        
+        // Ler a regra geral do localStorage (prioridade) ou usar a do primeiro setor como fallback
+        const globalRule = localStorage.getItem('ferias_global_rule') || (sectors.length > 0 ? sectors[0].regra_ferias : 1);
+        const ruleVal = parseInt(globalRule) || 1;
+        
+        display.innerText = `REGRA GERAL: ${ruleVal} PARCELA${ruleVal > 1 ? 'S' : ''}`;
+        display.classList.remove('text-amber-500');
+        display.classList.add('text-blue-400');
     }
 
     function updateFilterIndicators() {
@@ -587,15 +626,31 @@
                 });
 
                 const marker = L.marker([s.latitude, s.longitude], { icon }).addTo(sectorsGroup);
-                marker.bindPopup(`<div class="p-2 space-y-2">
-                    <h3 class="text-xs font-black uppercase text-blue-400">${s.nome}</h3>
-                    <p class="text-[9px] text-slate-500 font-bold uppercase">Gestor: ${s.gestor?.nome_completo || 'N/A'}</p>
-                    <div class="flex justify-between text-[10px] bg-white/5 p-2 rounded-lg">
-                        <span class="text-slate-500 uppercase font-bold">Em Férias:</span>
-                        <span class="text-blue-400 font-black">${onVacation}</span>
+                marker.bindPopup(`
+                    <div class="p-5 space-y-4 min-w-[240px]">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="material-symbols-outlined text-blue-500 text-lg">domain</span>
+                            <h3 class="text-[11px] font-black uppercase tracking-[0.1em] text-white pr-8">${s.nome}</h3>
+                        </div>
+                        
+                        <div class="space-y-2 pt-2 border-t border-white/5">
+                            <div class="flex justify-between items-center">
+                                <span class="text-[8px] font-bold text-slate-500 uppercase tracking-widest">Gestor</span>
+                                <span class="text-[10px] font-black text-slate-200 uppercase">${s.gestor?.nome_completo || 'N/A'}</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-[8px] font-bold text-slate-500 uppercase tracking-widest">Regra Ativa</span>
+                                <span class="text-[10px] font-black text-blue-400 uppercase">${s.regra_ferias || 1} PARCELA${(s.regra_ferias || 1) > 1 ? 'S' : ''}</span>
+                            </div>
+                        </div>
+
+                        <button onclick="window.abrirModalRegrasGerais('${s.id}')" 
+                            class="w-full py-3 mt-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 border border-blue-500/20 rounded-xl text-[9px] font-black uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-2">
+                            <span class="material-symbols-outlined text-sm">settings</span>
+                            <span>Gestão do Setor</span>
+                        </button>
                     </div>
-                    <button onclick="window.abrirModalRegrasGerais('${s.id}')" class="w-full py-2 bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded-lg text-[9px] font-black uppercase mt-2">REGRAS DO SETOR</button>
-                </div>`);
+                `, { maxWidth: 300 });
             }
         });
         if (sectors.length > 0) map.fitBounds(sectorsGroup.getBounds(), { padding: [50, 50] });
@@ -932,6 +987,15 @@
                 status: 'aprovado'
             }));
             await supabase.from('ferias').insert(toInsert);
+            
+            // Central de Eventos: Notificar Funcionário
+            await supabase.from('diario_logs').insert([{
+                funcionario_id: targetEmployee.id,
+                tipo: 'aviso_ferias',
+                mensagem_padrao: 'Suas férias foram aprovadas pelo gestor!',
+                status_pendencia: 'pendente'
+            }]);
+
             UI.showToast('Férias aprovadas!', 'success');
             fecharCardFerias();
             await init();
@@ -951,6 +1015,15 @@
                 status: 'rejeitado'
             }));
             await supabase.from('ferias').insert(toInsert);
+
+            // Central de Eventos: Notificar Funcionário
+            await supabase.from('diario_logs').insert([{
+                funcionario_id: targetEmployee.id,
+                tipo: 'aviso_ferias',
+                mensagem_padrao: 'Seu planejamento de férias foi rejeitado. Revise as datas.',
+                status_pendencia: 'pendente'
+            }]);
+
             UI.showToast('Planejamento rejeitado', 'warning');
             fecharCardFerias();
             await init();
@@ -990,11 +1063,24 @@
     document.getElementById('btn-salvar-regras').onclick = async () => {
         const val = document.querySelector('input[name="regra-parcela"]:checked').value;
         UI.showLoader();
-        if (activeSectorId) await supabase.from('setores').update({ regra_ferias: parseInt(val) }).eq('id', activeSectorId);
-        else await supabase.from('setores').update({ regra_ferias: parseInt(val) });
-        UI.showToast('Regras salvas!', 'success');
-        fecharModalRegrasGerais();
-        await init();
+        try {
+            const query = supabase.from('setores').update({ regra_ferias: parseInt(val) });
+            if (activeSectorId) {
+                await query.eq('id', activeSectorId);
+            } else {
+                // Filtro global seguro para PostgREST
+                await query.neq('id', '00000000-0000-0000-0000-000000000000');
+                localStorage.setItem('ferias_global_rule', val);
+            }
+            UI.showToast('Regras salvas!', 'success');
+            fecharModalRegrasGerais();
+            await init();
+        } catch (err) {
+            console.error(err);
+            UI.showToast('Erro ao salvar regras.', 'error');
+        } finally {
+            UI.hideLoader();
+        }
     };
 
     init();

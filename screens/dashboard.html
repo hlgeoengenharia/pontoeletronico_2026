@@ -123,25 +123,33 @@
         <!-- SEÇÃO: ESTATÍSTICAS DE FÉRIAS (Gestor/Admin) -->
         <section class="grid grid-cols-3 gap-3 px-1 role-gestor role-hidden">
             <a href="ferias.html" class="bg-blue-500/5 border border-blue-500/20 rounded-2xl p-4 text-center transition-all hover:bg-blue-500/10 active:scale-95 block">
-                <p class="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Férias (Mês)</p>
-                <p id="stat-ferias-mes" class="text-xl font-black text-blue-400">0</p>
+                <p class="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Férias (Pendentes)</p>
+                <p class="text-xl font-black text-blue-400 flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined text-lg">beach_access</span>
+                    <span id="stat-ferias-mes">0</span>
+                </p>
             </a>
             <a href="online.html" class="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-4 text-center transition-all hover:bg-emerald-500/10 active:scale-95 block">
                 <p class="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Monitoramento</p>
-                <p id="stat-online-equipe" class="text-xl font-black text-emerald-400">0</p>
-            </a>
+                <p class="text-xl font-black text-emerald-400 flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined text-lg">visibility</span>
+                    <span id="stat-online-equipe">0</span>
+                </p>
             </a>
             <a href="relacao_setores.html" class="bg-primary/5 border border-primary/20 rounded-2xl p-4 text-center transition-all hover:bg-primary/10 active:scale-95 block">
                 <p class="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Setores</p>
-                <p id="stat-total-setores" class="text-xl font-black text-slate-100">--</p>
+                <p class="text-xl font-black text-slate-100 flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined text-lg text-amber-500">domain</span>
+                    <span id="stat-total-setores">--</span>
+                </p>
             </a>
         </section>
 
         <!-- SEÇÃO: REGISTRO DE PONTO -->
         <section class="flex flex-col items-center py-4">
-            <button id="punchButton" class="relative group size-48 rounded-full flex flex-col items-center justify-center text-center p-6 shadow-2xl transition-all duration-500">
-                <span class="material-symbols-outlined text-5xl mb-2 text-white font-variation-settings-fill">power_settings_new</span>
-                <span class="text-xs font-black text-white leading-tight tracking-wider uppercase">REGISTRAR<br>PONTO</span>
+            <button id="punchButton" class="relative group size-40 rounded-full flex flex-col items-center justify-center text-center p-6 shadow-2xl transition-all duration-500">
+                <span class="material-symbols-outlined text-4xl mb-2 text-white font-variation-settings-fill">power_settings_new</span>
+                <span class="text-[10px] font-black text-white leading-tight tracking-wider uppercase">REGISTRAR<br>PONTO</span>
                 
                 <!-- Timer flutuante -->
                 <div id="user-timer" class="absolute -bottom-2 bg-background-dark border border-white/10 px-4 py-1 rounded-full text-[10px] font-black text-primary shadow-xl hidden">
@@ -310,6 +318,7 @@
         import { Auth } from '../js/auth.js';
         import { UI } from '../js/ui-utils.js';
         import { ScalesEngine } from '../js/scales-engine.js';
+        import { EventManager } from '../js/event-manager.js';
         import { GPSTracker } from '../js/gps-tracker.js';
         import { Notifications } from '../js/notifications.js';
 
@@ -499,22 +508,19 @@
         async function loadGlobalStats() {
             try {
                 const today = new Date().toISOString().split('T')[0];
-                const firstDayMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
-                const lastDayMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().split('T')[0];
-
+                
                 // 1. Buscas de Contagem e Férias
                 const [sRes, vacRes] = await Promise.all([
                     supabase.from('setores').select('*', { count: 'exact', head: true }),
-                    supabase.from('ferias').select('*', { count: 'exact', head: true })
-                        .eq('status', 'aprovado')
-                        .lte('data_inicio', lastDayMonth)
-                        .gte('data_fim', firstDayMonth)
+                    supabase.from('ferias').select('funcionario_id').eq('status', 'pendente')
                 ]);
+                
+                const pendingEmployees = new Set((vacRes.data || []).map(v => v.funcionario_id)).size;
 
                 if (document.getElementById('stat-total-setores')) 
                     document.getElementById('stat-total-setores').innerText = sRes.count || '0';
                 if (document.getElementById('stat-ferias-mes')) 
-                    document.getElementById('stat-ferias-mes').innerText = vacRes.count || '0';
+                    document.getElementById('stat-ferias-mes').innerText = pendingEmployees || '0';
 
                 // 2. Cálculo de Online (Ponto + Pulsos GPS)
                 const [ptsRes, pulseRes] = await Promise.all([
@@ -697,22 +703,31 @@
                     }
                 }
 
-                // VALIDAR GEOFENCE (Somente na Entrada)
-                if (nextType === 'check-in' && ['Presencial', 'Híbrido'].includes(currentUser.regime_trabalho)) {
-                    if (currentUser.setores && currentUser.setores.latitude) {
-                        try {
-                            const pos = await GPSTracker.getCurrentPosition();
-                            const dist = ScalesEngine.calculateDistance(pos.coords.latitude, pos.coords.longitude, currentUser.setores.latitude, currentUser.setores.longitude);
-                            const raio = currentUser.setores.raio || 100;
-                            
-                            if (dist > raio) {
-                                showGeofenceModal(pos.coords.latitude, pos.coords.longitude);
+                // --- VALIDAÇÃO CENTRALIZADA (GEOFENCE & HORÁRIO) VIA EVENT MANAGER ---
+                const escala = currentUser.escalas;
+                if (nextType === 'check-in' && escala) {
+                    try {
+                        const pos = await GPSTracker.getCurrentPosition();
+                        const lat = pos.coords.latitude;
+                        const lng = pos.coords.longitude;
+                        
+                        // Validar via Central de Eventos
+                        const validation = EventManager.validatePointEvent(
+                            { tipo: 'check-in', geolocalizacao_json: { lat, lng } },
+                            escala
+                        );
+
+                        if (validation.status === 'divergente') {
+                            // Se houver divergência de raio, mostrar o modal de justificativa
+                            if (validation.alerts.includes('FORA DO RAIO')) {
+                                showGeofenceModal(lat, lng);
                                 return;
                             }
-                        } catch (e) {
-                            UI.showToast('Erro ao validar localização. Verifique o GPS.', 'warning');
-                            return;
+                            // Outras divergências (ex: horário) são apenas registradas (conforme regra 'Apenas Alertar')
                         }
+                    } catch (e) {
+                        console.warn('Falha na validação automática:', e);
+                        // Fallback silenciável para não impedir a batida se o GPS falhar
                     }
                 }
 
@@ -768,13 +783,20 @@
                         return;
                     }
 
+                    // Validação Final de Divergências para o Banco
+                    const escala = currentUser.escalas;
+                    const validation = escala ? EventManager.validatePointEvent({ 
+                        tipo, 
+                        geolocalizacao_json: lat ? { lat, lng } : null 
+                    }, escala) : { status: 'normal', alerts: [] };
+
                     const { error } = await supabase.from('pontos').insert([{ 
                         funcionario_id: userId, 
                         data_hora: new Date().toISOString(), 
                         tipo: tipo, 
-                        status_validacao: justificativa ? 'pendente' : 'aprovado', 
-                        dentro_do_raio: !justificativa,
-                        justificativa_usuario: justificativa,
+                        status_validacao: (justificativa || validation.status === 'divergente') ? 'pendente' : 'aprovado', 
+                        dentro_do_raio: !validation.alerts.includes('FORA DO RAIO'),
+                        justificativa_usuario: justificativa || (validation.alerts.length > 0 ? validation.alerts.join(' | ') : null),
                         latitude: lat,
                         longitude: lng,
                         evidencia_url: evidênciaUrl
