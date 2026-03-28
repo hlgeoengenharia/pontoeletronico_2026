@@ -242,7 +242,7 @@
                     supabase.from('comunicados').select('*').or(`destinatario_id.eq.${targetId},tipo.eq.geral,setor_id.eq.${mySectorId || '00000000-0000-0000-0000-000000000000'}`).gte('created_at', `${dataRef}T00:00:00`).lte('created_at', `${dataRef}T23:59:59`),
                     supabase.from('diario_logs').select('*').eq('funcionario_id', targetId).gte('created_at', `${dataRef}T00:00:00`).lte('created_at', `${dataRef}T23:59:59`),
                     supabase.from('feriados_folgas').select('*').or(`funcionario_id.eq.${targetId},setor_id.eq.${mySectorId},escopo.eq.geral`).eq('data', dataRef),
-                    supabase.from('ferias').select('*').eq('funcionario_id', targetId).eq('status', 'aprovado').lte('data_inicio', dataRef).gte('data_fim', dataRef).catch(e => ({ data: [] }))
+                    supabase.from('ferias').select('*').eq('funcionario_id', targetId).eq('status', 'aprovado').lte('data_inicio', dataRef).gte('data_fim', dataRef)
                 ]);
 
                 renderResumo(ptsRes.data, anotRes.data, justRes.data, comsRes.data || [], logsRes.data || [], ferRes.data || [], vacRes.data || [], func.escalas, dataRef);
@@ -261,13 +261,8 @@
             // 1. Cálculos de Tempo
             const possuiAlmoco = escala?.possui_almoco !== false;
             const workedMins = calculateWorkedMinutes(pontos, possuiAlmoco);
-            let plannedMins = ScalesEngine.calculateDailyWorkMinutes(escala);
-            
-            if (isFerias) {
-                plannedMins = 0; // Se está em férias, não há carga prevista para o dia
-            }
-
-            const balance = workedMins - plannedMins;
+            const plannedMins = isFerias ? 0 : ScalesEngine.calculateDailyWorkMinutes(escala);
+            const balance = isFerias ? 0 : workedMins - plannedMins;
 
             document.getElementById('totalTrabalhado').innerText = formatMinutes(workedMins);
             document.getElementById('totalEsperado').innerText = isFerias ? 'FÉRIAS' : formatMinutes(plannedMins);
@@ -327,9 +322,23 @@
                 `;
             }
 
-            // 3. Render Observações Premium
             const obsCont = document.getElementById('containerObservacoes');
             obsCont.innerHTML = '';
+
+            if (isVacation) {
+                const vacationBanner = `
+                    <div class="bg-sky-500/10 border border-sky-500/20 rounded-3xl p-6 flex items-center gap-4 animate-in fade-in slide-in-from-top-4 duration-700">
+                        <div class="size-12 rounded-2xl bg-sky-500/20 flex items-center justify-center border border-sky-500/30 shrink-0">
+                            <span class="material-symbols-outlined text-sky-400 text-3xl">beach_access</span>
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-black text-sky-300 uppercase tracking-widest italic">Período de Férias</h4>
+                            <p class="text-[11px] text-sky-500/80 font-medium leading-relaxed mt-0.5">Este dia faz parte do seu período de FÉRIAS programado e aprovado.</p>
+                        </div>
+                    </div>
+                `;
+                obsCont.insertAdjacentHTML('afterbegin', vacationBanner);
+            }
 
             const messageDict = {
                 'Pulso de localização automática': 'Localização registrada automaticamente pelo sistema para validar sua presença em serviço durante a jornada.',
@@ -410,7 +419,15 @@
                     time: f.data + 'T07:00:00', // Manhã para ficar no topo
                     color: 'premium-border-purple',
                     label: 'FERIADOS E FOLGAS AGENDADOS'
-                }))
+                })),
+                ...(isVacation ? [{
+                    id: 'vacation-log',
+                    type: 'FERIAS_FOLGA',
+                    content: 'Período oficial de férias aprovado.',
+                    time: dataRef + 'T07:05:00',
+                    color: 'premium-border-blue',
+                    label: 'FÉRIAS'
+                }] : [])
             ].sort((a, b) => new Date(a.time) - new Date(b.time));
 
             if (allItems.length === 0) {
@@ -472,7 +489,7 @@
                                     <span class="material-symbols-outlined text-sm" style="color: currentColor">
                                         ${item.type === 'COMUNICADO_LOG' ? 'campaign' : item.type === 'ATIVIDADE' ? 'edit_note' : item.type === 'JUSTIFICATIVA' ? 'warning' : item.type === 'FERIAS_FOLGA' ? 'event_note' : 'location_on'}
                                     </span>
-                                    <p class="text-[11px] font-black uppercase tracking-widest" style="color: currentColor">${item.label}</p>
+                                    <p class="text-[11px] font-black uppercase tracking-widest" style="color: ${item.label === 'FÉRIAS' ? '#7dd3fc' : 'currentColor'}">${item.label}</p>
                                     <span class="text-[9px] text-slate-500 font-bold ml-2">
                                         ${new Date(item.time).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                                     </span>

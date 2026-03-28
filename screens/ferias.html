@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html class="dark" lang="pt-BR">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>Gestão de Férias - Admin Console</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap"
+    rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+    rel="stylesheet" />
+  <!-- Leaflet Map CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="../js/theme.js?v=1.0"></script>
+  <style>
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+      overflow: hidden;
+    }
+
+    #map {
+      height: 100vh;
+      width: 100vw;
+      z-index: 1;
+    }
+
+    .leaflet-container {
+      background: #101622 !important;
+    }
+
+    .glass-panel {
+      background: rgba(16, 22, 34, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+    }
+
+    .neon-border {
+      box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
+    }
+
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(59, 130, 246, 0.5);
+      border-radius: 10px;
+    }
+
+    .floating-ui {
+      position: fixed;
+      z-index: 1000;
+    }
+
+    .menu-lateral {
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 340px;
+      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 1050;
+    }
+
+    .menu-lateral.collapsed {
+      transform: translateX(-100%);
+    }
+
+    .btn-toggle {
+      position: fixed;
+      top: 24px;
+      left: 24px;
+      z-index: 1100;
+      transition: all 0.4s ease;
+    }
+
+    .btn-toggle.active {
+      left: 360px;
+    }
+
+    /* Status Markers */
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .status-repouso { background-color: #60A5FA; box-shadow: 0 0 8px #60A5FA; } /* Azul Sereno */
+    .status-aprovado { background-color: #10B981; box-shadow: 0 0 8px #10B981; } /* Verde Esmeralda */
+    .status-pendente { background-color: #F59E0B; box-shadow: 0 0 8px #F59E0B; } /* Amarelo */
+
+    .pin-container {
+      width: 50px;
+      height: 60px;
+      position: relative;
+      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4));
+    }
+    
+    .pin-drop {
+      width: 50px;
+      height: 50px;
+      background: #101622;
+      border: 2px solid #3b82f6;
+      border-radius: 50% 50% 50% 0;
+      transform: rotate(-45deg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .pin-content {
+      transform: rotate(45deg);
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .pin-badge {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      background: #3b82f6;
+      color: white;
+      font-size: 9px;
+      font-weight: 900;
+      padding: 2px 6px;
+      border-radius: 20px;
+      border: 2px solid #101622;
+      z-index: 10;
+    }
+
+    /* Accordion Styles */
+    .setor-group { transition: all 0.3s ease; }
+    .setor-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s ease-out, opacity 0.3s;
+      opacity: 0;
+    }
+    .setor-group.active .setor-content {
+      max-height: 1000px;
+      opacity: 1;
+      margin-top: 8px;
+    }
+    .chevron-icon { transition: transform 0.3s; }
+    .setor-group.active .chevron-icon { transform: rotate(180deg); }
+
+    /* Pulse Animations */
+    @keyframes pulse-rose {
+      0% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.4); }
+      70% { box-shadow: 0 0 0 10px rgba(244, 63, 94, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); }
+    }
+    @keyframes pulse-amber {
+      0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+      70% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+    }
+    .btn-pulse-rose { 
+      animation: pulse-rose 2s infinite; 
+      background: rgba(244, 63, 94, 0.1) !important; 
+      color: #f43f5e !important; 
+      border-color: rgba(244, 63, 94, 0.4) !important; 
+    }
+    .btn-pulse-amber { 
+      animation: pulse-amber 2s infinite; 
+      background: rgba(245, 158, 11, 0.1) !important; 
+      color: #f59e0b !important; 
+      border-color: rgba(245, 158, 11, 0.4) !important; 
+    }
+    .status-filter { transition: all 0.3s ease; }
+    .status-filter.active { background: #3b82f6; color: white; border-color: #3b82f6; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); }
+  </style>
+</head>
+
+<body class="bg-background-dark text-slate-100 min-h-screen">
+
+  <div id="map"></div>
+
+  <button id="btn-toggle-menu" class="btn-toggle size-12 glass-panel rounded-xl flex items-center justify-center text-blue-500 hover:bg-blue-500/10 transition-all border border-blue-500/30 shadow-2xl group">
+    <span class="material-symbols-outlined group-hover:scale-110 transition-transform">menu</span>
+  </button>
+
+  <aside id="menu-lateral" class="floating-ui menu-lateral glass-panel flex flex-col overflow-hidden shadow-2xl border-r border-blue-500/20 collapsed">
+    <div class="p-6 border-b border-white/5 bg-blue-500/5">
+        <div class="flex items-center gap-3 mb-4">
+            <span class="material-symbols-outlined text-blue-500 text-3xl">beach_access</span>
+            <div>
+                <h2 class="text-sm font-black tracking-widest uppercase">Cronograma</h2>
+                <p class="text-[9px] text-slate-500 font-bold uppercase tracking-tight">Gestão de Férias e Repouso</p>
+            </div>
+        </div>
+        <div class="relative">
+            <input id="search-ferias" type="text" placeholder="Filtrar por nome ou setor..." 
+                class="w-full bg-background-dark/50 border border-blue-500/20 rounded-lg py-2 px-9 text-[10px] font-bold uppercase tracking-widest focus:ring-1 focus:ring-blue-500 outline-none transition-all placeholder:text-slate-600">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-blue-500 opacity-40 text-sm">search</span>
+        </div>
+    </div>
+
+    <div id="ferias-filters" class="px-4 py-3 flex gap-2 custom-scrollbar bg-black/20">
+        <button id="filter-all" onclick="filterFeriasStatus('all')" class="status-filter active flex flex-col items-center justify-center min-w-[70px] px-2 py-3 rounded-2xl bg-white/5 text-slate-400 text-[9px] font-black uppercase border border-white/5 transition-all">
+            <span class="mb-1">Todos</span>
+            <span class="count opacity-50 px-2 py-0.5 rounded-full bg-black/20 text-[8px]">(0)</span>
+        </button>
+        <button id="filter-repouso" onclick="filterFeriasStatus('repouso')" class="status-filter flex flex-col items-center justify-center min-w-[70px] px-2 py-3 rounded-2xl bg-white/5 text-slate-400 text-[9px] font-black uppercase border border-white/5 transition-all">
+            <span class="mb-1">Em Férias</span>
+            <span class="count opacity-50 px-2 py-0.5 rounded-full bg-black/20 text-[8px]">(0)</span>
+        </button>
+        <button id="filter-aprovado" onclick="filterFeriasStatus('aprovado')" class="status-filter flex flex-col items-center justify-center min-w-[70px] px-2 py-3 rounded-2xl bg-white/5 text-slate-400 text-[9px] font-black uppercase border border-white/5 transition-all">
+            <span class="mb-1">Aprovadas</span>
+            <span class="count opacity-50 px-2 py-0.5 rounded-full bg-black/20 text-[8px]">(0)</span>
+        </button>
+        <button id="filter-pendente" onclick="filterFeriasStatus('pendente')" class="status-filter flex flex-col items-center justify-center min-w-[70px] px-2 py-3 rounded-2xl bg-white/5 text-slate-400 text-[9px] font-black uppercase border border-white/5 transition-all">
+            <span class="mb-1">Pendentes</span>
+            <span class="count opacity-50 px-2 py-0.5 rounded-full bg-black/20 text-[8px]">(0)</span>
+        </button>
+    </div>
+
+    <div id="lista-setores-ferias" class="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-4">
+        <div class="flex flex-col items-center justify-center py-10 opacity-30">
+            <span class="material-symbols-outlined animate-spin mb-2">sync</span>
+            <p class="text-[9px] font-bold uppercase tracking-widest">Sincronizando Cronograma...</p>
+        </div>
+    </div>
+
+    <div class="p-4 bg-background-dark/50 border-t border-white/5">
+        <button onclick="abrirModalRegrasGerais()" class="w-full py-3 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 border border-blue-500/30 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined text-sm">settings</span> 
+            <span>REGRAS GERAIS</span>
+        </button>
+    </div>
+  </aside>
+  <div class="floating-ui top-6 right-6 flex gap-3">
+    <button onclick="window.location.href='dashboard.html'" class="size-12 glass-panel rounded-xl flex items-center justify-center text-slate-400 hover:text-white transition-all border border-white/10 shadow-lg">
+      <span class="material-symbols-outlined">close</span>
+    </button>
+  </div>
+
+  <!-- MODAL: CARD DE FÉRIAS INDIVIDUAL (TRANSFORMADO) -->
+  <div id="modal-card-ferias" class="fixed inset-0 bg-black/95 backdrop-blur-xl hidden items-start justify-center overflow-y-auto z-[2500] p-4 md:p-12">
+      <div class="glass-panel w-full max-w-6xl rounded-[2.5rem] p-0 relative overflow-visible shadow-[0_0_100px_rgba(59,130,246,0.1)] border border-white/10 my-auto min-h-min">
+          <div class="absolute top-0 left-0 w-full h-1 bg-blue-500"></div>
+          
+          <header class="p-8 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
+              <div class="flex items-center gap-6">
+                  <div class="size-20 rounded-full border-2 border-blue-500/30 p-1 bg-slate-800 overflow-hidden shadow-2xl">
+                    <img id="ferias-foto" src="" class="w-full h-full object-cover rounded-full">
+                  </div>
+                  <div>
+                      <h2 class="text-2xl font-black italic tracking-tighter text-white uppercase">Meus Períodos de Férias</h2>
+                      <div class="flex items-center gap-3">
+                        <p id="ferias-nome" class="text-[10px] text-white font-black uppercase tracking-widest opacity-60">---</p>
+                        <span class="size-1 rounded-full bg-blue-500"></span>
+                        <p id="ferias-cargo" class="text-[10px] text-blue-400 font-black uppercase tracking-widest">---</p>
+                      </div>
+                  </div>
+              </div>
+
+              <!-- Painel de Contabilização Mensal (Sincronizado) -->
+              <div id="monthly-stats-panel-admin" class="hidden md:flex items-center gap-4 px-4 py-2 bg-white/5 rounded-2xl border border-white/10">
+                  <div class="text-center">
+                      <p class="text-[7px] text-slate-500 font-black uppercase">Nacionais</p>
+                      <p id="count-nacionais-admin" class="text-xs font-black text-amber-500">0</p>
+                  </div>
+                  <div class="w-px h-6 bg-white/10"></div>
+                  <div class="text-center">
+                      <p class="text-[7px] text-slate-500 font-black uppercase">Regionais</p>
+                      <p id="count-regionais-admin" class="text-xs font-black text-violet-400">0</p>
+                  </div>
+                  <div class="w-px h-6 bg-white/10"></div>
+                  <div class="text-center">
+                      <p class="text-[7px] text-slate-500 font-black uppercase">Folgas</p>
+                      <p id="count-folgas-admin" class="text-xs font-black text-cyan-400">0</p>
+                  </div>
+              </div>
+
+              <div class="flex items-center gap-6">
+                <div class="text-right">
+                    <p class="text-[9px] text-slate-500 uppercase font-black tracking-widest mb-1">Total Marcado</p>
+                    <p class="text-2xl font-black text-white"><span id="txt-dias-marcados">0</span>/30 <span class="text-xs text-slate-500">DIAS</span></p>
+                </div>
+                <button onclick="fecharCardFerias()" class="size-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-all hover:bg-white/10">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+              </div>
+          </header>
+
+          <main class="grid grid-cols-1 lg:grid-cols-12 gap-0">
+              <!-- Coluna Esquerda: Calendário e Seleção -->
+              <div class="lg:col-span-7 p-8 border-r border-white/5 space-y-8 bg-black/20">
+                  <div class="space-y-6">
+                      <div class="flex items-center justify-between">
+                          <div class="flex items-center gap-4">
+                              <div class="size-12 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-500">
+                                  <span class="material-symbols-outlined text-2xl font-variation-settings-fill">event_note</span>
+                              </div>
+                              <div>
+                                  <h3 class="text-xs font-black uppercase tracking-[0.2em] text-white">Selecione o Período</h3>
+                                  <p id="ferias-regras-info" class="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-1 italic">Mínimo de 10 dias por parcela</p>
+                              </div>
+                          </div>
+                          <div class="flex items-center gap-3 bg-white/5 p-1 rounded-xl border border-white/5">
+                              <button id="btn-prev-month" class="size-9 flex items-center justify-center hover:bg-white/10 rounded-lg transition-all text-slate-400">
+                                  <span class="material-symbols-outlined text-lg">chevron_left</span>
+                              </button>
+                              <span id="txt-month-year" class="text-[11px] font-black uppercase tracking-widest text-white min-w-[120px] text-center">Janeiro 2026</span>
+                              <button id="btn-next-month" class="size-9 flex items-center justify-center hover:bg-white/10 rounded-lg transition-all text-slate-400">
+                                  <span class="material-symbols-outlined text-lg">chevron_right</span>
+                              </button>
+                          </div>
+                      </div>
+
+                      <div id="grid-calendar-ferias" class="grid grid-cols-7 gap-1">
+                          <!-- Injetado via JS -->
+                      </div>
+
+                      <div id="current-selection-panel" class="hidden p-6 bg-blue-500/10 border border-blue-500/20 rounded-3xl flex items-center justify-between animate-in zoom-in-95">
+                          <div class="flex items-center gap-8">
+                              <div class="text-center">
+                                  <p class="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-1">Início</p>
+                                  <p id="selection-start" class="text-sm font-black text-white italic">--/--/--</p>
+                              </div>
+                              <span class="material-symbols-outlined text-blue-500 opacity-40">arrow_forward</span>
+                              <div class="text-center">
+                                  <p class="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-1">Fim</p>
+                                  <p id="selection-end" class="text-sm font-black text-white italic">--/--/--</p>
+                              </div>
+                          </div>
+                          <div class="text-right">
+                              <p class="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-1">Duração</p>
+                              <p class="text-lg font-black text-blue-400"><span id="selection-days">0</span> DIAS</p>
+                          </div>
+                      </div>
+
+                      <button id="btn-gravar-parcela" disabled class="w-full h-16 bg-blue-500/10 border border-blue-500/20 text-blue-500/40 text-[11px] font-black uppercase tracking-widest rounded-2xl transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-500 hover:text-white group">
+                          Gravar Parcela de Férias
+                      </button>
+                  </div>
+              </div>
+
+              <!-- Coluna Direita: Foto Cards e Ações -->
+              <div class="lg:col-span-5 p-8 space-y-8 flex flex-col justify-between h-full bg-white/[0.01]">
+                  <div class="space-y-6">
+                      <div class="flex items-center justify-between">
+                          <h3 class="text-[10px] font-black uppercase tracking-[0.2em] text-white flex items-center gap-2">
+                              <span class="material-symbols-outlined text-sm text-blue-500">photo_library</span>
+                              Resumo Visual (Foto Cards)
+                          </h3>
+                          <span id="parcela-count" class="text-[8px] text-slate-600 font-black uppercase tracking-widest">0/3 Parcelas</span>
+                      </div>
+
+                      <div id="photo-cards-container" class="space-y-4 max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
+                          <!-- Injetado via JS -->
+                      </div>
+                  </div>
+
+                  <div id="manager-actions" class="space-y-4 pt-8 border-t border-white/5">
+                      <div id="final-status-display" class="hidden animate-in slide-in-from-bottom-2">
+                        <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4 flex items-center gap-4 mb-4">
+                            <span class="material-symbols-outlined text-emerald-500">check_circle</span>
+                            <p class="text-[10px] text-emerald-500 font-black uppercase tracking-widest">PLANEJAMENTO DE 30 DIAS CONCLUÍDO</p>
+                        </div>
+                      </div>
+
+                      <div class="grid grid-cols-2 gap-3">
+                          <button id="btn-aprovar-ferias" class="bg-emerald-500 hover:bg-emerald-600 text-white h-14 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20 transition-all flex items-center justify-center gap-2">
+                              <span class="material-symbols-outlined text-lg">verified_user</span>
+                              Aprovar
+                          </button>
+                          <button id="btn-rejeitar-ferias" class="bg-rose-500 hover:bg-rose-600 text-white h-14 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-rose-500/20 transition-all flex items-center justify-center gap-2">
+                              <span class="material-symbols-outlined text-lg">block</span>
+                              Rejeitar
+                          </button>
+                          <button id="btn-excluir-ferias" class="col-span-2 bg-white/5 border border-white/10 text-slate-400 hover:text-white h-14 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 hover:bg-rose-500 hover:border-rose-500 group">
+                              <span class="material-symbols-outlined text-lg group-hover:scale-110 transition-transform">delete_sweep</span>
+                              Limpar Tudo
+                          </button>
+                      </div>
+                  </div>
+              </div>
+          </main>
+      </div>
+  </div>
+
+  <!-- MODAL: REGRAS GERAIS (ADMIN) -->
+  <div id="modal-regras-gerais" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center p-6 z-[2500]">
+      <div class="glass-panel w-full max-w-md rounded-3xl p-8 relative overflow-y-auto max-h-[90dvh] custom-scrollbar neon-border">
+          <div class="absolute top-0 left-0 w-full h-1 bg-blue-500"></div>
+          
+          <div class="flex justify-between items-center mb-8">
+              <div class="flex items-center gap-3">
+                  <span class="material-symbols-outlined text-blue-500 text-3xl">policy</span>
+                  <div>
+                      <h3 id="titulo-regras-gerais" class="text-sm font-black uppercase tracking-widest">Regras Gerais</h3>
+                      <p class="text-[9px] text-slate-500 font-bold uppercase">Configuração de Parcelamento</p>
+                  </div>
+              </div>
+              <button onclick="fecharModalRegrasGerais()" class="text-slate-500 hover:text-white transition-colors">
+                  <span class="material-symbols-outlined">close</span>
+              </button>
+          </div>
+
+          <div class="space-y-6">
+              <p class="text-[10px] font-bold text-slate-400 uppercase leading-relaxed">
+                  Defina como as férias de 30 dias poderão ser gozadas por este setor.
+              </p>
+              
+              <div class="space-y-3">
+                  <label class="flex items-center gap-3 p-4 bg-white/5 border border-white/10 rounded-2xl cursor-pointer hover:bg-white/10 transition-all">
+                      <input type="radio" name="regra-parcela" value="1" class="size-4 text-blue-500 focus:ring-blue-500 bg-background-dark border-white/20">
+                      <div>
+                          <p class="text-xs font-black text-white uppercase tracking-widest">1 Parcela (30 dias)</p>
+                          <p class="text-[9px] text-slate-500 font-bold uppercase">Gozo integral e ininterrupto</p>
+                      </div>
+                  </label>
+                  <label class="flex items-center gap-3 p-4 bg-white/5 border border-white/10 rounded-2xl cursor-pointer hover:bg-white/10 transition-all">
+                      <input type="radio" name="regra-parcela" value="2" class="size-4 text-blue-500 focus:ring-blue-500 bg-background-dark border-white/20">
+                      <div>
+                          <p class="text-xs font-black text-white uppercase tracking-widest">2 Parcelas (Mín. 10 dias)</p>
+                          <p class="text-[9px] text-slate-500 font-bold uppercase">Uma parcela com 10 dias no mínimo</p>
+                      </div>
+                  </label>
+                  <label class="flex items-center gap-3 p-4 bg-white/5 border border-white/10 rounded-2xl cursor-pointer hover:bg-white/10 transition-all">
+                      <input type="radio" name="regra-parcela" value="3" class="size-4 text-blue-500 focus:ring-blue-500 bg-background-dark border-white/20">
+                      <div>
+                          <p class="text-xs font-black text-white uppercase tracking-widest">3 Parcelas (10+10+10)</p>
+                          <p class="text-[9px] text-slate-500 font-bold uppercase">Três períodos de 10 dias corridos</p>
+                      </div>
+                  </label>
+              </div>
+
+              <button id="btn-salvar-regras" class="w-full py-4 bg-blue-600 text-white text-[11px] font-black uppercase tracking-[0.2em] rounded-2xl shadow-lg transition-all">
+                  Salvar Configuração
+              </button>
+          </div>
+      </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script type="module">
+    import { supabase } from '../js/supabase-config.js';
+    import { Auth } from '../js/auth.js';
+    import { UI } from '../js/ui-utils.js';
+
+    // --- CONFIGURAÇÃO DO MAPA ---
+    const map = L.map('map', { zoomControl: false, attributionControl: false }).setView([-23.5505, -46.6333], 15);
+    L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+      subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+      maxZoom: 20
+    }).addTo(map);
+
+    const sectorsGroup = L.featureGroup().addTo(map);
+
+    // --- ESTADO ---
+    let sectors = [];
+    let employees = [];
+    let feriasData = [];
+    let currentFilter = 'all';
+    let expandedSectorsFerias = new Set();
+
+    // Estado do Modal de Planejamento (Sincronizado com Diário)
+    let holidays = [];
+    let currentParcelas = [];
+    let currentMonth = new Date().getMonth();
+    let currentYear = new Date().getFullYear();
+    let selection = { start: null, end: null };
+    let sectorRule = 1;
+    let targetEmployee = null;
+
+    const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+
+    async function init() {
+        UI.showLoader();
+        await fetchData();
+        renderSidebar();
+        renderMapLayers();
+        UI.hideLoader();
+
+        // Controladores de UI
+        const btnToggleMenu = document.getElementById('btn-toggle-menu');
+        const menuLateral = document.getElementById('menu-lateral');
+        btnToggleMenu.onclick = () => {
+            const isCollapsed = menuLateral.classList.toggle('collapsed');
+            btnToggleMenu.classList.toggle('active', !isCollapsed);
+            btnToggleMenu.querySelector('span').innerText = isCollapsed ? 'menu' : 'close';
+        };
+
+        document.getElementById('search-ferias').oninput = (e) => filterSidebar(e.target.value);
+    }
+
+    async function fetchData() {
+        try {
+            const [sRes, fRes, ferRes, cRes, eRes, pRes] = await Promise.all([
+                supabase.from('setores').select('*, gestor:funcionarios!gestor_id(nome_completo)'),
+                supabase.from('funcionarios').select('id, nome_completo, nickname, cargo_id, especialidade_id, setor_id, foco_tecnico'),
+                supabase.from('ferias').select('*'),
+                supabase.from('cargos').select('id, nome'),
+                supabase.from('especialidades').select('id, nome'),
+                supabase.from('perfis_tripulantes').select('funcionario_id, foto_url')
+            ]);
+
+            sectors = sRes.data || [];
+            feriasData = ferRes.data || [];
+            
+            const cargosMap = {}; (cRes.data || []).forEach(c => cargosMap[c.id] = c.nome);
+            const espMap = {}; (eRes.data || []).forEach(e => espMap[e.id] = e.nome);
+            const fotosMap = {}; (pRes.data || []).forEach(p => fotosMap[p.funcionario_id] = p.foto_url);
+
+            const today = new Date().toISOString().split('T')[0];
+
+            employees = (fRes.data || []).map(f => {
+                const myFerias = feriasData.filter(v => v.funcionario_id === f.id);
+                let vacationStatus = 'nenhum';
+
+                myFerias.forEach(v => {
+                    if (v.status === 'aprovado') {
+                        if (today >= v.data_inicio && today <= v.data_fim) vacationStatus = 'repouso';
+                        else if (v.data_inicio > today && vacationStatus !== 'repouso') vacationStatus = 'aprovado';
+                    } else if (v.status === 'pendente' && vacationStatus === 'nenhum') {
+                        vacationStatus = 'pendente';
+                    }
+                });
+
+                return {
+                    ...f,
+                    foto_url: fotosMap[f.id] || null,
+                    cargo_nome: cargosMap[f.cargo_id] || 'Tripulante',
+                    especialidade_nome: espMap[f.especialidade_id] || 'N/A',
+                    vacationStatus
+                };
+            });
+
+            updateFilterIndicators();
+        } catch (err) { console.error('Erro fetchData:', err); }
+    }
+
+    function updateFilterIndicators() {
+        const counts = {
+            all: employees.length,
+            repouso: employees.filter(e => e.vacationStatus === 'repouso').length,
+            aprovado: employees.filter(e => e.vacationStatus === 'aprovado').length,
+            pendente: employees.filter(e => e.vacationStatus === 'pendente').length
+        };
+
+        // Atualizar textos e contadores
+        const btnAll = document.getElementById('filter-all');
+        const btnRepouso = document.getElementById('filter-repouso');
+        const btnAprovado = document.getElementById('filter-aprovado');
+        const btnPendente = document.getElementById('filter-pendente');
+
+        if (btnAll) btnAll.querySelector('.count').innerText = `(${counts.all})`;
+        if (btnRepouso) {
+            btnRepouso.querySelector('.count').innerText = `(${counts.repouso})`;
+            btnRepouso.classList.toggle('btn-pulse-rose', counts.repouso > 0);
+        }
+        if (btnAprovado) btnAprovado.querySelector('.count').innerText = `(${counts.aprovado})`;
+        if (btnPendente) {
+            btnPendente.querySelector('.count').innerText = `(${counts.pendente})`;
+            btnPendente.classList.toggle('btn-pulse-amber', counts.pendente > 0);
+        }
+    }
+
+    function renderMapLayers() {
+        sectorsGroup.clearLayers();
+        sectors.forEach(s => {
+            if (s.latitude && s.longitude) {
+                const sectorEmployees = employees.filter(e => e.setor_id === s.id);
+                const onVacation = sectorEmployees.filter(e => e.vacationStatus === 'repouso').length;
+
+                L.circle([s.latitude, s.longitude], { color: '#3b82f6', fillOpacity: 0.1, radius: s.raio || 100 }).addTo(sectorsGroup);
+
+                const icon = L.divIcon({
+                    className: 'custom-div-icon',
+                    html: `<div class="pin-container">
+                             <div class="pin-badge">${onVacation}</div>
+                             <div class="pin-drop"><div class="pin-content"><span class="material-symbols-outlined text-blue-500 text-2xl">domain</span></div></div>
+                           </div>`,
+                    iconSize: [50, 60], iconAnchor: [25, 60]
+                });
+
+                const marker = L.marker([s.latitude, s.longitude], { icon }).addTo(sectorsGroup);
+                marker.bindPopup(`<div class="p-2 space-y-2">
+                    <h3 class="text-xs font-black uppercase text-blue-400">${s.nome}</h3>
+                    <p class="text-[9px] text-slate-500 font-bold uppercase">Gestor: ${s.gestor?.nome_completo || 'N/A'}</p>
+                    <div class="flex justify-between text-[10px] bg-white/5 p-2 rounded-lg">
+                        <span class="text-slate-500 uppercase font-bold">Em Férias:</span>
+                        <span class="text-blue-400 font-black">${onVacation}</span>
+                    </div>
+                    <button onclick="window.abrirModalRegrasGerais('${s.id}')" class="w-full py-2 bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded-lg text-[9px] font-black uppercase mt-2">REGRAS DO SETOR</button>
+                </div>`);
+            }
+        });
+        if (sectors.length > 0) map.fitBounds(sectorsGroup.getBounds(), { padding: [50, 50] });
+    }
+
+    window.filterFeriasStatus = (status) => {
+        currentFilter = status;
+        document.querySelectorAll('.status-filter').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        const activeBtn = event.currentTarget || document.getElementById(`filter-${status}`);
+        if (activeBtn) activeBtn.classList.add('active');
+        renderSidebar();
+    };
+
+    function renderSidebar() {
+        const container = document.getElementById('lista-setores-ferias');
+        container.innerHTML = sectors.map(s => {
+            let sectorEmployees = employees.filter(e => e.setor_id === s.id);
+            if (currentFilter !== 'all') sectorEmployees = sectorEmployees.filter(e => e.vacationStatus === currentFilter);
+            if (sectorEmployees.length === 0 && currentFilter !== 'all') return '';
+
+            const isExpanded = expandedSectorsFerias.has(s.id);
+
+            return `
+            <div class="setor-group ${isExpanded ? 'active' : ''}">
+                <div onclick="window.toggleSetorFerias('${s.id}')" class="flex items-center justify-between px-3 py-3 bg-white/5 border border-white/5 rounded-2xl cursor-pointer hover:bg-blue-500/5 transition-all group">
+                    <div class="flex items-center gap-3">
+                        <div class="size-8 bg-blue-500/10 rounded-lg flex items-center justify-center text-blue-500 transition-all group-hover:bg-blue-500/20">
+                            <span class="material-symbols-outlined text-lg">domain</span>
+                        </div>
+                        <div>
+                            <h4 class="text-[10px] font-black text-slate-100 uppercase tracking-widest leading-none">${s.nome}</h4>
+                            <p class="text-[8px] text-slate-500 font-bold uppercase mt-1">${sectorEmployees.length} TRIPULANTES</p>
+                        </div>
+                    </div>
+                    <span class="material-symbols-outlined text-slate-600 text-sm chevron-icon">expand_more</span>
+                </div>
+                
+                <div class="setor-content space-y-2 mt-2 ml-4 border-l border-blue-500/20 pl-4">
+                    ${sectorEmployees.map(e => `
+                        <div onclick="event.stopPropagation(); abrirCardFerias('${e.id}')" class="flex items-center gap-3 p-3 bg-white/5 border border-white/5 rounded-xl hover:bg-blue-500/10 hover:border-blue-500/30 transition-all cursor-pointer group">
+                            <img src="${e.foto_url || `https://ui-avatars.com/api/?name=${e.nome_completo}&background=101622&color=60A5FA`}" class="size-8 rounded-full border border-white/10 shrink-0 object-cover">
+                            <div class="flex-1 min-w-0">
+                                <p class="text-[10px] font-black text-slate-100 uppercase truncate">${e.nickname || e.nome_completo}</p>
+                                <p class="text-[8px] text-slate-500 font-bold uppercase truncate">${e.cargo_nome}</p>
+                            </div>
+                            <span class="status-dot ${e.vacationStatus === 'repouso' ? 'status-repouso' : (e.vacationStatus === 'aprovado' ? 'status-aprovado' : (e.vacationStatus === 'pendente' ? 'status-pendente' : 'bg-slate-700'))}"></span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    window.toggleSetorFerias = (id) => {
+        // Encontrar o setor
+        const sector = sectors.find(s => s.id === id);
+        if (sector && sector.latitude && sector.longitude) {
+            // Direcionar no mapa para o ícone do setor com um zoom apropriado
+            map.flyTo([sector.latitude, sector.longitude], 17, {
+                animate: true,
+                duration: 1.5
+            });
+        }
+
+        if (expandedSectorsFerias.has(id)) expandedSectorsFerias.delete(id);
+        else expandedSectorsFerias.add(id);
+        renderSidebar();
+    };
+
+    function filterSidebar(term) {
+        const query = term.toLowerCase();
+        document.querySelectorAll('#lista-setores-ferias > div').forEach(div => {
+            const text = div.innerText.toLowerCase();
+            div.style.display = text.includes(query) ? 'block' : 'none';
+        });
+    }
+
+    // --- LÓGICA DE CARD DE FÉRIAS ---
+
+    window.abrirCardFerias = async (empId) => {
+        UI.showLoader();
+        targetEmployee = employees.find(e => e.id === empId);
+        const sector = sectors.find(s => s.id === targetEmployee.setor_id);
+        sectorRule = sector?.regra_ferias || 1;
+
+        document.getElementById('ferias-foto').src = targetEmployee.foto_url || `https://ui-avatars.com/api/?name=${targetEmployee.nome_completo}`;
+        document.getElementById('ferias-nome').innerText = targetEmployee.nome_completo.toUpperCase();
+        document.getElementById('ferias-cargo').innerText = `${targetEmployee.cargo_nome} / ${targetEmployee.foco_tecnico || 'FOCO TÉCNICO'}`;
+        
+        const regraTxtMap = { 1: "Integral: 30 dias corridos.", 2: "2 Parcelas: Mín 10 dias.", 3: "3 Parcelas de 10 dias." };
+        document.getElementById('ferias-regras-info').innerText = `REGRA DO SETOR: ${regraTxtMap[sectorRule]}`;
+
+        // Resetar Estado de Seleção
+        selection = { start: null, end: null };
+        
+        // Carregar Dados de Férias do Funcionário
+        try {
+            const { data: hData } = await supabase.from('feriados_folgas').select('*').or(`escopo.eq.geral,funcionario_id.eq.${empId}`);
+            holidays = hData || [];
+
+            const { data: vData } = await supabase.from('ferias').select('*').eq('funcionario_id', empId).order('parcela_numero', {ascending: true});
+            currentParcelas = (vData || []).map(f => ({
+                id: f.id,
+                start: new Date(f.data_inicio + 'T12:00:00'),
+                end: new Date(f.data_fim + 'T12:00:00'),
+                days: Math.ceil(Math.abs(new Date(f.data_fim) - new Date(f.data_inicio)) / (1000 * 60 * 60 * 24)) + 1,
+                status: f.status
+            }));
+
+            renderCalendar();
+            updateSelectionPanel();
+            updateProgress();
+            renderPhotoCards();
+        } catch (err) {
+            console.error("Erro abrirCardFerias:", err);
+        }
+
+        document.getElementById('modal-card-ferias').classList.replace('hidden', 'flex');
+        UI.hideLoader();
+    };
+
+    function calculateDays(start, end) {
+        const diff = Math.abs(end - start);
+        return Math.ceil(diff / (1000 * 60 * 60 * 24)) + 1;
+    }
+
+    function renderCalendar() {
+        const grid = document.getElementById('grid-calendar-ferias');
+        const txtMonth = document.getElementById('txt-month-year');
+        if (!grid) return;
+        
+        grid.innerHTML = '';
+        txtMonth.innerText = `${monthNames[currentMonth]} ${currentYear}`;
+
+        const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+        for (let i = 0; i < firstDay; i++) grid.appendChild(document.createElement('div'));
+
+        for (let d = 1; d <= daysInMonth; d++) {
+            const date = new Date(currentYear, currentMonth, d);
+            const dateISO = date.toISOString().split('T')[0];
+            const dayEl = document.createElement('div');
+            
+            dayEl.className = 'p-3 text-center text-[10px] font-bold rounded-xl border border-white/5 bg-white/[0.02] flex items-center justify-center min-h-[44px] cursor-pointer transition-all hover:bg-white/10';
+            dayEl.innerText = d;
+
+            const h = holidays.find(h => h.data === dateISO);
+            if (h) {
+                const t = h.tipo?.toLowerCase() || '';
+                if (t.includes('nacional')) dayEl.classList.add('bg-amber-500/20', 'text-amber-500', 'border-amber-500/30');
+                else if (t.includes('regional')) dayEl.classList.add('bg-violet-500/20', 'text-violet-400', 'border-violet-500/30');
+                else if (t.includes('folga')) dayEl.classList.add('bg-cyan-500/20', 'text-cyan-400', 'border-cyan-500/30');
+                else dayEl.classList.add('bg-amber-500/20', 'text-amber-500', 'border-amber-500/30');
+            }
+            
+            const isMarked = currentParcelas.find(p => date >= p.start && date <= p.end);
+            if (isMarked) dayEl.classList.add('bg-blue-500/20', 'text-blue-400', 'border-blue-500/40', 'shadow-[0_0_10px_rgba(59,130,246,0.2)]');
+
+            if (selection.start && selection.end) {
+                if (date >= selection.start && date <= selection.end) dayEl.classList.add('bg-blue-500', 'text-white', 'border-blue-400');
+            } else if (selection.start && date.getTime() === selection.start.getTime()) {
+                dayEl.classList.add('bg-blue-500', 'text-white');
+            }
+
+            dayEl.onclick = () => handleDayClick(date);
+            grid.appendChild(dayEl);
+        }
+
+        updateMonthlyCountersAdmin();
+    }
+
+    function updateMonthlyCountersAdmin() {
+        if (!document.getElementById('monthly-stats-panel-admin')) return;
+        
+        const currentMonthHolidays = holidays.filter(h => {
+            const d = new Date(h.data + 'T12:00:00');
+            return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+        });
+
+        const counts = {
+            nacional: currentMonthHolidays.filter(h => (h.tipo||'').includes('nacional')).length,
+            regional: currentMonthHolidays.filter(h => (h.tipo||'').includes('regional')).length,
+            folga: currentMonthHolidays.filter(h => (h.tipo||'').includes('folga')).length
+        };
+
+        const panel = document.getElementById('monthly-stats-panel-admin');
+        if (counts.nacional > 0 || counts.regional > 0 || counts.folga > 0) {
+            panel.classList.remove('hidden');
+            document.getElementById('count-nacionais-admin').innerText = counts.nacional;
+            document.getElementById('count-regionais-admin').innerText = counts.regional;
+            document.getElementById('count-folgas-admin').innerText = counts.folga;
+        } else {
+            panel.classList.add('hidden');
+        }
+    }
+
+    function handleDayClick(date) {
+        if (currentParcelas.find(p => date >= p.start && date <= p.end)) return;
+        if (!selection.start || (selection.start && selection.end)) {
+            selection.start = date;
+            selection.end = null;
+        } else {
+            if (date < selection.start) { selection.end = selection.start; selection.start = date; }
+            else selection.end = date;
+        }
+        updateSelectionPanel();
+        renderCalendar();
+    }
+
+    function updateSelectionPanel() {
+        const panel = document.getElementById('current-selection-panel');
+        const btn = document.getElementById('btn-gravar-parcela');
+        if (!panel || !btn) return;
+
+        if (!selection.start || !selection.end) {
+            panel.classList.add('hidden');
+            btn.disabled = true;
+            btn.innerText = 'Selecione o Período';
+            return;
+        }
+
+        panel.classList.remove('hidden');
+        const days = calculateDays(selection.start, selection.end);
+        document.getElementById('selection-start').innerText = selection.start.toLocaleDateString('pt-BR');
+        document.getElementById('selection-end').innerText = selection.end.toLocaleDateString('pt-BR');
+        document.getElementById('selection-days').innerText = days;
+
+        if (days >= 10) {
+            btn.disabled = false;
+            btn.innerText = `Gravar ${currentParcelas.length + 1}ª Parcela (${days} dias)`;
+        } else {
+            btn.disabled = true;
+            btn.innerText = 'Mínimo de 10 dias';
+        }
+    }
+
+    document.getElementById('btn-prev-month').onclick = () => {
+        currentMonth--;
+        if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+        renderCalendar();
+    };
+
+    document.getElementById('btn-next-month').onclick = () => {
+        currentMonth++;
+        if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+        renderCalendar();
+    };
+
+    document.getElementById('btn-gravar-parcela').onclick = () => {
+        const days = calculateDays(selection.start, selection.end);
+        const already = currentParcelas.reduce((acc, p) => acc + p.days, 0);
+        if (already + days > 30) { UI.showToast('Limite de 30 dias excedido', 'error'); return; }
+
+        currentParcelas.push({ start: selection.start, end: selection.end, days: days, status: 'pendente' });
+        selection = { start: null, end: null };
+        updateSelectionPanel();
+        updateProgress();
+        renderCalendar();
+        renderPhotoCards();
+    };
+
+    function updateProgress() {
+        const total = currentParcelas.reduce((acc, p) => acc + p.days, 0);
+        document.getElementById('txt-dias-marcados').innerText = total;
+        document.getElementById('parcela-count').innerText = `${currentParcelas.length} Parcela(s) Grau: ${sectorRule}`;
+        document.getElementById('final-status-display').classList.toggle('hidden', total < 30);
+    }
+
+    window.irParaMesParcela = (dateISO) => {
+        const date = new Date(dateISO + 'T12:00:00');
+        currentMonth = date.getMonth();
+        currentYear = date.getFullYear();
+        renderCalendar();
+        document.getElementById('grid-calendar-ferias').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    };
+
+    function renderPhotoCards() {
+        const container = document.getElementById('photo-cards-container');
+        if (!container) return;
+        container.innerHTML = '';
+
+        if (currentParcelas.length === 0) {
+            container.innerHTML = `<div class="p-8 border border-dashed border-white/5 rounded-2xl opacity-20 text-center"><p class="text-[9px] font-black uppercase">Vazio</p></div>`;
+            return;
+        }
+
+        currentParcelas.forEach((p, i) => {
+            const card = document.createElement('div');
+            const dateISO = p.start.toISOString().split('T')[0];
+            card.className = 'bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between group hover:bg-white/10 transition-all cursor-pointer';
+            card.onclick = () => window.irParaMesParcela(dateISO);
+            card.innerHTML = `
+                <div class="flex gap-4 items-center">
+                    <div class="size-10 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500 font-black italic text-xs">${i+1}ª</div>
+                    <div>
+                        <p class="text-[7px] text-slate-500 uppercase font-black">Periodo</p>
+                        <p class="text-[10px] font-black text-white">${p.start.toLocaleDateString('pt-BR')} - ${p.end.toLocaleDateString('pt-BR')}</p>
+                    </div>
+                </div>
+                <div class="text-right flex items-center gap-4">
+                    <div>
+                        <p class="text-[7px] text-slate-500 uppercase font-black">Dias</p>
+                        <p class="text-xs font-black text-blue-400">${p.days}</p>
+                    </div>
+                    <button onclick="event.stopPropagation(); window.removerParcela(${i})" class="size-8 rounded-lg bg-rose-500/10 text-rose-500 flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all">
+                        <span class="material-symbols-outlined text-sm">delete</span>
+                    </button>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    window.removerParcela = (idx) => {
+        currentParcelas.splice(idx, 1);
+        updateProgress();
+        renderCalendar();
+        renderPhotoCards();
+    };
+
+    document.getElementById('btn-aprovar-ferias').onclick = async () => {
+        if (currentParcelas.reduce((acc, p) => acc + p.days, 0) < 30) { UI.showToast('Planejamento incompleto', 'warning'); return; }
+        UI.showLoader();
+        try {
+            await supabase.from('ferias').delete().eq('funcionario_id', targetEmployee.id);
+            const toInsert = currentParcelas.map((p, i) => ({
+                funcionario_id: targetEmployee.id,
+                data_inicio: p.start.toISOString().split('T')[0],
+                data_fim: p.end.toISOString().split('T')[0],
+                parcela_numero: i + 1,
+                status: 'aprovado'
+            }));
+            await supabase.from('ferias').insert(toInsert);
+            UI.showToast('Férias aprovadas!', 'success');
+            fecharCardFerias();
+            await init();
+        } catch (err) { console.error(err); } finally { UI.hideLoader(); }
+    };
+
+    document.getElementById('btn-rejeitar-ferias').onclick = async () => {
+        if (!confirm('Rejeitar este planejamento?')) return;
+        UI.showLoader();
+        try {
+            await supabase.from('ferias').delete().eq('funcionario_id', targetEmployee.id);
+            const toInsert = currentParcelas.map((p, i) => ({
+                funcionario_id: targetEmployee.id,
+                data_inicio: p.start.toISOString().split('T')[0],
+                data_fim: p.end.toISOString().split('T')[0],
+                parcela_numero: i + 1,
+                status: 'rejeitado'
+            }));
+            await supabase.from('ferias').insert(toInsert);
+            UI.showToast('Planejamento rejeitado', 'warning');
+            fecharCardFerias();
+            await init();
+        } catch (err) { console.error(err); } finally { UI.hideLoader(); }
+    };
+
+    document.getElementById('btn-excluir-ferias').onclick = async () => {
+        if (!confirm('Deseja limpar todas as marcações?')) return;
+        UI.showLoader();
+        try {
+            await supabase.from('ferias').delete().eq('funcionario_id', targetEmployee.id);
+            UI.showToast('Marcações removidas', 'info');
+            currentParcelas = [];
+            updateProgress();
+            renderCalendar();
+            renderPhotoCards();
+            fecharCardFerias();
+            await init();
+        } catch (err) { console.error(err); } finally { UI.hideLoader(); }
+    };
+
+    window.fecharCardFerias = () => document.getElementById('modal-card-ferias').classList.replace('flex', 'hidden');
+
+    // --- REGRAS GERAIS ---
+    let activeSectorId = null;
+    window.abrirModalRegrasGerais = (sId = null) => {
+        activeSectorId = sId;
+        const s = sectors.find(sec => sec.id === sId);
+        document.getElementById('titulo-regras-gerais').innerText = s ? `Regras: ${s.nome}` : 'Regras Gerais';
+        const current = s?.regra_ferias || 1;
+        document.querySelector(`input[name="regra-parcela"][value="${current}"]`).checked = true;
+        document.getElementById('modal-regras-gerais').classList.replace('hidden', 'flex');
+    };
+
+    window.fecharModalRegrasGerais = () => document.getElementById('modal-regras-gerais').classList.replace('flex', 'hidden');
+
+    document.getElementById('btn-salvar-regras').onclick = async () => {
+        const val = document.querySelector('input[name="regra-parcela"]:checked').value;
+        UI.showLoader();
+        if (activeSectorId) await supabase.from('setores').update({ regra_ferias: parseInt(val) }).eq('id', activeSectorId);
+        else await supabase.from('setores').update({ regra_ferias: parseInt(val) });
+        UI.showToast('Regras salvas!', 'success');
+        fecharModalRegrasGerais();
+        await init();
+    };
+
+    init();
+  </script>
+</body>
+</html>

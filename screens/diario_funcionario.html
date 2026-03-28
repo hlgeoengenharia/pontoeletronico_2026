@@ -64,6 +64,82 @@
             border-color: rgba(13, 89, 242, 0.2);
             background: rgba(13, 89, 242, 0.1);
         }
+
+        /* Vacation System Styles */
+        .glass-calendar-day {
+            transition: all 0.2s ease;
+            cursor: pointer;
+            position: relative;
+            z-index: 10;
+        }
+        .glass-calendar-day:hover:not(.disabled) {
+            background: rgba(13, 89, 242, 0.2);
+            transform: scale(1.1);
+        }
+        .glass-calendar-day.selected {
+            background: #0d59f2 !important;
+            color: white !important;
+            box-shadow: 0 0 15px rgba(13, 89, 242, 0.5);
+            border-radius: 8px;
+        }
+        .glass-calendar-day.holiday-national {
+            background: rgba(245, 158, 11, 0.15);
+            border: 1px dashed rgba(245, 158, 11, 0.5);
+            color: #f59e0b;
+        }
+        .glass-calendar-day.holiday-regional {
+            background: rgba(139, 92, 246, 0.15);
+            border: 1px dashed rgba(139, 92, 246, 0.5);
+            color: #a78bfa;
+        }
+        .glass-calendar-day.day-off {
+            background: rgba(6, 182, 212, 0.15);
+            border: 1px dashed rgba(6, 182, 212, 0.5);
+            color: #22d3ee;
+        }
+        .glass-calendar-day.holiday {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px dashed rgba(245, 158, 11, 0.4);
+            color: #f59e0b;
+        }
+        .glass-calendar-day.marked {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #10b981;
+        }
+        .photo-card {
+            aspect-ratio: 3/4;
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95));
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 20px 20px 60px rgba(0,0,0,0.5);
+            position: relative;
+            overflow: hidden;
+        }
+        .photo-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(13, 89, 242, 0.1) 0%, transparent 70%);
+            pointer-events: none;
+        }
+        .photo-badge {
+            background: #0d59f2;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 99px;
+            font-size: 10px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
     </style>
     <title>Diário de Bordo | ChronoSync</title>
 </head>
@@ -91,14 +167,18 @@
             <!-- Seletor de Modo e Título Centralizados -->
             <div class="flex flex-col items-center gap-4 mb-6 pt-2">
                 <!-- Toggle Mode Selector -->
-                <div class="flex bg-background-dark p-1 rounded-2xl border border-white/10 shadow-2xl w-full max-w-[300px]">
+                <div class="flex bg-background-dark p-1 rounded-2xl border border-white/10 shadow-2xl w-full max-w-[340px]">
                     <button type="button" id="btnModeAtividade" 
-                        class="flex-1 px-4 py-2.5 text-[10px] font-black uppercase tracking-wider rounded-xl bg-primary text-white transition-all shadow-lg whitespace-nowrap">
+                        class="flex-1 px-3 py-2.5 text-[10px] font-black uppercase tracking-wider rounded-xl bg-primary text-white transition-all shadow-lg whitespace-nowrap">
                         Atividade
                     </button>
                     <button type="button" id="btnModeJustificativa" 
-                        class="flex-1 px-4 py-2.5 text-[10px] font-black uppercase tracking-wider rounded-xl text-slate-400 hover:text-white transition-all whitespace-nowrap">
+                        class="flex-1 px-3 py-2.5 text-[10px] font-black uppercase tracking-wider rounded-xl text-slate-400 hover:text-white transition-all whitespace-nowrap">
                         Justificativa
+                    </button>
+                    <button type="button" id="btnModeFerias" 
+                        class="flex-1 px-3 py-2.5 text-[10px] font-black uppercase tracking-wider rounded-xl text-slate-400 hover:text-white transition-all whitespace-nowrap">
+                        Minhas Férias
                     </button>
                 </div>
 
@@ -213,21 +293,28 @@
         let targetId = null;
 
         async function init() {
-            UI.showLoader();
-            const user = Auth.getUser();
-            if (user) UI.initSidebar(user.role);
-            
-            const urlParams = new URLSearchParams(window.location.search);
-            targetId = urlParams.get('id') || localStorage.getItem('userId');
-            
-            if (!targetId) {
-                document.getElementById('logs-container').innerHTML = '<p class="text-red-500 text-center text-sm">Erro de identificação.</p>';
-                UI.hideLoader();
-                return;
-            }
+            try {
+                UI.showLoader();
+                const user = Auth.getUser();
+                if (user) UI.initSidebar(user.role);
+                
+                const urlParams = new URLSearchParams(window.location.search);
+                targetId = urlParams.get('id') || localStorage.getItem('userId');
+                
+                if (!targetId) {
+                    const container = document.getElementById('historicoAnotacoesContainer');
+                    if (container) container.innerHTML = '<p class="text-rose-500 text-center text-[10px] font-black uppercase tracking-widest py-10 opacity-60">Erro de identificação: ID não encontrado.</p>';
+                    UI.showToast('Erro: Identificação do usuário não encontrada.', 'error');
+                    return;
+                }
 
-            await initAnotacoesLogic();
-            UI.hideLoader();
+                await initAnotacoesLogic();
+            } catch (err) {
+                console.error("Critical error during init:", err);
+                UI.showToast('Erro crítico ao carregar a página.', 'error');
+            } finally {
+                UI.hideLoader();
+            }
         }
 
 
@@ -284,7 +371,9 @@
                 btnJustificativa.classList.add('bg-primary', 'text-white', 'shadow-lg');
                 btnJustificativa.classList.remove('text-slate-400');
                 btnAtividade.classList.remove('bg-primary', 'text-white', 'shadow-lg');
-                btnAtividade.classList.add('text-slate-400');
+                btnAtividade.classList.add('text-slate-400', 'bg-transparent');
+                btnFerias.classList.remove('bg-primary', 'text-white', 'shadow-lg');
+                btnFerias.classList.add('text-slate-400', 'bg-transparent');
                 camposJustif.classList.remove('hidden');
                 
                 // Atualizar Título e Cores
@@ -295,6 +384,11 @@
                 
                 labelAtividade.innerText = `MOTIVO/EXPLICAÇÃO (${todayBR})`;
                 btnSalvar.innerHTML = '<span class="material-symbols-outlined text-sm">send</span> Enviar Justificativa';
+            };
+
+            const btnFerias = document.getElementById('btnModeFerias');
+            btnFerias.onclick = () => {
+                window.abrirModalFerias();
             };
 
             // Lógica de Anexo
@@ -390,6 +484,12 @@
                     .select('*')
                     .or(`funcionario_id.eq.${targetId},setor_id.eq.${mySectorId || '00000000-0000-0000-0000-000000000000'},escopo.eq.geral`);
 
+                // 5. Buscar Férias Planejadas (para o histórico)
+                const { data: feriasPlanejadas, error: errFerP } = await supabase
+                    .from('ferias')
+                    .select('*')
+                    .eq('funcionario_id', targetId);
+
                 const feriadosGrouped = (feriadosRaw || []).reduce((acc, f) => {
                     const key = f.created_at;
                     if (!acc[key]) acc[key] = [];
@@ -409,7 +509,7 @@
                     };
                 });
 
-                if (errAnot || errJust || errLogs || errCom || errFer || errVac) throw (errAnot || errJust || errLogs || errCom || errFer || errVac);
+                if (errAnot || errJust || errLogs || errCom || errFer || errFerP || errVac) throw (errAnot || errJust || errLogs || errCom || errFer || errFerP || errVac);
                 
                 // --- LEITURA EM MASSA (AUTO-CLEAN) ---
                 // Feriados/Folgas
@@ -452,15 +552,14 @@
                         data_item: (l.data_hora || "").split('T')[0], 
                         conteudo: l.mensagem_padrao
                     })),
-                    ...(feriasAprovadas || []).map(v => ({
-                        ...v,
-                        itemType: 'SISTEMA',
-                        subtipo: 'ferias_aprovada',
-                        data_item: v.data_inicio,
-                        conteudo: `Início do período de férias aprovado: ${v.data_inicio.split('-').reverse().join('/')} até ${v.data_fim.split('-').reverse().join('/')}.`
+                    ...(feriasPlanejadas || []).map(f => ({
+                        ...f,
+                        itemType: 'FERIAS',
+                        data_item: f.created_at ? f.created_at.split('T')[0] : (f.data_inicio || ""),
+                        conteudo: `Planejamento de Férias: ${f.parcela_numero}ª Parcela`
                     })),
                     ...feriados
-                ].sort((a, b) => (new Date(b.data_item) - new Date(a.data_item)) || (new Date(b.created_at || b.data_hora || b.data_item) - new Date(a.created_at || a.data_hora || a.data_item)));
+                ].sort((a, b) => (new Date(b.data_item) - new Date(a.data_item)) || (new Date(b.created_at || b.data_hora || b.data_item) - new Date(a.created_at || a.data_hora || b.data_item)));
 
                 if (labelTotalAnotacoes) labelTotalAnotacoes.innerText = `Total: ${allHistoryData.length} registros`;
                 renderUnifiedHistory();
@@ -472,38 +571,36 @@
         }
 
         function renderUnifiedHistory() {
-            const historicoAnotacoesContainer = document.getElementById('historicoAnotacoesContainer');
-            const labelTotalAnotacoes = document.getElementById('labelTotalAnotacoes');
-            const containerBtnExpandir = document.getElementById('containerBtnExpandir');
+            const container = document.getElementById('historicoAnotacoesContainer');
+            const labelTotal = document.getElementById('labelTotalAnotacoes');
+            const btnExpand = document.getElementById('btnExpandHistory');
             const iconExpand = document.getElementById('iconExpandHistory');
             const txtExpand = document.getElementById('txtExpandHistory');
+            const containerExpand = document.getElementById('containerBtnExpandir');
 
-            if (labelTotalAnotacoes) labelTotalAnotacoes.innerText = `Total: ${allHistoryData.length} registros`;
+            if (!container) return;
 
-            // Resetar botão se necessário
+            if (labelTotal) labelTotal.innerText = `Total: ${allHistoryData.length} registros`;
+
+            // Resetar status do botão de expansão
             if (iconExpand && txtExpand) {
-                if (historyExpanded) {
-                    iconExpand.innerText = 'expand_less';
-                    txtExpand.innerText = 'Recolher Histórico';
-                } else {
-                    iconExpand.innerText = 'expand_more';
-                    txtExpand.innerText = 'Ver Histórico Completo';
-                }
+                iconExpand.innerText = historyExpanded ? 'expand_less' : 'expand_more';
+                txtExpand.innerText = historyExpanded ? 'Recolher Histórico' : 'Ver Histórico Completo';
             }
 
             if (allHistoryData.length === 0) {
-                historicoAnotacoesContainer.innerHTML = `
+                container.innerHTML = `
                 <div class="text-center py-10 opacity-30">
                     <span class="material-symbols-outlined text-4xl mb-2">inbox</span>
-                    <p class="text-[10px] font-bold uppercase tracking-widest">Nenhuma atividade encontrada</p>
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-slate-500">Nenhuma atividade registrada ainda</p>
                 </div>`;
-                containerBtnExpandir.classList.add('hidden');
+                if (containerExpand) containerExpand.classList.add('hidden');
                 return;
             }
 
             // Agrupar por data
             const grouped = allHistoryData.reduce((acc, item) => {
-                const date = item.data_item;
+                const date = item.data_item || (item.created_at ? item.created_at.split('T')[0] : 'Indefinido');
                 if (!acc[date]) acc[date] = [];
                 acc[date].push(item);
                 return acc;
@@ -511,255 +608,229 @@
 
             const sortedDates = Object.keys(grouped).sort((a,b) => new Date(b) - new Date(a));
             
-            // Decidir quais datas mostrar
+            if (containerExpand) containerExpand.classList.toggle('hidden', sortedDates.length <= 1);
+            
             let datesToRender = sortedDates;
-            if (sortedDates.length === 0) {
-                containerBtnExpandir.classList.add('hidden');
-                historicoAnotacoesContainer.classList.remove('max-h-[500px]', 'overflow-y-auto', 'pr-2', 'custom-scrollbar');
+            if (!historyExpanded) {
+                datesToRender = sortedDates.slice(0, 5); // No modo colapsado, mostrar os 5 dias mais recentes
+                container.classList.remove('max-h-[600px]', 'overflow-y-auto', 'pr-2');
             } else {
-                containerBtnExpandir.classList.toggle('hidden', sortedDates.length <= 1);
-                if (!historyExpanded) {
-                    datesToRender = sortedDates.slice(0, 10); // Mostrar até 10 dias recentes
-                    historicoAnotacoesContainer.classList.remove('max-h-[500px]', 'overflow-y-auto', 'pr-2', 'custom-scrollbar');
-                } else {
-                    datesToRender = sortedDates;
-                    historicoAnotacoesContainer.classList.add('max-h-[500px]', 'overflow-y-auto', 'pr-2', 'custom-scrollbar');
-                }
+                container.classList.add('max-h-[600px]', 'overflow-y-auto', 'pr-2', 'custom-scrollbar');
             }
 
-            historicoAnotacoesContainer.innerHTML = datesToRender.map(date => {
+            container.innerHTML = datesToRender.map(date => {
                 const items = grouped[date];
-                const dateFormatted = new Date(date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+                const dateFormatted = date === 'Indefinido' ? 'Data Indefinida' : new Date(date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
 
                 return `
-                <div class="bg-white/5 border border-white/10 rounded-2xl overflow-hidden shadow-lg mb-4">
-                    <div class="bg-primary/5 px-4 py-3 border-b border-white/5 flex justify-between items-center">
-                        <span class="text-slate-400 text-[10px] font-black uppercase tracking-widest">${dateFormatted}</span>
-                        <span class="text-[9px] text-slate-500 font-black uppercase">${items.length} ${items.length > 1 ? 'ÍTENS' : 'ÍTEM'}</span>
+                <div class="mb-8 last:mb-0">
+                    <div class="flex items-center gap-3 mb-4 sticky top-0 bg-[#0f1115]/80 backdrop-blur-md py-2 z-10">
+                        <span class="h-px flex-1 bg-white/5"></span>
+                        <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 italic drop-shadow-sm">${dateFormatted}</h4>
+                        <span class="h-px flex-1 bg-white/5"></span>
                     </div>
-                    <div class="p-4 space-y-5">
-                        ${items.map(item => {
-                            const isJustif = item.itemType === 'JUSTIFICATIVA';
-                            const isSystem = item.itemType === 'SISTEMA';
-                            const statusMap = {
-                                'pendente': 'bg-amber-500/10 text-amber-500 border-amber-500/20',
-                                'aprovado': 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
-                                'rejeitado': 'bg-rose-500/10 text-rose-500 border-rose-500/20',
-                                'aprovada': 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
-                                'rejeitada': 'bg-rose-500/10 text-rose-500 border-rose-500/20'
-                            };
 
-                            let statusClass = '';
-                            let statusLabel = '';
-                            
-                            if (isJustif) {
-                                const s = item.status?.toLowerCase();
-                                if (s === 'aprovado' || s === 'aprovada') {
-                                    statusClass = 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40';
-                                    statusLabel = 'ABONADO';
-                                } else if (s === 'rejeitado' || s === 'rejeitada') {
-                                    statusClass = 'bg-rose-500/20 text-rose-400 border-rose-500/40';
-                                    statusLabel = 'REJEITADO';
-                                } else {
-                                    statusClass = 'bg-amber-500/10 text-amber-500 border-amber-500/20';
-                                    statusLabel = 'PENDENTE';
-                                }
-                            } else if (isSystem) {
-                                const s = item.status_pendencia?.toLowerCase();
-                                const isInformativo = item.tipo === 'comunicado' || item.tipo === 'aviso_ferias';
-                                if (s === 'aprovado' || s === 'aprovada') {
-                                    statusClass = 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40';
-                                    statusLabel = 'ABONADO';
-                                } else if (s === 'rejeitado' || s === 'rejeitada') {
-                                    statusClass = 'bg-rose-500/20 text-rose-400 border-rose-500/40';
-                                    statusLabel = 'REJEITADO';
-                                } else {
-                                    statusClass = 'bg-amber-500/10 text-amber-500 border-amber-500/20';
-                                    statusLabel = 'PENDENTE';
-                                }
-                                if (isInformativo && s === 'pendente') {
-                                    statusLabel = ''; 
-                                    statusClass = 'hidden';
-                                }
-                            } else if (item.itemType === 'COMUNICADO') {
-                                if (item.subtipo === 'hora_extra') {
-                                    const isLidoLocal = localStorage.getItem(`ciente_${item.id}`) === 'true';
-                                    const realLido = item.lido || isLidoLocal;
-                                    statusClass = realLido ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' : 'bg-amber-500/10 text-amber-500 border-amber-500/20';
-                                    statusLabel = realLido ? 'CIENTE' : 'PENDENTE';
-                                } else {
-                                    statusLabel = ''; statusClass = 'hidden';
-                                }
-                            }
-                            
-                             // Tradução de mensagens técnicas
-                            const messageDict = {
-                                'Pulso de localização automática': 'Localização registrada automaticamente pelo sistema para validar sua presença em serviço durante a jornada.',
-                                'Log Automático de Rastreio (Regime Externo)': 'Registro automático de localização para fins de auditoria em jornada de trabalho sob regime externo.',
-                                'Funcionário saiu do local de trabalho': 'O sistema detectou que você se ausentou do raio de alcance permitido para o seu local de escala/setor designado.',
-                                'Funcionário retornou ao local de trabalho': 'O sistema detectou o seu retorno para dentro do raio de alcance permitido do seu local de escala/setor designado.',
-                                'Solicitação de ponto fora do raio': 'Sua tentativa de registro de ponto foi bloqueada ou sinalizada por estar fora do raio de geofence permitido para o seu setor.'
-                            };
+                    <div class="space-y-4">
+                        ${(() => {
+                            const feriasItems = items.filter(i => i.itemType === 'FERIAS');
+                            const otherItems = items.filter(i => i.itemType !== 'FERIAS');
+                            let html = '';
 
-                            const defaultMessages = {
-                                'gps_pulse': 'Localização registrada automaticamente pelo sistema.',
-                                'gps_hora': 'Rastreio automático de regime externo.',
-                                'geofence_out': 'Saída do perímetro permitido.',
-                                'geofence_in': 'Retorno ao perímetro permitido.',
-                                'ponto_fora_raio': 'Tentativa de ponto fora do raio.'
-                            };
+                            // 1. Grouped Vacation Photo Card
+                            if (feriasItems.length > 0) {
+                                feriasItems.sort((a,b) => a.parcela_numero - b.parcela_numero);
+                                const first = feriasItems[0];
+                                const year = new Date((first.data_inicio || first.data_item) + 'T12:00:00').getFullYear();
+                                const status = first.status?.toLowerCase() || 'pendente';
+                                
+                                const statusStyles = {
+                                    'pendente': 'bg-amber-500/10 text-amber-500 border-amber-500/20',
+                                    'aprovado': 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
+                                    'aprovada': 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
+                                    'rejeitado': 'bg-rose-500/10 text-rose-500 border-rose-500/20',
+                                    'rejeitada': 'bg-rose-500/10 text-rose-500 border-rose-500/20'
+                                };
+                                const currentStatusClass = statusStyles[status] || 'bg-slate-500/10 text-slate-500 border-white/5';
 
-                            const displayConteudo = messageDict[item.conteudo] || item.conteudo || defaultMessages[item.tipo] || 'Registro automático de posição.';
-                            const isFerias = item.tipo === 'aviso_ferias' || (item.itemType === 'SISTEMA' && (item.conteudo && (item.conteudo.toLowerCase().includes('feriado') || item.conteudo.toLowerCase().includes('folga') || item.conteudo.toLowerCase().includes('férias'))));
-
-                            // Mapeamento de Cores e Títulos Refinado
-                            let colorClass = 'text-primary';
-                            let title = 'ATIVIDADE DO DIA';
-
-                            if (isJustif) {
-                                colorClass = 'text-orange-500';
-                                title = item.tipo_divergencia || 'JUSTIFICATIVA DE INCIDENTE';
-                            } else if (item.itemType === 'COMUNICADO' && item.subtipo !== 'hora_extra') {
-                                colorClass = 'text-emerald-500';
-                                title = 'COMUNICADO OFICIAL';
-                            } else if (item.itemType === 'COMUNICADO' && item.subtipo === 'hora_extra') {
-                                colorClass = 'text-amber-500';
-                                title = 'SOLICITAÇÃO DE HORA EXTRA';
-                             } else if (item.tipo === 'esquecimento_ponto') {
-                                 colorClass = 'text-amber-600 font-bold';
-                                 title = 'ESQUECIMENTO DE PONTO';
-                             } else if (isSystem) {
-                                 const type = item.tipo || '';
-                                 const contentLower = (item.conteudo || '').toLowerCase();
-                                 if (type === 'gps_pulse') {
-                                     colorClass = 'text-rose-400/90';
-                                     title = 'CHECK-POINT DE LOCALIZAÇÃO (PULSO)';
-                                 } else if (type === 'gps_hora') {
-                                     colorClass = 'text-rose-300/80';
-                                     title = 'RASTREIO DE REGIME EXTERNO';
-                                 } else if (type === 'geofence_out') {
-                                     colorClass = 'text-rose-500';
-                                 } else if (type === 'geofence_in') {
-                                     colorClass = 'text-rose-500';
-                                     title = 'QUEBRA DE PERÍMETRO (ENTRADA)';
-                                 } else if (type === 'ponto_fora_raio') {
-                                     colorClass = 'text-rose-600 font-bold';
-                                     title = 'SOLICITAÇÃO DE PONTO FORA DO RAIO';
-                                 } else if (type === 'aviso_ferias' || contentLower.includes('feriado') || contentLower.includes('folga') || contentLower.includes('férias')) {
-                                     colorClass = 'text-amber-500';
-                                     title = 'FERIADOS E FOLGAS AGENDADOS';
-                                     // Auto-leitura para feriados
-                                     if (!localStorage.getItem(`visto_${item.id}`)) {
-                                         localStorage.setItem(`visto_${item.id}`, 'true');
-                                     }
-                                 } else {
-                                     colorClass = 'text-rose-500';
-                                     title = item.tipo_divergencia || 'OCORRÊNCIA DE SISTEMA';
-                                 }
-                             }
-
-                            return `
-                            <div class="card-history ${colorClass} py-2 mb-6 last:mb-0 group">
-                                <div class="flex justify-between items-start mb-2">
-                                    <div class="flex flex-col gap-1">
-                                        <div class="flex items-center gap-2 flex-wrap">
-                                            <h3 class="text-[11px] font-black uppercase tracking-widest ${colorClass}">${title}</h3>
-                                            <span class="text-[10px] text-slate-500 font-bold tracking-tighter">
-                                                ${new Date(item.created_at || item.data_hora).toLocaleDateString('pt-BR')} | ${new Date(item.created_at || item.data_hora).toLocaleTimeString('pt-BR')}
-                                            </span>
-                                        </div>
-                                        ${isFerias ? `
-                                            <div class="space-y-4 mt-2">
-                                                ${(() => {
-                                                    // Se houver múltiplos eventos agrupados, o formato é "Resumo: Data - Tipo (Obs) - Data - Tipo (Obs)..."
-                                                    // Se for um único, pode ser apenas "Data: Tipo (Obs)"
-                                                    let segments = [];
-                                                    if (displayConteudo.includes(':') && !displayConteudo.includes(' - ')) {
-                                                        // Caso simples de um item: "21/04/2026: FERIADO NACIONAL (Tiradentes)"
-                                                        segments = [displayConteudo];
-                                                    } else if (displayConteudo.includes(':')) {
-                                                        // Caso múltiplo: "Resumo: 21/04/2026 - FERIADO NACIONAL (Tiradentes) - ..."
-                                                        const afterColon = displayConteudo.substring(displayConteudo.indexOf(':') + 1);
-                                                        segments = afterColon.split(' - ').filter(s => s.trim().length > 5);
-                                                    } else {
-                                                        segments = [displayConteudo];
-                                                    }
-
-                                                    return segments.map(descFull => {
-                                                        const cleanLine = descFull.trim().startsWith('- ') ? descFull.trim().substring(2) : descFull.trim();
-                                                        if (cleanLine.toUpperCase().includes('ATUALIZAR O COMUNICADO')) return '';
-
-                                                        // Extração de dados (Data, Tipo, Obs)
-                                                        let date = cleanLine.match(/\d{2}\/\d{2}\/\d{4}/)?.[0] || '';
-                                                        let rest = cleanLine.replace(date, '').replace(/^[:\s-]+/, '').trim();
-                                                        
-                                                        let type = rest.split('(')[0].trim();
-                                                        let obs = rest.includes('(') ? rest.substring(rest.indexOf('(')+1, rest.lastIndexOf(')')) : '';
-                                                        
-                                                        if (!type && rest) type = rest;
-                                                        if (type.toUpperCase().includes('COMUNICADO DE FERIADOS') || type.toUpperCase().includes('FERIADOS/FOLGAS AGENDADAS') || !type) {
-                                                            type = 'INFORMATIVO';
-                                                        }
-
-                                                        // Cores específicas por item
-                                                        let itemColor = 'border-amber-500';
-                                                        if (type.toUpperCase().includes('NACIONAL')) itemColor = 'border-amber-500';
-                                                        else if (type.toUpperCase().includes('REGIONAL')) itemColor = 'border-orange-500';
-                                                        else if (type.toUpperCase().includes('FOLGA')) itemColor = 'border-purple-500';
-
-                                                        return `
-                                                            <div class="p-3 rounded-r-xl border-l-[3px] ${itemColor} bg-white/[0.02] space-y-1">
-                                                                <p class="text-[12px] text-slate-100 font-black uppercase tracking-tight flex items-center gap-2">
-                                                                    <span>- ${type}</span>
-                                                                    <span class="bg-black/40 px-2 py-0.5 rounded text-[10px] font-bold text-slate-300 tracking-tighter">${date}</span>
-                                                                </p>
-                                                                ${obs ? `<p class="text-[13px] text-slate-300 italic leading-relaxed font-medium">"${obs}"</p>` : ''}
-                                                            </div>
-                                                        `;
-                                                    }).join('');
-                                                })()}
+                                html += `
+                                <div class="bg-white/5 border border-white/5 rounded-[2.5rem] p-6 overflow-hidden shadow-2xl relative group/ferias">
+                                    <div class="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 blur-[60px] rounded-full -translate-y-1/2 translate-x-1/2 opacity-50"></div>
+                                    
+                                    <div class="flex items-center justify-between mb-8">
+                                        <div class="flex items-center gap-4">
+                                            <div class="size-14 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 shadow-xl shadow-amber-500/10 shrink-0 transform group-hover/ferias:scale-110 transition-transform duration-500">
+                                                <span class="material-symbols-outlined text-2xl font-variation-settings-fill">beach_access</span>
                                             </div>
-                                        ` : `
-                                            <p class="text-slate-300 text-sm italic leading-relaxed border-l border-white/10 pl-3">"${displayConteudo}"</p>
-                                        `}
+                                            <div>
+                                                <h5 class="text-sm font-black italic tracking-tighter text-white uppercase leading-tight">Plano de Férias ${year}</h5>
+                                                <p class="text-[8px] text-slate-500 font-bold tracking-[0.2em] uppercase mt-0.5">Gestão de Descanso Anual</p>
+                                            </div>
+                                        </div>
+                                        <div class="px-4 py-1.5 rounded-full border ${currentStatusClass} text-[9px] font-black uppercase tracking-[0.2em] shadow-lg">
+                                            ${status.toUpperCase()}
+                                        </div>
                                     </div>
-                                    <div class="flex flex-col items-end gap-2">
-                                        ${(statusLabel && !isFerias) ? `
-                                            <span class="${statusClass} text-[8px] px-2 py-0.5 rounded-full border border-current font-black uppercase tracking-widest shrink-0 shadow-lg shadow-current/5">
-                                                ${statusLabel}
-                                            </span>
-                                        ` : ''}
+
+                                    <div class="space-y-4">
+                                        ${feriasItems.map(p => `
+                                            <div class="bg-black/40 border border-white/5 rounded-[1.5rem] p-4 flex items-center justify-between group/parcela hover:bg-black/60 transition-colors duration-300">
+                                                <div class="flex items-center gap-6">
+                                                    <div class="text-center min-w-[40px]">
+                                                        <p class="text-[10px] font-black text-amber-500 italic">${p.parcela_numero}ª</p>
+                                                        <p class="text-[6px] text-slate-500 font-black uppercase tracking-tighter">Parcela</p>
+                                                    </div>
+                                                    <div class="flex gap-6 items-center">
+                                                        <div>
+                                                            <p class="text-[7px] text-slate-500 uppercase font-black tracking-widest mb-1 opacity-60">Início</p>
+                                                            <p class="text-[10px] font-black text-white italic tracking-tighter">${new Date(p.data_inicio + 'T12:00:00').toLocaleDateString('pt-BR')}</p>
+                                                        </div>
+                                                        <span class="material-symbols-outlined text-white/10 text-sm">arrow_forward</span>
+                                                        <div>
+                                                            <p class="text-[7px] text-slate-500 uppercase font-black tracking-widest mb-1 opacity-60">Termina</p>
+                                                            <p class="text-[10px] font-black text-white italic tracking-tighter">${new Date(p.data_fim + 'T12:00:00').toLocaleDateString('pt-BR')}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="text-right">
+                                                    <p class="text-[11px] font-black text-white tracking-tighter italic h-10 w-10 rounded-full border border-white/10 flex items-center justify-center bg-white/5">${Math.ceil(Math.abs(new Date(p.data_fim) - new Date(p.data_inicio)) / (1000 * 60 * 60 * 24)) + 1}</p>
+                                                    <p class="text-[6px] text-slate-500 font-black uppercase tracking-widest mt-1">Dias</p>
+                                                </div>
+                                            </div>
+                                        `).join('')}
                                     </div>
+
+                                    ${status === 'pendente' ? `
+                                        <div class="flex gap-4 mt-8 pt-4 border-t border-white/5 justify-center">
+                                            <button onclick="window.abrirModalFerias()" class="flex-1 max-w-[160px] h-[50px] bg-amber-500/10 border border-amber-500/30 rounded-2xl text-amber-500 text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-amber-500 hover:text-white transition-all duration-300 shadow-lg active:scale-95">
+                                                <span class="material-symbols-outlined text-lg">edit</span>
+                                                Alterar
+                                            </button>
+                                            <button onclick="window.excluirAnotacao('${first.id}', 'ferias')" class="flex-1 max-w-[160px] h-[50px] bg-rose-500/10 border border-rose-500/30 rounded-2xl text-rose-500 text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-rose-500 hover:text-white transition-all duration-300 shadow-lg active:scale-95">
+                                                <span class="material-symbols-outlined text-lg">delete</span>
+                                                Excluir
+                                            </button>
+                                        </div>
+                                    ` : (status === 'rejeitado' || status === 'rejeitada' ? `
+                                        <div class="mt-6 p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl text-center space-y-3 animate-pulse">
+                                            <p class="text-[10px] text-rose-400 font-bold uppercase tracking-widest">Este plano foi recusado</p>
+                                            <button onclick="window.abrirModalFerias()" class="w-full h-[40px] bg-rose-500 text-white text-[9px] font-black uppercase tracking-widest rounded-xl hover:bg-rose-600 transition-all">Refazer Planejamento</button>
+                                        </div>
+                                    ` : '')}
+                                </div>`;
+                            }
+
+                            // 2. Render Other Activity Items
+                            html += otherItems.map(item => {
+                                const isJustif = item.itemType === 'JUSTIFICATIVA';
+                                const isSystem = item.itemType === 'SISTEMA';
+                                const isComun = item.itemType === 'COMUNICADO';
+                                
+                                const statusStyles = {
+                                    'pendente': 'bg-amber-500/10 text-amber-500 border-amber-500/20',
+                                    'aprovado': 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
+                                    'aprovada': 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
+                                    'rejeitado': 'bg-rose-500/10 text-rose-500 border-rose-500/20',
+                                    'rejeitada': 'bg-rose-500/10 text-rose-500 border-rose-500/20'
+                                };
+
+                                let sLabel = '';
+                                let sClass = 'hidden';
+                                
+                                if (isJustif) {
+                                    const s = item.status?.toLowerCase() || 'pendente';
+                                    sLabel = s === 'pendente' ? 'EM ANÁLISE' : (s.includes('aprov') ? 'ABONADO' : 'RECUSADO');
+                                    sClass = statusStyles[s] || 'bg-slate-500/10 text-slate-400 border-white/5';
+                                } else if (isSystem && item.status_pendencia) {
+                                    const s = item.status_pendencia.toLowerCase();
+                                    sLabel = s === 'pendente' ? 'PENDENTE' : (s.includes('aprov') ? 'ABONADO' : 'RECUSADO');
+                                    sClass = statusStyles[s] || 'bg-slate-500/10 text-slate-400 border-white/5';
+                                }
+
+                                // Color settings for the classic 'card-history' bar
+                                let colorClass = 'text-primary';
+                                let titleText = 'ATIVIDADE REGISTRADA';
+                                let icon = 'assignment';
+
+                                if (isJustif) {
+                                    colorClass = 'text-amber-500';
+                                    titleText = (item.tipo_divergencia || 'JUSTIFICATIVA DE PONTO').toUpperCase();
+                                    icon = 'history_edu';
+                                } else if (isComun) {
+                                    colorClass = 'text-emerald-500';
+                                    titleText = 'COMUNICADO OFICIAL';
+                                    icon = 'campaign';
+                                } else if (isSystem) {
+                                    colorClass = 'text-rose-500';
+                                    titleText = (item.subtipo === 'checkin' ? 'CHECK-IN' : (item.subtipo === 'checkout' ? 'CHECK-OUT' : 'LOG DO SISTEMA'));
+                                    icon = 'analytics';
+                                }
+
+                                const colorHex = isJustif ? '#f59e0b' : (isComun ? '#10b981' : (isSystem ? '#f43f5e' : '#3b82f6'));
+
+                                return `
+                                <div class="card-history bg-white/5 border border-white/5 rounded-2xl p-5 mb-4 group/card transition-all hover:bg-white/[0.08]" style="color: ${colorHex}">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <div class="flex items-center gap-3">
+                                            <div class="size-8 rounded-lg bg-current/10 border border-current/20 flex items-center justify-center">
+                                                <span class="material-symbols-outlined text-base font-variation-settings-fill">${icon}</span>
+                                            </div>
+                                            <div>
+                                                <h6 class="text-[10px] font-black uppercase tracking-[0.2em] leading-tight">${titleText}</h6>
+                                                <p class="text-[8px] text-slate-500 font-bold uppercase tracking-widest">${new Date(item.created_at || item.data_hora || item.data_item).toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})}</p>
+                                            </div>
+                                        </div>
+                                        <div class="px-3 py-1 rounded-full border ${sClass} text-[7px] font-black uppercase tracking-widest shadow-sm">
+                                            ${sLabel}
+                                        </div>
+                                    </div>
+                                    
+                                    <p class="text-[13px] text-slate-300 italic mb-5 leading-relaxed font-medium pl-3 border-l-2 border-current/20">
+                                        "${item.conteudo || item.descricao || 'Registro automático de atividade.'}"
+                                    </p>
+
+                                    <div class="flex flex-wrap gap-2 items-center justify-between pt-4 border-t border-white/5">
+                                        <div class="flex gap-2">
+                                            ${item.coordenadas ? `
+                                                <button onclick="window.toggleMapaCard('${item.id}', '${item.coordenadas}')" class="h-10 px-4 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-400 text-[10px] font-black uppercase flex items-center gap-2 hover:bg-rose-500 hover:text-white transition-all shadow-md active:scale-95">
+                                                    <span class="material-symbols-outlined text-sm">map</span>
+                                                    MAPA
+                                                </button>
+                                            ` : ''}
+                                            ${item.evidencia_url ? `
+                                                <a href="${item.evidencia_url}" target="_blank" class="h-10 px-4 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-500 text-[10px] font-black uppercase flex items-center gap-2 hover:bg-amber-500 hover:text-white transition-all shadow-md active:scale-95">
+                                                    <span class="material-symbols-outlined text-sm">attach_file</span>
+                                                    ANEXO
+                                                </a>
+                                            ` : ''}
+                                        </div>
+                                        
+                                        <div class="flex gap-2 text-slate-400">
+                                            ${(item.itemType === 'ATIVIDADE' && (new Date() - new Date(item.created_at) < 24 * 60 * 60 * 1000)) ? `
+                                                <button onclick="window.toggleEditCard('${item.id}', 'atividade', \`${(item.conteudo || '').replace(/`/g, '\\`').replace(/\$/g, '\\$')}\` )" class="size-10 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center hover:text-primary hover:border-primary/40 transition-all active:scale-90">
+                                                    <span class="material-symbols-outlined text-lg">edit</span>
+                                                </button>
+                                                <button onclick="window.excluirAnotacao('${item.id}')" class="size-10 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center hover:text-rose-500 hover:border-rose-500/40 transition-all active:scale-90">
+                                                    <span class="material-symbols-outlined text-lg">delete</span>
+                                                </button>
+                                            ` : ''}
+                                            ${(item.itemType === 'JUSTIFICATIVA' && item.status === 'pendente') ? `
+                                                <button onclick="window.toggleEditCard('${item.id}', 'justificativa', \`${(item.descricao || '').replace(/`/g, '\\`').replace(/\$/g, '\\$')}\` )" class="size-10 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center hover:text-primary hover:border-primary/40 transition-all active:scale-90">
+                                                    <span class="material-symbols-outlined text-lg">edit</span>
+                                                </button>
+                                                <button onclick="window.excluirJustificativa('${item.id}')" class="size-10 bg-white/5 border border-white/10 rounded-xl flex items-center justify-center hover:text-rose-500 hover:border-rose-500/40 transition-all active:scale-90">
+                                                    <span class="material-symbols-outlined text-lg">delete</span>
+                                                </button>
+                                            ` : ''}
+                                        </div>
+                                    </div>
+                                    <div id="map-card-${item.id}" class="map-container-card overflow-hidden transition-all duration-500 h-0"></div>
+                                    <div id="edit-card-${item.id}" class="edit-container-card overflow-hidden transition-all duration-500 h-0"></div>
                                 </div>
-                                <div class="flex flex-wrap gap-2 mt-3 overflow-hidden">
-                                     <div class="flex gap-3 mt-1">
-                                        ${(() => {
-                                            if (item.itemType === 'ATIVIDADE' && (new Date() - new Date(item.created_at) < 24 * 60 * 60 * 1000)) {
-                                                return `<button onclick="window.toggleEditCard('${item.id}', 'atividade', \`${item.conteudo.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)" class="p-3 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-primary transition-all shadow-sm flex items-center justify-center min-w-[44px] min-h-[44px]"><span class="material-symbols-outlined text-xl">edit</span></button>
-                                                        <button onclick="window.excluirAnotacao('${item.id}')" class="p-3 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-rose-500 transition-all shadow-sm flex items-center justify-center min-w-[44px] min-h-[44px]"><span class="material-symbols-outlined text-xl">delete</span></button>`;
-                                            } else if (isSystem && item.status_pendencia === 'pendente' && item.tipo !== 'comunicado' && item.tipo !== 'aviso_ferias' && (new Date() - new Date(item.data_hora || item.created_at) < 24 * 60 * 60 * 1000)) {
-                                                return `<button onclick="window.toggleEditCard('${item.id}', '${item.tipo_raw}', \`${(item.justificativa_colaborador || '').replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)" class="px-4 py-2 bg-primary/10 border border-primary/20 rounded-xl text-primary text-[10px] font-black uppercase tracking-widest flex items-center gap-2 min-h-[44px]"><span class="material-symbols-outlined text-lg">edit_note</span><span>Justificar</span></button>`;
-                                            } else if (item.itemType === 'JUSTIFICATIVA' && item.status === 'pendente') {
-                                                return `<button onclick="window.toggleEditCard('${item.id}', 'justificativa', \`${(item.descricao || '').replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)" class="p-3 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-primary transition-all shadow-sm flex items-center justify-center min-w-[44px] min-h-[44px]"><span class="material-symbols-outlined text-xl">edit</span></button>
-                                                        <button onclick="window.excluirJustificativa('${item.id}')" class="p-3 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-rose-500 transition-all flex items-center justify-center min-w-[44px] min-h-[44px]"><span class="material-symbols-outlined text-xl">delete</span></button>`;
-                                            } else if (item.itemType === 'COMUNICADO' && item.subtipo === 'hora_extra') {
-                                                const isLido = !!item.lido || localStorage.getItem(`ciente_${item.id}`) === 'true';
-                                                const btnClass = isLido ? "bg-emerald-500/30 border-emerald-500/60 text-emerald-400" : "bg-amber-500/10 border-amber-500/20 text-amber-500 hover:bg-amber-500/20";
-                                                return `<button ${isLido ? 'disabled' : `onclick="window.marcarComunicadoLido('${item.id}')"`} class="px-4 py-2 ${btnClass} border rounded-xl transition-all flex items-center gap-2 text-[10px] font-black uppercase tracking-widest min-h-[44px]"><span class="material-symbols-outlined text-lg font-bold">${isLido ? 'done_all' : 'done'}</span><span>CIENTE</span></button>`;
-                                            }
-                                            return '';
-                                        })()}
-                                     </div>
-                                     <div class="flex gap-3">
-                                        ${item.evidencia_url ? `<a href="${item.evidencia_url}" target="_blank" class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-500 text-[10px] font-black uppercase tracking-widest min-h-[44px] hover:bg-amber-500/20 transition-all"><span class="material-symbols-outlined text-lg">attach_file</span><span>Ver Arquivo</span></a>` : ''}
-                                        ${item.coordenadas ? `<button onclick="window.toggleMapaCard('${item.id}', '${item.coordenadas}')" class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-500 text-[10px] font-black uppercase tracking-widest min-h-[44px] hover:bg-rose-500/20 transition-all"><span class="material-symbols-outlined text-lg">map</span><span>Ver Mapa</span></button>` : ''}
-                                     </div>
-                                </div>
-                                <div id="map-card-${item.id}" class="map-container-card"></div>
-                                <div id="edit-card-${item.id}" class="edit-container-card"></div>
-                                ${item.justificativa_colaborador ? `<div class="mt-3 bg-white/5 border border-white/5 p-3 rounded-lg text-[11px] text-slate-400 italic"><span class="text-primary font-bold mr-1 not-italic tracking-tighter uppercase">Justificativa:</span> ${item.justificativa_colaborador}</div>` : ''}
-                            </div>`;
-                        }).join('')}
+                                `;
+                            }).join('');
+
+                            return html;
+                        })()}
                     </div>
                 </div>`;
             }).join('');
@@ -994,6 +1065,593 @@
             </div>
         </div>
     </aside>
+    <div id="sidebarOverlay" onclick="UI.toggleSidebar()" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[150] hidden opacity-0 transition-all duration-300"></div>
+
+    <!-- MODAL MINHAS FÉRIAS -->
+    <div id="modal-ferias" class="fixed inset-0 z-[200] hidden flex-col bg-background-dark overflow-y-auto">
+        <header class="sticky top-0 z-50 bg-background-dark/80 backdrop-blur-xl border-b border-white/5 p-6 flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <button onclick="window.fecharModalFerias()" class="text-slate-400 hover:text-white transition-all size-10 flex items-center justify-center rounded-xl bg-white/5">
+                    <span class="material-symbols-outlined">close</span>
+                </button>
+                <div>
+                    <h2 class="text-xl font-black italic tracking-tighter text-white uppercase">Meus Períodos de Férias</h2>
+                    <p class="text-[10px] text-primary font-black uppercase tracking-[0.2em]">Planejamento Anual 2026</p>
+                </div>
+            </div>
+            <div id="ferias-progress" class="flex items-center gap-6">
+                <!-- Painel de Contabilização Mensal (Novo) -->
+                <div id="monthly-stats-panel" class="hidden md:flex items-center gap-4 px-4 py-2 bg-white/5 rounded-2xl border border-white/10">
+                    <div class="text-center">
+                        <p class="text-[7px] text-slate-500 font-black uppercase">Nacionais</p>
+                        <p id="count-nacionais" class="text-xs font-black text-amber-500">0</p>
+                    </div>
+                    <div class="w-px h-6 bg-white/10"></div>
+                    <div class="text-center">
+                        <p class="text-[7px] text-slate-500 font-black uppercase">Regionais</p>
+                        <p id="count-regionais" class="text-xs font-black text-violet-400">0</p>
+                    </div>
+                    <div class="w-px h-6 bg-white/10"></div>
+                    <div class="text-center">
+                        <p class="text-[7px] text-slate-500 font-black uppercase">Folgas</p>
+                        <p id="count-folgas" class="text-xs font-black text-cyan-400">0</p>
+                    </div>
+                </div>
+
+                <div class="text-right">
+                    <p class="text-[10px] text-slate-500 uppercase font-black">Total Marcado</p>
+                    <p class="text-xl font-black text-white"><span id="txt-dias-marcados">0</span>/30 <span class="text-xs text-slate-500">DIAS</span></p>
+                </div>
+                <div class="h-10 w-[2px] bg-white/10"></div>
+                <div id="status-badge-ferias" class="px-4 py-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[10px] font-black uppercase tracking-widest">
+                    Pendente de Início
+                </div>
+            </div>
+        </header>
+
+        <main class="flex-1 max-w-5xl mx-auto w-full p-6 grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <!-- Coluna Esquerda: Calendário e Seleção -->
+            <div class="lg:col-span-7 space-y-6">
+                <!-- Painel de Seleção -->
+                <div class="bg-white/5 border border-white/10 rounded-3xl p-6 space-y-6 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 p-4 opacity-5">
+                        <span class="material-symbols-outlined text-8xl">calendar_month</span>
+                    </div>
+
+                    <div class="flex items-center justify-between relative z-10">
+                        <div class="flex items-center gap-3">
+                            <div class="size-10 rounded-xl bg-primary/20 flex items-center justify-center text-primary">
+                                <span class="material-symbols-outlined">event_note</span>
+                            </div>
+                            <div>
+                                <h3 class="text-xs font-black uppercase tracking-widest text-slate-100">Selecione o Período</h3>
+                                <p class="text-[10px] text-slate-500 font-bold uppercase">Mínimo de 10 dias por parcela</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button id="btn-prev-month" class="p-2 hover:bg-white/5 rounded-lg transition-all text-slate-400">
+                                <span class="material-symbols-outlined">chevron_left</span>
+                            </button>
+                            <span id="txt-month-year" class="text-[11px] font-black uppercase tracking-widest text-white min-w-[120px] text-center">Janeiro 2026</span>
+                            <button id="btn-next-month" class="p-2 hover:bg-white/5 rounded-lg transition-all text-slate-400">
+                                <span class="material-symbols-outlined">chevron_right</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Legenda -->
+                    <div class="flex flex-wrap gap-x-4 gap-y-2 px-2">
+                        <div class="flex items-center gap-2">
+                            <div class="size-2 rounded-full bg-amber-500"></div>
+                            <span class="text-[9px] font-black uppercase text-slate-500">Feriado Nac.</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="size-2 rounded-full bg-violet-400"></div>
+                            <span class="text-[9px] font-black uppercase text-slate-500">Feriado Reg.</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="size-2 rounded-full bg-cyan-400"></div>
+                            <span class="text-[9px] font-black uppercase text-slate-500">Folga</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="size-2 rounded-full bg-primary shadow-[0_0_5px_#0d59f2]"></div>
+                            <span class="text-[9px] font-black uppercase text-slate-500">Seleção</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div class="size-2 rounded-full bg-emerald-500"></div>
+                            <span class="text-[9px] font-black uppercase text-slate-500">Marcado</span>
+                        </div>
+                    </div>
+
+                    <!-- Grid do Calendário -->
+                    <div class="grid grid-cols-7 gap-1">
+                        <div class="text-[10px] font-black text-slate-600 p-2 text-center">DOM</div>
+                        <div class="text-[10px] font-black text-slate-600 p-2 text-center">SEG</div>
+                        <div class="text-[10px] font-black text-slate-600 p-2 text-center">TER</div>
+                        <div class="text-[10px] font-black text-slate-600 p-2 text-center">QUA</div>
+                        <div class="text-[10px] font-black text-slate-600 p-2 text-center">QUI</div>
+                        <div class="text-[10px] font-black text-slate-600 p-2 text-center">SEX</div>
+                        <div class="text-[10px] font-black text-slate-600 p-2 text-center">SAB</div>
+                    </div>
+                    <div id="grid-calendar-ferias" class="grid grid-cols-7 gap-1">
+                        <!-- Injetado via JS -->
+                    </div>
+
+                    <!-- Resumo da Seleção Atual -->
+                    <div id="current-selection-panel" class="hidden p-4 bg-primary/10 border border-primary/20 rounded-2xl flex items-center justify-between animate-in zoom-in-95 duration-300">
+                        <div class="flex items-center gap-4">
+                            <div class="text-center">
+                                <p class="text-[9px] text-slate-500 font-bold uppercase">Início</p>
+                                <p id="selection-start" class="text-xs font-black text-white">--/--/--</p>
+                            </div>
+                            <div class="material-symbols-outlined text-primary">arrow_forward</div>
+                            <div class="text-center">
+                                <p class="text-[9px] text-slate-500 font-bold uppercase">Fim</p>
+                                <p id="selection-end" class="text-xs font-black text-white">--/--/--</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-[9px] text-slate-500 font-bold uppercase">Duração</p>
+                            <p class="text-sm font-black text-primary"><span id="selection-days">0</span> DIAS</p>
+                        </div>
+                    </div>
+
+                    <button id="btn-gravar-parcela" disabled class="w-full py-4 bg-primary/20 text-primary/40 text-[11px] font-black uppercase tracking-widest rounded-2xl transition-all border border-primary/10 disabled:cursor-not-allowed">
+                        Gravar Parcela de Férias
+                    </button>
+                </div>
+            </div>
+
+            <!-- Coluna Direita: Foto Cards -->
+            <div class="lg:col-span-5 space-y-6">
+                <div class="flex items-center justify-between px-2">
+                    <h3 class="text-xs font-black uppercase tracking-widest text-slate-100 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-sm text-primary">analytics</span>
+                        Resumo Visual (Foto Cards)
+                    </h3>
+                    <span id="parcela-count" class="text-[10px] text-slate-500 font-bold uppercase">0/3 Parcelas</span>
+                </div>
+
+                <div id="photo-cards-container" class="space-y-6">
+                    <!-- Cards de Exemplo/Vazios -->
+                    <div id="empty-photo-cards" class="flex flex-col items-center justify-center p-12 border-2 border-dashed border-white/5 rounded-3xl opacity-20">
+                        <span class="material-symbols-outlined text-6xl mb-4">photo_library</span>
+                        <p class="text-[10px] font-black uppercase tracking-widest text-center">Nenhuma parcela gravada ainda</p>
+                    </div>
+                </div>
+
+                <!-- Painel de Controle Final (Visível após completar 30 dias) -->
+                <div id="final-control-panel" class="hidden animate-in slide-in-from-bottom-4 duration-500 space-y-4">
+                    <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-3xl p-6 text-center">
+                        <span class="material-symbols-outlined text-emerald-500 text-4xl mb-2">verified_user</span>
+                        <h4 class="text-sm font-black text-emerald-500 uppercase tracking-widest">30 Dias Completados!</h4>
+                        <p class="text-[10px] text-slate-400 mt-1 uppercase">Revise suas parcelas antes de enviar para aprovação.</p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <button onclick="window.confirmarTudoFerias()" class="bg-emerald-500 hover:bg-emerald-600 text-white py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-emerald-500/20 transition-all">
+                            Enviar Para Aprovação
+                        </button>
+                        <button onclick="window.reiniciarFerias()" class="bg-white/5 border border-white/10 text-slate-400 hover:text-white py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all">
+                            Limpar Tudo
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Script de Férias -->
+    <script type="module">
+        import { supabase } from '../js/supabase-config.js';
+        import { Auth } from '../js/auth.js';
+        import { UI } from '../js/ui-utils.js';
+
+        let holidays = [];
+        let existingFerias = [];
+        let currentParcelas = []; // [{start, end, days, status}]
+        let currentMonth = new Date().getMonth();
+        let currentYear = new Date().getFullYear();
+        let selection = { start: null, end: null };
+        let sectorRule = 1; // Default
+        
+        // Obter ID do usuário no escopo deste módulo (suporta ID na URL para visualização administrativa)
+        const urlParams = new URLSearchParams(window.location.search);
+        const userId = urlParams.get('id') || localStorage.getItem('userId');
+
+        const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+
+        window.abrirModalFerias = async (editingId = null) => {
+            UI.showLoader();
+            const modal = document.getElementById('modal-ferias');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            
+            await loadFeriasData();
+            
+            // Get Sector Rule
+            const { data: userData } = await supabase.from('funcionarios').select('setor_id').eq('id', userId).single();
+            if (userData?.setor_id) {
+                const { data: sector } = await supabase.from('setores').select('regra_ferias').eq('id', userData.setor_id).single();
+                sectorRule = sector?.regra_ferias || 1;
+            }
+
+            renderCalendar();
+            updateProgress();
+            renderPhotoCards();
+            UI.hideLoader();
+        };
+
+        window.fecharModalFerias = () => {
+            const modal = document.getElementById('modal-ferias');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        };
+
+        async function loadFeriasData() {
+            try {
+                // Carregar Feriados
+                const { data: hData } = await supabase.from('feriados_folgas').select('*').or('escopo.eq.geral,funcionario_id.eq.' + userId);
+                holidays = hData || [];
+
+                // Carregar Férias Existentes (incluindo as em rascunho se necessário, mas aqui focamos na tabela 'ferias')
+                const { data: fData } = await supabase.from('ferias').select('*').eq('funcionario_id', userId);
+                existingFerias = fData || [];
+                
+                // Montar rascunho a partir de existingFerias se houver
+                currentParcelas = existingFerias.map(f => {
+                    const start = new Date(f.data_inicio + 'T12:00:00');
+                    const end = new Date(f.data_fim + 'T12:00:00');
+                    return {
+                        id: f.id,
+                        start: start,
+                        end: end,
+                        days: calculateDays(start, end),
+                        status: 'rascunho' // Força status rascunho local para permitir remoção/edição no modal
+                    };
+                });
+
+            } catch (err) {
+                console.error("Erro ao carregar dados de férias:", err);
+            }
+        }
+
+        function calculateDays(start, end) {
+            const diff = Math.abs(end - start);
+            return Math.ceil(diff / (1000 * 60 * 60 * 24)) + 1;
+        }
+
+        function renderCalendar() {
+            const grid = document.getElementById('grid-calendar-ferias');
+            const txtMonth = document.getElementById('txt-month-year');
+            grid.innerHTML = '';
+            txtMonth.innerText = `${monthNames[currentMonth]} ${currentYear}`;
+
+            const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+            // Espaços vazios
+            for (let i = 0; i < firstDay; i++) {
+                grid.appendChild(document.createElement('div'));
+            }
+
+            for (let d = 1; d <= daysInMonth; d++) {
+                const date = new Date(currentYear, currentMonth, d);
+                const dateISO = date.toISOString().split('T')[0];
+                const dayEl = document.createElement('div');
+                dayEl.className = 'glass-calendar-day p-3 text-center text-[11px] font-bold rounded-xl border border-white/5 bg-white/[0.02] flex items-center justify-center min-h-[44px]';
+                dayEl.innerText = d;
+
+            // Verificar Feriados e Tipos
+            const h = holidays.find(h => h.data === dateISO);
+            if (h) {
+                const t = h.tipo?.toLowerCase() || '';
+                if (t.includes('nacional')) dayEl.classList.add('holiday-national');
+                else if (t.includes('regional')) dayEl.classList.add('holiday-regional');
+                else if (t.includes('folga')) dayEl.classList.add('day-off');
+                else dayEl.classList.add('holiday');
+            }
+
+            // Verificar Já Marcado
+            const isMarked = currentParcelas.find(p => date >= p.start && date <= p.end);
+            if (isMarked) dayEl.classList.add('marked');
+
+            // Verificar Seleção Atual
+            if (selection.start && selection.end) {
+                if (date >= selection.start && date <= selection.end) dayEl.classList.add('selected');
+            } else if (selection.start && date.getTime() === selection.start.getTime()) {
+                dayEl.classList.add('selected');
+            }
+
+            dayEl.onclick = () => handleDayClick(date);
+            grid.appendChild(dayEl);
+        }
+
+        updateMonthlyCounters();
+    }
+
+    function updateMonthlyCounters() {
+        if (!document.getElementById('monthly-stats-panel')) return;
+        
+        const currentMonthHolidays = holidays.filter(h => {
+            const d = new Date(h.data + 'T12:00:00');
+            return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+        });
+
+        const counts = {
+            nacional: currentMonthHolidays.filter(h => (h.tipo||'').includes('nacional')).length,
+            regional: currentMonthHolidays.filter(h => (h.tipo||'').includes('regional')).length,
+            folga: currentMonthHolidays.filter(h => (h.tipo||'').includes('folga')).length
+        };
+
+        const panel = document.getElementById('monthly-stats-panel');
+        if (counts.nacional > 0 || counts.regional > 0 || counts.folga > 0) {
+            panel.classList.remove('hidden');
+            document.getElementById('count-nacionais').innerText = counts.nacional;
+            document.getElementById('count-regionais').innerText = counts.regional;
+            document.getElementById('count-folgas').innerText = counts.folga;
+        } else {
+            panel.classList.add('hidden');
+        }
+    }
+
+        function handleDayClick(date) {
+            // Se já está marcado em uma parcela salva, ignora
+            if (currentParcelas.find(p => date >= p.start && date <= p.end)) return;
+
+            if (!selection.start || (selection.start && selection.end)) {
+                selection.start = date;
+                selection.end = null;
+            } else {
+                if (date < selection.start) {
+                    selection.end = selection.start;
+                    selection.start = date;
+                } else {
+                    selection.end = date;
+                }
+            }
+            updateSelectionPanel();
+            renderCalendar();
+        }
+
+        function updateSelectionPanel() {
+            const panel = document.getElementById('current-selection-panel');
+            const btn = document.getElementById('btn-gravar-parcela');
+            
+            if (!selection.start || !selection.end) {
+                panel.classList.add('hidden');
+                btn.disabled = true;
+                btn.classList.add('bg-primary/20', 'text-primary/40');
+                btn.classList.remove('bg-primary', 'text-white', 'shadow-primary/20', 'shadow-lg');
+                return;
+            }
+
+            panel.classList.remove('hidden');
+            const days = calculateDays(selection.start, selection.end);
+            
+            document.getElementById('selection-start').innerText = selection.start.toLocaleDateString('pt-BR');
+            document.getElementById('selection-end').innerText = selection.end.toLocaleDateString('pt-BR');
+            document.getElementById('selection-days').innerText = days;
+
+            if (days >= 10) {
+                btn.disabled = false;
+                btn.classList.remove('bg-primary/20', 'text-primary/40');
+                btn.classList.add('bg-primary', 'text-white', 'shadow-primary/20', 'shadow-lg');
+                btn.innerText = `Gravar ${currentParcelas.length + 1}ª Parcela (${days} dias)`;
+            } else {
+                btn.disabled = true;
+                btn.classList.add('bg-primary/20', 'text-primary/40');
+                btn.innerText = 'Mínimo de 10 dias por parcela';
+            }
+        }
+
+        document.getElementById('btn-prev-month').onclick = () => {
+            currentMonth--;
+            if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+            renderCalendar();
+        };
+
+        document.getElementById('btn-next-month').onclick = () => {
+            currentMonth++;
+            if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+            renderCalendar();
+        };
+
+        document.getElementById('btn-gravar-parcela').onclick = async () => {
+            const days = calculateDays(selection.start, selection.end);
+            const totalAlready = currentParcelas.reduce((acc, p) => acc + p.days, 0);
+            
+            if (totalAlready + days > 30) {
+                UI.showToast(`Excedeu o limite de 30 dias (Já marcou ${totalAlready}).`, 'error');
+                return;
+            }
+
+            currentParcelas.push({
+                start: selection.start,
+                end: selection.end,
+                days: days,
+                status: 'rascunho'
+            });
+
+            selection = { start: null, end: null };
+            updateSelectionPanel();
+            updateProgress();
+            renderCalendar();
+            renderPhotoCards();
+            UI.showToast('Parcela gravada com sucesso!', 'success');
+        };
+
+        window.irParaMesParcela = (dateISO) => {
+            const date = new Date(dateISO + 'T12:00:00');
+            currentMonth = date.getMonth();
+            currentYear = date.getFullYear();
+            renderCalendar();
+            
+            // Scroll suave para o calendário
+            document.getElementById('grid-calendar-ferias').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        };
+
+        function updateProgress() {
+            const total = currentParcelas.reduce((acc, p) => acc + p.days, 0);
+            document.getElementById('txt-dias-marcados').innerText = total;
+            
+            const ruleTextMap = { 1: "30 Dias Diretos", 2: "2 Parcelas (Mín 10d)", 3: "3 Parcelas de 10d" };
+            document.getElementById('parcela-count').innerText = `${currentParcelas.length} Parcela(s) | Regra: ${ruleTextMap[sectorRule]}`;
+
+            const badge = document.getElementById('status-badge-ferias');
+            
+            let isValid = false;
+            if (sectorRule === 1) isValid = (currentParcelas.length === 1 && total === 30);
+            else if (sectorRule === 2) isValid = (currentParcelas.length === 2 && total === 30 && currentParcelas.every(p => p.days >= 10));
+            else if (sectorRule === 3) isValid = (currentParcelas.length === 3 && total === 30 && currentParcelas.every(p => p.days === 10));
+
+            if (isValid) {
+                document.getElementById('final-control-panel').classList.remove('hidden');
+                badge.innerText = 'Pronto para Enviar';
+                badge.className = 'px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[10px] font-black uppercase tracking-widest';
+            } else {
+                document.getElementById('final-control-panel').classList.add('hidden');
+                if (total === 30 && !isValid) {
+                    badge.innerText = 'Não respeita a regra do setor';
+                    badge.className = 'px-4 py-2 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-[10px] font-black uppercase tracking-widest';
+                } else {
+                    badge.innerText = (total === 0) ? 'Pendente de Início' : `Faltam ${30 - total} Dias`;
+                    badge.className = 'px-4 py-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[10px] font-black uppercase tracking-widest';
+                }
+            }
+        }
+
+        function renderPhotoCards() {
+            const container = document.getElementById('photo-cards-container');
+            if (!container) return;
+
+            if (currentParcelas.length === 0) {
+                container.innerHTML = `
+                    <div id="empty-photo-cards" class="flex flex-col items-center justify-center p-12 border-2 border-dashed border-white/5 rounded-3xl opacity-20">
+                        <span class="material-symbols-outlined text-6xl mb-4">photo_library</span>
+                        <p class="text-[10px] font-black uppercase tracking-widest text-center">Nenhuma parcela gravada ainda</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = '';
+
+            // Adicionar botão de Limpar Tudo no topo se houver parcelas
+            const clearBtnHeader = document.createElement('div');
+            clearBtnHeader.className = 'mb-4';
+            clearBtnHeader.innerHTML = `
+                <button onclick="window.reiniciarFerias()" class="w-full py-3 bg-rose-500/10 border border-rose-500/20 text-rose-500 text-[9px] font-black uppercase tracking-[0.2em] rounded-xl hover:bg-rose-500 hover:text-white transition-all shadow-lg active:scale-95 flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined text-sm">history</span>
+                    LIMPAR MARCAÇÕES
+                </button>
+            `;
+            container.appendChild(clearBtnHeader);
+
+            currentParcelas.forEach((p, index) => {
+                const dateISO = p.start.toISOString().split('T')[0];
+                const card = document.createElement('div');
+                card.className = 'group relative bg-white/5 border border-white/5 rounded-2xl p-4 overflow-hidden mb-4 cursor-pointer hover:bg-primary/5 hover:border-primary/20 transition-all animate-in fade-in slide-in-from-right-4 duration-300';
+                card.style.animationDelay = `${index * 100}ms`;
+                card.onclick = () => window.irParaMesParcela(dateISO);
+                
+                card.innerHTML = `
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="flex items-center gap-3">
+                            <div class="size-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-lg">
+                                <span class="material-symbols-outlined text-xl font-variation-settings-fill">beach_access</span>
+                            </div>
+                            <div>
+                                <h4 class="text-[11px] font-black italic text-white uppercase leading-tight">${index + 1}ª PARCELA</h4>
+                                <p class="text-[8px] text-slate-500 font-bold uppercase tracking-widest">PLANEJAMENTO 2026</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                             <p class="text-[8px] text-slate-500 uppercase font-black tracking-widest mb-0.5">DURAÇÃO</p>
+                             <p class="text-sm font-black text-amber-500">${p.days} DIAS</p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-black/40 border border-white/5 rounded-xl p-3 flex items-center justify-between">
+                        <div class="flex gap-4">
+                            <div>
+                                <p class="text-[7px] text-slate-500 uppercase font-black tracking-widest mb-0.5">Início</p>
+                                <p class="text-[10px] font-black text-white">${p.start.toLocaleDateString('pt-BR')}</p>
+                            </div>
+                            <div class="w-px h-4 bg-white/10 self-center"></div>
+                            <div>
+                                <p class="text-[7px] text-slate-500 uppercase font-black tracking-widest mb-0.5">Fim</p>
+                                <p class="text-[10px] font-black text-white">${p.end.toLocaleDateString('pt-BR')}</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                             ${p.status === 'rascunho' ? `
+                                <button onclick="event.stopPropagation(); window.removerParcela(${index})" class="size-8 rounded-lg bg-rose-500/10 text-rose-500 flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all shadow-sm active:scale-90">
+                                    <span class="material-symbols-outlined text-base">delete_sweep</span>
+                                </button>
+                             ` : ''}
+                        </div>
+                    </div>
+
+                    <div class="mt-3 flex items-center gap-2 opacity-30 group-hover:opacity-60 transition-opacity">
+                         <span class="material-symbols-outlined text-[10px] text-primary">touch_app</span>
+                         <span class="text-[8px] text-slate-500 uppercase font-black tracking-widest">Clique para ver no calendário</span>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        window.removerParcela = (index) => {
+            currentParcelas.splice(index, 1);
+            updateProgress();
+            renderCalendar();
+            renderPhotoCards();
+            UI.showToast('Parcela removida.', 'info');
+        };
+
+        window.reiniciarFerias = () => {
+            if (!confirm('Deseja limpar todos os períodos marcados?')) return;
+            currentParcelas = [];
+            selection = { start: null, end: null };
+            updateProgress();
+            renderCalendar();
+            renderPhotoCards();
+        };
+
+        window.confirmarTudoFerias = async () => {
+            UI.showLoader();
+            try {
+                // Deletar as antigas (para sobrescrever o planejamento)
+                const { error: delErr } = await supabase.from('ferias').delete().eq('funcionario_id', userId);
+                if (delErr) throw delErr;
+
+                // Salvar as novas
+                const inserts = currentParcelas.map((p, idx) => ({
+                    funcionario_id: userId,
+                    data_inicio: p.start.toISOString().split('T')[0],
+                    data_fim: p.end.toISOString().split('T')[0],
+                    parcela_numero: idx + 1,
+                    status: 'pendente'
+                }));
+
+                const { error: insErr } = await supabase.from('ferias').insert(inserts);
+                if (insErr) throw insErr;
+
+                UI.showToast('Férias enviadas para aprovação!', 'success');
+                window.fecharModalFerias();
+                // Opcional: Recarregar histórico ou página
+                setTimeout(() => window.location.reload(), 1500);
+
+            } catch (err) {
+                console.error("Erro ao salvar férias:", err);
+                UI.showToast('Erro ao salvar planejamento.', 'error');
+            } finally {
+                UI.hideLoader();
+            }
+        };
+
+    </script>
+
     <div id="sidebarOverlay" onclick="UI.toggleSidebar()" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[150] hidden opacity-0 transition-all duration-300"></div>
 
     <script type="module" src="../js/manager-context.js?v=3.0"></script>

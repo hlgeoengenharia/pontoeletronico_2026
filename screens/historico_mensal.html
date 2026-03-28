@@ -424,7 +424,7 @@
                     supabase.from('comunicados').select('*').or(`destinatario_id.eq.${targetId},tipo.eq.geral,setor_id.eq.${mySectorId || '00000000-0000-0000-0000-000000000000'}`).gte('created_at', startMonth).lte('created_at', endMonth),
                     supabase.from('diario_logs').select('*').eq('funcionario_id', targetId).gte('created_at', startMonth).lte('created_at', endMonth),
                     supabase.from('feriados_folgas').select('*').or(`funcionario_id.eq.${targetId},setor_id.eq.${mySectorId},escopo.eq.geral`).gte('data', startMonth.split('T')[0]).lte('data', endMonth.split('T')[0]),
-                    supabase.from('ferias').select('*').eq('funcionario_id', targetId).eq('status', 'aprovado').lte('data_inicio', endMonth.split('T')[0]).gte('data_fim', startMonth.split('T')[0]).catch(e => ({ data: [] }))
+                    supabase.from('ferias').select('*').eq('funcionario_id', targetId).eq('status', 'aprovado').lte('data_inicio', endMonth.split('T')[0]).gte('data_fim', startMonth.split('T')[0])
                 ]);
 
                 renderEspelho(ptsRes.data || [], anotRes.data || [], justRes.data || [], comsRes.data || [], logsRes.data || [], ferRes.data || [], vacRes.data || [], func.escalas, month, year);
@@ -472,11 +472,11 @@
                 const dayComunicados = (comunicados || []).filter(c => c.created_at.startsWith(dateStr));
                 const dayLogs = (logs || []).filter(l => l.created_at.startsWith(dateStr));
                 const daySpecial = (feriados || []).find(f => f.data === dateStr);
-                const dayFerias = (ferias || []).find(f => f.data_inicio <= dateStr && f.data_fim >= dateStr);
+                const isVacation = (ferias || []).some(f => f.data_inicio <= dateStr && f.data_fim >= dateStr);
 
                 const possuiAlmoco = escala?.possui_almoco !== false;
                 let dayWorkedMinutes = calculateWorkedMinutes(dayPoints, possuiAlmoco);
-                const isPlanned = plannedDays.includes(dateStr) && !daySpecial && !dayFerias;
+                const isPlanned = plannedDays.includes(dateStr) && !daySpecial && !isVacation;
                 const isFinished = ScalesEngine.isDayFinished(dateStr, escala);
                 const shouldCharge = isPlanned && (dayPoints.length > 0 || isFinished);
                 const dailyPlannedMinutes = shouldCharge ? ScalesEngine.calculateDailyWorkMinutes(escala) : 0;
@@ -502,10 +502,10 @@
                 else if (balance < 0 && shouldCharge) balanceClass = 'text-rose-400';
 
                 let statusHtml = '';
-                if (daySpecial) {
+                if (isVacation) {
+                    statusHtml = `<span class="px-2 py-1 rounded bg-sky-500/20 text-sky-400 text-[9px] font-black uppercase border border-sky-500/40">Férias</span>`;
+                } else if (daySpecial) {
                     statusHtml = `<span class="px-2 py-1 rounded bg-purple-500/10 text-purple-500 text-[9px] font-black uppercase border border-purple-500/20">${daySpecial.tipo.replace('_', ' ')}</span>`;
-                } else if (dayFerias) {
-                    statusHtml = `<span class="px-2 py-1 rounded bg-blue-500/20 text-blue-400 text-[9px] font-black uppercase border border-blue-500/40">FÉRIAS</span>`;
                 } else if (isAbonado) {
                     statusHtml = '<span class="px-2 py-1 rounded bg-emerald-500/20 text-emerald-400 text-[9px] font-black uppercase border border-emerald-500/40">Abonado</span>';
                 } else if (isRejeitado) {
@@ -522,7 +522,7 @@
                     statusHtml = '<span class="text-[9px] text-slate-500 font-black uppercase tracking-widest italic opacity-50">Escala</span>';
                 }
 
-                const hasDetails = dayAnotacoes.length > 0 || dayJustificativas.length > 0 || dayComunicados.length > 0 || dayLogs.length > 0 || !!daySpecial;
+                const hasDetails = dayAnotacoes.length > 0 || dayJustificativas.length > 0 || dayComunicados.length > 0 || dayLogs.length > 0 || !!daySpecial || isVacation;
                 const rowBgClass = d % 2 === 0 ? 'bg-white/[0.04]' : 'bg-transparent';
 
                 html += `
@@ -616,7 +616,8 @@
                             color: l.tipo === 'comunicado' ? 'premium-border-green' : 'premium-border-rose', 
                             label: l.tipo === 'comunicado' ? 'COMUNICADO OFICIAL' : (titleDict[l.tipo] || 'REGISTRO DE GPS')
                         })),
-                        ...(daySpecial ? [{ type: 'FERIAS_FOLGA', content: daySpecial.descricao, time: daySpecial.data + 'T07:00:00', color: 'premium-border-purple', label: 'FERIADOS E FOLGAS AGENDADOS' }] : [])
+                        ...(daySpecial ? [{ type: 'FERIAS_FOLGA', content: daySpecial.descricao, time: daySpecial.data + 'T07:00:00', color: 'premium-border-purple', label: 'FERIADOS E FOLGAS AGENDADOS' }] : []),
+                        ...(isVacation ? [{ type: 'FERIAS_FOLGA', content: 'Período de Férias Aprovado', time: dateStr + 'T07:05:00', color: 'premium-border-blue', label: 'FÉRIAS' }] : [])
                     ].sort((a, b) => new Date(a.time) - new Date(b.time));
 
                     html += `
@@ -667,7 +668,7 @@
                                                     <span class="material-symbols-outlined text-xs" style="color: currentColor">
                                                         ${item.type === 'COMUNICADO' ? 'campaign' : item.type === 'ATIVIDADE' ? 'edit_note' : item.type === 'JUSTIFICATIVA' ? 'warning' : item.type === 'FERIAS_FOLGA' ? 'event_note' : 'location_on'}
                                                     </span>
-                                                    <p class="text-[9px] font-black uppercase tracking-widest text-slate-400">${item.label}</p>
+                                                    <p class="text-[9px] font-black uppercase tracking-widest text-slate-400" style="${item.label === 'FÉRIAS' ? 'color:#7dd3fc' : ''}">${item.label}</p>
                                                     ${statusLabel ? `<span class="px-1.5 py-0.5 rounded border ${statusClass} text-[7px] font-black">${statusLabel}</span>` : ''}
                                                 </div>
                                                 <div class="flex items-center gap-2">

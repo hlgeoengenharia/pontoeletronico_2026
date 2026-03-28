@@ -122,13 +122,14 @@
 
         <!-- SEÇÃO: ESTATÍSTICAS DE FÉRIAS (Gestor/Admin) -->
         <section class="grid grid-cols-3 gap-3 px-1 role-gestor role-hidden">
-            <div class="bg-white/5 border border-white/10 rounded-2xl p-4 text-center">
-                <p class="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Total Equipe</p>
-                <p id="stat-total-equipe" class="text-xl font-black text-slate-100">--</p>
-            </div>
-            <a href="online.html?mode=ferias" class="bg-blue-500/5 border border-blue-500/20 rounded-2xl p-4 text-center transition-all hover:bg-blue-500/10 active:scale-95 block">
+            <a href="ferias.html" class="bg-blue-500/5 border border-blue-500/20 rounded-2xl p-4 text-center transition-all hover:bg-blue-500/10 active:scale-95 block">
                 <p class="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Férias (Mês)</p>
                 <p id="stat-ferias-mes" class="text-xl font-black text-blue-400">0</p>
+            </a>
+            <a href="online.html" class="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-4 text-center transition-all hover:bg-emerald-500/10 active:scale-95 block">
+                <p class="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Monitoramento</p>
+                <p id="stat-online-equipe" class="text-xl font-black text-emerald-400">0</p>
+            </a>
             </a>
             <a href="relacao_setores.html" class="bg-primary/5 border border-primary/20 rounded-2xl p-4 text-center transition-all hover:bg-primary/10 active:scale-95 block">
                 <p class="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Setores</p>
@@ -408,20 +409,13 @@
             const startMonth = new Date(year, month, 1).toISOString();
             const endMonth = new Date(year, month + 1, 0).toISOString();
             
-            const [feriadosRes, pontosRes] = await Promise.all([
-                supabase.from('feriados_folgas')
-                    .select('*')
-                    .or(`funcionario_id.eq.${currentUser.id},setor_id.eq.${currentUser.setor_id},escopo.eq.geral`)
-                    .gte('data', startMonth.split('T')[0])
-                    .lte('data', endMonth.split('T')[0]),
-                supabase.from('pontos')
-                    .select('*')
-                    .eq('funcionario_id', currentUser.id)
-                    .gte('data_hora', startMonth)
-                    .lte('data_hora', endMonth)
+            const [feriadosRes, pontosRes, feriasRes] = await Promise.all([
+                supabase.from('feriados_folgas').select('*').or(`funcionario_id.eq.${currentUser.id},setor_id.eq.${currentUser.setor_id},escopo.eq.geral`).gte('data', startMonth).lte('data', endMonth),
+                supabase.from('pontos').select('*').eq('funcionario_id', currentUser.id).gte('data_hora', startMonth + 'T00:00:00').lte('data_hora', endMonth + 'T23:59:59'),
+                supabase.from('ferias').select('*').eq('funcionario_id', currentUser.id).eq('status', 'aprovado')
             ]);
 
-            renderCalendar(feriadosRes.data || [], pontosRes.data || [], month, year);
+            renderCalendar(feriadosRes.data || [], pontosRes.data || [], feriasRes.data || [], month, year);
         }
 
         function setupCalendarNavigation() {
@@ -508,24 +502,38 @@
                 const firstDayMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
                 const lastDayMonth = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0).toISOString().split('T')[0];
 
-                let totalFunc = 0, totalSetores = 0, emFerias = 0;
-                try {
-                    const res = await Promise.all([
-                        supabase.from('funcionarios').select('*', { count: 'exact', head: true }),
-                        supabase.from('setores').select('*', { count: 'exact', head: true }),
-                        supabase.from('ferias').select('*', { count: 'exact', head: true })
-                            .eq('status', 'aprovado')
-                            .lte('data_inicio', lastDayMonth)
-                            .gte('data_fim', firstDayMonth)
-                    ]);
-                    totalFunc = res[0].count;
-                    totalSetores = res[1].count;
-                    emFerias = res[2].count;
-                } catch (e) { console.warn('Tabela ferias pode não existir ainda:', e); }
+                // 1. Buscas de Contagem e Férias
+                const [sRes, vacRes] = await Promise.all([
+                    supabase.from('setores').select('*', { count: 'exact', head: true }),
+                    supabase.from('ferias').select('*', { count: 'exact', head: true })
+                        .eq('status', 'aprovado')
+                        .lte('data_inicio', lastDayMonth)
+                        .gte('data_fim', firstDayMonth)
+                ]);
 
-                document.getElementById('stat-total-equipe').innerText = totalFunc || '0';
-                document.getElementById('stat-total-setores').innerText = totalSetores || '0';
-                document.getElementById('stat-ferias-mes').innerText = emFerias || '0';
+                if (document.getElementById('stat-total-setores')) 
+                    document.getElementById('stat-total-setores').innerText = sRes.count || '0';
+                if (document.getElementById('stat-ferias-mes')) 
+                    document.getElementById('stat-ferias-mes').innerText = vacRes.count || '0';
+
+                // 2. Cálculo de Online (Ponto + Pulsos GPS)
+                const [ptsRes, pulseRes] = await Promise.all([
+                    supabase.from('pontos').select('funcionario_id').gte('data_hora', `${today}T00:00:00`),
+                    supabase.from('diario_logs').select('funcionario_id').eq('tipo', 'gps_pulse').gte('created_at', new Date(Date.now() - 20 * 60 * 1000).toISOString())
+                ]);
+
+                const onlineSet = new Set();
+                if (ptsRes.data) {
+                    const counts = {};
+                    ptsRes.data.forEach(p => { counts[p.funcionario_id] = (counts[p.funcionario_id] || 0) + 1; });
+                    Object.keys(counts).forEach(id => { if (counts[id] % 2 !== 0) onlineSet.add(id); });
+                }
+                if (pulseRes.data) pulseRes.data.forEach(p => onlineSet.add(p.funcionario_id));
+                if (currentUser) onlineSet.add(currentUser.id);
+                
+                if (document.getElementById('stat-online-equipe'))
+                    document.getElementById('stat-online-equipe').innerText = onlineSet.size || '0';
+
             } catch (err) { console.error('Erro ao carregar estatísticas:', err); }
         }
 
@@ -820,7 +828,7 @@
 
 
 
-        function renderCalendar(feriadosData = [], pontosData = [], month, year) {
+        function renderCalendar(feriadosData = [], pontosData = [], feriasData = [], month, year) {
             const grid = document.getElementById('app-calendar');
             if (!grid) return;
 
@@ -850,7 +858,13 @@
                 const isPast = date < todayZero;
                 const isFuture = date > todayZero;
 
-                // 1. Identificar Eventos (Feriado/Folga)
+                // 1. Identificar Eventos (Férias / Feriado / Folga)
+                const isVacation = feriasData.some(f => {
+                    const s = new Date(f.data_inicio + 'T00:00:00');
+                    const e = new Date(f.data_fim + 'T23:59:59');
+                    return date >= s && date <= e;
+                });
+
                 const event = feriadosData.find(f => f.data === dateStr);
                 
                 // 2. Calcular Saldo (Se passado ou hoje)
@@ -878,7 +892,9 @@
                 // Estilos de Círculo
                 let circleClass = 'h-10 w-10 flex flex-col items-center justify-center text-xs font-black rounded-full transition-all relative cursor-pointer active:scale-95 hover:brightness-110 ';
                 
-                if (event) {
+                if (isVacation) {
+                    circleClass += 'bg-sky-500/30 text-sky-200 border border-sky-500/40 shadow-xl shadow-sky-500/10';
+                } else if (event) {
                     const type = event.tipo.toLowerCase();
                     if (type === 'feriado_nacional') {
                         circleClass += 'bg-amber-600 text-white shadow-xl shadow-amber-600/30';
@@ -898,7 +914,9 @@
 
                 // Indicador de Ponto (Dot)
                 let indicators = '';
-                if (event) {
+                if (isVacation) {
+                    indicators = `<span class="absolute -bottom-1.5 size-1 rounded-full bg-sky-400"></span>`;
+                } else if (event) {
                     const type = event.tipo.toLowerCase();
                     const dotColor = type === 'feriado_nacional' ? 'bg-amber-600' : (type === 'feriado_regional' ? 'bg-orange-600' : 'bg-purple-600');
                     indicators = `<span class="absolute -bottom-1.5 size-1 rounded-full ${dotColor}"></span>`;
@@ -932,7 +950,10 @@
 
             legendSection.innerHTML = `
                 <!-- Legenda de Cores -->
-                <div class="flex justify-center gap-4 flex-wrap">
+                    <div class="flex items-center gap-2">
+                        <span class="size-2.5 rounded-full bg-sky-500/40 shadow-lg shadow-sky-500/20"></span>
+                        <span class="text-[8px] font-black text-slate-500 uppercase tracking-widest">Férias</span>
+                    </div>
                     <div class="flex items-center gap-2">
                         <span class="size-2.5 rounded-full bg-amber-600 shadow-lg shadow-amber-600/20"></span>
                         <span class="text-[8px] font-black text-slate-500 uppercase tracking-widest">Nacional</span>
