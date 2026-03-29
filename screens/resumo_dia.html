@@ -19,11 +19,14 @@
     <style>
         @media print {
             .no-print { display: none !important; }
-            body { background: white !important; color: black !important; padding-bottom: 0 !important; }
-            main { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
+            body { background: white !important; color: black !important; font-size: 10pt !important; }
+            main { max-width: 100% !important; padding: 0 !important; }
+            .bg-white\/5, .bg-emerald-500\/5, .bg-rose-500\/5, .bg-blue-500\/10 { background: white !important; border: 1px solid #e2e8f0 !important; }
+            .text-slate-100, .text-slate-200, .text-slate-300 { color: black !important; }
+            .text-slate-500, .text-slate-600 { color: #475569 !important; }
+            .card-history { border: 1px solid #e2e8f0 !important; color: black !important; background: white !important; border-left-width: 3px !important; }
+            .card-history p { color: black !important; }
             .stats-grid { display: grid !important; grid-template-columns: repeat(4, 1fr) !important; gap: 0.5rem !important; }
-            .bg-background-dark, .bg-\[\#0f172a\] { background: #f8fafc !important; border: 1px solid #e2e8f0 !important; }
-            .text-slate-100, .text-slate-300 { color: #0f172a !important; }
         }
         /* Audit Slim Card Styles */
         .audit-card { transition: all 0.3s ease; }
@@ -54,6 +57,14 @@
             border-radius: 20px;
             padding: 16px;
         }
+        .card-history.slim-mode {
+            padding: 8px 12px !important;
+            margin-bottom: 4px !important;
+            border-radius: 8px !important;
+            background: rgba(255, 255, 255, 0.02) !important;
+        }
+        .card-history.slim-mode p { font-size: 10px !important; line-height: 1.4 !important; }
+        .card-history.slim-mode .material-symbols-outlined { font-size: 10px !important; }
         .card-history::before {
             content: '';
             position: absolute;
@@ -258,19 +269,37 @@
         }
 
         function renderResumo(pontos, anotacoes, justificativas, comunicados, logs, feriados, ferias, escala, dataRef) {
+            // Usando o helper centralizado do ScalesEngine para consistência
+            const month = new Date(dataRef + 'T12:00:00').getMonth();
+            const year = new Date(dataRef + 'T12:00:00').getFullYear();
+            const plannedDays = (escala) ? ScalesEngine.projectBaseDays(escala, escala.vigencia_inicio, month, year) : [];
+            const dayExemptInfo = ScalesEngine.isExemptDay(dataRef, feriados, ferias, escala, plannedDays);
+            const isPlanned = plannedDays.includes(dataRef);
             const isVacation = ferias && ferias.length > 0;
             
             // 1. Cálculos de Tempo
-            const possuiAlmoco = escala?.possui_almoco !== false;
-            const workedMins = calculateWorkedMinutes(pontos, possuiAlmoco);
-            const plannedMins = isVacation ? 0 : ScalesEngine.calculateDailyWorkMinutes(escala);
-            const balance = isVacation ? 0 : workedMins - plannedMins;
+            const possessesLunch = escala?.possui_almoco !== false;
+            let workedMins = calculateWorkedMinutes(pontos, possessesLunch);
+            
+            const activeJustif = justificativas[0];
+            const isAbonado = activeJustif?.status === 'aprovado';
+            
+            const isFinished = ScalesEngine.isDayFinished(dataRef, escala);
+            const shouldCharge = isPlanned && !dayExemptInfo.exempt && (pontos.length > 0 || isFinished);
+            const dailyPlannedMinutes = shouldCharge ? ScalesEngine.calculateDailyWorkMinutes(escala) : 0;
+
+            if (isAbonado && isPlanned && !dayExemptInfo.exempt) {
+                workedMins = dailyPlannedMinutes; // Abono
+            }
+
+            const balance = workedMins - dailyPlannedMinutes;
 
             document.getElementById('totalTrabalhado').innerText = formatMinutes(workedMins);
-            document.getElementById('totalEsperado').innerText = isVacation ? 'FÉRIAS' : formatMinutes(plannedMins);
+            document.getElementById('totalEsperado').innerText = dayExemptInfo.exempt ? dayExemptInfo.type : formatMinutes(dailyPlannedMinutes);
             
-            if (isVacation) {
-                document.getElementById('user-nome-audit').innerHTML += ` <span class="ml-2 px-3 py-1 bg-blue-500 text-white text-[10px] font-black rounded-full italic shadow-lg shadow-blue-500/20">EM REPOUSO</span>`;
+            if (dayExemptInfo.exempt) {
+                const badgeColor = dayExemptInfo.type === 'FÉRIAS' ? 'bg-blue-500' : (dayExemptInfo.type === 'FERIADO' ? 'bg-purple-500' : 'bg-slate-600');
+                document.getElementById('user-nome-audit').innerHTML += ` <span class="ml-2 px-3 py-1 ${badgeColor} text-white text-[10px] font-black rounded-full italic shadow-lg">EM ${dayExemptInfo.type}</span>`;
             }
             
             const horarioEl = document.getElementById('horarioPrevisto');
@@ -279,13 +308,20 @@
                 const ultimoPonto = pontos.length > 1 ? new Date(pontos[pontos.length - 1].data_hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '--:--';
                 horarioEl.innerText = `${primeiroPonto} / ${ultimoPonto}`;
             } else {
-                horarioEl.innerText = '--:-- / --:--';
+                horarioEl.innerText = dayExemptInfo.exempt ? dayExemptInfo.type : '--:-- / --:--';
             }
             
-            const saldoEl = document.getElementById('totalSaldo');
-            saldoEl.innerText = formatBalance(balance);
-            document.getElementById('saldoCard').className = `bg-${balance >= 0 ? 'emerald' : 'rose'}-500/5 border border-${balance >= 0 ? 'emerald' : 'rose'}-500/10 p-5 rounded-3xl border-l-4 border-l-${balance >= 0 ? 'emerald' : 'rose'}-500`;
-            saldoEl.className = `text-2xl font-black italic text-${balance >= 0 ? 'emerald' : 'rose'}-400`;
+            const saldoLabel = document.getElementById('totalSaldo');
+            if (dayExemptInfo.exempt) {
+                saldoLabel.innerText = `00:00 | ${dayExemptInfo.type}`;
+                saldoLabel.className = `text-xl font-black italic text-slate-500 opacity-60`;
+                document.getElementById('saldoCard').className = `bg-slate-500/5 border border-slate-500/10 p-5 rounded-3xl border-l-4 border-l-slate-500`;
+            } else {
+                saldoLabel.innerText = formatBalance(balance);
+                const isPositive = balance >= 0;
+                document.getElementById('saldoCard').className = `bg-${isPositive ? 'emerald' : 'rose'}-500/5 border border-${isPositive ? 'emerald' : 'rose'}-500/10 p-5 rounded-3xl border-l-4 border-l-${isPositive ? 'emerald' : 'rose'}-500`;
+                saldoLabel.className = `text-2xl font-black italic text-${isPositive ? 'emerald' : 'rose'}-400`;
+            }
 
             // 2. Render Batidas (Visual do Espelho de Ponto)
             const batidasCont = document.getElementById('batidasContainer');
@@ -319,6 +355,7 @@
                                     </div>
                                 </div>
                             `).join('')}
+                              ${pontos.length === 0 ? `<div class="text-center py-2 text-[10px] text-slate-700 font-bold uppercase italic opacity-40 tracking-widest">${dayExemptInfo.exempt ? dayExemptInfo.type : 'Sem Registros'}</div>` : ''}
                         </div>
                     </div>
                 `;

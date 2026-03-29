@@ -61,7 +61,14 @@ export const EventManager = {
             icon: 'event_note',
             colorClass: 'text-purple-500',
             premiumBorder: 'premium-border-purple',
-            autoClear: true // Limpa ao visualizar e sair
+            autoClear: true
+        },
+        'EVENTO': {
+            title: 'EVENTO AGENDADO',
+            icon: 'calendar_today',
+            colorClass: 'text-indigo-400',
+            premiumBorder: 'premium-border-blue',
+            autoClear: true
         }
     },
 
@@ -78,7 +85,8 @@ export const EventManager = {
         
         if (typeKey === 'GPS' || item.tipo === 'gps_pulse' || item.tipo === 'gps_hora') return this.EVENT_CONFIG['GPS'];
         if (typeKey === 'FERIAS') return this.EVENT_CONFIG['FERIAS'];
-        if (typeKey === 'FERIAS_FOLGA') return this.EVENT_CONFIG['FERIAS_FOLGA'];
+        if (typeKey === 'FERIAS_FOLGA' || typeKey === 'FERIAS_FOLGA_GROUP') return this.EVENT_CONFIG['FERIAS_FOLGA'];
+        if (typeKey === 'EVENTO') return this.EVENT_CONFIG['EVENTO'];
         
         return this.EVENT_CONFIG[typeKey] || this.EVENT_CONFIG['SISTEMA'];
     },

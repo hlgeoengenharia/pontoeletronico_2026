@@ -105,6 +105,62 @@
             border-top: 1px solid rgba(255, 255, 255, 0.05);
             opacity: 1;
         }
+
+        /* Estilos Slim e Otimização de Impressão */
+        .card-history.slim-mode {
+            padding: 8px 12px !important;
+            margin-bottom: 4px !important;
+            border-radius: 8px !important;
+            background: rgba(255, 255, 255, 0.02) !important;
+        }
+        .card-history.slim-mode p {
+            font-size: 10px !important;
+            line-height: 1.4 !important;
+        }
+        .card-history.slim-mode .material-symbols-outlined {
+            font-size: 10px !important;
+        }
+
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; color: black !important; padding-bottom: 0 !important; font-size: 10pt !important; }
+            main { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
+            header { border-bottom: 2px solid #334155 !important; margin-bottom: 1cm !important; }
+            
+            .audit-card {
+                background: white !important;
+                border: 1px solid #cbd5e1 !important;
+                padding: 1rem !important;
+                margin-bottom: 1rem !important;
+                box-shadow: none !important;
+                color: black !important;
+            }
+            .audit-card h3 { color: black !important; border-bottom: 1px solid #cbd5e1 !important; }
+            
+            #espelhoBody tr { page-break-inside: avoid !important; border-bottom: 1px solid #e2e8f0 !important; }
+            .bg-background-dark, .bg-\[\#0f172a\], .bg-white\/\[0\.04\] { background: white !important; }
+            .text-slate-100, .text-slate-300, .text-slate-200 { color: black !important; }
+            .text-slate-500, .text-slate-600 { color: #475569 !important; }
+
+            .card-history {
+                background: white !important;
+                border: 1px solid #e2e8f0 !important;
+                border-left-width: 3px !important;
+                margin-left: 0 !important;
+                box-shadow: none !important;
+                color: black !important;
+                padding: 6px 10px !important;
+            }
+            .card-history::before { display: none !important; }
+            .card-history p { color: black !important; }
+            
+            .stats-grid > div {
+                border: 1px solid #cbd5e1 !important;
+                background: white !important;
+                color: black !important;
+            }
+            .stats-grid p { color: black !important; }
+        }
     </style>
 </head>
 
@@ -474,55 +530,75 @@
                 const daySpecial = (feriados || []).find(f => f.data === dateStr);
                 const isVacation = (ferias || []).some(f => f.data_inicio <= dateStr && f.data_fim >= dateStr);
 
-                const possuiAlmoco = escala?.possui_almoco !== false;
-                let dayWorkedMinutes = calculateWorkedMinutes(dayPoints, possuiAlmoco);
-                const isPlanned = plannedDays.includes(dateStr) && !daySpecial && !isVacation;
+                const possessesLunch = escala?.possui_almoco !== false;
+                let dayWorkedMinutes = calculateWorkedMinutes(dayPoints, possessesLunch);
+                
                 const isFinished = ScalesEngine.isDayFinished(dateStr, escala);
-                const shouldCharge = isPlanned && (dayPoints.length > 0 || isFinished);
-                const dailyPlannedMinutes = shouldCharge ? ScalesEngine.calculateDailyWorkMinutes(escala) : 0;
-
-                // --- NOVA REGRA DE ABONO ---
-                const activeJustif = dayJustificativas[0]; // Pega a primeira justificativa do dia se existir
+                const activeJustif = dayJustificativas[0]; 
                 const isAbonado = activeJustif?.status === 'aprovado';
                 const isRejeitado = activeJustif?.status === 'rejeitado';
+
+                // Usando o novo helper do ScalesEngine para identificar dias isentos
+                const dayExemptInfo = ScalesEngine.isExemptDay(dateStr, feriados, ferias, escala, plannedDays);
+                const isPlanned = plannedDays.includes(dateStr);
                 
-                if (isAbonado && isPlanned) {
+                // Se o dia não era planejado OU é feriado/férias, é isento
+                const shouldCharge = isPlanned && !dayExemptInfo.exempt && (dayPoints.length > 0 || isFinished);
+                const dailyPlannedMinutes = shouldCharge ? ScalesEngine.calculateDailyWorkMinutes(escala) : 0;
+
+                if (isAbonado && isPlanned && !dayExemptInfo.exempt) {
                     dayWorkedMinutes = dailyPlannedMinutes; // Abona a jornada completa
                 }
 
                 totalWorkedMinutes += dayWorkedMinutes;
                 totalPlannedMinutes += dailyPlannedMinutes;
                 
-                const isMissing = isPlanned && isFinished && dayPoints.length === 0 && !isAbonado;
-                if (!isMissing && (dayPoints.length > 0 || isAbonado)) daysPresent++;
+                // --- LÓGICA DE ESTATÍSTICA ATUALIZADA ---
+                // Denominador da frequência: Dias em que o funcionário PODERIA trabalhar
+                if (isPlanned && !dayExemptInfo.exempt) {
+                    daysBusinessTotal++;
+                    
+                    const isMissing = isFinished && dayPoints.length === 0 && !isAbonado;
+                    if (!isMissing && (dayPoints.length > 0 || isAbonado)) {
+                        daysPresent++;
+                    }
+                }
 
                 const balance = dayWorkedMinutes - dailyPlannedMinutes;
                 let balanceClass = 'text-slate-500';
                 if (balance > 0) balanceClass = 'text-emerald-400';
                 else if (balance < 0 && shouldCharge) balanceClass = 'text-rose-400';
 
+                let balanceText = formatBalance(balance);
+                if (dayExemptInfo.exempt) {
+                    balanceText = `00:00 | ${dayExemptInfo.type}`;
+                    balanceClass = 'text-slate-500 opacity-60 italic';
+                }
+
                 let statusHtml = '';
-                if (isVacation) {
-                    statusHtml = `<span class="px-2 py-1 rounded bg-sky-500/20 text-sky-400 text-[9px] font-black uppercase border border-sky-500/40">Férias</span>`;
-                } else if (daySpecial) {
-                    statusHtml = `<span class="px-2 py-1 rounded bg-purple-500/10 text-purple-500 text-[9px] font-black uppercase border border-purple-500/20">${daySpecial.tipo.replace('_', ' ')}</span>`;
+                if (dayExemptInfo.exempt) {
+                    const badgeColors = {
+                        'FÉRIAS': 'bg-sky-500/20 text-sky-400 border-sky-500/40',
+                        'FOLGA': 'text-slate-700 opacity-50',
+                        'FERIADO': 'bg-purple-500/10 text-purple-500 border-purple-500/20'
+                    };
+                    const colorClass = badgeColors[dayExemptInfo.type] || 'text-slate-500';
+                    statusHtml = `<span class="px-2 py-1 rounded ${colorClass} text-[9px] font-black uppercase border border-white/5">${dayExemptInfo.type}</span>`;
                 } else if (isAbonado) {
                     statusHtml = '<span class="px-2 py-1 rounded bg-emerald-500/20 text-emerald-400 text-[9px] font-black uppercase border border-emerald-500/40">Abonado</span>';
                 } else if (isRejeitado) {
                     statusHtml = '<span class="px-2 py-1 rounded bg-rose-500/20 text-rose-400 text-[9px] font-black uppercase border border-rose-500/40">Rejeitado</span>';
                 } else if (activeJustif?.status === 'pendente') {
                     statusHtml = '<span class="px-2 py-1 rounded bg-amber-500/20 text-amber-400 text-[9px] font-black uppercase border border-amber-500/40">Pendente</span>';
-                } else if (!isPlanned) {
-                    statusHtml = '<span class="text-[9px] text-slate-700 font-black uppercase tracking-widest">Folga</span>';
                 } else if (dayPoints.length > 0) {
                     statusHtml = '<span class="px-2 py-1 rounded bg-emerald-500/10 text-emerald-500 text-[9px] font-black uppercase border border-emerald-500/20">Presente</span>';
-                } else if (isMissing) {
+                } else if (isPlanned && isFinished && dayPoints.length === 0) {
                     statusHtml = '<span class="px-2 py-1 rounded bg-rose-500/10 text-rose-500 text-[9px] font-black uppercase border border-rose-500/20">Ausente</span>';
                 } else {
                     statusHtml = '<span class="text-[9px] text-slate-500 font-black uppercase tracking-widest italic opacity-50">Escala</span>';
                 }
 
-                const hasDetails = dayAnotacoes.length > 0 || dayJustificativas.length > 0 || dayComunicados.length > 0 || dayLogs.length > 0 || !!daySpecial || isVacation;
+                const hasDetails = dayAnotacoes.length > 0 || dayJustificativas.length > 0 || dayComunicados.length > 0 || dayLogs.length > 0 || dayExemptInfo.exempt;
                 const rowBgClass = d % 2 === 0 ? 'bg-white/[0.04]' : 'bg-transparent';
 
                 html += `
@@ -564,9 +640,9 @@
                                     `).join('')}
                                 </div>
                              </div>
-                             ${dayPoints.length === 0 ? '<div class="text-center py-2 text-[10px] text-slate-700 font-bold uppercase italic opacity-40 tracking-widest">Sem Registros</div>' : ''}
+                             ${dayPoints.length === 0 ? `<div class="text-center py-2 text-[10px] text-slate-700 font-bold uppercase italic opacity-40 tracking-widest">${dayExemptInfo.exempt ? dayExemptInfo.type : 'Sem Registros'}</div>` : ''}
                         </td>
-                        <td class="p-4 align-top text-xs font-black italic ${balanceClass}">${formatBalance(balance)}</td>
+                        <td class="p-4 align-top text-xs font-black italic ${balanceClass}">${balanceText}</td>
                         <td class="p-4 align-top text-center">${statusHtml}</td>
                     </tr>
                 `;
@@ -616,15 +692,15 @@
                             color: l.tipo === 'comunicado' ? 'premium-border-green' : 'premium-border-rose', 
                             label: l.tipo === 'comunicado' ? 'COMUNICADO OFICIAL' : (titleDict[l.tipo] || 'REGISTRO DE GPS')
                         })),
-                        ...(daySpecial ? [{ type: 'FERIAS_FOLGA', content: daySpecial.descricao, time: daySpecial.data + 'T07:00:00', color: 'premium-border-purple', label: 'FERIADOS E FOLGAS AGENDADOS' }] : []),
-                        ...(isVacation ? [{ type: 'FERIAS_FOLGA', content: 'Período de Férias Aprovado', time: dateStr + 'T07:05:00', color: 'premium-border-blue', label: 'FÉRIAS' }] : [])
+                        ...(daySpecial ? [{ id: daySpecial.id, type: 'FERIAS_FOLGA', content: daySpecial.descricao, time: daySpecial.data + 'T07:00:00', color: 'premium-border-purple', label: dayExemptInfo.type }] : []),
+                        ...(isVacation ? [{ id: 'vacation-' + dateStr, type: 'FERIAS_FOLGA', content: 'Período de Férias Aprovado', time: dateStr + 'T07:05:00', color: 'premium-border-blue', label: 'FÉRIAS' }] : [])
                     ].sort((a, b) => new Date(a.time) - new Date(b.time));
 
                     html += `
                         <tr class="${rowBgClass} border-b-0">
                             <td></td>
                             <td colspan="4" class="p-2">
-                                <div class="space-y-2">
+                                <div class="space-y-1">
                                     ${dayItems.map(item => {
                                         const createdAt = new Date(item.time);
                                         const now = new Date();
@@ -645,67 +721,42 @@
                                                 statusClass = isLido ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : 'text-amber-400 bg-amber-500/10 border-amber-500/20';
                                             } else {
                                                 statusLabel = ''; statusClass = 'hidden';
-                                                // Auto-leitura para comunicados comuns
-                                                if (!localStorage.getItem(`ciente_${item.id}`)) {
-                                                    localStorage.setItem(`ciente_${item.id}`, 'true');
-                                                }
+                                                if (!localStorage.getItem(`ciente_${item.id}`)) localStorage.setItem(`ciente_${item.id}`, 'true');
                                             }
                                         } else if (item.type === 'FERIAS_FOLGA' || item.type === 'COMUNICADO_LOG') {
                                             statusLabel = ''; statusClass = 'hidden';
-                                            // Auto-leitura para feriados e logs informativos
                                             const logId = item.id || (item.time + item.content);
-                                            if (!localStorage.getItem(`visto_${logId}`)) {
-                                                localStorage.setItem(`visto_${logId}`, 'true');
-                                            }
+                                            if (!localStorage.getItem(`visto_${logId}`)) localStorage.setItem(`visto_${logId}`, 'true');
                                         } else {
                                             statusLabel = ''; statusClass = 'hidden';
                                         }
 
                                         return `
-                                        <div class="card-history ${item.color} ml-2 mb-2 p-3 rounded-xl bg-slate-800/20 border border-white/5 flex flex-col gap-2 group/card">
+                                        <div class="card-history slim-mode ${item.color} ml-2 mb-1 p-2 rounded-lg bg-slate-800/10 border border-white/5 flex flex-col gap-1 group/card">
                                             <div class="flex items-center justify-between">
-                                                <div class="flex items-center gap-2">
-                                                    <span class="material-symbols-outlined text-xs" style="color: currentColor">
+                                                <div class="flex items-center gap-1.5">
+                                                    <span class="material-symbols-outlined text-[10px]" style="color: currentColor">
                                                         ${item.type === 'COMUNICADO' ? 'campaign' : item.type === 'ATIVIDADE' ? 'edit_note' : item.type === 'JUSTIFICATIVA' ? 'warning' : item.type === 'FERIAS_FOLGA' ? 'event_note' : 'location_on'}
                                                     </span>
-                                                    <p class="text-[9px] font-black uppercase tracking-widest text-slate-400" style="${item.label === 'FÉRIAS' ? 'color:#7dd3fc' : ''}">${item.label}</p>
-                                                    ${statusLabel ? `<span class="px-1.5 py-0.5 rounded border ${statusClass} text-[7px] font-black">${statusLabel}</span>` : ''}
+                                                    <p class="text-[8px] font-black uppercase tracking-tighter text-slate-400" style="${item.label === 'FÉRIAS' ? 'color:#7dd3fc' : ''}">${item.label}</p>
+                                                    ${statusLabel ? `<span class="px-1 py-0.5 rounded border ${statusClass} text-[6px] font-black">${statusLabel}</span>` : ''}
                                                 </div>
-                                                <div class="flex items-center gap-2">
-                                                    <span class="text-[8px] text-slate-500 font-bold">${new Date(item.time).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                                                <div class="flex items-center gap-1.5">
+                                                    <span class="text-[7px] text-slate-500 font-bold no-print">${new Date(item.time).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
                                                     
-                                                    <!-- BOTÕES 24H -->
                                                     ${canEdit ? `
-                                                    <div class="flex items-center gap-2 ml-2">
-                                                        <button onclick="window.editarItem('${item.id}', '${item.type}', \`${item.content.replace(/"/g, '&quot;')}\`)" class="p-2.5 rounded-lg bg-white/5 text-slate-400 hover:text-white transition-colors border border-white/5 flex items-center justify-center min-w-[40px] min-h-[40px]">
-                                                            <span class="material-symbols-outlined text-lg">brush</span>
+                                                    <div class="flex items-center gap-1 ml-1 no-print">
+                                                        <button onclick="window.editarItem('${item.id}', '${item.type}', \`${item.content.replace(/"/g, '&quot;')}\`)" class="p-1 rounded bg-white/5 text-slate-500 hover:text-white transition-colors">
+                                                            <span class="material-symbols-outlined text-xs">brush</span>
                                                         </button>
-                                                        <button onclick="window.excluirItem('${item.id}', '${item.type}')" class="p-2.5 rounded-lg bg-white/5 text-slate-400 hover:text-rose-400 transition-colors border border-white/5 flex items-center justify-center min-w-[40px] min-h-[40px]">
-                                                            <span class="material-symbols-outlined text-lg">delete</span>
+                                                        <button onclick="window.excluirItem('${item.id}', '${item.type}')" class="p-1 rounded bg-white/5 text-slate-500 hover:text-rose-400 transition-colors">
+                                                            <span class="material-symbols-outlined text-xs">delete</span>
                                                         </button>
                                                     </div>
                                                     ` : ''}
                                                 </div>
                                             </div>
-                                            <p class="text-[11px] text-slate-200 italic leading-relaxed">"${item.content}"</p>
-                                            
-                                            <div class="flex flex-wrap gap-2 mt-1">
-                                                ${item.evidencia_url ? `
-                                                <a href="${item.evidencia_url}" target="_blank" class="px-2 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[8px] font-black uppercase rounded flex items-center gap-1 hover:bg-amber-500/20 transition-all">
-                                                    <span class="material-symbols-outlined text-xs">attach_file</span> VER ANEXO
-                                                </a>
-                                                ` : ''}
-                                                
-                                                ${item.type === 'COMUNICADO' && item.subtipo === 'hora_extra' ? `
-                                                    <div class="w-full flex justify-end">
-                                                        <button ${item.lido ? 'disabled' : `onclick="window.marcarComunicadoLido('${item.id}')"`} 
-                                                                class="px-3 py-1.5 ${item.lido ? 'bg-emerald-500/30 border-emerald-500/60 text-emerald-400 cursor-default' : 'bg-amber-500/10 border-amber-500/20 text-amber-500 hover:bg-amber-500/20'} border rounded-lg transition-all flex items-center gap-1.5 text-[8px] font-black uppercase tracking-widest">
-                                                            <span class="material-symbols-outlined text-sm">${item.lido ? 'done_all' : 'done'}</span>
-                                                            <span>CIENTE</span>
-                                                        </button>
-                                                    </div>
-                                                ` : ''}
-                                            </div>
+                                            <p class="text-[10px] text-slate-300 italic leading-tight">"${item.content}"</p>
                                         </div>
                                         `;
                                     }).join('')}

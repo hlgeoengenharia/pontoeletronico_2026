@@ -127,13 +127,27 @@ const NotificationsEngine = {
             .eq('funcionario_id', func.id)
             .in('data_incidente', targetDates);
 
+        // --- NOVO: Buscar Férias e Feriados para Isenção ---
+        const sId = func.setor_id || '00000000-0000-0000-0000-000000000000';
+        const [resFer, resVac] = await Promise.all([
+            supabase.from('feriados_folgas').select('data').or(`funcionario_id.eq.${func.id},setor_id.eq.${sId},escopo.eq.geral`).in('data', targetDates),
+            supabase.from('ferias').select('data_inicio, data_fim').eq('funcionario_id', func.id).eq('status', 'aprovado')
+        ]);
+
+        const feriadosDates = (resFer.data || []).map(f => f.data);
+        const feriasData = resVac.data || [];
+
         const execOptions = [];
 
         for (const dateStr of targetDates) {
             const hasPonto = pontos && pontos.some(p => p.data_hora.startsWith(dateStr));
             const hasJustificativa = justificativas && justificativas.some(j => j.data_incidente === dateStr);
+            
+            // Verificar Isenção (Helper local ou lógico)
+            const isFeriado = feriadosDates.includes(dateStr);
+            const isFerias = feriasData.some(f => dateStr >= f.data_inicio && dateStr <= f.data_fim);
 
-            if (!hasPonto && !hasJustificativa) {
+            if (!hasPonto && !hasJustificativa && !isFeriado && !isFerias) {
                 // Auto-create pendency
                 execOptions.push({
                     funcionario_id: func.id,

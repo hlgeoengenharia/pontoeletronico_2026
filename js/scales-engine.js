@@ -213,6 +213,27 @@ const ScalesEngine = {
     },
 
     /**
+     * Verifica se um dia é isento de contagem de faltas (Férias / Folga / Feriado)
+     */
+    isExemptDay(dateStr, feriados, ferias, escala, plannedDays) {
+        if (!dateStr) return false;
+        
+        // 1. É Férias Aprovada?
+        const isVacation = (ferias || []).some(f => f.data_inicio <= dateStr && f.data_fim >= dateStr);
+        if (isVacation) return { exempt: true, type: 'FÉRIAS' };
+
+        // 2. É Feriado ou Folga específica?
+        const special = (feriados || []).find(f => f.data === dateStr);
+        if (special) return { exempt: true, type: special.tipo.toUpperCase().replace('_', ' ') };
+
+        // 3. Não é dia de escala/trabalho?
+        const isPlanned = plannedDays.includes(dateStr);
+        if (!isPlanned) return { exempt: true, type: 'FOLGA' };
+
+        return { exempt: false };
+    },
+
+    /**
      * Formata horas decimais (ex: 8.5) em HH:mm (ex: 08:30)
      */
     formatDecimalHours(decimalHours) {
