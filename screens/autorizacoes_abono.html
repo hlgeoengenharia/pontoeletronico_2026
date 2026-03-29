@@ -103,12 +103,10 @@
           const role = (user.role || '').toLowerCase();
           const isGestorOnly = ['manager', 'gestor', 'comandante'].includes(role);
 
-          if (isGestorOnly) {
-            if (user.setorId) {
+          if (isGestorOnly && user.setorId) {
               queryJust = queryJust.eq('funcionarios.setor_id', user.setorId);
               queryGps = queryGps.eq('funcionarios.setor_id', user.setorId);
               queryLogs = queryLogs.eq('funcionarios.setor_id', user.setorId);
-            }
           }
 
           const [{ data: dataJust, error: errJust }, { data: dataGps, error: errGps }, { data: dataLogs, error: errLogs }] = await Promise.all([

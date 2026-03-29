@@ -653,14 +653,38 @@
 
     async function fetchData() {
         try {
+            const user = Auth.getUser();
+            const role = (user.role || '').toLowerCase();
+            const isGestorOnly = (role === 'manager' || role === 'gestor');
+            const sId = user.setorId;
+
             // 1. Setores
-            const { data: sData, error: sError } = await supabase.from('setores').select('*, gestor:funcionarios!gestor_id(nome_completo)');
+            let queryS = supabase.from('setores').select('*, gestor:funcionarios!gestor_id(nome_completo)');
+            if (isGestorOnly && sId) queryS = queryS.eq('id', sId);
+            
+            const { data: sData, error: sError } = await queryS;
             if (sError) console.error('Erro setores:', sError);
             sectors = sData || [];
 
-            // 2. Funcionários e Tabelas Relacionadas (Busca Separada)
+            // Ajustar Botão de Comunicação Lateral para Gestor
+            if (isGestorOnly && sectors.length > 0) {
+                const btnMain = document.getElementById('btn-main-action');
+                if (btnMain) {
+                    btnMain.onclick = () => window.abrirModalComunicado('setorial', sectors[0].id, sectors[0].nome);
+                    const labelMain = document.getElementById('label-main-action');
+                    if (labelMain) labelMain.innerText = 'COMUNICADO SETORIAL';
+                    
+                    const iconMain = document.getElementById('icon-main-action');
+                    if (iconMain) iconMain.innerText = 'hub';
+                }
+            }
+
+            // 2. Funcionários e Tabelas Relacionadas (Filtros por Setor)
+            let queryF = supabase.from('funcionarios').select('id, nome_completo, nickname, cargo_id, especialidade_id, setor_id, nivel_acesso, regime_trabalho');
+            if (isGestorOnly && sId) queryF = queryF.eq('setor_id', sId);
+
             const [fRes, cRes, eRes, pRes] = await Promise.all([
-                supabase.from('funcionarios').select('id, nome_completo, nickname, cargo_id, especialidade_id, setor_id, nivel_acesso, regime_trabalho'),
+                queryF,
                 supabase.from('cargos').select('id, nome'),
                 supabase.from('especialidades').select('id, nome'),
                 supabase.from('perfis_tripulantes').select('funcionario_id, foto_url')
@@ -669,13 +693,13 @@
             if (fRes.error) throw fRes.error;
             
             const cargosMap = {};
-            (cRes.data || []).forEach(c => cargosMap[c.id] = c.nome);
+                (cRes.data || []).forEach(c => cargosMap[c.id] = c.nome);
             
             const espMap = {};
-            (eRes.data || []).forEach(e => espMap[e.id] = e.nome);
+                (eRes.data || []).forEach(e => espMap[e.id] = e.nome);
 
             const fotosMap = {};
-            (pRes.data || []).forEach(p => fotosMap[p.funcionario_id] = p.foto_url);
+                (pRes.data || []).forEach(p => fotosMap[p.funcionario_id] = p.foto_url);
 
             const fData = (fRes.data || []).map(f => ({
                 ...f,
@@ -691,11 +715,15 @@
                 const offset = now.getTimezoneOffset() * 60000;
                 const localToday = new Date(now - offset).toISOString().split('T')[0];
                 
-                const { data: pData } = await supabase
+                let queryPoints = supabase
                     .from('pontos')
-                    .select('funcionario_id, tipo, data_hora')
+                    .select('funcionario_id, tipo, data_hora, funcionarios!inner(setor_id)')
                     .gte('data_hora', `${localToday}T00:00:00`)
                     .order('data_hora', { ascending: true });
+                
+                if (isGestorOnly && sId) queryPoints = queryPoints.eq('funcionarios.setor_id', sId);
+
+                const { data: pData } = await queryPoints;
                 
                 pData?.forEach(p => {
                     if (!statusMap[p.funcionario_id]) statusMap[p.funcionario_id] = [];
@@ -703,51 +731,64 @@
                 });
             } catch (pErr) { console.error('Erro ao processar status:', pErr); }
 
-            // 4. Localizações (Resiliente)
+            // 4. Localizações (Último Ponto Registrado)
             let lastLocs = {};
             try {
-                const { data: lData } = await supabase
+                let queryLocs = supabase
                     .from('pontos')
-                    .select('funcionario_id, latitude, longitude, data_hora')
+                    .select('funcionario_id, latitude, longitude, data_hora, funcionarios!inner(setor_id)')
                     .not('latitude', 'is', null)
                     .order('data_hora', { ascending: false });
+                
+                if (isGestorOnly && sId) queryLocs = queryLocs.eq('funcionarios.setor_id', sId);
+
+                const { data: lData } = await queryLocs;
                 
                 lData?.forEach(l => {
                     if (!lastLocs[l.funcionario_id]) lastLocs[l.funcionario_id] = l;
                 });
             } catch (lErr) { console.error('Erro ao buscar localizações:', lErr); }
 
-            // 3. Buscar Últimos Pulsos de GPS (Sinal de vida)
-            // Tipos: gps_pulse, gps_hora, geofence_in, geofence_out, ponto_fora_raio
-            const { data: pulses } = await supabase
+            // 5. Buscar Últimos Pulsos de GPS (Sinal de vida)
+            let queryPulse = supabase
                 .from('diario_logs')
-                .select('funcionario_id, coordenadas, data_hora')
+                .select('funcionario_id, coordenadas, data_hora, funcionarios!inner(setor_id)')
                 .in('tipo', ['gps_pulse', 'gps_hora', 'geofence_in', 'geofence_out', 'ponto_fora_raio'])
                 .order('data_hora', { ascending: false });
+            
+            if (isGestorOnly && sId) queryPulse = queryPulse.eq('funcionarios.setor_id', sId);
+
+            const { data: pulses } = await queryPulse;
 
             const pulseMap = {};
-            (pulses || []).forEach(p => {
-                if (!pulseMap[p.funcionario_id]) pulseMap[p.funcionario_id] = p;
-            });
+                (pulses || []).forEach(p => {
+                    if (!pulseMap[p.funcionario_id]) pulseMap[p.funcionario_id] = p;
+                });
 
-            // 5. Buscar Todos os Comunicados (Histórico de H.E e Mensagens)
-            const { data: heData } = await supabase
+            // 6. Buscar Todos os Comunicados (Histórico de H.E e Mensagens)
+            let queryHE = supabase
                 .from('comunicados')
-                .select('*')
+                .select('*, funcionarios!inner(setor_id)')
                 .order('created_at', { ascending: false });
+            
+            if (isGestorOnly && sId) queryHE = queryHE.eq('funcionarios.setor_id', sId);
+
+            const { data: heData } = await queryHE;
 
             const heMap = {};
-            (heData || []).forEach(he => {
-                if (!heMap[he.destinatario_id]) heMap[he.destinatario_id] = [];
-                heMap[he.destinatario_id].push(he);
-            });
+                (heData || []).forEach(he => {
+                    if (!heMap[he.destinatario_id]) heMap[he.destinatario_id] = [];
+                    heMap[he.destinatario_id].push(he);
+                });
 
-            // 6. Dados de Férias
+            // 7. Dados de Férias
             let vData = [];
             try {
-                const resV = await supabase.from('ferias').select('*');
+                let queryV = supabase.from('ferias').select('*, funcionarios!inner(setor_id)');
+                if (isGestorOnly && sId) queryV = queryV.eq('funcionarios.setor_id', sId);
+                const resV = await queryV;
                 if (resV.data) vData = resV.data;
-            } catch (e) { console.warn('Tabela ferias ausente:', e); }
+            } catch (e) { console.warn('Erro ao carregar férias:', e); }
             const feriasInfo = vData || [];
 
             employees = (fData || []).map(f => {

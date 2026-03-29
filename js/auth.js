@@ -44,7 +44,7 @@ const Auth = {
             // Salvar no localStorage extraindo do JOIN
             const f = data.funcionarios;
             localStorage.setItem('userId', f.id);
-            localStorage.setItem('userRole', f.nivel_acesso);
+            localStorage.setItem('userRole', (f.nivel_acesso || '').trim());
             localStorage.setItem('userName', f.nome_completo);
             localStorage.setItem('userNickname', data.nickname);
             localStorage.setItem('userMatricula', f.matricula);
@@ -52,11 +52,17 @@ const Auth = {
             localStorage.setItem('userSetorId', f.setor_id || '');
             localStorage.setItem('userFuncao', f.cargos?.nome || f.funcao || 'Tripulante');
             localStorage.setItem('userCargoNivel', f.cargos?.nivel || 'N/A');
+            
+            let perms = f.permissoes_gestor || {};
+            if (typeof perms === 'string') {
+                try { perms = JSON.parse(perms); } catch (e) { perms = {}; }
+            }
+            localStorage.setItem('userPermissions', JSON.stringify(perms));
 
-            console.log('Login bem-sucedido:', f.nome_completo);
+            console.log(`[Auth] Login bem-sucedido. Perfil: ${f.nivel_acesso || 'N/A'}`);
             return { success: true, user: { ...f, nickname: data.nickname, foto_url: data.foto_url, senha: data.senha } };
         } catch (err) {
-            console.error('Erro detalhado no login:', err);
+            console.error('[Auth] Erro detalhado no login:', err);
             return { success: false, error: err.message };
         }
     },
@@ -69,7 +75,7 @@ const Auth = {
         const sessionKeys = [
             'userId', 'userRole', 'userName', 'userNickname', 
             'userMatricula', 'userSetor', 'userSetorId', 
-            'userFuncao', 'userCargoNivel', 'force_password_change'
+            'userFuncao', 'userCargoNivel', 'userPermissions', 'force_password_change'
         ];
         sessionKeys.forEach(key => localStorage.removeItem(key));
         
@@ -113,6 +119,13 @@ const Auth = {
      * Retorna os dados do usuário atual
      */
     getUser() {
+        let permissions = {};
+        try {
+            permissions = JSON.parse(localStorage.getItem('userPermissions') || '{}');
+        } catch (e) {
+            console.error('Erro ao ler permissões:', e);
+        }
+
         return {
             id: localStorage.getItem('userId'),
             role: localStorage.getItem('userRole'),
@@ -122,7 +135,8 @@ const Auth = {
             setor: localStorage.getItem('userSetor'),
             setorId: localStorage.getItem('userSetorId'),
             funcao: localStorage.getItem('userFuncao'),
-            funcaoNivel: localStorage.getItem('userCargoNivel')
+            funcaoNivel: localStorage.getItem('userCargoNivel'),
+            permissions: permissions
         };
     }
 };

@@ -114,8 +114,10 @@ const UI = {
      * @param {string} userRole Cargo do usuário
      */
     initSidebar(userRole) {
-        const role = String(userRole || '').toLowerCase();
-        console.log(`[UI.initSidebar] Inicializando menu para: ${role}`);
+        const storedRole = localStorage.getItem('userRole') || '';
+        const role = String(userRole || storedRole).trim().toLowerCase();
+        
+        console.log(`[UI.initSidebar] Inicializando menu para: "${role}"`);
         const sidebarNav = document.getElementById('sidebarNav');
         if (!sidebarNav) {
             console.warn('[UI.initSidebar] Elemento #sidebarNav não encontrado.');
@@ -123,40 +125,72 @@ const UI = {
         }
 
         // Recuperar contexto para manter inspeção se houver
-        const urlParams = new URLSearchParams(window.location.search);
-        const employeeId = urlParams.get('id');
-        const roleParam = urlParams.get('role');
-        const contextQuery = employeeId ? `?id=${employeeId}${roleParam ? `&role=${roleParam}` : ''}` : '';
+        const cleanQuery = window.location.search.replace(/^\?/, '');
+        const contextQuery = cleanQuery ? `&${cleanQuery}` : '';
 
         let menuHtml = '';
 
         // Definir itens por papel
         const items = [];
 
-        // Itens Básicos (Comuns a todos no menu lateral se logados)
-        if (role === 'admin') {
-            items.push({ href: 'dashboard.html', icon: 'dashboard', label: 'Painel Admin' });
-            items.push({ href: 'cadastro_setores.html', icon: 'domain_add', label: 'Cadastro Setores' });
-            items.push({ href: 'cadastro_escalas.html', icon: 'calendar_month', label: 'Cadastro Escalas' });
-            items.push({ href: 'cadastro_cargos.html', icon: 'work', label: 'Cadastro Cargo/Função' });
-            items.push({ href: 'cadastro_especialidades.html', icon: 'school', label: 'CADASTRAR GRADUAÇÕES' });
-            items.push({ href: 'cadastro_funcionario.html', icon: 'person_add', label: 'Cadastro Funcionários' });
-        } else if (role === 'manager' || role === 'gestor' || role === 'comandante') {
-            items.push({ href: 'dashboard.html', icon: 'dashboard', label: 'Início (Gestor)' });
-            items.push({ href: 'cadastro_escalas.html', icon: 'calendar_month', label: 'Gestão de Escalas' });
-            items.push({ href: 'perfil_funcionario.html', icon: 'person', label: 'Meu Perfil' });
+        // Itens Administrativos (Admin, Gestor, Comandante)
+        if (role === 'admin' || role === 'manager' || role === 'gestor' || role === 'comandante') {
+            const isAdmin = (role === 'admin' || role === 'comandante');
+            
+            // Buscar permissões do localStorage
+            let perms = {};
+            try {
+                const storedPerms = localStorage.getItem('userPermissions');
+                perms = JSON.parse(storedPerms || '{}');
+            } catch (e) {
+                console.error('[UI] Erro ao ler permissões no menu:', e);
+            }
+
+            // Painel de Controle: EXCLUSIVO Admin
+            if (isAdmin) {
+                items.push({ 
+                    href: 'controle.html' + (contextQuery ? '?' + contextQuery.substring(1) : ''), 
+                    icon: 'dashboard', 
+                    label: 'Painel de Controle' 
+                });
+            }
+
+            // Módulos de cadastro com trava de permissão para Gestores
+            if (isAdmin || perms.setores)
+                items.push({ href: 'cadastro_setores.html', icon: 'domain_add', label: 'Cadastro Setores' });
+            
+            if (isAdmin || perms.escalas)
+                items.push({ href: 'cadastro_escalas.html', icon: 'calendar_month', label: 'Cadastro Escalas' });
+            
+            if (isAdmin || perms.cargos)
+                items.push({ href: 'cadastro_cargos.html', icon: 'work', label: 'Cadastro Cargo/Função' });
+            
+            if (isAdmin || perms.graduacoes)
+                items.push({ href: 'cadastro_especialidades.html', icon: 'school', label: 'Graduações (Espec.)' });
+            
+            if (isAdmin || perms.funcionarios)
+                items.push({ href: 'cadastro_funcionario.html', icon: 'person_add', label: 'Cadastro Funcionários' });
+
+            items.push({ href: 'dashboard.html' + (contextQuery ? '?' + contextQuery.substring(1) : ''), icon: 'home', label: 'Início' });
         } else {
-            // Funcionário comum - Extamente igual ao Footer (5 Itens)
+            // Funcionário comum - Extamente igual ao Footer (3 Itens principais)
             items.push({ href: 'dashboard.html', icon: 'home', label: 'Início' });
             items.push({ href: 'estatistica_funcionario.html', icon: 'bar_chart', label: 'Estatística' });
             items.push({ href: 'diario_funcionario.html', icon: 'edit_note', label: 'Diário' });
-            items.push({ href: 'perfil_funcionario.html', icon: 'person', label: 'Meu Perfil' });
         }
 
         menuHtml = items.map(item => {
             // Não propagar contexto para páginas de "Novo Cadastro"
-            const skipContext = (item.href === 'cadastro_funcionario.html' || item.href === 'cadastro_setores.html' || item.href === 'cadastro_escalas.html' || item.href === 'cadastro_cargos.html');
-            const finalHref = skipContext ? item.href : `${item.href}${item.href === 'perfil_funcionario.html' && !employeeId ? '' : contextQuery}`;
+            const skipContext = (
+                item.href === 'cadastro_funcionario.html' || 
+                item.href === 'cadastro_setores.html' || 
+                item.href === 'cadastro_escalas.html' || 
+                item.href === 'cadastro_cargos.html' ||
+                item.href === 'cadastro_especialidades.html'
+            );
+            // Lógica de concatenação inteligente para evitar ?id=...?id=...
+            const hrefHasQuery = item.href.includes('?');
+            const finalHref = skipContext ? item.href : `${item.href}${hrefHasQuery ? contextQuery : (contextQuery ? '?' + contextQuery.substring(1) : '')}`;
             
             return `
             <a href="${finalHref}" class="flex items-center gap-4 p-3 rounded-lg hover:bg-primary/10 text-slate-600 dark:text-slate-300 hover:text-primary transition-all group">

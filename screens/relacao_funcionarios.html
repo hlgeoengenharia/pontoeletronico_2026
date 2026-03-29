@@ -48,9 +48,9 @@
         <span class="material-symbols-outlined">arrow_back</span>
       </div>
       <div class="flex-1 text-center">
-        <h2 class="text-slate-100 text-lg font-bold tracking-wider uppercase">RELAÇÃO DE FUNCIONÁRIOS</h2>
-        <span
-          class="text-[10px] text-primary font-black uppercase tracking-[0.2em] bg-primary/10 px-2 py-0.5 rounded-full inline-block mt-1 animate-pulse">3
+        <h2 id="page-title" class="text-slate-100 text-lg font-bold tracking-wider uppercase">RELAÇÃO DE FUNCIONÁRIOS</h2>
+        <span id="active-crew-count"
+          class="text-[10px] text-primary font-black uppercase tracking-[0.2em] bg-primary/10 px-2 py-0.5 rounded-full inline-block mt-1 animate-pulse">---
           Tripulantes Ativos</span>
       </div>
       <button id="openSidebar" onclick="UI.toggleSidebar()"
@@ -142,8 +142,8 @@
           renderizarLista(todosFuncionarios);
 
           // Atualizar título e contador
-          const headerTitle = document.querySelector('header h2');
-          const contador = document.querySelector('header h2 + span');
+          const headerTitle = document.getElementById('page-title');
+          const contador = document.getElementById('active-crew-count');
 
           if (setorId && funcData.length > 0 && funcData[0].setores) {
             headerTitle.textContent = `FUNCIONÁRIOS: ${funcData[0].setores.nome.toUpperCase()}`;

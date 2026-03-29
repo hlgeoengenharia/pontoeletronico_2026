@@ -109,6 +109,30 @@
             border-top: 1px solid rgba(255, 255, 255, 0.05);
             opacity: 1;
         }
+        /* Animações de Transição de Página (Slide) */
+        @keyframes slide-out-to-left { 
+            0% { transform: translateX(0); opacity: 1; }
+            100% { transform: translateX(-30px); opacity: 0; }
+        }
+        @keyframes slide-out-to-right { 
+            0% { transform: translateX(0); opacity: 1; }
+            100% { transform: translateX(30px); opacity: 0; }
+        }
+        @keyframes slide-in-from-right { 
+            0% { transform: translateX(30px); opacity: 0; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slide-in-from-left { 
+            0% { transform: translateX(-30px); opacity: 0; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+
+        .anim-slide-out-left { animation: slide-out-to-left 0.3s forwards ease-in; }
+        .anim-slide-out-right { animation: slide-out-to-right 0.3s forwards ease-in; }
+        .anim-slide-in-right { animation: slide-in-from-right 0.4s forwards ease-out; }
+        .anim-slide-in-left { animation: slide-in-from-left 0.4s forwards ease-out; }
+
+        .transition-container { transition: opacity 0.5s ease; }
     </style>
 </head>
 
@@ -137,7 +161,7 @@
         </div>
     </header>
 
-    <main class="max-w-2xl mx-auto p-4 md:p-8 space-y-8">
+    <main id="main-content" class="max-w-2xl mx-auto p-4 md:p-8 space-y-8 transition-container">
         <div class="audit-card bg-slate-900 border border-white/5 rounded-3xl p-5 flex items-center gap-6 shadow-2xl relative group">
             <div class="relative w-24 h-24 rounded-2xl border-4 border-amber-500/30 overflow-hidden shrink-0 shadow-2xl transition-all group-hover:border-amber-500/50">
                 <img id="user-photo-audit" src="https://ui-avatars.com/api/?name=User&background=020617&color=fff" 
@@ -211,6 +235,15 @@
         async function init() {
             const btnVoltar = document.getElementById('btn-voltar');
             if (btnVoltar) btnVoltar.onclick = () => UI.voltarInicio();
+
+            // Verificar se houve navegação por swipe para aplicar animação de entrada
+            const lastNav = sessionStorage.getItem('last_nav_direction');
+            if (lastNav) {
+                const content = document.getElementById('main-content');
+                const inClass = lastNav === 'next' ? 'anim-slide-in-right' : 'anim-slide-in-left';
+                content.classList.add(inClass);
+                sessionStorage.removeItem('last_nav_direction');
+            }
 
             const urlParams = new URLSearchParams(window.location.search);
             const targetId = urlParams.get('id') || localStorage.getItem('userId');
@@ -630,7 +663,17 @@
                 urlParams.set('id', targetId);
             }
             
-            window.location.href = `resumo_dia.html?${urlParams.toString()}`;
+            // Aplicar animação de saída
+            const content = document.getElementById('main-content');
+            const outClass = offset > 0 ? 'anim-slide-out-left' : 'anim-slide-out-right';
+            content.classList.add(outClass);
+            
+            // Salvar direção para a animação de entrada na nova página
+            sessionStorage.setItem('last_nav_direction', offset > 0 ? 'next' : 'prev');
+            
+            setTimeout(() => {
+                window.location.href = `resumo_dia.html?${urlParams.toString()}`;
+            }, 250);
         };
 
         // --- LÓGICA DE NAVEGAÇÃO POR SWIPE (Gesto) ---

@@ -18,8 +18,20 @@ export const Notifications = {
             const role = (userRole || '').toLowerCase();
             
             try {
-                if (role === 'admin' || role === 'gestor' || role === 'manager') {
-                    const { count } = await supabase.from('justificativas').select('id', { count: 'exact', head: true }).eq('status', 'pendente');
+                const isManagement = role === 'admin' || role === 'gestor' || role === 'manager';
+                const isGestorOnly = (role === 'gestor' || role === 'manager');
+                
+                if (isManagement) {
+                    let queryJust = supabase.from('justificativas').select('id, funcionarios!inner(setor_id)', { count: 'exact', head: true }).eq('status', 'pendente');
+                    
+                    if (isGestorOnly) {
+                        const { data: userDat } = await supabase.from('funcionarios').select('setor_id').eq('id', userId).maybeSingle();
+                        if (userDat?.setor_id) {
+                            queryJust = queryJust.eq('funcionarios.setor_id', userDat.setor_id);
+                        }
+                    }
+                    
+                    const { count } = await queryJust;
                     sinoCount = count || 0;
                 } else {
                     const [resJust, resLogs] = await Promise.all([

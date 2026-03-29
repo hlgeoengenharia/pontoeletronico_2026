@@ -37,6 +37,64 @@
             pointer-events: none;
             transform: scale(0.95);
         }
+
+        /* Animações de Transição de Calendário */
+        @keyframes slide-to-left {
+            0% { transform: translateX(0); opacity: 1; }
+            100% { transform: translateX(-20px); opacity: 0; }
+        }
+        @keyframes slide-from-right {
+            0% { transform: translateX(20px); opacity: 0; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slide-to-right {
+            0% { transform: translateX(0); opacity: 1; }
+            100% { transform: translateX(20px); opacity: 0; }
+        }
+        @keyframes slide-from-left {
+            0% { transform: translateX(-20px); opacity: 0; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+
+        .anim-slide-out-left { animation: slide-to-left 0.2s forwards ease-in; }
+        .anim-slide-in-right { animation: slide-from-right 0.3s forwards ease-out; }
+        .anim-slide-out-right { animation: slide-to-right 0.2s forwards ease-in; }
+        .anim-slide-in-left { animation: slide-from-left 0.3s forwards ease-out; }
+
+        /* Cards Métricos Premium 3D */
+        .metric-card-3d {
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+            transform: translateY(0);
+        }
+        .metric-card-3d:active { transform: translateY(2px) scale(0.98); }
+        .metric-card-3d::after {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%; width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+            transition: 0.5s;
+        }
+        .metric-card-3d:hover::after { left: 100%; }
+
+        .card-3d-blue { 
+            background: rgba(59, 130, 246, 0.12) !important; 
+            border-color: rgba(59, 130, 246, 0.4) !important; 
+            box-shadow: 0 10px 20px -5px rgba(59, 130, 246, 0.3), inset 0 0 15px rgba(59, 130, 246, 0.1);
+        }
+        .card-3d-emerald { 
+            background: rgba(16, 185, 129, 0.12) !important; 
+            border-color: rgba(16, 185, 129, 0.4) !important; 
+            box-shadow: 0 10px 20px -5px rgba(16, 185, 129, 0.3), inset 0 0 15px rgba(16, 185, 129, 0.1);
+        }
+        .card-3d-amber { 
+            background: rgba(245, 158, 11, 0.08) !important; 
+            border-color: rgba(245, 158, 11, 0.3) !important; 
+            box-shadow: 0 10px 20px -5px rgba(245, 158, 11, 0.3), inset 0 0 15px rgba(245, 158, 11, 0.05);
+        }
+
+        .icon-3d-glow { filter: drop-shadow(0 0 5px currentColor); }
     </style>
 </head>
 
@@ -122,24 +180,24 @@
 
         <!-- SEÇÃO: ESTATÍSTICAS DE FÉRIAS (Gestor/Admin) -->
         <section class="grid grid-cols-3 gap-3 px-1 role-gestor role-hidden">
-            <a href="ferias.html" class="bg-blue-500/5 border border-blue-500/20 rounded-2xl p-4 text-center transition-all hover:bg-blue-500/10 active:scale-95 block">
-                <p class="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Férias (Pendentes)</p>
+            <a href="ferias.html" class="metric-card-3d card-3d-blue rounded-2xl p-4 text-center block">
+                <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Férias (Pendentes)</p>
                 <p class="text-xl font-black text-blue-400 flex items-center justify-center gap-2">
-                    <span class="material-symbols-outlined text-lg">beach_access</span>
+                    <span class="material-symbols-outlined text-lg icon-3d-glow">beach_access</span>
                     <span id="stat-ferias-mes">0</span>
                 </p>
             </a>
-            <a href="online.html" class="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-4 text-center transition-all hover:bg-emerald-500/10 active:scale-95 block">
-                <p class="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Monitoramento</p>
+            <a href="online.html" class="metric-card-3d card-3d-emerald rounded-2xl p-4 text-center block">
+                <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Monitoramento</p>
                 <p class="text-xl font-black text-emerald-400 flex items-center justify-center gap-2">
-                    <span class="material-symbols-outlined text-lg">visibility</span>
+                    <span class="material-symbols-outlined text-lg icon-3d-glow">visibility</span>
                     <span id="stat-online-equipe">0</span>
                 </p>
             </a>
-            <a href="relacao_setores.html" class="bg-primary/5 border border-primary/20 rounded-2xl p-4 text-center transition-all hover:bg-primary/10 active:scale-95 block">
-                <p class="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Setores</p>
-                <p class="text-xl font-black text-slate-100 flex items-center justify-center gap-2">
-                    <span class="material-symbols-outlined text-lg text-amber-500">domain</span>
+            <a id="link-setores" href="relacao_funcionarios.html" class="metric-card-3d card-3d-amber rounded-2xl p-4 text-center block">
+                <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Setores</p>
+                <p class="text-xl font-black text-amber-500 flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined text-lg icon-3d-glow">domain</span>
                     <span id="stat-total-setores">--</span>
                 </p>
             </a>
@@ -411,8 +469,18 @@
             const calendarGrid = document.getElementById('app-calendar');
 
             const navigate = async (offset) => {
-                calendarDate.setMonth(calendarDate.getMonth() + offset);
-                await refreshCalendar();
+                const outClass = offset > 0 ? 'anim-slide-out-left' : 'anim-slide-out-right';
+                const inClass = offset > 0 ? 'anim-slide-in-right' : 'anim-slide-in-left';
+                
+                calendarGrid.classList.add(outClass);
+                
+                setTimeout(async () => {
+                    calendarDate.setMonth(calendarDate.getMonth() + offset);
+                    await refreshCalendar();
+                    calendarGrid.classList.remove(outClass);
+                    calendarGrid.classList.add(inClass);
+                    setTimeout(() => { calendarGrid.classList.remove(inClass); }, 300);
+                }, 150);
             };
 
             if (btnPrev) btnPrev.onclick = () => navigate(-1);
@@ -519,25 +587,45 @@
         async function loadGlobalStats() {
             try {
                 const today = new Date().toISOString().split('T')[0];
-                
-                // 1. Buscas de Contagem e Férias
-                const [sRes, vacRes] = await Promise.all([
-                    supabase.from('setores').select('*', { count: 'exact', head: true }),
-                    supabase.from('ferias').select('funcionario_id').eq('status', 'pendente')
-                ]);
-                
+                const role = currentUser?.nivel_acesso || 'Funcionário';
+                const isGestor = role === 'Gestor';
+                const sId = currentUser?.setor_id;
+
+                // 1. Buscas de Contagem e Férias (Filtradas se Gestor)
+                let queryS = supabase.from('setores').select('*', { count: 'exact', head: true });
+                let queryV = supabase.from('ferias').select('funcionario_id, funcionarios!inner(setor_id)').eq('status', 'pendente');
+
+                if (isGestor && sId) {
+                    queryV = queryV.eq('funcionarios.setor_id', sId);
+                }
+
+                const [sRes, vacRes] = await Promise.all([queryS, queryV]);
+
                 const pendingEmployees = new Set((vacRes.data || []).map(v => v.funcionario_id)).size;
 
-                if (document.getElementById('stat-total-setores')) 
-                    document.getElementById('stat-total-setores').innerText = sRes.count || '0';
-                if (document.getElementById('stat-ferias-mes')) 
+                const linkSetores = document.getElementById('link-setores');
+                if (linkSetores) {
+                    if (isGestor && sId) linkSetores.href = `relacao_funcionarios.html?setor=${sId}`;
+                    else linkSetores.href = `relacao_funcionarios.html`;
+                }
+
+                if (document.getElementById('stat-total-setores')) {
+                    document.getElementById('stat-total-setores').innerText = isGestor ? '1' : (sRes.count || '0');
+                }
+                if (document.getElementById('stat-ferias-mes')) {
                     document.getElementById('stat-ferias-mes').innerText = pendingEmployees || '0';
+                }
 
                 // 2. Cálculo de Online (Ponto + Pulsos GPS)
-                const [ptsRes, pulseRes] = await Promise.all([
-                    supabase.from('pontos').select('funcionario_id').gte('data_hora', `${today}T00:00:00`),
-                    supabase.from('diario_logs').select('funcionario_id').eq('tipo', 'gps_pulse').gte('created_at', new Date(Date.now() - 20 * 60 * 1000).toISOString())
-                ]);
+                let queryP = supabase.from('pontos').select('funcionario_id, funcionarios!inner(setor_id)').gte('data_hora', `${today}T00:00:00`);
+                let queryPulse = supabase.from('diario_logs').select('funcionario_id, funcionarios!inner(setor_id)').eq('tipo', 'gps_pulse').gte('created_at', new Date(Date.now() - 20 * 60 * 1000).toISOString());
+
+                if (isGestor && sId) {
+                    queryP = queryP.eq('funcionarios.setor_id', sId);
+                    queryPulse = queryPulse.eq('funcionarios.setor_id', sId);
+                }
+
+                const [ptsRes, pulseRes] = await Promise.all([queryP, queryPulse]);
 
                 const onlineSet = new Set();
                 if (ptsRes.data) {
@@ -982,7 +1070,8 @@
             const sortedEvents = [...feriadosData].sort((a,b) => a.data.localeCompare(b.data));
 
             legendSection.innerHTML = `
-                <!-- Legenda de Cores -->
+                <!-- Legenda de Cores (Horizontal e Centralizada) -->
+                <div class="flex flex-row flex-wrap justify-center items-center gap-x-6 gap-y-3 mb-6">
                     <div class="flex items-center gap-2">
                         <span class="size-2.5 rounded-full bg-sky-500/40 shadow-lg shadow-sky-500/20"></span>
                         <span class="text-[8px] font-black text-slate-500 uppercase tracking-widest">Férias</span>
@@ -1000,6 +1089,9 @@
                         <span class="text-[8px] font-black text-slate-500 uppercase tracking-widest">Folga</span>
                     </div>
                 </div>
+
+                <!-- Divisor Sutil -->
+                <div class="h-px bg-white/5 w-full"></div>
 
                 <!-- Lista de Detalhes -->
                 <div class="space-y-2 mt-4">
