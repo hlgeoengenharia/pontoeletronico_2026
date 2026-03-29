@@ -709,12 +709,14 @@
                                             </div>
 
                                             <div class="flex gap-2">
-                                                <button onclick="window.abrirModalFerias()" class="flex-1 flex items-center justify-center gap-2 py-3 bg-white/5 hover:bg-white/10 rounded-xl transition-all border border-white/5 text-[9px] font-black text-amber-500 uppercase tracking-widest">
-                                                    <span class="material-symbols-outlined text-sm">edit</span> Alterar Planejamento
+                                                <button onclick="window.abrirModalFerias()" class="flex-1 flex items-center justify-center gap-2 py-4 bg-white/5 hover:bg-white/10 rounded-2xl transition-all border border-white/5 text-[9px] font-black text-amber-500 uppercase tracking-widest group">
+                                                    <span class="material-symbols-outlined text-sm group-hover:scale-110 transition-transform">edit</span> Alterar Planejamento
                                                 </button>
-                                                <button onclick="window.excluirPlanejamentoFerias()" class="flex items-center justify-center gap-2 px-6 py-3 bg-rose-500/5 hover:bg-rose-500/10 rounded-xl transition-all border border-rose-500/10 text-[9px] font-black text-rose-500 uppercase tracking-widest">
-                                                    <span class="material-symbols-outlined text-sm">delete</span>
-                                                </button>
+                                                ${item.status === 'pendente' ? `
+                                                    <button onclick="window.excluirPlanejamentoFerias()" class="flex items-center justify-center gap-2 px-6 py-4 bg-rose-500/5 hover:bg-rose-500/10 rounded-2xl transition-all border border-rose-500/10 text-[9px] font-black text-rose-500 uppercase tracking-widest group">
+                                                        <span class="material-symbols-outlined text-sm group-hover:scale-110 transition-transform">delete</span>
+                                                    </button>
+                                                ` : ''}
                                             </div>
                                         </div>
                                     `;
@@ -1054,18 +1056,56 @@
 
         function renderPhotoCards() {
             const c = document.getElementById('photo-cards-container');
-            c.innerHTML = currentParcelas.map((p, i) => `
-                <div class="bg-white/5 p-4 rounded-xl border border-white/5 flex justify-between items-center mb-2">
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            const freezeLimit = new Date(today);
+            freezeLimit.setDate(today.getDate() + 15);
+
+            c.innerHTML = currentParcelas.map((p, i) => {
+                const isFrozen = new Date(p.start) < freezeLimit;
+                return `
+                <div onclick="window.focarParcela(${i})" class="bg-white/5 p-4 rounded-xl border border-white/5 flex justify-between items-center mb-2 cursor-pointer hover:bg-white/10 hover:border-primary/30 transition-all group">
                     <div>
-                        <p class="text-[10px] font-black text-white">${i+1}ª PARCELA (${p.days}d)</p>
-                        <p class="text-[8px] text-slate-500">${p.start.toLocaleDateString()} - ${p.end.toLocaleDateString()}</p>
+                        <div class="flex items-center gap-2 mb-1">
+                            <p class="text-[10px] font-black text-white group-hover:text-primary transition-colors">${i+1}ª PARCELA (${p.days}d)</p>
+                            ${isFrozen ? '<span class="px-1.5 py-0.5 bg-sky-500/10 text-sky-400 border border-sky-500/20 text-[6px] font-black uppercase rounded leading-none flex items-center gap-1"><span class="material-symbols-outlined text-[10px]">ac_unit</span> CONGELADA</span>' : ''}
+                        </div>
+                        <p class="text-[8px] text-slate-500">${new Date(p.start).toLocaleDateString()} - ${new Date(p.end).toLocaleDateString()}</p>
                     </div>
-                    <button onclick="window.removerParcela(${i})" class="text-rose-500 material-symbols-outlined text-sm">close</button>
+                    ${!isFrozen ? `
+                        <button onclick="event.stopPropagation(); window.removerParcela(${i})" class="size-10 flex items-center justify-center rounded-xl bg-rose-500/5 text-rose-500/40 hover:text-rose-500 hover:bg-rose-500/10 transition-all group/del">
+                            <span class="material-symbols-outlined text-[20px] group-hover/del:scale-110 transition-transform">delete</span>
+                        </button>
+                    ` : `
+                        <div class="size-10 flex items-center justify-center text-sky-500/30">
+                            <span class="material-symbols-outlined text-[20px]">lock</span>
+                        </div>
+                    `}
                 </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
+        window.focarParcela = (i) => {
+            const p = currentParcelas[i];
+            if (!p) return;
+            currentMonth = p.start.getMonth();
+            currentYear = p.start.getFullYear();
+            renderCalendar();
+            UI.showToast(`Visualizando ${i+1}ª Parcela`, 'info');
+        };
+
         window.removerParcela = (i) => {
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            const freezeLimit = new Date(today);
+            freezeLimit.setDate(today.getDate() + 15);
+            
+            if (new Date(currentParcelas[i].start) < freezeLimit) {
+                UI.showToast('Esta parcela está congelada e não pode ser removida!', 'warning');
+                return;
+            }
+
             currentParcelas.splice(i, 1);
             updateProgress(); renderCalendar(); renderPhotoCards();
         };
@@ -1073,19 +1113,43 @@
         window.confirmarTudoFerias = async () => {
             UI.showLoader();
             try {
-                await supabase.from('ferias').delete().eq('funcionario_id', targetId);
+                // Verificar se já existe um plano aprovado
+                const { data: existing } = await supabase.from('ferias').select('status').eq('funcionario_id', targetId);
+                const isSubsequentEdit = existing && existing.some(f => f.status === 'aprovado' || f.status === 'rejeitado');
+                
+                // Novo status: se for rascunho inicial = pendente. Se for alteração em aprovado = proposto.
+                const newStatus = isSubsequentEdit ? 'proposto' : 'pendente';
+
+                // Se for alteração, limpamos apenas as propostas anteriores antes de inserir a nova
+                if (isSubsequentEdit) {
+                    await supabase.from('ferias').delete().eq('funcionario_id', targetId).eq('status', 'proposto');
+                } else {
+                    await supabase.from('ferias').delete().eq('funcionario_id', targetId);
+                }
+
                 const inserts = currentParcelas.map((p, idx) => ({
                     funcionario_id: targetId,
-                    data_inicio: p.start.toISOString().split('T')[0],
-                    data_fim: p.end.toISOString().split('T')[0],
+                    data_inicio: p.start instanceof Date ? p.start.toISOString().split('T')[0] : p.start,
+                    data_fim: p.end instanceof Date ? p.end.toISOString().split('T')[0] : p.end,
                     parcela_numero: idx + 1,
-                    status: 'pendente'
+                    status: newStatus
                 }));
                 await supabase.from('ferias').insert(inserts);
-                UI.showToast('Enviado com sucesso!', 'success');
+
+                // --- REGISTRO NA CENTRAL DE EVENTOS ---
+                await supabase.from('diario_logs').insert([{
+                    funcionario_id: targetId,
+                    tipo: 'aviso_ferias',
+                    mensagem_padrao: isSubsequentEdit ? 'Alteração no planejamento de férias enviada para análise.' : 'Novo planejamento de férias enviado para análise.',
+                    status_pendencia: 'pendente'
+                }]);
+
+                UI.showToast(isSubsequentEdit ? 'Alteração enviada para análise!' : 'Planejamento enviado com sucesso!', 'success');
                 window.fecharModalFerias();
+                if (window.init) await window.init();
             } catch (err) {
                 console.error(err);
+                UI.showToast('Erro ao salvar planejamento.', 'error');
             } finally {
                 UI.hideLoader();
             }
