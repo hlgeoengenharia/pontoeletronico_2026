@@ -1,5 +1,6 @@
 import { supabase } from './supabase-config.js';
 import { EventManager } from './event-manager.js';
+import { ScalesEngine } from './scales-engine.js';
 
 /**
  * Módulo Notifications - Projeto V01
@@ -33,20 +34,34 @@ export const Notifications = {
             // B. Comunicados e Feriados (Badge Diário)
             let diarioCount = 0;
             try {
-                const { data: user } = await supabase.from('funcionarios').select('setor_id').eq('id', userId).maybeSingle();
+                const { data: user } = await supabase.from('funcionarios').select('setor_id, escala_id').eq('id', userId).maybeSingle();
                 const sectorId = user?.setor_id || '00000000-0000-0000-0000-000000000000';
 
                 const [resComs, resLogs, resFer, resJustProcessed] = await Promise.all([
-                    supabase.from('comunicados').select('id, subtipo, lido').or(`destinatario_id.eq.${userId},tipo.eq.geral,setor_id.eq.${sectorId}`),
+                    supabase.from('comunicados').select('id, subtipo, lido, created_at').or(`destinatario_id.eq.${userId},tipo.eq.geral,setor_id.eq.${sectorId}`),
                     supabase.from('diario_logs').select('id, tipo').eq('funcionario_id', userId).in('tipo', ['comunicado', 'aviso_ferias']).eq('status_pendencia', 'pendente'),
-                    supabase.from('feriados_folgas').select('id').or(`funcionario_id.eq.${userId},setor_id.eq.${sectorId},escopo.eq.geral`),
+                    supabase.from('feriados_folgas').select('id, created_at').or(`funcionario_id.eq.${userId},setor_id.eq.${sectorId},escopo.eq.geral`),
                     supabase.from('justificativas').select('id, status').eq('funcionario_id', userId).neq('status', 'pendente')
                 ]);
 
+                // Buscar Escala para regra de fim de turno
+                let isShiftFinished = false;
+                if (user?.escala_id) {
+                    const { data: escalaData } = await supabase.from('escalas').select('*').eq('id', user.escala_id).maybeSingle();
+                    const todayStr = new Date().toISOString().split('T')[0];
+                    isShiftFinished = ScalesEngine.isDayFinished(todayStr, escalaData);
+                }
+
                 const itemsCC = (resComs.data || []).filter(c => {
-                    const isSeen = c.lido || localStorage.getItem(`ciente_${c.id}`);
                     const config = EventManager.getConfig({ itemType: 'COMUNICADO', ...c });
-                    return !isSeen || !config.autoClear;
+                    const isManualSeen = localStorage.getItem(`ciente_${c.id}`);
+                    
+                    if (!config.autoClear) {
+                        // Persiste até ser "Ciente" ou o turno acabar
+                        return !isManualSeen && !isShiftFinished;
+                    }
+                    // Comunicados simples limpam no exit (detectado via autoClear e localStorage)
+                    return !isManualSeen;
                 });
                 const cC = itemsCC.length;
 
@@ -58,8 +73,8 @@ export const Notifications = {
                 const cL = itemsCL.length;
 
                 const itemsCF = (resFer.data || []).filter(f => {
-                    const isSeen = localStorage.getItem(`visto_feriado_${f.id}`);
-                    return !isSeen;
+                    const isManualSeen = localStorage.getItem(`visto_feriado_${f.id}`);
+                    return !isManualSeen;
                 });
                 const cF = itemsCF.length;
 

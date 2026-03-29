@@ -580,15 +580,34 @@
                     };
                 }
 
+                // 5. Unificar e Agrupar Feriados/Folgas por Data de Envio (created_at)
+                const ferRes = await supabase.from('feriados_folgas').select('*').or(`funcionario_id.eq.${targetId},setor_id.eq.${sId},escopo.eq.geral`);
+                const groupedFerRes = (ferRes.data || []).reduce((acc, f) => {
+                    const key = f.created_at || f.data; 
+                    if (!acc[key]) acc[key] = [];
+                    acc[key].push(f);
+                    return acc;
+                }, {});
+
+                const feriadoItems = Object.entries(groupedFerRes).map(([key, list]) => ({
+                    id: 'group_' + key.replace(/[:.-]/g, ''),
+                    created_at: list[0].created_at || key,
+                    data_item: (list[0].created_at || key).split('T')[0],
+                    itemType: 'FERIAS_FOLGA_GROUP',
+                    list: list,
+                    conteudo: list.map(f => `${f.data.split('-').reverse().slice(0,2).join('/')}: ${f.tipo.replace('_', ' ').toUpperCase()}`).join(' | ')
+                }));
+
                 const itemsRaw = [
                     ...(resAnot.data || []).map(a => ({ ...a, itemType: 'ATIVIDADE', data_item: a.data, conteudo: a.conteudo })),
                     ...(resJust.data || []).map(j => ({ ...j, itemType: 'JUSTIFICATIVA', data_item: j.data_incidente, conteudo: j.descricao })),
                     ...(resCom.data || []).map(c => ({ ...c, itemType: 'COMUNICADO', data_item: (c.created_at||"").split('T')[0], conteudo: c.conteudo })),
                     ...(resLogs.data || []).map(l => ({ ...l, itemType: 'SISTEMA', data_item: (l.data_hora||"").split('T')[0], conteudo: l.mensagem_padrao })),
-                    ...(groupedFerias ? [groupedFerias] : [])
+                    ...(groupedFerias ? [groupedFerias] : []),
+                    ...feriadoItems
                 ];
 
-                // Auto Clear Informativos
+                // Auto Clear Informativos (Apenas Comunicados Simples)
                 await EventManager.clearAutoInformativos(targetId, itemsRaw);
 
                 // Auto Clear Justificativas Processadas (Visualização do Funcionário)
@@ -608,7 +627,21 @@
 
                 Notifications.updateBadges();
 
-                allHistoryData = itemsRaw.sort((a,b) => new Date(b.data_item) - new Date(a.data_item));
+                // 6. Filtrar apenas eventos do dia e ordenar (do mais recente para o mais antigo)
+                const now = new Date();
+                const todayStr = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+
+                allHistoryData = itemsRaw
+                    .filter(item => item.data_item === todayStr)
+                    .sort((a,b) => {
+                        const timeA = new Date(a.created_at || a.data_hora || a.time_raw || a.data_item + 'T00:00:00');
+                        const timeB = new Date(b.created_at || b.data_hora || b.time_raw || b.data_item + 'T00:00:00');
+                        return timeB - timeA;
+                    });
+
+                const labelTotal = document.getElementById('labelTotalAnotacoes');
+                if (labelTotal) labelTotal.innerText = `Total: ${allHistoryData.length} ${allHistoryData.length === 1 ? 'registro' : 'registros'} do dia`;
+
                 renderUnifiedHistory();
             } catch (err) {
                 console.error(err);
@@ -669,8 +702,44 @@
 
                                 const canEdit = EventManager.canEdit(item);
 
-                                // Renderização Específica para Cronograma de Férias
+                                // Renderização do Card de Feriados/Folgas Agrupados
+                                if (item.itemType === 'FERIAS_FOLGA_GROUP') {
+                                    return `
+                                        <div class="bg-white/5 border border-white/5 rounded-2xl p-6 premium-border-purple shadow-lg relative">
+                                            <div class="flex justify-between items-start mb-6">
+                                                <div class="flex items-center gap-3">
+                                                    <div class="size-10 rounded-xl bg-purple-500/10 flex items-center justify-center border border-purple-500/20">
+                                                        <span class="material-symbols-outlined text-xl text-purple-400 font-variation-settings-fill">event_note</span>
+                                                    </div>
+                                                    <div>
+                                                        <h6 class="text-[11px] font-black uppercase tracking-widest text-white">FERIADOS E FOLGAS AGENDADOS</h6>
+                                                        <p class="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-1">${formatDateTime(item.created_at)}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="space-y-2">
+                                                ${item.list.map(f => `
+                                                    <div class="flex items-center gap-3 bg-black/20 p-3 rounded-xl border border-white/5">
+                                                        <div class="text-center min-w-[50px]">
+                                                            <p class="text-[10px] font-black text-white">${f.data.split('-').reverse().slice(0,2).join('/')}</p>
+                                                        </div>
+                                                        <div class="w-px h-6 bg-white/10"></div>
+                                                        <div class="flex-1">
+                                                            <div class="flex items-center gap-2">
+                                                                <span class="text-[8px] font-black uppercase ${f.tipo === 'folga' ? 'text-rose-400' : 'text-amber-400'}">${f.tipo.replace('_', ' ')}</span>
+                                                            </div>
+                                                            <p class="text-[9px] text-slate-400 italic">${f.descricao || 'Sem descrição'}</p>
+                                                        </div>
+                                                    </div>
+                                                `).join('')}
+                                            </div>
+                                        </div>
+                                    `;
+                                }
+
                                 if (item.itemType === 'CRONOGRAMA_FERIAS') {
+                                    // ... mantem o original, ja estava bom
                                     return `
                                         <div class="bg-white/5 border border-white/5 rounded-2xl p-5 premium-border-sky shadow-lg relative">
                                             <div class="flex justify-between items-start mb-4">
@@ -709,9 +778,15 @@
                                             </div>
 
                                             <div class="flex gap-2">
-                                                <button onclick="window.abrirModalFerias()" class="flex-1 flex items-center justify-center gap-2 py-4 bg-white/5 hover:bg-white/10 rounded-2xl transition-all border border-white/5 text-[9px] font-black text-amber-500 uppercase tracking-widest group">
-                                                    <span class="material-symbols-outlined text-sm group-hover:scale-110 transition-transform">edit</span> Alterar Planejamento
-                                                </button>
+                                                ${canEdit ? `
+                                                    <button onclick="window.abrirModalFerias()" class="flex-1 flex items-center justify-center gap-2 py-4 bg-white/5 hover:bg-white/10 rounded-2xl transition-all border border-white/5 text-[9px] font-black text-amber-500 uppercase tracking-widest group">
+                                                        <span class="material-symbols-outlined text-sm group-hover:scale-110 transition-transform">edit</span> Alterar Planejamento
+                                                    </button>
+                                                ` : `
+                                                    <div class="flex-1 flex items-center justify-center gap-2 py-4 bg-white/5 rounded-2xl border border-white/5 text-[8px] font-bold text-slate-500 uppercase tracking-widest opacity-50 cursor-not-allowed">
+                                                        <span class="material-symbols-outlined text-xs">lock</span> Mudança Bloqueada (+15d)
+                                                    </div>
+                                                `}
                                                 ${item.status === 'pendente' ? `
                                                     <button onclick="window.excluirPlanejamentoFerias()" class="flex items-center justify-center gap-2 px-6 py-4 bg-rose-500/5 hover:bg-rose-500/10 rounded-2xl transition-all border border-rose-500/10 text-[9px] font-black text-rose-500 uppercase tracking-widest group">
                                                         <span class="material-symbols-outlined text-sm group-hover:scale-110 transition-transform">delete</span>
@@ -721,6 +796,12 @@
                                         </div>
                                     `;
                                 }
+
+                                const isHE = item.subtipo === 'hora_extra';
+                                const isCiente = localStorage.getItem(`ciente_${item.id}`);
+                                const btnStyle = isCiente ? 
+                                    'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 
+                                    'bg-amber-500/10 border-amber-500/20 text-amber-500 shadow-lg shadow-amber-500/10';
 
                                 return `
                                     <div class="bg-white/5 border border-white/5 rounded-2xl p-5 ${sideBorder} ${isFerias ? 'bg-vacation-soft' : ''} shadow-lg relative">
@@ -742,7 +823,7 @@
                                         <p class="text-[11px] text-slate-300 ${isJustificativa ? '' : 'italic'} leading-relaxed">"${item.conteudo}"</p>
                                         
                                         <div class="flex justify-between items-center mt-4">
-                                            <div>
+                                            <div class="flex-1">
                                                 ${isJustificativa && item.evidencia_url ? `
                                                     <a href="${item.evidencia_url}" target="_blank" class="flex items-center gap-2 btn-anexo-glass px-4 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-widest">
                                                         <span class="material-symbols-outlined text-sm">attach_file</span> Ver Anexo
@@ -755,7 +836,12 @@
                                                     <button onclick="window.editarRegistro('${item.id}', '${item.itemType}')" class="p-3 bg-white/5 text-primary hover:bg-primary/10 rounded-xl transition-all material-symbols-outlined text-[18px]">edit</button>
                                                     <button onclick="window.excluirAnotacao('${item.id}', '${item.itemType}')" class="p-3 bg-white/5 text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all material-symbols-outlined text-[18px]">delete</button>
                                                 ` : ''}
-                                                ${item.subtipo === 'hora_extra' ? `<button onclick="window.marcarCiente('${item.id}')" class="px-3 py-1 bg-emerald-500 text-white text-[8px] font-black rounded-full uppercase shadow-lg shadow-emerald-500/20">Estou Ciente</button>` : ''}
+                                                ${isHE ? `
+                                                    <button onclick="window.marcarCiente('${item.id}', 'HE')" class="px-6 py-3 rounded-2xl border transition-all text-[9.5px] font-black uppercase tracking-widest flex items-center gap-2 ${btnStyle}">
+                                                        <span class="material-symbols-outlined text-sm">${isCiente ? 'done_all' : 'check'}</span>
+                                                        <span>ESTOU CIENTE</span>
+                                                    </button>
+                                                ` : ''}
                                             </div>
                                         </div>
                                     </div>
@@ -873,12 +959,25 @@
         }
 
         // --- EXPOSED GLOBALS ---
-        window.marcarCiente = async (id) => {
+        window.marcarCiente = async (id, type) => {
             UI.showLoader();
             try {
-                localStorage.setItem(`ciente_${id}`, 'true');
-                await supabase.from('comunicados').update({ lido: true }).eq('id', id);
+                if (type === 'HE') {
+                    localStorage.setItem(`ciente_${id}`, 'true');
+                    await supabase.from('comunicados').update({ lido: true }).eq('id', id);
+                } else if (type === 'FERIADO') {
+                    localStorage.setItem(`visto_feriado_${id}`, 'true');
+                    // Também marca os itens individuais do grupo para limpar o badge
+                    const group = allHistoryData.find(i => i.id === id);
+                    if (group && group.list) {
+                        group.list.forEach(f => {
+                            localStorage.setItem(`visto_feriado_${f.id}`, 'true');
+                        });
+                    }
+                }
+                
                 UI.showToast('Confirmado!', 'success');
+                Notifications.updateBadges(); // Atualiza contador na hora
                 await loadUnifiedHistory();
             } catch (err) {
                 console.error(err);
@@ -886,6 +985,12 @@
                 UI.hideLoader();
             }
         };
+
+        // --- AUTO CLEAR ON EXIT ---
+        window.addEventListener('beforeunload', () => {
+             // Limpa o badge de comunicados simples salvando no localStorage antes de sair
+             EventManager.clearAutoInformativos(targetId, allHistoryData);
+        });
 
         window.excluirAnotacao = async (id) => {
             if (!confirm('Deseja excluir?')) return;

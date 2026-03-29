@@ -195,6 +195,7 @@
         import { Auth } from '../js/auth.js';
         import { UI } from '../js/ui-utils.js';
         import { ScalesEngine } from '../js/scales-engine.js';
+        import { Notifications } from '../js/notifications.js';
 
         async function init() {
             const btnVoltar = document.getElementById('btn-voltar');
@@ -246,6 +247,7 @@
                 ]);
 
                 renderResumo(ptsRes.data, anotRes.data, justRes.data, comsRes.data || [], logsRes.data || [], ferRes.data || [], vacRes.data || [], func.escalas, dataRef);
+                Notifications.updateBadges();
 
             } catch (err) {
                 console.error(err);
@@ -256,18 +258,18 @@
         }
 
         function renderResumo(pontos, anotacoes, justificativas, comunicados, logs, feriados, ferias, escala, dataRef) {
-            const isFerias = ferias && ferias.length > 0;
+            const isVacation = ferias && ferias.length > 0;
             
             // 1. Cálculos de Tempo
             const possuiAlmoco = escala?.possui_almoco !== false;
             const workedMins = calculateWorkedMinutes(pontos, possuiAlmoco);
-            const plannedMins = isFerias ? 0 : ScalesEngine.calculateDailyWorkMinutes(escala);
-            const balance = isFerias ? 0 : workedMins - plannedMins;
+            const plannedMins = isVacation ? 0 : ScalesEngine.calculateDailyWorkMinutes(escala);
+            const balance = isVacation ? 0 : workedMins - plannedMins;
 
             document.getElementById('totalTrabalhado').innerText = formatMinutes(workedMins);
-            document.getElementById('totalEsperado').innerText = isFerias ? 'FÉRIAS' : formatMinutes(plannedMins);
+            document.getElementById('totalEsperado').innerText = isVacation ? 'FÉRIAS' : formatMinutes(plannedMins);
             
-            if (isFerias) {
+            if (isVacation) {
                 document.getElementById('user-nome-audit').innerHTML += ` <span class="ml-2 px-3 py-1 bg-blue-500 text-white text-[10px] font-black rounded-full italic shadow-lg shadow-blue-500/20">EM REPOUSO</span>`;
             }
             
@@ -594,6 +596,41 @@
             window.location.href = `resumo_dia.html?${urlParams.toString()}`;
         };
 
+        // --- LÓGICA DE NAVEGAÇÃO POR SWIPE (Gesto) ---
+        let touchStartX = 0;
+        let touchStartY = 0;
+
+        const handleStart = (e) => {
+            touchStartX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+            touchStartY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+        };
+
+        const handleEnd = (e) => {
+            const endX = e.type.includes('touch') ? e.changedTouches[0].clientX : e.clientX;
+            const endY = e.type.includes('touch') ? e.changedTouches[0].clientY : e.clientY;
+            
+            const diffX = touchStartX - endX;
+            const diffY = touchStartY - endY;
+            
+            // Threshold: 100px para evitar toques acidentais
+            // E garantir que o movimento horizontal é maior que o vertical
+            if (Math.abs(diffX) > 100 && Math.abs(diffX) > Math.abs(diffY)) {
+                if (diffX > 0) {
+                    navigateDay(1); // Swipe Left -> Próximo Dia
+                } else {
+                    navigateDay(-1); // Swipe Right -> Dia Anterior
+                }
+            }
+        };
+
+        // Adicionar a toda a página
+        document.addEventListener('touchstart', handleStart, { passive: true });
+        document.addEventListener('touchend', handleEnd, { passive: true });
+
+        // Suporte para Mouse (Drag)
+        document.addEventListener('mousedown', handleStart);
+        document.addEventListener('mouseup', handleEnd);
+
         const mapInstances = {};
         window.toggleMapaCard = (id, coordenadas) => {
             const container = document.getElementById(`map-card-${id}`);
@@ -738,6 +775,29 @@
 
         init();
     </script>
+
+    <!-- Bottom Navigation (Links dinâmicos) -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-background-dark/90 border-t border-white/5 py-4 z-50 flex justify-center backdrop-blur-xl no-print">
+        <div class="flex items-center justify-around w-full max-w-md px-6">
+            <a href="dashboard.html" class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+                <span class="material-symbols-outlined text-2xl">home</span>
+                <span class="text-[9px] font-black uppercase tracking-widest text-center">Início</span>
+            </a>
+            <a href="estatistica_funcionario.html" class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+                <span class="material-symbols-outlined text-2xl">bar_chart</span>
+                <span class="text-[9px] font-black uppercase tracking-widest text-center">Estatística</span>
+            </a>
+            <a href="diario_funcionario.html" class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors relative">
+                <span class="material-symbols-outlined text-2xl">edit_note</span>
+                <span class="text-[9px] font-black uppercase tracking-widest text-center">Diário</span>
+                <span id="notif-badge-footer" class="absolute top-0 right-0 size-3.5 bg-amber-500 text-white text-[7px] font-black rounded-full flex items-center justify-center border border-background-dark hidden">0</span>
+            </a>
+            <a id="nav-perfil-link" href="perfil_funcionario.html" class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+                <span class="material-symbols-outlined text-2xl">person</span>
+                <span class="text-[9px] font-black uppercase tracking-widest text-center">Perfil</span>
+            </a>
+        </div>
+    </nav>
 </body>
 
 </html>

@@ -167,6 +167,13 @@ const UI = {
         }).join('');
 
         sidebarNav.innerHTML = menuHtml;
+        
+        // Listener para fechar ao clicar fora (no overlay)
+        const overlay = document.getElementById('sidebarOverlay');
+        if (overlay && !overlay.dataset.listenerAdded) {
+            overlay.addEventListener('click', () => this.toggleSidebar(false));
+            overlay.dataset.listenerAdded = 'true';
+        }
 
         // Adicionar listener de logout se houver botão
         const logoutBtn = document.getElementById('logoutBtn');

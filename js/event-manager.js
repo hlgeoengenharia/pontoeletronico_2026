@@ -37,10 +37,10 @@ export const EventManager = {
         },
         'HORA_EXTRA': {
             title: 'SOLICITAÇÃO DE HORA EXTRA',
-            icon: 'campaign',
+            icon: 'timer',
             colorClass: 'text-amber-500',
             premiumBorder: 'premium-border-amber',
-            autoClear: false // Requer CIENTE
+            autoClear: false // Requer CIENTE ou Fim de Turno
         },
         'SISTEMA': {
             title: 'LOG DO SISTEMA',
@@ -61,7 +61,7 @@ export const EventManager = {
             icon: 'event_note',
             colorClass: 'text-purple-500',
             premiumBorder: 'premium-border-purple',
-            autoClear: true
+            autoClear: true // Limpa ao visualizar e sair
         }
     },
 
@@ -83,17 +83,37 @@ export const EventManager = {
         return this.EVENT_CONFIG[typeKey] || this.EVENT_CONFIG['SISTEMA'];
     },
 
-    // 3. Regras de Edição (24 Horas)
+    // 3. Regras de Edição (Integridade Corporativa)
     canEdit(item) {
-        const createdAt = new Date(item.created_at || item.data_hora || item.time || item.time_raw);
         const now = new Date();
+        const typeKey = item.itemType || item.type;
+
+        // Regra 1: Férias (Parcelas) - Congelar 15 dias antes do início
+        if (typeKey === 'CRONOGRAMA_FERIAS') {
+            // Se houver múltiplas parcelas, verificamos se a mais próxima está a menos de 15 dias
+            if (!item.parcelas || !Array.isArray(item.parcelas)) return false;
+            
+            return item.parcelas.every(p => {
+                const start = new Date(p.data_inicio + 'T00:00:00');
+                const diffDays = (start - now) / (1000 * 60 * 60 * 24);
+                return diffDays >= 15;
+            });
+        }
+
+        // Regra 2: Atividades e Justificativas - 24 Horas
+        const createdAt = new Date(item.created_at || item.data_hora || item.time || item.time_raw || item.data_item + 'T00:00:00');
         const diffHours = (now - createdAt) / (1000 * 60 * 60);
 
         const editableTypes = ['ATIVIDADE', 'JUSTIFICATIVA'];
-        const isEditableType = editableTypes.includes(item.itemType || item.type);
+        const isEditableType = editableTypes.includes(typeKey);
         const isPending = (item.status === 'pendente' || item.status_pendencia === 'pendente');
 
-        return diffHours < 24 && isEditableType && (item.itemType === 'ATIVIDADE' || isPending);
+        if (isEditableType) {
+            if (typeKey === 'ATIVIDADE') return diffHours < 24;
+            if (typeKey === 'JUSTIFICATIVA') return diffHours < 24 && isPending;
+        }
+
+        return false;
     },
 
     // 4. Inteligência de Escala (Integração com ScalesEngine)
