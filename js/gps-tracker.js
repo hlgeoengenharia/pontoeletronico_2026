@@ -60,6 +60,14 @@ class GPSTracker {
             const coordStr = `${lat},${lng}`;
             const nowTime = new Date().toLocaleTimeString('pt-BR');
 
+            // 2. Atualizar Posição em Tempo Real na tabela de Funcionários (Fácil acesso para Rede Neural)
+            try {
+                await supabase.from('funcionarios').update({
+                    last_lat: lat,
+                    last_lng: lng
+                }).eq('id', user.id);
+            } catch (updErr) { console.warn('[GPSTracker] Erro ao atualizar last_lat na tabela funcionarios:', updErr); }
+
             // 3. Rastreamento Externo (Baseado na Escala)
             const escala = user.escalas || {};
             if (escala.rastreio_horario) {

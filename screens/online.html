@@ -616,9 +616,18 @@
     const urlParams = new URLSearchParams(window.location.search);
     const isFeriasMode = urlParams.get('mode') === 'ferias';
 
+    // Timer de atualização
+    let refreshInterval = null;
+
     // --- INICIALIZAÇÃO ---
     async function init() {
         UI.showLoader();
+        const currentUser = Auth.getUser();
+
+        // Ativar Rastreamento GPS para o próprio usuário logado enquanto navega
+        if (currentUser) {
+            GPSTracker.startTracking(currentUser);
+        }
 
         if (isFeriasMode) {
             document.getElementById('neural-title').innerText = 'CRONOGRAMA';
@@ -680,7 +689,7 @@
             }
 
             // 2. Funcionários e Tabelas Relacionadas (Filtros por Setor)
-            let queryF = supabase.from('funcionarios').select('id, nome_completo, nickname, cargo_id, especialidade_id, setor_id, nivel_acesso, regime_trabalho');
+            let queryF = supabase.from('funcionarios').select('id, nome_completo, nickname, cargo_id, especialidade_id, setor_id, nivel_acesso, regime_trabalho, last_lat, last_lng');
             if (isGestorOnly && sId) queryF = queryF.eq('setor_id', sId);
 
             const [fRes, cRes, eRes, pRes] = await Promise.all([
@@ -828,11 +837,12 @@
                     }
                 });
 
-                const isOnline = hasActivePunch || isRecentActivity || isMe;
+                const onlineStatus = hasActivePunch || isRecentActivity || isMe;
                 const loc = lastLocs[f.id];
                 
-                let finalLat = loc?.latitude || null;
-                let finalLng = loc?.longitude || null;
+                // Prioridade de Coordenadas: 1. Pulso Recente | 2. Tabela Funcionarios (Realtime) | 3. Último Ponto
+                let finalLat = f.last_lat || loc?.latitude || null;
+                let finalLng = f.last_lng || loc?.longitude || null;
 
                 if (lastPulse && lastPulse.coordenadas) {
                     const [plat, plng] = lastPulse.coordenadas.split(',').map(Number);
@@ -842,9 +852,15 @@
                     }
                 }
 
+                // Centralizar mapa em mim na primeira carga bem-sucedida se eu tiver coordenadas
+                if (isMe && finalLat && !window.centeredOnMe) {
+                    map.setView([finalLat, finalLng], 15);
+                    window.centeredOnMe = true;
+                }
+
                 return {
                     ...f,
-                    status: isOnline ? 'online' : 'offline',
+                    status: onlineStatus ? 'online' : 'offline',
                     vacationStatus,
                     last_lat: finalLat,
                     last_lng: finalLng,
