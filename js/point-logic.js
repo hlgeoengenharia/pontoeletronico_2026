@@ -62,7 +62,8 @@ export const PointLogic = {
             status_validacao: 'pendente',
             modalidade: checkIn.modalidade,
             justificativa_usuario: 'Registro automático por esquecimento de check-out (Regra 50% da jornada).',
-            geolocalizacao_json: checkIn.geolocalizacao_json
+            latitude: checkIn.latitude,
+            longitude: checkIn.longitude
         }]);
 
         if (pError) throw pError;

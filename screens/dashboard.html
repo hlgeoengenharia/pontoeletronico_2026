@@ -682,10 +682,20 @@
                     const label = btn.querySelector('span.text-xs');
                     if (label) label.innerHTML = 'EM GOZO<br>DE FÉRIAS';
                     btn.onclick = null;
+                } else if (!currentUser.biometria_cadastrada) {
+                    // --- TRAVA DE BIOMETRIA OBRIGATÓRIA ---
+                    btn.classList.add('bg-amber-600', 'animate-pulse');
+                    const label = btn.querySelector('span.text-xs');
+                    if (label) label.innerHTML = 'BIOMETRIA<br>PENDENTE';
+                    btn.onclick = () => {
+                        UI.showToast("Cadastre sua biometria facial para liberar o ponto.", "warning");
+                        setTimeout(() => window.location.href = `perfil_funcionario.html?id=${userId}&role=${role}`, 1500);
+                    };
                 } else if (isOnline) {
                     btn.classList.add('bg-rose-500'); // Check-out é sempre Rose para destaque
                     const label = btn.querySelector('span.text-xs');
                     if (label) label.innerHTML = 'FINALIZAR<br>TURNO';
+                    btn.onclick = () => handlePunchAction('check-out');
                 } else {
                     // Aplicar Cor por Perfil
                     if (role === 'Admin') btn.classList.add('punch-admin');
@@ -694,6 +704,7 @@
 
                     const label = btn.querySelector('span.text-xs');
                     if (label) label.innerHTML = 'REGISTRAR<br>PONTO';
+                    btn.onclick = () => handlePunchAction('check-in');
 
                     // Lógica de Janela de Ativação e Congelamento
                     await checkButtonWindow(btn);
@@ -774,11 +785,9 @@
                 btn.classList.add('animate-celestial');
             }
 
-            btn.onclick = async () => {
+            async function handlePunchAction(nextType) {
                 const { data: lastPoints } = await supabase.from('pontos').select('tipo, hora_extra_liberada').eq('funcionario_id', userId).order('data_hora', { ascending: false }).limit(1);
                 const lastPoint = lastPoints && lastPoints.length > 0 ? lastPoints[0] : null;
-                const lastType = lastPoint ? lastPoint.tipo : 'check-out';
-                const nextType = lastType === 'check-in' ? 'check-out' : 'check-in';
 
                 // --- VALIDAÇÃO DE CHECK-OUT (HORA EXTRA / BLOQUEIO) ---
                 if (nextType === 'check-out') {
@@ -812,7 +821,7 @@
                         
                         // Validar via Central de Eventos
                         const validation = EventManager.validatePointEvent(
-                            { tipo: 'check-in', geolocalizacao_json: { lat, lng } },
+                            { tipo: 'check-in', latitude: lat, longitude: lng },
                             escala
                         );
 
@@ -822,11 +831,9 @@
                                 showGeofenceModal(lat, lng);
                                 return;
                             }
-                            // Outras divergências (ex: horário) são apenas registradas (conforme regra 'Apenas Alertar')
                         }
                     } catch (e) {
                         console.warn('Falha na validação automática:', e);
-                        // Fallback silenciável para não impedir a batida se o GPS falhar
                     }
                 }
 
@@ -835,7 +842,7 @@
                 } else {
                     await executePunch(nextType);
                 }
-            };
+            }
 
             // Listener para Captura de Face
             document.getElementById('btn-capturar-face').onclick = async () => {
@@ -874,31 +881,29 @@
                         }
                     }
 
-                    // Se a biometria estiver ativa mas não foi fornecida foto (fluxo cancelado ou erro)
-                    if (currentUser.biometria_cadastrada && !photoFile && !justificativa) {
-                        fecharModalCamera();
-                        await abrirModalCamera();
-                        UI.hideLoader();
-                        return;
+                    // 2. Preparar Justificativa com Foto embutida (Contorno de Schema)
+                    let justificativaFinal = justificativa;
+                    if (evidênciaUrl) {
+                        justificativaFinal = `[FOTO:${evidênciaUrl}] ${justificativa || ''}`.trim();
                     }
 
                     // Validação Final de Divergências para o Banco
                     const escala = currentUser.escalas;
                     const validation = escala ? EventManager.validatePointEvent({ 
                         tipo, 
-                        geolocalizacao_json: lat ? { lat, lng } : null 
+                        latitude: lat,
+                        longitude: lng 
                     }, escala) : { status: 'normal', alerts: [] };
 
                     const { error } = await supabase.from('pontos').insert([{ 
                         funcionario_id: userId, 
                         data_hora: new Date().toISOString(), 
                         tipo: tipo, 
-                        status_validacao: (justificativa || validation.status === 'divergente') ? 'pendente' : 'aprovado', 
+                        status_validacao: (justificativaFinal || validation.status === 'divergente') ? 'pendente' : 'aprovado', 
                         dentro_do_raio: !validation.alerts.includes('FORA DO RAIO'),
-                        justificativa_usuario: justificativa || (validation.alerts.length > 0 ? validation.alerts.join(' | ') : null),
+                        justificativa_usuario: justificativaFinal || (validation.alerts.length > 0 ? validation.alerts.join(' | ') : null),
                         latitude: lat,
-                        longitude: lng,
-                        evidencia_url: evidênciaUrl
+                        longitude: lng
                     }]);
 
                     if (error) throw error;

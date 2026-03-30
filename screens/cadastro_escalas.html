@@ -96,7 +96,7 @@
             <label class="block text-sm font-medium mb-1 text-slate-400">Regime de Trabalho</label>
             <select id="regime_trabalho"
               class="w-full bg-background-dark/50 border-primary/30 rounded-lg focus:ring-primary focus:border-primary text-slate-100 p-3 outline-none">
-              <option value="Escritório">Presencial (Escritório)</option>
+              <option value="Presencial">Presencial (Escritório)</option>
               <option value="Externo">Externo (Rastreio Ativo)</option>
               <option value="Híbrido">Híbrido (App Decide)</option>
             </select>
@@ -218,6 +218,12 @@
             <input id="tol_entrada"
               class="w-full bg-background-dark/30 border-white/10 rounded p-2 text-sm text-primary font-bold"
               type="number" value="15">
+          </div>
+          <div class="col-span-3 pt-2 border-t border-white/5 mt-1">
+             <p class="text-[9px] text-slate-400 leading-relaxed">
+               <strong class="text-primary/70">JANELA ANTES/DEPOIS:</strong> Define o período de ativação do botão de registro no Dashboard (ex: 30 min antes/depois do horário previsto).<br>
+               <strong class="text-primary/70">TOLERÂNCIA:</strong> Margem legal permitida para variações de horário sem gerar alertas de divergência.
+             </p>
           </div>
         </div>
 
@@ -673,7 +679,7 @@
                         <div class="space-y-1">
                             <label class="text-[11px] font-bold uppercase opacity-50 text-slate-400">Regime de Trabalho</label>
                             <select id="inline-regime-${e.id}" onchange="updateInlineVisibility('${e.id}')" class="w-full bg-background-dark/50 border-primary/30 rounded-lg px-3 py-3 text-xs text-slate-100 outline-none">
-                                <option value="Escritório" ${e.regime === 'Escritório' ? 'selected' : ''}>Presencial</option>
+                                <option value="Presencial" ${e.regime === 'Presencial' ? 'selected' : ''}>Presencial</option>
                                 <option value="Externo" ${e.regime === 'Externo' ? 'selected' : ''}>Externo</option>
                                 <option value="Híbrido" ${e.regime === 'Híbrido' ? 'selected' : ''}>Híbrido</option>
                             </select>
@@ -772,6 +778,12 @@
                               <label class="text-[9px] font-bold text-slate-400 uppercase mb-1">Tol. Ent. (min)</label>
                               <input id="inline-tol-in-${e.id}" type="number" class="w-full bg-background-dark/30 border-white/10 rounded p-2 text-sm text-primary font-bold" value="${e.tolerancia_entrada_minutos || 15}">
                           </div>
+                          <div class="col-span-3 pt-2 border-t border-white/5 mt-1">
+                              <p class="text-[9px] text-slate-400 leading-relaxed">
+                                <strong class="text-primary/70">JANELA ANTES/DEPOIS:</strong> Período de ativação do botão no Dashboard.<br>
+                                <strong class="text-primary/70">TOLERÂNCIA:</strong> Margem para variações sem gerar alertas.
+                              </p>
+                           </div>
                         </div>
                       </div>
 
@@ -859,21 +871,6 @@
                             <p class="text-xs text-slate-400 leading-relaxed font-medium">
                               <strong class="text-primary/70">ATIVADO:</strong> Para funcionários em regime 'Externo', o aplicativo capturará a localização GPS a cada 60 minutos durante o expediente para fins de log de rota.<br>
                               <strong class="text-slate-500 font-bold">DESATIVADO:</strong> A localização só é capturada no momento exato das batidas de ponto.
-                            </p>
-                          </div>
-
-                          <!-- Revisão -->
-                          <div class="p-3 bg-background-dark/30 rounded-lg space-y-2">
-                            <div class="flex items-center justify-between">
-                              <span class="text-xs font-bold text-slate-200">Revisão Periódica da Escala</span>
-                              <div class="flex items-center gap-2 shrink-0">
-                                <input id="inline-frequencia-${e.id}" type="number" value="${e.frequencia_meses || 0}" min="0" class="w-14 bg-background-dark/50 border-primary/30 rounded p-1.5 text-xs text-primary font-bold text-center">
-                                <span class="text-[9px] font-bold text-slate-500 uppercase">Meses</span>
-                              </div>
-                            </div>
-                            <p class="text-xs text-slate-400 leading-relaxed font-medium">
-                              <strong class="text-primary/70">ATIVADO:</strong> Define o ciclo de vida da escala. Ao atingir o prazo, o sistema alerta a necessidade de reavaliação.<br>
-                              <strong class="text-slate-500 font-bold">DESATIVADO (0):</strong> A escala não possui prazo de validade e nunca será solicitada a sua revisão.
                             </p>
                           </div>
 
@@ -1094,7 +1091,6 @@
                 gestao_horas_extras: document.getElementById(`inline-rule-extra-${id}`).checked,
                 limite_horas_extras: parseInt(document.getElementById(`inline-extra-limit-${id}`).value) || 0,
                 rastreio_horario: document.getElementById(`inline-rule-track-${id}`).checked,
-                frequencia_meses: parseInt(document.getElementById(`inline-frequencia-${id}`).value) || 0,
                 possui_almoco: document.getElementById(`inline-rule-lunch-${id}`).checked,
                 
                 // Configs Complexas
@@ -1104,8 +1100,7 @@
                 ciclo_config: {
                     trab_total: parseInt(document.getElementById(`inline-trab-${id}`).value) || 12,
                     folga_total: parseInt(document.getElementById(`inline-folga-${id}`).value) || 36
-                },
-                updated_at: new Date().toISOString()
+                }
             };
 
             if (!dados.nome) throw new Error('O nome da escala é obrigatório!');

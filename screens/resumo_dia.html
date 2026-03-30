@@ -366,11 +366,26 @@
                         <div class="space-y-4">
                             ${pontos.filter((_, i) => i % 2 === 0).map((p, i) => `
                                 <div class="flex items-center gap-4">
-                                    <div class="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
+                                    <div class="flex items-center gap-1.5 bg-emerald-500/10 p-2 rounded-lg">
                                         <span class="material-symbols-outlined text-emerald-500 text-sm">login</span>
                                     </div>
                                     <div>
-                                        <p class="text-[8px] font-black text-slate-500 uppercase tracking-tighter">Entrada ${i + 1}</p>
+                                        <div class="flex items-center gap-2">
+                                            <p class="text-[8px] font-black text-slate-500 uppercase tracking-tighter">Entrada ${i + 1}</p>
+                                            ${(() => {
+                                                const desc = p.justificativa_usuario || '';
+                                                let url = p.evidencia_url || (p.geolocalizacao_json && p.geolocalizacao_json.evidencia_url);
+                                                if (desc.includes('[FOTO:')) {
+                                                    const match = desc.match(/\[FOTO:(.*?)\]/);
+                                                    if (match) url = match[1];
+                                                }
+                                                return url ? `
+                                                    <a href="${url}" target="_blank" class="text-amber-500 hover:text-amber-400">
+                                                        <span class="material-symbols-outlined text-[12px]">attach_file</span>
+                                                    </a>
+                                                ` : '';
+                                            })()}
+                                        </div>
                                         <p class="text-sm font-black text-slate-200">${formatTime(p)}</p>
                                     </div>
                                 </div>
@@ -379,11 +394,26 @@
                         <div class="space-y-4">
                             ${pontos.filter((_, i) => i % 2 !== 0).map((p, i) => `
                                 <div class="flex items-center gap-4">
-                                    <div class="w-8 h-8 rounded-lg bg-rose-500/10 flex items-center justify-center border border-rose-500/20">
+                                    <div class="flex items-center gap-1.5 bg-rose-500/10 p-2 rounded-lg">
                                         <span class="material-symbols-outlined text-rose-500 text-sm">logout</span>
                                     </div>
                                     <div>
-                                        <p class="text-[8px] font-black text-slate-500 uppercase tracking-tighter">Saída ${i + 1}</p>
+                                        <div class="flex items-center gap-2">
+                                            <p class="text-[8px] font-black text-slate-500 uppercase tracking-tighter">Saída ${i + 1}</p>
+                                            ${(() => {
+                                                const desc = p.justificativa_usuario || '';
+                                                let url = p.evidencia_url || (p.geolocalizacao_json && p.geolocalizacao_json.evidencia_url);
+                                                if (desc.includes('[FOTO:')) {
+                                                    const match = desc.match(/\[FOTO:(.*?)\]/);
+                                                    if (match) url = match[1];
+                                                }
+                                                return url ? `
+                                                    <a href="${url}" target="_blank" class="text-amber-500 hover:text-amber-400">
+                                                        <span class="material-symbols-outlined text-[12px]">attach_file</span>
+                                                    </a>
+                                                ` : '';
+                                            })()}
+                                        </div>
                                         <p class="text-sm font-black text-slate-200">${formatTime(p)}</p>
                                     </div>
                                 </div>

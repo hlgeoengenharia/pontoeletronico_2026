@@ -131,13 +131,11 @@ export const EventManager = {
         const results = [];
         
         // A. Geofence
-        if (escala.lat && escala.lng && ponto.geolocalizacao_json) {
-            const dist = ScalesEngine.calculateDistance(
-                ponto.geolocalizacao_json.lat, 
-                ponto.geolocalizacao_json.lng,
-                escala.lat,
-                escala.lng
-            );
+        const lat = ponto.latitude || (ponto.geolocalizacao_json ? ponto.geolocalizacao_json.lat : null);
+        const lng = ponto.longitude || (ponto.geolocalizacao_json ? ponto.geolocalizacao_json.lng : null);
+
+        if (escala.lat && escala.lng && lat && lng) {
+            const dist = ScalesEngine.calculateDistance(lat, lng, escala.lat, escala.lng);
             if (dist > (escala.raio_geofence || 200)) {
                 results.push('FORA DO RAIO');
             }

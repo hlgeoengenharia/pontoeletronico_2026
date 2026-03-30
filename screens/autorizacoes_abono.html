@@ -120,13 +120,28 @@
           // Normalizar e Unificar
           const allPendencies = [
             ...(dataJust || []).map(j => ({ ...j, itemType: 'ABONO', file_url: j.evidencia_url })),
-            ...(dataGps || []).map(g => ({ 
-                ...g, 
-                itemType: 'GPS', 
-                data_incidente: g.data_hora, 
-                tipo_divergencia: g.status === 'automatico_50' ? 'ESQUECIMENTO DE SAÍDA (PROPOSTA 50%)' : 'SOLICITAÇÃO DE PONTO FORA DO RAIO', 
-                descricao: g.status === 'automatico_50' ? (g.justificativa_usuario || 'O sistema propôs 50% da jornada por falta de check-out.') : g.justificativa_usuario, 
-                file_url: g.evidencia_url || g.arquivo_url 
+            ...((dataGps || []).map(g => {
+                // Extrair FOTO da justificativa se houver
+                let photoUrl = g.evidencia_url || g.arquivo_url;
+                let cleanDesc = g.justificativa_usuario || '';
+                
+                if (cleanDesc.includes('[FOTO:')) {
+                    const match = cleanDesc.match(/\[FOTO:(.*?)\]/);
+                    if (match) {
+                        photoUrl = match[1];
+                        cleanDesc = cleanDesc.replace(match[0], '').trim();
+                    }
+                }
+
+                return {
+                    ...g, 
+                    id: g.id, 
+                    itemType: 'GPS', 
+                    data_incidente: g.data_hora, 
+                    tipo_divergencia: g.status === 'automatico_50' ? 'ESQUECIMENTO DE SAÍDA (PROPOSTA 50%)' : 'SOLICITAÇÃO DE PONTO FORA DO RAIO', 
+                    descricao: g.status === 'automatico_50' ? (cleanDesc || 'O sistema propôs 50% da jornada por falta de check-out.') : cleanDesc, 
+                    file_url: photoUrl || (g.geolocalizacao_json ? g.geolocalizacao_json.evidencia_url : null)
+                };
             })),
             ...(dataLogs || []).map(l => ({ 
               ...l, 
