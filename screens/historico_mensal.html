@@ -504,6 +504,33 @@
             loadData();
         };
 
+        // --- LÓGICA DE SWIPE (TROCA DE MÊS) ---
+        let touchStartX = 0;
+        let touchStartY = 0;
+
+        const handleStart = (e) => {
+            touchStartX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
+            touchStartY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
+        };
+
+        const handleEnd = async (e) => {
+            const endX = e.type.includes('touch') ? e.changedTouches[0].clientX : e.clientX;
+            const endY = e.type.includes('touch') ? e.changedTouches[0].clientY : e.clientY;
+            const diffX = touchStartX - endX;
+            const diffY = touchStartY - endY;
+            
+            if (Math.abs(diffX) > 80 && Math.abs(diffX) > Math.abs(diffY)) {
+                if (diffX > 0) navigateMonth(1);  // Esquerda -> Próximo
+                else navigateMonth(-1);           // Direita -> Anterior
+            }
+        };
+
+        const mainContainer = document.querySelector('main');
+        mainContainer.addEventListener('touchstart', handleStart, { passive: true });
+        mainContainer.addEventListener('touchend', handleEnd, { passive: true });
+        mainContainer.addEventListener('mousedown', handleStart);
+        mainContainer.addEventListener('mouseup', handleEnd);
+
         function renderEspelho(pontos, anotacoes, justificativas, comunicados, logs, feriados, ferias, escala, mParam, yParam) {
             const month = parseInt(mParam);
             const year = parseInt(yParam);
