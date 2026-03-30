@@ -255,8 +255,27 @@
                     const diffY = touchStartY - endY;
                     
                     if (Math.abs(diffX) > 80 && Math.abs(diffX) > Math.abs(diffY)) {
-                        if (diffX > 0) { curYear++; loadStats(); } // Esquerda -> Próximo
-                        else { curYear--; loadStats(); }            // Direita -> Anterior
+                        const direction = diffX > 0 ? 1 : -1;
+                        const main = mainContainer;
+
+                        // 1. Iniciar Transição (Saída)
+                        main.classList.add('transition-all', 'duration-300', 'ease-out', 'opacity-0', direction > 0 ? '-translate-x-4' : 'translate-x-4');
+                        
+                        setTimeout(async () => {
+                            // 2. Trocar Dados
+                            if (direction > 0) curYear++;
+                            else curYear--;
+                            await loadStats();
+
+                            // 3. Resetar Posição para entrar do lado oposto
+                            main.classList.remove('-translate-x-4', 'translate-x-4');
+                            main.classList.add(direction > 0 ? 'translate-x-4' : '-translate-x-4');
+
+                            // 4. Iniciar Transição (Entrada)
+                            setTimeout(() => {
+                                main.classList.remove('opacity-0', '-translate-x-4', 'translate-x-4');
+                            }, 50);
+                        }, 300);
                     }
                 };
 
