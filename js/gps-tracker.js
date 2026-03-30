@@ -60,13 +60,8 @@ class GPSTracker {
             const coordStr = `${lat},${lng}`;
             const nowTime = new Date().toLocaleTimeString('pt-BR');
 
-            // 2. Atualizar Posição em Tempo Real na tabela de Funcionários (Fácil acesso para Rede Neural)
-            try {
-                await supabase.from('funcionarios').update({
-                    last_lat: lat,
-                    last_lng: lng
-                }).eq('id', user.id);
-            } catch (updErr) { console.warn('[GPSTracker] Erro ao atualizar last_lat na tabela funcionarios:', updErr); }
+            // 2. Rastreamento Automático (Pulsos)
+            await this.logPulse(user.id, coordStr);
 
             // 3. Rastreamento Externo (Baseado na Escala)
             const escala = user.escalas || {};
@@ -125,7 +120,7 @@ class GPSTracker {
             const lastLog = new Date(latestLogs[0].created_at);
             const now = new Date();
             const diffMin = (now - lastLog) / (1000 * 60);
-            if (diffMin < 14) {
+            if (diffMin < 2) {
                 console.log(`[GPSTracker] Pulso ignorado: último registro há ${Math.round(diffMin)} min.`);
                 return;
             }

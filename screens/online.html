@@ -690,7 +690,7 @@
             }
 
             // 2. Funcionários e Tabelas Relacionadas (Filtros por Setor)
-            let queryF = supabase.from('funcionarios').select('id, nome_completo, nickname, cargo_id, especialidade_id, setor_id, nivel_acesso, regime_trabalho, last_lat, last_lng');
+            let queryF = supabase.from('funcionarios').select('id, nome_completo, nickname, cargo_id, especialidade_id, setor_id, nivel_acesso, regime_trabalho');
             if (isGestorOnly && sId) queryF = queryF.eq('setor_id', sId);
 
             const [fRes, cRes, eRes, pRes] = await Promise.all([
@@ -841,9 +841,9 @@
                 const onlineStatus = hasActivePunch || isRecentActivity || isMe;
                 const loc = lastLocs[f.id];
                 
-                // Prioridade de Coordenadas: 1. Pulso Recente | 2. Tabela Funcionarios (Realtime) | 3. Último Ponto
-                let finalLat = f.last_lat || loc?.latitude || null;
-                let finalLng = f.last_lng || loc?.longitude || null;
+                // Prioridade de Coordenadas: 1. Pulso Recente (diario_logs) | 2. Último Ponto (pontos)
+                let finalLat = loc?.latitude || null;
+                let finalLng = loc?.longitude || null;
 
                 if (lastPulse && lastPulse.coordenadas) {
                     const [plat, plng] = lastPulse.coordenadas.split(',').map(Number);
