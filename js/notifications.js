@@ -68,12 +68,8 @@ export const Notifications = {
                     const config = EventManager.getConfig({ itemType: 'COMUNICADO', ...c });
                     const isManualSeen = localStorage.getItem(`ciente_${c.id}`);
                     
-                    if (!config.autoClear) {
-                        // Persiste até ser "Ciente" ou o turno acabar
-                        return !isManualSeen && !isShiftFinished;
-                    }
-                    // Comunicados simples limpam no exit (detectado via autoClear e localStorage)
-                    return !isManualSeen;
+                    // Comunicados (Simples ou Hora Extra) somem se "Vistos" ou no "Fim do Turno"
+                    return !isManualSeen && !isShiftFinished;
                 });
                 const cC = itemsCC.length;
 
@@ -86,9 +82,10 @@ export const Notifications = {
 
                 const itemsCF = (resFer.data || []).filter(f => {
                     const isManualSeen = localStorage.getItem(`visto_feriado_${f.id}`);
-                    return !isManualSeen;
+                    // Feriados/Folgas somem se "Vistos" ou no "Fim do Turno"
+                    return !isManualSeen && !isShiftFinished;
                 });
-                const cF = itemsCF.length;
+                const cF = itemsCF.length > 0 ? 1 : 0;
 
                 const itemsCJ = (resJustProcessed.data || []).filter(j => {
                     const isSeen = localStorage.getItem(`visto_justificativa_${j.id}`);
@@ -97,8 +94,6 @@ export const Notifications = {
                 const cJ = itemsCJ.length;
 
                 diarioCount = cC + cL + cF + cJ;
-                console.log(`[Notifications] Badge Diário: ${diarioCount} (Comums:${cC}, Logs:${cL}, Fers:${cF}, Just:${cJ})`);
-                if (cC > 0) console.log('[Notifications] IDs Comunicados Pendentes:', itemsCC.map(i => i.id + ' (' + i.subtipo + ')'));
             } catch (e) { console.warn('[Notifications] Erro ao carregar contagem do Diário:', e); }
 
             // C. Atualização da UI

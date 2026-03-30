@@ -157,24 +157,45 @@ export const EventManager = {
 
     // 5. Limpeza de Diário (Nova Regra: Exceto Hora Extra)
     async clearAutoInformativos(userId, allItems) {
-        const toClear = allItems.filter(item => {
-            const config = this.getConfig(item);
-            const alreadySeen = localStorage.getItem(`visto_${item.id}`) || localStorage.getItem(`ciente_${item.id}`) || localStorage.getItem(`visto_feriado_${item.id}`);
-            return config.autoClear && !alreadySeen;
-        });
+        if (!allItems || !allItems.length) return;
+        
+        // Função auxiliar para marcar item como visto, verificando se já foi marcado antes
+        const markSeenIfPending = (id, type) => {
+            if (!id) return;
+            
+            let key = `visto_${id}`;
+            if (type === 'FERIAS_FOLGA' || type === 'FERIAS_FOLGA_GROUP' || type === 'CRONOGRAMA_FERIAS') {
+                key = `visto_feriado_${id}`;
+            } else if (type === 'COMUNICADO') {
+                key = `ciente_${id}`;
+            }
 
-        toClear.forEach(item => {
+            if (!localStorage.getItem(key)) {
+                localStorage.setItem(key, 'true');
+            }
+        };
+
+        allItems.forEach(item => {
             const config = this.getConfig(item);
-            // Salva no localStorage para não contar mais no badge
-            if (item.itemType === 'FERIAS_FOLGA') {
-                localStorage.setItem(`visto_feriado_${item.id}`, 'true');
-            } else if (item.itemType === 'COMUNICADO') {
-                localStorage.setItem(`ciente_${item.id}`, 'true');
+            if (!config.autoClear) return;
+            
+            // Se for um grupo (múltiplos feriados), processar cada um individualmente
+            if (item.list && Array.isArray(item.list)) {
+                item.list.forEach(subItem => markSeenIfPending(subItem.id, item.itemType));
             } else {
-                localStorage.setItem(`visto_${item.id}`, 'true');
+                markSeenIfPending(item.id, item.itemType);
+            }
+
+            // Marcar também o próprio ID do grupo no registro de vistos de sistema
+            const itemId = item.id || item.editId;
+            if (itemId && !localStorage.getItem(`visto_${itemId}`)) {
+                localStorage.setItem(`visto_${itemId}`, 'true');
             }
         });
 
-        return toClear.length;
+        // Notificar sistema para atualizar badges se houve mudanças
+        if (typeof Notifications !== 'undefined' && Notifications.updateBadges) {
+            Notifications.updateBadges();
+        }
     }
 };

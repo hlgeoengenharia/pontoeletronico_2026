@@ -627,6 +627,8 @@
                     ...feriadoItems
                 ];
 
+                console.log('[Diário] Itens Brutos Carregados:', itemsRaw.map(i => ({ id: i.id, type: i.itemType, subSet: i.list?.length })));
+
                 // Auto Clear Informativos (Apenas Comunicados Simples)
                 await EventManager.clearAutoInformativos(targetId, itemsRaw);
 

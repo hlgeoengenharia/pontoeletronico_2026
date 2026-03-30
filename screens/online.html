@@ -1713,8 +1713,15 @@
                     escopo: activeComunicado.tipo
                 }));
 
-                const { error: ferError } = await supabase.from('feriados_folgas').insert(feriasData);
+                const { data: insertedData, error: ferError } = await supabase.from('feriados_folgas').insert(feriasData).select('id');
                 if (ferError) throw ferError;
+
+                // Auto-Ciente: Marcar como visto para o próprio remetente (evita badge no próprio sino)
+                if (insertedData) {
+                    insertedData.forEach(item => {
+                        localStorage.setItem(`visto_feriado_${item.id}`, 'true');
+                    });
+                }
 
                 UI.showToast('Cronograma registrado com sucesso!', 'success');
                 selectedSpecialDays = [];
@@ -1743,14 +1750,21 @@
             };
 
             let comError;
+            let insertedCom;
             if (activeComunicado.editId) {
                 const { error } = await supabase.from('comunicados').update(comunicadoData).eq('id', activeComunicado.editId);
                 comError = error;
             } else {
-                const { error } = await supabase.from('comunicados').insert([comunicadoData]);
+                const { data, error } = await supabase.from('comunicados').insert([comunicadoData]).select('id');
                 comError = error;
+                insertedCom = data?.[0];
             }
             if (comError) throw comError;
+
+            // Auto-Ciente para Comunicados
+            if (insertedCom) {
+                localStorage.setItem(`ciente_${insertedCom.id}`, 'true');
+            }
 
             // 2. Se for Hora Extra Individual, liberar o check-out no ponto aberto
             if (activeComunicado.subtipo === 'hora_extra' && activeComunicado.tipo === 'individual') {
