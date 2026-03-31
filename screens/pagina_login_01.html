@@ -132,6 +132,13 @@
     import { Auth } from '../js/auth.js?v=6';
     import { UI } from '../js/ui-utils.js?v=6';
 
+    // Utilitário de Limpeza de Cache de Sistema (Reseta 'visto' e 'ciente')
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('ciente_') || key.startsWith('visto_feriado_')) {
+        localStorage.removeItem(key);
+      }
+    });
+
     async function handleLogin() {
       const user = document.getElementById('username').value;
       const pass = document.getElementById('password').value;

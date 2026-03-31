@@ -13,7 +13,7 @@
     <script src="../js/theme.js?v=1.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script type="module" src="../js/supabase-config.js"></script>
-    <title>Cadastro de Funcionário | ChronoSync Admin</title>
+    <title>V1.2.2 - Cadastro de Funcionário | ChronoSync Admin</title>
 </head>
 
 <body
@@ -1648,8 +1648,19 @@
         }
 
         function renderFuncionarios(data) {
+            console.log('[DEBUG VERSION] V1.2.1 - renderFuncionarios');
             const container = document.getElementById('lista-funcionarios');
             const countSpan = document.getElementById('total-funcionarios');
+            const formContainer = document.getElementById('container-form');
+            
+            // SEGURANÇA: Mover o form de volta para o pai original antes de limpar a lista
+            // Isso evita que o innerHTML descarte o form que estava dentro de um slot de edição
+            if (formContainer && container.contains(formContainer)) {
+                console.log('[Cadastro] Preservando formContainer antes do re-render');
+                document.querySelector('section.space-y-4').appendChild(formContainer);
+                formContainer.classList.add('hidden');
+            }
+
             countSpan.innerText = `${String(data.length).padStart(2, '0')} ATIVOS`;
 
             if (data.length === 0) {
@@ -1659,7 +1670,7 @@
 
             container.innerHTML = data.map(f => `
                 <div id="card-func-${f.id}" class="bg-slate-900/40 border border-white/5 rounded-2xl overflow-hidden group hover:border-primary/30 transition-all shadow-xl">
-                    <div onclick="abrirEdicaoCard('${f.id}')" class="p-4 flex items-center justify-between cursor-pointer">
+                    <div onclick="abrirEdicaoCardV2('${f.id}')" class="p-4 flex items-center justify-between cursor-pointer">
                         <div class="flex items-center gap-4">
                             <div class="size-12 rounded-full border-2 border-primary/20 p-0.5 overflow-hidden">
                                 <img src="${f.foto_url || `https://ui-avatars.com/api/?name=${f.nome_completo}&background=0D59F2&color=fff`}" class="w-full h-full rounded-full object-cover">
@@ -1673,7 +1684,7 @@
                             </div>
                         </div>
                         <div class="flex gap-2">
-                             <button type="button" onclick="event.stopPropagation(); abrirEdicaoCard('${f.id}')" class="p-2.5 bg-primary/10 border border-primary/20 rounded-xl text-primary hover:bg-primary/20 transition-all">
+                             <button type="button" onclick="event.stopPropagation(); abrirEdicaoCardV2('${f.id}')" class="p-2.5 bg-primary/10 border border-primary/20 rounded-xl text-primary hover:bg-primary/20 transition-all">
                                 <span class="material-symbols-outlined text-lg">edit</span>
                              </button>
                              <button type="button" onclick="event.stopPropagation(); deletarFuncionarioQuick('${f.id}')" class="p-2.5 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-500 hover:bg-rose-500/20 transition-all">
@@ -1703,9 +1714,16 @@
             renderFuncionarios(filtrados);
         };
 
-        window.abrirEdicaoCard = (id) => {
+        window.abrirEdicaoCardV2 = (id) => {
+            console.log('[DEBUG VERSION] V1.2.2 - abrirEdicaoCardV2', id);
             const slot = document.getElementById(`edit-slot-${id}`);
             const formContainer = document.getElementById('container-form');
+            
+            if (!formContainer || !slot) {
+                console.error('[Cadastro] Erro: Elementos necessários não encontrados.', { formContainer, slot });
+                UI.showToast('Erro ao abrir edição: Interface indisponível', 'error');
+                return;
+            }
             
             // Se o form já estiver nesse slot, apenas fecha
             if (formContainer.parentElement === slot && !slot.classList.contains('hidden')) {
@@ -1730,6 +1748,10 @@
 
             // Rolar suavemente para o card
             document.getElementById(`card-func-${id}`).scrollIntoView({ behavior: 'smooth', block: 'start' });
+        };
+        window.abrirEdicaoCard = (id) => {
+            console.error('FATAL: Versão antiga do abrirEdicaoCard sendo chamada!');
+            alert('Erro de Versão: Seu navegador está usando código antigo em cache. Por favor use Ctrl+F5.');
         };
 
         window.fecharFormCadastro = () => {

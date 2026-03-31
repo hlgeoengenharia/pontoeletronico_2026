@@ -600,10 +600,10 @@
                     };
                 }
 
-                // 5. Unificar e Agrupar Feriados/Folgas por Data de Envio (created_at)
+                // 5. Unificar e Agrupar Feriados/Folgas por Data Alvo (data)
                 const ferRes = await supabase.from('feriados_folgas').select('*').or(`funcionario_id.eq.${targetId},setor_id.eq.${sId},escopo.eq.geral`);
                 const groupedFerRes = (ferRes.data || []).reduce((acc, f) => {
-                    const key = f.created_at || f.data; 
+                    const key = f.data; 
                     if (!acc[key]) acc[key] = [];
                     acc[key].push(f);
                     return acc;
@@ -611,18 +611,24 @@
 
                 const feriadoItems = Object.entries(groupedFerRes).map(([key, list]) => ({
                     id: 'group_' + key.replace(/[:.-]/g, ''),
-                    created_at: list[0].created_at || key,
-                    data_item: (list[0].created_at || key).split('T')[0],
+                    created_at: list[0].created_at,
+                    data_item: key,
                     itemType: 'FERIAS_FOLGA_GROUP',
                     list: list,
                     conteudo: list.map(f => `${f.data.split('-').reverse().slice(0,2).join('/')}: ${f.tipo.replace('_', ' ').toUpperCase()}`).join(' | ')
                 }));
 
+                const getLocalISO = (dStr) => {
+                    if (!dStr) return '';
+                    const d = new Date(dStr);
+                    return new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+                };
+
                 const itemsRaw = [
                     ...(resAnot.data || []).map(a => ({ ...a, itemType: 'ATIVIDADE', data_item: a.data, conteudo: a.conteudo })),
                     ...(resJust.data || []).map(j => ({ ...j, itemType: 'JUSTIFICATIVA', data_item: j.data_incidente, conteudo: j.descricao })),
-                    ...(resCom.data || []).map(c => ({ ...c, itemType: 'COMUNICADO', data_item: (c.created_at||"").split('T')[0], conteudo: c.conteudo })),
-                    ...(resLogs.data || []).map(l => ({ ...l, itemType: 'SISTEMA', data_item: (l.data_hora||"").split('T')[0], conteudo: l.mensagem_padrao })),
+                    ...(resCom.data || []).map(c => ({ ...c, itemType: 'COMUNICADO', data_item: getLocalISO(c.created_at), conteudo: c.conteudo })),
+                    ...(resLogs.data || []).map(l => ({ ...l, itemType: 'SISTEMA', data_item: getLocalISO(l.data_hora), conteudo: l.mensagem_padrao })),
                     ...(groupedFerias ? [groupedFerias] : []),
                     ...feriadoItems
                 ];
@@ -654,7 +660,6 @@
                 const todayStr = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
 
                 allHistoryData = itemsRaw
-                    .filter(item => item.data_item === todayStr)
                     .sort((a,b) => {
                         const timeA = new Date(a.created_at || a.data_hora || a.time_raw || a.data_item + 'T00:00:00');
                         const timeB = new Date(b.created_at || b.data_hora || b.time_raw || b.data_item + 'T00:00:00');
@@ -662,7 +667,12 @@
                     });
 
                 const labelTotal = document.getElementById('labelTotalAnotacoes');
-                if (labelTotal) labelTotal.innerText = `Total: ${allHistoryData.length} ${allHistoryData.length === 1 ? 'registro' : 'registros'} do dia`;
+                if (labelTotal) labelTotal.innerText = `Total: ${allHistoryData.length} ${allHistoryData.length === 1 ? 'registro' : 'registros'} unificados`;
+
+                const btnExpandContainer = document.getElementById('containerBtnExpandir');
+                if (btnExpandContainer) {
+                    btnExpandContainer.classList.toggle('hidden', allHistoryData.length === 0);
+                }
 
                 renderUnifiedHistory();
             } catch (err) {
@@ -687,7 +697,33 @@
             }, {});
 
             const sortedDates = Object.keys(grouped).sort((a,b) => new Date(b) - new Date(a));
-            const viewDates = historyExpanded ? sortedDates : sortedDates.slice(0, 5);
+            const todayDateStr = new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+            
+            const viewDates = historyExpanded ? sortedDates : sortedDates.filter(d => {
+                if (d === todayDateStr) return true;
+                // Mostrar dias que possuem pendências (mesmo que no passado/futuro)
+                return grouped[d].some(item => {
+                    const config = EventManager.getConfig(item);
+                    if (item.itemType === 'FERIAS_FOLGA_GROUP') {
+                        return !item.list.every(f => f.lido === true || localStorage.getItem('visto_feriado_' + f.id));
+                    }
+                    if (item.itemType === 'COMUNICADO') {
+                        return !(item.lido === true || localStorage.getItem('ciente_' + item.id));
+                    }
+                    if (item.itemType === 'SISTEMA') {
+                        return !localStorage.getItem('visto_' + item.id) && !config.autoClear;
+                    }
+                    if (item.itemType === 'JUSTIFICATIVA') {
+                        return !localStorage.getItem('visto_justificativa_' + item.id) && item.status !== 'pendente';
+                    }
+                    return false;
+                });
+            });
+
+            if(!historyExpanded && viewDates.length === 0) {
+                container.innerHTML = '<div class="text-center py-10 opacity-30 text-[10px] uppercase font-bold tracking-widest text-slate-500">HOJE: Nenhum registro de eventos ou atividades</div>';
+                return;
+            }
 
             container.innerHTML = viewDates.map(date => {
                 const items = grouped[date];
@@ -727,37 +763,38 @@
                                 // Renderização do Card de Feriados/Folgas Agrupados
                                 if (item.itemType === 'FERIAS_FOLGA_GROUP') {
                                     return `
-                                        <div class="bg-white/5 border border-white/5 rounded-2xl p-6 premium-border-purple shadow-lg relative">
-                                            <div class="flex justify-between items-start mb-6">
-                                                <div class="flex items-center gap-3">
-                                                    <div class="size-10 rounded-xl bg-purple-500/10 flex items-center justify-center border border-purple-500/20">
-                                                        <span class="material-symbols-outlined text-xl text-purple-400 font-variation-settings-fill">event_note</span>
+                                        ${ (() => {
+                                        const date = new Date(item.created_at);
+                                        const cienteFlag = item.list.every(f => f.lido === true || localStorage.getItem('visto_feriado_' + f.id));
+                                        
+                                        return `
+                                            <div class="bg-white/5 border border-white/5 rounded-2xl p-4 space-y-3 group border-l-4 ${cienteFlag ? 'border-l-rose-500' : 'border-l-amber-500 bg-amber-500/5'} shadow-lg relative">
+                                                <div class="flex justify-between items-start">
+                                                    <div class="flex items-center gap-2">
+                                                        <span class="material-symbols-outlined text-sm ${cienteFlag ? 'text-rose-500' : 'text-amber-500'}">event_note</span>
+                                                        <span class="text-[9px] font-black uppercase tracking-widest ${cienteFlag ? 'text-rose-500' : 'text-amber-500'}">FERIADOS / FOLGAS</span>
+                                                        <span class="text-[8px] font-bold text-slate-500 ml-2">
+                                                            ${date.toLocaleDateString('pt-BR')} | ${date.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})}
+                                                        </span>
                                                     </div>
-                                                    <div>
-                                                        <h6 class="text-[11px] font-black uppercase tracking-widest text-white">FERIADOS E FOLGAS AGENDADOS</h6>
-                                                        <p class="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-1">${formatDateTime(item.created_at)}</p>
+                                                    <div class="flex items-center gap-3">
+                                                        ${!cienteFlag ? `
+                                                            <button onclick="window.marcarCiente('${item.id}', 'FERIADO')" class="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-500 border border-amber-500/20 shadow-lg shadow-amber-500/10 hover:bg-amber-500/20 transition-all">
+                                                                <span class="material-symbols-outlined text-[10px]">pending</span>
+                                                                <span class="text-[7px] font-black uppercase tracking-tighter">ESTOU CIENTE</span>
+                                                            </button>
+                                                        ` : `
+                                                            <div class="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                                                <span class="material-symbols-outlined text-[10px]">verified</span>
+                                                                <span class="text-[7px] font-black uppercase tracking-tighter">CIENTE</span>
+                                                            </div>
+                                                        `}
                                                     </div>
                                                 </div>
+                                                <p class="text-[11px] text-slate-300 leading-relaxed italic line-clamp-3">"${item.conteudo}"</p>
                                             </div>
-
-                                            <div class="space-y-2">
-                                                ${item.list.map(f => `
-                                                    <div class="flex items-center gap-3 bg-black/20 p-3 rounded-xl border border-white/5">
-                                                        <div class="text-center min-w-[50px]">
-                                                            <p class="text-[10px] font-black text-white">${f.data.split('-').reverse().slice(0,2).join('/')}</p>
-                                                        </div>
-                                                        <div class="w-px h-6 bg-white/10"></div>
-                                                        <div class="flex-1">
-                                                            <div class="flex items-center gap-2">
-                                                                <span class="text-[8px] font-black uppercase ${f.tipo === 'folga' ? 'text-rose-400' : 'text-amber-400'}">${f.tipo.replace('_', ' ')}</span>
-                                                            </div>
-                                                            <p class="text-[9px] text-slate-400 italic">${f.descricao || 'Sem descrição'}</p>
-                                                        </div>
-                                                    </div>
-                                                `).join('')}
-                                            </div>
-                                        </div>
-                                    `;
+                                        `;
+                                    })() }`;
                                 }
 
                                 if (item.itemType === 'CRONOGRAMA_FERIAS') {
@@ -819,19 +856,25 @@
                                     `;
                                 }
 
-                                const isHE = item.subtipo === 'hora_extra';
-                                const isCiente = localStorage.getItem(`ciente_${item.id}`);
+                                                                const isHE = item.subtipo === 'hora_extra';
+                                const isCiente = item.lido === true || localStorage.getItem(`ciente_${item.id}`);
                                 const btnStyle = isCiente ? 
                                     'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 
                                     'bg-amber-500/10 border-amber-500/20 text-amber-500 shadow-lg shadow-amber-500/10';
 
+                                let bgClass = isFerias ? 'bg-vacation-soft' : '';
+                                if (isHE) {
+                                    if (!isCiente) { sideBorder = 'premium-border-amber'; bgClass = 'bg-amber-500/10'; }
+                                    else { sideBorder = 'premium-border-emerald'; }
+                                }
+
                                 return `
-                                    <div class="card-history slim-mode ${sideBorder} ${isFerias ? 'bg-vacation-soft' : ''} shadow-lg relative">
+                                    <div class="card-history slim-mode ${sideBorder} ${bgClass} shadow-lg relative">
                                         <div class="flex justify-between items-start mb-2">
                                             <div class="flex flex-col gap-0.5">
                                                 <div class="flex items-center gap-1.5">
                                                     <span class="material-symbols-outlined text-[12px] ${config.colorClass}">${icon}</span>
-                                                    <h6 class="text-[9px] font-black uppercase tracking-widest text-white leading-tight">${isAtividade ? 'ATIVIDADE DO DIA' : config.title}</h6>
+                                                    <h6 class="text-[9px] font-black uppercase tracking-widest text-white leading-tight">${item.itemType === 'COMUNICADO' ? (isHE ? 'HORA EXTRA SOLICITADA' : 'COMUNICADO INTERNO') : (isAtividade ? 'ATIVIDADE DO DIA' : config.title)}</h6>
                                                 </div>
                                                 <p class="text-[7.5px] font-medium text-slate-500 uppercase tracking-tight">
                                                     ${formatDateTime(item.created_at || item.data_hora || item.time_raw || item.data_item)}

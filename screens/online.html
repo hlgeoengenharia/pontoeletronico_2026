@@ -332,6 +332,14 @@
                   <textarea id="comunicado-texto" rows="4" 
                       class="w-full bg-background-dark/50 border border-white/10 rounded-2xl p-4 text-xs text-slate-100 placeholder:text-slate-700 focus:border-primary outline-none transition-all"
                       placeholder="Digite a mensagem ou instruções da solicitação..."></textarea>
+                      
+                  <div id="container-limite-extra" class="hidden flex items-center justify-between p-3 bg-white/5 border border-white/10 rounded-xl mt-3 transition-opacity duration-300">
+                      <div class="space-y-1">
+                          <label class="text-[9px] font-black text-slate-300 uppercase tracking-widest block">Limite de Prorrogação</label>
+                          <span class="text-[8px] text-slate-500 font-bold uppercase block">Janela extra pós-expediente (minutos)</span>
+                      </div>
+                      <input id="input-limite-extra" type="number" min="1" value="120" class="w-16 bg-background-dark border border-white/20 rounded-lg p-2 text-xs text-primary font-bold focus:border-primary outline-none text-center shadow-inner">
+                  </div>
               </div>
 
               <!-- Novo Container: Férias e Folgas -->
@@ -629,6 +637,26 @@
         if (currentUser) {
             GPSTracker.startTracking(currentUser);
         }
+
+        // --- NOVO: Listener de Pulsos Realtime ---
+        // Sincroniza a UI imediatamente quando o GPSTracker envia um pulso
+        window.addEventListener('gps-pulse-sent', async (e) => {
+            const { userId, coordStr } = e.detail;
+            const [lat, lng] = coordStr.split(',').map(Number);
+            
+            // Atualização local imediata para feedback instantâneo no clique
+            const empIndex = employees.findIndex(emp => emp.id === userId);
+            if (empIndex !== -1) {
+                employees[empIndex].last_lat = lat;
+                employees[empIndex].last_lng = lng;
+                employees[empIndex].status = 'online';
+            }
+            
+            // Recarrega dados do banco para garantir consistência total
+            await fetchData();
+            renderSidebar();
+            renderMapLayers();
+        });
 
         if (isFeriasMode) {
             document.getElementById('neural-title').innerText = 'CRONOGRAMA';
@@ -1163,7 +1191,7 @@
 
     window.focarFuncionario = (id) => {
         const emp = employees.find(e => e.id === id);
-        if (emp && emp.last_lat) {
+        if (emp && emp.last_lat !== null && emp.last_lng !== null) {
             map.flyTo([emp.last_lat, emp.last_lng], 18);
             
             // Abrir popup no mapa
@@ -1236,6 +1264,7 @@
         const labelConteudo = document.getElementById('label-conteudo-mensagem');
         const containerPadrao = document.getElementById('container-comunicado-padrao');
         const containerFerias = document.getElementById('container-ferias-folgas');
+        const containerLimite = document.getElementById('container-limite-extra');
         
         // Reset Buttons
         [btnMsg, btnHE, btnFer].forEach(btn => {
@@ -1249,17 +1278,20 @@
             if (labelConteudo) labelConteudo.innerText = 'COMUNICADO DO DIA';
             containerPadrao.classList.remove('hidden');
             containerFerias.classList.add('hidden');
+            if (containerLimite) containerLimite.classList.add('hidden');
         } else if (subtipo === 'hora_extra') {
             btnHE.classList.add('bg-primary', 'text-white', 'shadow-lg');
             btnHE.classList.remove('text-slate-400');
             if (labelConteudo) labelConteudo.innerText = 'SOLICITAÇÃO DE HORA EXTRA';
             containerPadrao.classList.remove('hidden');
             containerFerias.classList.add('hidden');
+            if (containerLimite) containerLimite.classList.remove('hidden');
         } else if (subtipo === 'ferias_folgas') {
             btnFer.classList.add('bg-primary', 'text-white', 'shadow-lg');
             btnFer.classList.remove('text-slate-400');
             containerPadrao.classList.add('hidden');
             containerFerias.classList.remove('hidden');
+            if (containerLimite) containerLimite.classList.add('hidden');
             renderFeriasCalendar();
         }
         
@@ -1757,11 +1789,21 @@
             }
             
             // 1. Criar ou Atualizar Comunicado
+            let finalConteudo = conteudo;
+            if (activeComunicado.subtipo === 'hora_extra') {
+                const limit = document.getElementById('input-limite-extra').value || 120;
+                if (!finalConteudo.includes('[LIMITE:')) {
+                    finalConteudo = `[LIMITE:${limit}] ${finalConteudo}`;
+                } else {
+                    finalConteudo = finalConteudo.replace(/\[LIMITE:\d+\]/, `[LIMITE:${limit}]`);
+                }
+            }
+
             const comunicadoData = {
                 remetente_id: remetenteId,
                 tipo: activeComunicado.tipo,
                 subtipo: activeComunicado.subtipo,
-                conteudo: conteudo,
+                conteudo: finalConteudo,
                 destinatario_id: activeComunicado.tipo === 'individual' ? activeComunicado.targetId : null,
                 setor_id: activeComunicado.tipo === 'setorial' ? activeComunicado.targetId : null
             };
@@ -1776,12 +1818,14 @@
                 comError = error;
                 insertedCom = data?.[0];
             }
-            if (comError) throw comError;
-
-            // Auto-Ciente para Comunicados
-            if (insertedCom) {
-                localStorage.setItem(`ciente_${insertedCom.id}`, 'true');
+            if (!comError) { // Force badge update after successful insert
+                if (window.Notifications && typeof window.Notifications.updateBadges === 'function') {
+                    window.Notifications.updateBadges();
+                }
             }
+
+            // Auto-Ciente removed – user must click "Estou Ciente" to mark as seen
+
 
             // 2. Se for Hora Extra Individual, liberar o check-out no ponto aberto
             if (activeComunicado.subtipo === 'hora_extra' && activeComunicado.tipo === 'individual') {

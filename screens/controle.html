@@ -68,11 +68,33 @@
             <div class="sci-fi-gradient neon-border rounded-2xl p-6 space-y-4 bg-slate-900/40">
                 <div class="flex flex-col gap-2">
                     <label class="text-[10px] font-black uppercase text-primary/70 tracking-widest">Escolha um ou mais Gestores da Tripulação</label>
-                    <div class="relative group">
-                        <select id="gestor-select" multiple class="w-full bg-slate-950/80 border border-slate-800 rounded-xl py-4 px-4 text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all min-h-[120px] custom-scrollbar text-slate-300">
-                            <!-- Injetado via JS -->
-                        </select>
-                        <p class="text-[9px] text-slate-500 mt-2 italic font-medium">* Segure CTRL ou Shift para selecionar múltiplos perfis</p>
+                    <div class="space-y-4">
+                        <!-- Filtro de Pesquisa -->
+                        <div class="relative group">
+                            <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-primary/40 group-focus-within:text-primary transition-colors text-lg">search</span>
+                            <input type="text" id="gestor-search" placeholder="PESQUISAR GESTOR PELO NOME..." 
+                                class="w-full bg-slate-950/80 border border-slate-800 rounded-xl py-4 pl-12 pr-4 text-[10px] font-black uppercase tracking-widest focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all placeholder:text-slate-700 neon-border">
+                        </div>
+
+                        <!-- Lista de Gestores (Lista de Cards Full-Width) -->
+                        <div id="gestor-list" class="grid grid-cols-1 gap-3 max-h-[320px] overflow-y-auto pr-2 custom-scrollbar">
+                            <!-- Injetado via JS: renderGestores() -->
+                            <div class="col-span-full py-12 flex flex-col items-center justify-center opacity-20">
+                                <span class="material-symbols-outlined animate-spin text-3xl mb-2">sync</span>
+                                <p class="text-[9px] font-black uppercase tracking-widest">Sincronizando Gestores...</p>
+                            </div>
+                        </div>
+
+                        <!-- Bandeja de Selecionados (Chips) -->
+                        <div id="selected-tray" class="hidden animate-in fade-in slide-in-from-top-2 duration-300 pt-2">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="material-symbols-outlined text-primary text-xs">check_circle</span>
+                                <span class="text-[9px] font-black text-slate-500 uppercase tracking-widest">Gestores Selecionados para Edição</span>
+                            </div>
+                            <div id="selected-chips" class="flex flex-wrap gap-2 p-3 bg-primary/5 border border-primary/10 rounded-xl">
+                                <!-- Chips serao injetados aqui -->
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -200,7 +222,12 @@
         import { Auth } from '../js/auth.js';
 
         let gestoresData = [];
-        const gestorSelect = document.getElementById('gestor-select');
+        let selectedIds = [];
+        
+        const gestorSearch = document.getElementById('gestor-search');
+        const gestorList = document.getElementById('gestor-list');
+        const selectedTray = document.getElementById('selected-tray');
+        const selectedChips = document.getElementById('selected-chips');
         const permissoesContainer = document.getElementById('permissoes-container');
         const emptyState = document.getElementById('empty-state');
 
@@ -216,45 +243,113 @@
             await carregarGestores();
             
             // Event Listeners
-            gestorSelect.addEventListener('change', handleSelectionChange);
+            gestorSearch.addEventListener('input', (e) => filtrarGestores(e.target.value));
             document.getElementById('btn-marcar-todos').addEventListener('click', marcarTodos);
             document.getElementById('btn-salvar-privilegios').addEventListener('click', salvarConfiguracoes);
         }
 
         async function carregarGestores() {
-            UI.showLoader();
             try {
                 const { data, error } = await supabase
                     .from('funcionarios')
-                    .select('id, nome_completo, nivel_acesso, permissoes_gestor')
+                    .select('id, nome_completo, nivel_acesso, permissoes_gestor, matricula')
                     .eq('nivel_acesso', 'Gestor')
                     .order('nome_completo');
 
                 if (error) throw error;
                 gestoresData = data || [];
-                
-                gestorSelect.innerHTML = gestoresData.map(g => `
-                    <option value="${g.id}" class="py-2 border-b border-white/5 last:border-0">${g.nome_completo}</option>
-                `).join('');
+                renderGestores(gestoresData);
 
-                if (gestoresData.length === 0) {
-                   gestorSelect.innerHTML = '<option disabled>Nenhum Gestor encontrado</option>';
-                }
             } catch (err) {
                 console.error('Erro ao carregar gestores:', err);
                 UI.showToast('Erro ao carregar lista de gestores', 'error');
-            } finally {
-                UI.hideLoader();
             }
         }
 
-        function handleSelectionChange() {
-            const selectedIds = Array.from(gestorSelect.selectedOptions).map(opt => opt.value);
+        function renderGestores(data) {
+            if (data.length === 0) {
+                gestorList.innerHTML = `
+                    <div class="col-span-full py-10 flex flex-col items-center justify-center opacity-40">
+                        <span class="material-symbols-outlined text-4xl mb-2">person_search</span>
+                        <p class="text-[10px] font-black uppercase tracking-widest text-center">Nenhum gestor encontrado nesta busca</p>
+                    </div>
+                `;
+                return;
+            }
+
+            gestorList.innerHTML = data.map(g => {
+                const isSelected = selectedIds.includes(g.id);
+                const iniciais = g.nome_completo.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+                
+                return `
+                    <div onclick="toggleSelection('${g.id}')" 
+                        class="toggle-card w-full rounded-xl p-4 flex items-center gap-4 cursor-pointer group transition-all border ${isSelected ? 'border-primary/60 bg-primary/10 shadow-[0_0_15px_rgba(13,89,242,0.15)]' : 'border-white/5 bg-slate-900/40'}">
+                        <div class="size-12 rounded-lg flex items-center justify-center font-black text-xs ${isSelected ? 'bg-primary text-white' : 'bg-slate-800 text-slate-500 group-hover:bg-primary/20 group-hover:text-primary'} transition-colors">
+                            ${iniciais}
+                        </div>
+                        <div class="flex-1 min-w-0 text-left">
+                            <h4 class="text-xs font-black uppercase tracking-tight text-slate-200 truncate">${g.nome_completo}</h4>
+                            <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">MAT: ${g.matricula || '---'}</p>
+                        </div>
+                        <div class="${isSelected ? 'opacity-100' : 'opacity-20 group-hover:opacity-100'} transition-opacity">
+                            <span class="material-symbols-outlined text-primary text-2xl">
+                                ${isSelected ? 'check_circle' : 'circle'}
+                            </span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function filtrarGestores(termo) {
+            const query = termo.toLowerCase().trim();
+            const filtered = gestoresData.filter(g => 
+                g.nome_completo.toLowerCase().includes(query) || 
+                (g.matricula && g.matricula.includes(query))
+            );
+            renderGestores(filtered);
+        }
+
+        window.toggleSelection = (id) => {
+            const index = selectedIds.indexOf(id);
+            if (index === -1) {
+                selectedIds.push(id);
+            } else {
+                selectedIds.splice(index, 1);
+            }
             
+            // Re-renderizar lista para mostrar estado selecionado
+            filtrarGestores(gestorSearch.value);
+            handleSelectionChange();
+        };
+
+        function handleSelectionChange() {
+            // Atualizar Bandeja (Chips)
+            if (selectedIds.length > 0) {
+                selectedTray.classList.remove('hidden');
+                selectedChips.innerHTML = selectedIds.map(id => {
+                    const g = gestoresData.find(x => x.id === id);
+                    return `
+                        <div class="flex items-center gap-2 bg-primary/20 border border-primary/30 px-3 py-1.5 rounded-full animate-in zoom-in duration-200">
+                            <span class="text-[9px] font-black text-primary uppercase whitespace-nowrap">${g?.nome_completo || 'Selecionado'}</span>
+                            <button onclick="event.stopPropagation(); toggleSelection('${id}')" class="text-primary hover:text-white transition-colors">
+                                <span class="material-symbols-outlined text-xs">close</span>
+                            </button>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                selectedTray.classList.add('hidden');
+            }
+
+            // Lógica de Permissões
             if (selectedIds.length === 1) {
                 // Modo Único: Carregar permissões atuais
                 const gestor = gestoresData.find(g => g.id === selectedIds[0]);
-                const perms = gestor.permissoes_gestor || {};
+                let perms = gestor.permissoes_gestor || {};
+                if (typeof perms === 'string') {
+                    try { perms = JSON.parse(perms); } catch(e) { perms = {}; }
+                }
                 
                 document.getElementById('ctrl-perm-setores').checked = !!perms.setores;
                 document.getElementById('ctrl-perm-escalas').checked = !!perms.escalas;
@@ -273,6 +368,11 @@
                 permissoesContainer.classList.add('hidden');
                 emptyState.classList.remove('hidden');
             }
+            
+            // Rolar suavemente para o container de permissões se for a primeira seleção
+            if (selectedIds.length === 1 && permissoesContainer.classList.contains('hidden')) {
+                 permissoesContainer.scrollIntoView({ behavior: 'smooth' });
+            }
         }
 
         function marcarTodos() {
@@ -284,9 +384,8 @@
         }
 
         async function salvarConfiguracoes() {
-            const selectedIds = Array.from(gestorSelect.selectedOptions).map(opt => opt.value);
             if (selectedIds.length === 0) {
-                UI.showToast('Selecione ao menos um gestor.', 'warning');
+                UI.showToast('Selecione ao menos um gestor na lista acima.', 'warning');
                 return;
             }
 
@@ -307,7 +406,7 @@
 
                 if (error) throw error;
 
-                UI.showToast('Privilégios atualizados com sucesso!', 'success');
+                UI.showToast(`Privilégios atualizados para ${selectedIds.length} gestor(es)!`, 'success');
                 
                 // Atualizar dados locais para o próximo clique
                 selectedIds.forEach(id => {

@@ -10,7 +10,9 @@ export const Notifications = {
     async updateBadges() {
         const userId = localStorage.getItem('userId');
         const userRole = localStorage.getItem('userRole');
-        if (!userId) return;
+        const role = (userRole || '').toLowerCase();
+        const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        const safeUserId = uuidPattern.test(userId) ? userId : (role === 'admin' ? userId : '00000000-0000-0000-0000-000000000000');
 
         try {
             // A. Justificativas e Pendências (Badge Sino)
@@ -23,20 +25,22 @@ export const Notifications = {
                 
                 if (isManagement) {
                     let queryJust = supabase.from('justificativas').select('id, funcionarios!inner(setor_id)', { count: 'exact', head: true }).eq('status', 'pendente');
+                    let queryFerias = supabase.from('ferias').select('id, funcionarios!inner(setor_id)', { count: 'exact', head: true }).eq('status', 'pendente');
                     
                     if (isGestorOnly) {
-                        const { data: userDat } = await supabase.from('funcionarios').select('setor_id').eq('id', userId).maybeSingle();
+                        const { data: userDat } = await supabase.from('funcionarios').select('setor_id').eq('id', safeUserId).maybeSingle();
                         if (userDat?.setor_id) {
                             queryJust = queryJust.eq('funcionarios.setor_id', userDat.setor_id);
+                            queryFerias = queryFerias.eq('funcionarios.setor_id', userDat.setor_id);
                         }
                     }
                     
-                    const { count } = await queryJust;
-                    sinoCount = count || 0;
+                    const [resJust, resFerias] = await Promise.all([queryJust, queryFerias]);
+                    sinoCount = (resJust.count || 0) + (resFerias.count || 0);
                 } else {
                     const [resJust, resLogs] = await Promise.all([
-                        supabase.from('justificativas').select('id', { count: 'exact', head: true }).eq('funcionario_id', userId).eq('status', 'pendente'),
-                        supabase.from('diario_logs').select('id', { count: 'exact', head: true }).eq('funcionario_id', userId).eq('status_pendencia', 'pendente')
+                        supabase.from('justificativas').select('id', { count: 'exact', head: true }).eq('funcionario_id', safeUserId).eq('status', 'pendente'),
+                        supabase.from('diario_logs').select('id', { count: 'exact', head: true }).eq('funcionario_id', safeUserId).eq('status_pendencia', 'pendente')
                             .not('tipo', 'in', '("comunicado","aviso_ferias")')
                     ]);
                     sinoCount = (resJust.count || 0) + (resLogs.count || 0);
@@ -46,27 +50,30 @@ export const Notifications = {
             // B. Comunicados e Feriados (Badge Diário)
             let diarioCount = 0;
             try {
-                const { data: user } = await supabase.from('funcionarios').select('setor_id, escala_id').eq('id', userId).maybeSingle();
+                const { data: user } = await supabase.from('funcionarios').select('setor_id, escala_id').eq('id', safeUserId).maybeSingle();
                 const sectorId = user?.setor_id || '00000000-0000-0000-0000-000000000000';
+                
+                
 
                 const [resComs, resLogs, resFer, resJustProcessed] = await Promise.all([
-                    supabase.from('comunicados').select('id, subtipo, lido, created_at').or(`destinatario_id.eq.${userId},tipo.eq.geral,setor_id.eq.${sectorId}`),
-                    supabase.from('diario_logs').select('id, tipo').eq('funcionario_id', userId).in('tipo', ['comunicado', 'aviso_ferias']).eq('status_pendencia', 'pendente'),
-                    supabase.from('feriados_folgas').select('id, created_at').or(`funcionario_id.eq.${userId},setor_id.eq.${sectorId},escopo.eq.geral`),
-                    supabase.from('justificativas').select('id, status').eq('funcionario_id', userId).neq('status', 'pendente')
+                    supabase.from('comunicados').select('id, subtipo, lido, created_at').or(`destinatario_id.eq.${safeUserId},tipo.eq.geral,setor_id.eq.${sectorId}`),
+                    supabase.from('diario_logs').select('id, tipo').eq('funcionario_id', safeUserId).in('tipo', ['comunicado', 'aviso_ferias']).eq('status_pendencia', 'pendente'),
+                    supabase.from('feriados_folgas').select('id, created_at').or(`funcionario_id.eq.${safeUserId},setor_id.eq.${sectorId},escopo.eq.geral`),
+                    supabase.from('justificativas').select('id, status').eq('funcionario_id', safeUserId).neq('status', 'pendente')
                 ]);
 
                 // Buscar Escala para regra de fim de turno
                 let isShiftFinished = false;
                 if (user?.escala_id) {
                     const { data: escalaData } = await supabase.from('escalas').select('*').eq('id', user.escala_id).maybeSingle();
-                    const todayStr = new Date().toISOString().split('T')[0];
+                    const now = new Date();
+                    const todayStr = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
                     isShiftFinished = ScalesEngine.isDayFinished(todayStr, escalaData);
                 }
 
                 const itemsCC = (resComs.data || []).filter(c => {
                     const config = EventManager.getConfig({ itemType: 'COMUNICADO', ...c });
-                    const isManualSeen = localStorage.getItem(`ciente_${c.id}`);
+                    const isManualSeen = c.lido === true || localStorage.getItem(`ciente_${c.id}`);
                     
                     // Comunicados (Simples ou Hora Extra) somem se "Vistos" ou no "Fim do Turno"
                     return !isManualSeen && !isShiftFinished;
@@ -96,6 +103,7 @@ export const Notifications = {
                 diarioCount = cC + cL + cF + cJ;
             } catch (e) { console.warn('[Notifications] Erro ao carregar contagem do Diário:', e); }
 
+            console.log('Badge counts -> Diario:', diarioCount, 'Sino:', sinoCount);
             // C. Atualização da UI
             this.setBadge('notif-badge', sinoCount);
             this.setBadge('notif-badge-footer', diarioCount);
@@ -131,11 +139,17 @@ export const Notifications = {
         // 1. Polling de backup (60s)
         setInterval(() => this.updateBadges(), 60000);
 
-        // 2. Realtime para atualização instantânea
+        // Listen for badge refresh triggers from other pages (e.g., after comunicado insert)
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'badgeRefresh') {
+                this.updateBadges();
+            }
+        });
         const channel = supabase.channel('realtime-notifications')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'comunicados' }, () => this.updateBadges())
             .on('postgres_changes', { event: '*', schema: 'public', table: 'justificativas' }, () => this.updateBadges())
             .on('postgres_changes', { event: '*', schema: 'public', table: 'diario_logs' }, () => this.updateBadges())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'ferias' }, () => this.updateBadges())
             .on('postgres_changes', { event: '*', schema: 'public', table: 'feriados_folgas' }, () => {
                 this.updateBadges();
                 // Dispara evento global para o Dashboard atualizar o calendário

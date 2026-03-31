@@ -15,10 +15,10 @@ const Auth = {
                 .from('perfis_tripulantes')
                 .select(`
                     *,
-                    funcionarios!inner (
+                    funcionarios (
                         *,
-                        setores!setor_id (nome),
-                        cargos!cargo_id (nome, nivel)
+                        setores!funcionarios_setor_id_fkey(nome),
+                        cargos(nome, nivel)
                     )
                 `)
                 .ilike('nickname', nickname)

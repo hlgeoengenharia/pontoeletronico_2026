@@ -1638,6 +1638,7 @@
                             return;
                         }
 
+                        const selectFuncao = document.getElementById('funcao-select');
                         const updatesFunc = {
                             nome_completo: document.getElementById('nome_completo').value,
                             cpf: document.getElementById('cpf').value || null,
@@ -1645,7 +1646,8 @@
                             data_nascimento: document.getElementById('data_nasc').value || null,
                             sexo: document.querySelector('input[name="gender"]:checked')?.value || null,
                             nivel_acesso: document.getElementById('nivel_acesso_select')?.value || 'Funcionário',
-                            funcao_id: document.getElementById('funcao-select')?.value || null,
+                            cargo_id: selectFuncao?.value || null,
+                            funcao: selectFuncao?.selectedIndex > -1 ? selectFuncao.options[selectFuncao.selectedIndex].text.split(' (')[0] : null,
                             setor_id: document.getElementById('setor-select')?.value || null,
                             data_inicio_prevista: document.getElementById('data_inicio_prevista')?.value || null,
                             nivel_escolaridade: document.getElementById('nivel_escolaridade').value,

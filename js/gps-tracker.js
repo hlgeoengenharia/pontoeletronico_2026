@@ -129,6 +129,9 @@ class GPSTracker {
         const msg = `Localização registrada automaticamente pelo sistema para validar sua presença em serviço durante a jornada.`;
         await this.logOccurrence(userId, 'gps_pulse', msg, coordStr, 'aprovado');
         console.log(`[GPSTracker] Pulso de GPS enviado para funcionario_id: ${userId}`);
+
+        // Notificar a UI (online.html) para atualizar imediatamente
+        window.dispatchEvent(new CustomEvent('gps-pulse-sent', { detail: { userId, coordStr } }));
     }
 
     static async logHourlyLocation(userId, coordStr) {
@@ -152,15 +155,13 @@ class GPSTracker {
         await this.logOccurrence(userId, 'gps_hora', msg, coordStr, 'aprovado');
     }
 
-    static async logOccurrence(userId, type, message, coords, status = 'pendente', typeOriginal = null) {
+    static async logOccurrence(userId, type, message, coords, status = 'pendente') {
         const payload = {
             funcionario_id: userId,
             data_hora: new Date().toISOString(),
             tipo: type,
-            tipo_original: typeOriginal || type.toUpperCase(),
             mensagem_padrao: message,
             coordenadas: coords,
-            lido_pelo_funcionario: false,
             status_pendencia: status
         };
         await supabase.from('diario_logs').insert([payload]);

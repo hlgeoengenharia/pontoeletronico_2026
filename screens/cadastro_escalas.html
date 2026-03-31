@@ -14,7 +14,7 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
     rel="stylesheet" />
-  <script src="../js/ui-utils.js"></script>
+  <script type="module" src="../js/ui-utils.js"></script>
   <script src="../js/theme.js?v=1.0"></script>
   <style>
     body {
@@ -67,46 +67,50 @@
 
       <div id="container-form" class="hidden sci-fi-gradient sci-fi-border rounded-xl p-6 glow-border neon-border scroll-mt-24">
         <form id="form-escala" class="space-y-4">
-        <div>
-          <label class="block text-sm font-medium mb-1 text-slate-400">Nome da Escala</label>
-          <input id="nome_escala"
-            class="w-full bg-background-dark/50 border-primary/30 rounded-lg focus:ring-primary focus:border-primary text-slate-100 p-3"
-            placeholder="Ex: Plantão Alfa" type="text" required />
-        </div>
+        
+        <!-- 1. Nome e Carga (Grid 2 Colunas) -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium mb-1 text-slate-400">Tipo de Escala</label>
+          <div class="space-y-1">
+            <label class="text-[11px] font-bold uppercase opacity-50 text-slate-400">Nome da Escala</label>
+            <input id="nome_escala"
+              class="w-full bg-background-dark/50 border-primary/30 rounded-lg focus:ring-primary focus:border-primary text-slate-100 p-3 text-xs"
+              placeholder="Ex: Plantão Alfa" type="text" required />
+          </div>
+          <div class="space-y-1">
+            <label class="text-[11px] font-bold uppercase opacity-50 text-slate-400">Carga Semanal (h)</label>
+            <input id="carga_horaria"
+              class="w-full bg-background-dark/50 border-primary/30 rounded-lg focus:ring-primary focus:border-primary text-slate-100 p-3 text-xs"
+              placeholder="44" type="number" required />
+          </div>
+        </div>
+
+        <!-- 2. Configuração (Grid 3 Colunas) -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="space-y-1">
+            <label class="text-[11px] font-bold uppercase opacity-50 text-slate-400">Tipo de Escala</label>
             <select id="tipo_escala"
-              class="w-full bg-background-dark/50 border-primary/30 rounded-lg focus:ring-primary focus:border-primary text-slate-100 p-3 outline-none">
+              class="w-full bg-background-dark/50 border-primary/30 rounded-lg focus:ring-primary focus:border-primary text-slate-100 p-3 text-xs outline-none">
               <option value="semanal">Semanal (Dias Fixos)</option>
               <option value="ciclo">Ciclo (Trabalho x Folga)</option>
             </select>
           </div>
-          <div>
-            <label class="block text-sm font-medium mb-1 text-slate-400">Tipo de Repetição</label>
-            <select id="tipo_repeticao"
-              class="w-full bg-background-dark/50 border-primary/30 rounded-lg focus:ring-primary focus:border-primary text-slate-100 p-3 outline-none">
-              <option value="alternada">Alternada (Par/Ímpar)</option>
-              <option value="fixa">Fixa (Mesmos dias constantes)</option>
-            </select>
-          </div>
-        </div>
-
-          <div>
-            <label class="block text-sm font-medium mb-1 text-slate-400">Regime de Trabalho</label>
+          <div class="space-y-1">
+            <label class="text-[11px] font-bold uppercase opacity-50 text-slate-400">Regime de Trabalho</label>
             <select id="regime_trabalho"
-              class="w-full bg-background-dark/50 border-primary/30 rounded-lg focus:ring-primary focus:border-primary text-slate-100 p-3 outline-none">
+              class="w-full bg-background-dark/50 border-primary/30 rounded-lg focus:ring-primary focus:border-primary text-slate-100 p-3 text-xs outline-none">
               <option value="Presencial">Presencial (Escritório)</option>
               <option value="Externo">Externo (Rastreio Ativo)</option>
               <option value="Híbrido">Híbrido (App Decide)</option>
             </select>
           </div>
-        
-        <div>
-          <label class="block text-sm font-medium mb-1 text-slate-400">Carga Semanal (h)</label>
-          <input id="carga_horaria"
-            class="w-full bg-background-dark/50 border-primary/30 rounded-lg focus:ring-primary focus:border-primary text-slate-100 p-3"
-            placeholder="44" type="number" required />
+          <div class="space-y-1">
+            <label class="text-[11px] font-bold uppercase opacity-50 text-slate-400">Tipo de Repetição</label>
+            <select id="tipo_repeticao"
+              class="w-full bg-background-dark/50 border-primary/30 rounded-lg focus:ring-primary focus:border-primary text-slate-100 p-3 text-xs outline-none">
+              <option value="alternada">Alternada (Par/Ímpar)</option>
+              <option value="fixa">Fixa (Mesmos dias constantes)</option>
+            </select>
+          </div>
         </div>
 
         <!-- Campos para Ciclo (Ocultos por padrão) -->
@@ -174,7 +178,7 @@
               class="w-full bg-background-dark/50 border border-slate-800 rounded-xl p-3 text-sm focus:border-primary/50 transition-colors outline-none">
           </div>
           <div>
-            <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1.5">Saída (Auto)</label>
+            <label class="block text-[10px] text-slate-500 uppercase font-bold mb-1.5">Saída (Calculada)</label>
             <input type="time" id="horario_saida" required
               class="w-full bg-background-dark/50 border border-slate-800 rounded-xl p-3 text-sm focus:border-primary/50 transition-colors outline-none">
           </div>
@@ -280,38 +284,21 @@
               </p>
             </div>
 
-            <!-- Horas Extras -->
-            <div class="group p-3 bg-background-dark/30 rounded-lg space-y-2">
+
+
+
+            <!-- Rastreio -->
+            <div class="p-3 bg-background-dark/30 rounded-lg space-y-2">
               <div class="flex items-center justify-between">
-                <span class="text-xs font-bold text-slate-200">Gestão de Horas Extras</span>
+                <span class="text-xs font-bold text-slate-200">Rastreio Horário (Externos)</span>
                 <label class="relative inline-flex items-center cursor-pointer">
-                  <input id="rule_extra_hours" type="checkbox" class="sr-only peer">
+                  <input id="rule_track" type="checkbox" class="sr-only peer">
                   <div class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
                 </label>
               </div>
               <p class="text-xs text-slate-400 leading-relaxed font-medium">
-                <strong class="text-primary/70">ATIVADO:</strong> Permite que o colaborador solicite prorrogação de jornada via aplicativo. Você deve definir o limite máximo permitido abaixo.<br>
-                <strong class="text-slate-500 font-bold">DESATIVADO:</strong> O sistema não oferece opção de extensão, tratando qualquer tempo excedente como saldo comum ou extra não autorizada.
-              </p>
-              <div id="extra_hours_limit_container" class="hidden mt-2 pl-2 border-l border-primary/20 flex items-center justify-between">
-                <span class="text-xs text-slate-400 uppercase font-bold tracking-tight">Limite Máximo (Minutos)</span>
-                <input id="limit_extra_hours" type="number" value="120" class="w-20 bg-background-dark/50 border-primary/30 rounded p-1 text-xs text-primary font-bold">
-              </div>
-            </div>
-
-
-            <!-- Frequência de Revisão -->
-            <div class="p-3 bg-background-dark/30 rounded-lg space-y-2">
-              <div class="flex items-center justify-between">
-                <span class="text-xs font-bold text-slate-200">Revisão Periódica da Escala</span>
-                <div class="flex items-center gap-2 shrink-0">
-                  <input id="frequencia_meses" type="number" value="0" min="0" class="w-14 bg-background-dark/50 border-primary/30 rounded p-1.5 text-xs text-primary font-bold text-center">
-                  <span class="text-[9px] font-bold text-slate-500 uppercase">Meses</span>
-                </div>
-              </div>
-              <p class="text-xs text-slate-400 leading-relaxed font-medium">
-                <strong class="text-primary/70">ATIVADO:</strong> Define o ciclo de vida da escala. Ao atingir o prazo, o sistema alerta a necessidade de reavaliação.<br>
-                <strong class="text-slate-500 font-bold">DESATIVADO (0):</strong> A escala não possui prazo de validade e nunca será solicitada a sua revisão.
+                <strong class="text-primary/70">ATIVADO:</strong> Para funcionários em regime 'Externo', o aplicativo capturará a localização GPS a cada 60 minutos durante o expediente para fins de log de rota.<br>
+                <strong class="text-slate-500 font-bold">DESATIVADO:</strong> A localização só é capturada no momento exato das batidas de ponto.
               </p>
             </div>
 
@@ -440,8 +427,7 @@
     const cicloInputs = document.getElementById('ciclo_inputs');
     const semanalInputs = document.getElementById('semanal_inputs');
     const hibridoInputs = document.getElementById('hibrido_inputs');
-    const extraHoursToggle = document.getElementById('rule_extra_hours');
-    const extraHoursLimitContainer = document.getElementById('extra_hours_limit_container');
+
 
     function initEscalaLogic() {
       const inputs = ['carga_horaria', 'horario_entrada'];
@@ -550,13 +536,6 @@
 
     tipoEscalaSel.onchange = updateVisibility;
 
-    extraHoursToggle.onchange = () => {
-      if (extraHoursToggle.checked) {
-        extraHoursLimitContainer.classList.remove('hidden');
-      } else {
-        extraHoursLimitContainer.classList.add('hidden');
-      }
-    };
 
     let diasHibridosSelecionados = [];
 
@@ -840,24 +819,7 @@
                             </p>
                           </div>
 
-                          <!-- Horas Extras -->
-                          <div class="group p-3 bg-background-dark/30 rounded-lg space-y-2">
-                            <div class="flex items-center justify-between">
-                              <span class="text-xs font-bold text-slate-200">Gestão de Horas Extras</span>
-                              <label class="relative inline-flex items-center cursor-pointer">
-                                <input id="inline-rule-extra-${e.id}" type="checkbox" ${e.gestao_horas_extras === true ? 'checked' : ''} onchange="document.getElementById('inline-extra-limit-cont-${e.id}').classList.toggle('hidden', !this.checked)" class="sr-only peer">
-                                <div class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
-                              </label>
-                            </div>
-                            <p class="text-xs text-slate-400 leading-relaxed font-medium">
-                              <strong class="text-primary/70">ATIVADO:</strong> Permite que o colaborador solicite prorrogação de jornada via aplicativo. Você deve definir o limite máximo permitido abaixo.<br>
-                              <strong class="text-slate-500 font-bold">DESATIVADO:</strong> O sistema não oferece opção de extensão, tratando qualquer tempo excedente como saldo comum ou extra não autorizada.
-                            </p>
-                            <div id="inline-extra-limit-cont-${e.id}" class="${e.gestao_horas_extras === true ? '' : 'hidden'} mt-2 pl-2 border-l border-primary/20 flex items-center justify-between">
-                              <span class="text-xs text-slate-400 uppercase font-bold tracking-tight">Limite Máximo (Minutos)</span>
-                              <input id="inline-extra-limit-${e.id}" type="number" value="${e.limite_horas_extras || 120}" class="w-20 bg-background-dark/50 border-primary/30 rounded p-1 text-xs text-primary font-bold">
-                            </div>
-                          </div>
+
 
                           <!-- Rastreio -->
                           <div class="p-3 bg-background-dark/30 rounded-lg space-y-2">
@@ -1088,8 +1050,8 @@
                 restrito_gps: document.getElementById(`inline-rule-gps-${id}`).checked,
                 aprovacao_excecao: document.getElementById(`inline-rule-appr-${id}`).checked,
                 punicao_esquecimento: document.getElementById(`inline-rule-forget-${id}`).checked,
-                gestao_horas_extras: document.getElementById(`inline-rule-extra-${id}`).checked,
-                limite_horas_extras: parseInt(document.getElementById(`inline-extra-limit-${id}`).value) || 0,
+                gestao_horas_extras: false,
+                limite_horas_extras:  0,
                 rastreio_horario: document.getElementById(`inline-rule-track-${id}`).checked,
                 possui_almoco: document.getElementById(`inline-rule-lunch-${id}`).checked,
                 
@@ -1178,8 +1140,9 @@
         restrito_gps: document.getElementById('rule_gps').checked,
         aprovacao_excecao: document.getElementById('rule_approval').checked,
         punicao_esquecimento: document.getElementById('rule_forget').checked,
-        gestao_horas_extras: document.getElementById('rule_extra_hours').checked,
-        limite_horas_extras: parseInt(document.getElementById('limit_extra_hours').value) || 0,
+        gestao_horas_extras: false,
+        limite_horas_extras: 0,
+        rastreio_horario: document.getElementById('rule_track').checked,
         possui_almoco: document.getElementById('rule_lunch').checked,
         tipo_repeticao: document.getElementById('tipo_repeticao').value
       };

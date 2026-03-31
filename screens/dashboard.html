@@ -605,7 +605,8 @@
 
                 const linkSetores = document.getElementById('link-setores');
                 if (linkSetores) {
-                    if (isGestor && sId) linkSetores.href = `relacao_funcionarios.html?setor=${sId}`;
+                    if (role === 'Admin') linkSetores.href = 'relacao_setores.html';
+                    else if (isGestor && sId) linkSetores.href = `relacao_funcionarios.html?setor=${sId}`;
                     else linkSetores.href = `relacao_funcionarios.html`;
                 }
 
@@ -726,6 +727,13 @@
                         const outT = (i + 1 < data.length) ? new Date(data[i + 1].data_hora).getTime() : Date.now();
                         totalMs += (outT - inT);
                     }
+                    
+                    // Regra 3 das Diretrizes: Subtração Cega de Almoço (1 Hora) se > 6H.
+                    if (totalMs > 6 * 3600000) {
+                        totalMs -= 3600000;
+                        document.getElementById('stats-total').classList.add('text-primary'); // Destaque visual
+                    }
+
                     const h = Math.floor(totalMs / 3600000);
                     const m = Math.floor((totalMs % 3600000) / 60000);
                     document.getElementById('stats-total').innerText = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
@@ -799,13 +807,33 @@
                         exitTime.setHours(hS, mS, 0, 0);
                         
                         const tolerance = escala.tolerancia_saida_minutos || 15;
-                        const extraLimit = (escala.gestao_horas_extras && escala.limite_horas_extras) ? escala.limite_horas_extras : 0;
+                        let extraLimit = 0;
+                        
+                        // Busca comunicados de H.E para garantir bypass se dado 'Ciente'
+                        const todayStr = new Date().toISOString().split('T')[0];
+                        const sId = currentUser.setor_id || '00000000-0000-0000-0000-000000000000';
+                        const { data: coms } = await supabase.from('comunicados')
+                            .select('id, conteudo, lido')
+                            .or(`destinatario_id.eq.${userId},tipo.eq.geral,setor_id.eq.${sId}`)
+                            .eq('subtipo', 'hora_extra')
+                            .gte('created_at', `${todayStr}T00:00:00`)
+                            .order('created_at', { ascending: false })
+                            .limit(1);
+
+                        if (coms && coms.length > 0) {
+                            const c = coms[0];
+                            const isLido = c.lido || localStorage.getItem(`ciente_${c.id}`) === 'true';
+                            if (isLido) {
+                                const match = c.conteudo.match(/\[LIMITE:(\d+)\]/);
+                                extraLimit = match ? parseInt(match[1], 10) : 120;
+                            }
+                        }
                         
                         const maxAllowed = new Date(exitTime.getTime() + (tolerance + extraLimit) * 60000);
                         
-                        // Se passou do limite permitido e NÃO tem liberação de Hora Extra
+                        // Se passou do limite permitido e NÃO tem liberação
                         if (now > maxAllowed && !lastPoint?.hora_extra_liberada) {
-                            UI.showToast('Check-out bloqueado por excesso de jornada. Solicite liberação ao gestor.', 'error');
+                            UI.showToast('Check-out bloqueado por excesso de jornada. Confirme a solicitação no Diário ou contate seu gestor.', 'error');
                             return;
                         }
                     }
@@ -813,36 +841,69 @@
 
                 // --- VALIDAÇÃO CENTRALIZADA (GEOFENCE & HORÁRIO) VIA EVENT MANAGER ---
                 const escala = currentUser.escalas;
-                if (nextType === 'check-in' && escala) {
+                let lat = null;
+                let lng = null;
+                let gpsOculto = false;
+
+                if (escala) {
                     try {
                         const pos = await GPSTracker.getCurrentPosition();
-                        const lat = pos.coords.latitude;
-                        const lng = pos.coords.longitude;
+                        lat = pos.coords.latitude;
+                        lng = pos.coords.longitude;
                         
                         // Validar via Central de Eventos
                         const validation = EventManager.validatePointEvent(
-                            { tipo: 'check-in', latitude: lat, longitude: lng },
+                            { tipo: nextType, latitude: lat, longitude: lng },
                             escala
                         );
 
-                        if (validation.status === 'divergente') {
-                            // Se houver divergência de raio, mostrar o modal de justificativa
-                            if (validation.alerts.includes('FORA DO RAIO')) {
-                                showGeofenceModal(lat, lng);
-                                return;
-                            }
+                        if (validation.status === 'divergente' && validation.alerts.includes('FORA DO RAIO')) {
+                            showGeofenceModal(lat, lng, nextType);
+                            return;
                         }
                     } catch (e) {
-                        console.warn('Falha na validação automática:', e);
+                        console.warn('Falha no GPS (Oculto/Desligado):', e);
+                        gpsOculto = true;
                     }
                 }
 
                 if (currentUser.biometria_cadastrada) {
-                    await abrirModalCamera();
+                    await abrirModalCamera(nextType, lat, lng, gpsOculto); // Precisamos adaptar opening da camera para carregar o state
                 } else {
-                    await executePunch(nextType);
+                    await executePunch(nextType, null, lat, lng, null, gpsOculto);
                 }
             }
+
+            // Variáveis temporárias para a câmera
+            let tempNextType = null;
+            let tempLat = null;
+            let tempLng = null;
+            let tempGpsOculto = false;
+
+            window.abrirModalCamera = async (type, lat, lng, gpsOculto) => {
+                tempNextType = type;
+                tempLat = lat;
+                tempLng = lng;
+                tempGpsOculto = gpsOculto;
+                const modal = document.getElementById('modalCamera');
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                    document.getElementById('video-feed').srcObject = stream;
+                } catch (e) {
+                    UI.showToast("Câmera é obrigatória para biometria.", "error");
+                    fecharModalCamera();
+                }
+            };
+
+            window.fecharModalCamera = () => {
+                const modal = document.getElementById('modalCamera');
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                const stream = document.getElementById('video-feed').srcObject;
+                if (stream) stream.getTracks().forEach(track => track.stop());
+            };
 
             // Listener para Captura de Face
             document.getElementById('btn-capturar-face').onclick = async () => {
@@ -859,14 +920,15 @@
                 
                 fecharModalCamera();
                 
-                // Determinar o próximo tipo novamente para segurança
-                const { data: lastPoints } = await supabase.from('pontos').select('tipo').eq('funcionario_id', userId).order('data_hora', { ascending: false }).limit(1);
-                const nextType = (lastPoints && lastPoints[0]?.tipo === 'check-in') ? 'check-out' : 'check-in';
+                if (!tempNextType) {
+                    const { data: lastPoints } = await supabase.from('pontos').select('tipo').eq('funcionario_id', userId).order('data_hora', { ascending: false }).limit(1);
+                    tempNextType = (lastPoints && lastPoints[0]?.tipo === 'check-in') ? 'check-out' : 'check-in';
+                }
                 
-                await executePunch(nextType, null, null, null, file);
+                await executePunch(tempNextType, null, tempLat, tempLng, file, tempGpsOculto);
             };
 
-            async function executePunch(tipo, justificativa = null, lat = null, lng = null, photoFile = null) {
+            async function executePunch(tipo, justificativa = null, lat = null, lng = null, photoFile = null, gpsOculto = false) {
                 UI.showLoader();
                 try {
                     let evidênciaUrl = null;
@@ -887,7 +949,7 @@
                         justificativaFinal = `[FOTO:${evidênciaUrl}] ${justificativa || ''}`.trim();
                     }
 
-                    // Validação Final de Divergências para o Banco
+                    // 3. Validação Final de Divergências para o Banco
                     const escala = currentUser.escalas;
                     const validation = escala ? EventManager.validatePointEvent({ 
                         tipo, 
@@ -895,11 +957,16 @@
                         longitude: lng 
                     }, escala) : { status: 'normal', alerts: [] };
 
+                    // 4. Se GPS Oculto, adiciona à lista de alertas
+                    if (gpsOculto) validation.alerts.push("Bateu Ponto com GPS Oculto/Desligado");
+
+                    const isDivergent = gpsOculto || validation.status === 'divergente' || (validation.alerts && validation.alerts.length > 0);
+
                     const { error } = await supabase.from('pontos').insert([{ 
                         funcionario_id: userId, 
                         data_hora: new Date().toISOString(), 
                         tipo: tipo, 
-                        status_validacao: (justificativaFinal || validation.status === 'divergente') ? 'pendente' : 'aprovado', 
+                        status_validacao: (justificativaFinal || isDivergent) ? 'pendente' : 'aprovado', 
                         dentro_do_raio: !validation.alerts.includes('FORA DO RAIO'),
                         justificativa_usuario: justificativaFinal || (validation.alerts.length > 0 ? validation.alerts.join(' | ') : null),
                         latitude: lat,
@@ -907,6 +974,18 @@
                     }]);
 
                     if (error) throw error;
+
+                    // 5. Se o GPS esteve oculto, joga no diário como pendência
+                    if (gpsOculto) {
+                        const msgGPSOculto = `O registro de ponto (${tipo.toUpperCase()}) foi efetuado sem o envio das coordenadas GPS obrigatórias, contrariando o regulamento da escala.`;
+                        await supabase.from('diario_logs').insert([{
+                            funcionario_id: userId,
+                            data_hora: new Date().toISOString(),
+                            tipo: 'gps_oculto',
+                            mensagem_padrao: msgGPSOculto,
+                            status_pendencia: 'pendente'
+                        }]);
+                    }
 
                     UI.showToast('Ponto registrado com sucesso!', 'success');
                     await refreshStatus();
@@ -918,15 +997,22 @@
             }
 
             // Lógica do Modal de Justificativa
+            let pendingGeoNextType = null;
             const modal = document.getElementById('modalJustificativa');
-            function showGeofenceModal(lat, lng) {
+            function showGeofenceModal(lat, lng, type) {
+                pendingGeoNextType = type;
                 modal.classList.remove('hidden');
                 modal.classList.add('flex');
                 document.getElementById('btnConfirmarPontoForaRaio').onclick = async () => {
                     const text = document.getElementById('justificativaTexto').value;
                     if (!text) { UI.showToast('Escreva uma justificativa', 'warning'); return; }
                     modal.classList.add('hidden');
-                    await executePunch('check-in', text, lat, lng);
+                    
+                    if (currentUser.biometria_cadastrada) {
+                        await abrirModalCamera(pendingGeoNextType, lat, lng, false);
+                    } else {
+                        await executePunch(pendingGeoNextType, text, lat, lng, null, false);
+                    }
                 };
                 document.getElementById('btnFecharModal').onclick = () => modal.classList.add('hidden');
             }
