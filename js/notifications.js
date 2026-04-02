@@ -68,9 +68,9 @@ export const Notifications = {
                 
 
                 const [resComs, resLogs, resFer, resJustProcessed] = await Promise.all([
-                    supabase.from('comunicados').select('id, subtipo, lido, created_at').or(`destinatario_id.eq.${safeUserId},tipo.eq.geral,setor_id.eq.${sectorId}`),
+                    supabase.from('comunicados').select('id, tipo, subtipo, conteudo, lido, created_at, setor_id').or(`destinatario_id.eq.${safeUserId},tipo.eq.geral,tipo.eq.setorial,setor_id.eq.${sectorId}`),
                     supabase.from('diario_logs').select('id, tipo').eq('funcionario_id', safeUserId).in('tipo', ['comunicado', 'aviso_ferias']).eq('status_pendencia', 'pendente'),
-                    supabase.from('feriados_folgas').select('id, created_at').or(`funcionario_id.eq.${safeUserId},setor_id.eq.${sectorId},escopo.eq.geral`),
+                    supabase.from('feriados_folgas').select('id, tipo, created_at, setor_id').or(`funcionario_id.eq.${safeUserId},setor_id.eq.${sectorId},escopo.eq.geral`),
                     supabase.from('justificativas').select('id, status').eq('funcionario_id', safeUserId).neq('status', 'pendente')
                 ]);
 
@@ -87,8 +87,8 @@ export const Notifications = {
                     const config = EventManager.getConfig({ itemType: 'COMUNICADO', ...c });
                     const isManualSeen = c.lido === true || localStorage.getItem(`ciente_${c.id}`);
                     
-                    // Comunicados (Simples ou Hora Extra) somem se "Vistos" ou no "Fim do Turno"
-                    return !isManualSeen && !isShiftFinished;
+                    // Comunicados (Simples ou Hora Extra) somem se "Vistos"
+                    return !isManualSeen;
                 });
                 const cC = itemsCC.length;
 
@@ -101,8 +101,8 @@ export const Notifications = {
 
                 const itemsCF = (resFer.data || []).filter(f => {
                     const isManualSeen = localStorage.getItem(`visto_feriado_${f.id}`);
-                    // Feriados/Folgas somem se "Vistos" ou no "Fim do Turno"
-                    return !isManualSeen && !isShiftFinished;
+                    // Feriados/Folgas somem se "Vistos"
+                    return !isManualSeen;
                 });
                 const cF = itemsCF.length > 0 ? 1 : 0;
 

@@ -304,7 +304,7 @@
             <a href="diario_funcionario.html" class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors relative">
                 <span class="material-symbols-outlined text-2xl">edit_note</span>
                 <span class="text-[9px] font-black uppercase tracking-widest text-center">Diário</span>
-                <span id="notif-badge-footer" class="absolute top-0 right-0 size-3.5 bg-amber-500 text-white text-[7px] font-black rounded-full flex items-center justify-center border border-background-dark hidden">0</span>
+                <span id="badge-diario" class="absolute top-0 right-0 size-3.5 bg-amber-500 text-white text-[7px] font-black rounded-full flex items-center justify-center border border-background-dark hidden">0</span>
             </a>
             <a id="nav-perfil-link" href="perfil_funcionario.html" class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
                 <span class="material-symbols-outlined text-2xl">person</span>
@@ -314,7 +314,7 @@
     </nav>
 
     <!-- Modal Câmera (Biometria Facial) -->
-    <div id="modal-camera" class="fixed inset-0 bg-black/95 z-[3000] hidden items-center justify-center p-4 backdrop-blur-xl">
+    <div id="modalCamera" class="fixed inset-0 bg-black/95 z-[3000] hidden items-center justify-center p-4 backdrop-blur-xl">
         <div class="bg-background-dark border border-primary/30 rounded-[3rem] w-full max-w-lg overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95 duration-300">
             <div class="p-6 border-b border-white/5 flex justify-between items-center bg-primary/5">
                 <div class="flex items-center gap-3">
@@ -364,33 +364,6 @@
         let cameraStream = null;
         let isInspectionMode = false;
 
-        // --- LÓGICA DE CÂMERA (BIOMETRIA) ---
-        window.abrirModalCamera = async () => {
-            const modal = document.getElementById('modal-camera');
-            const video = document.getElementById('video-feed');
-            try {
-                cameraStream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: "user", width: 720, height: 720 }, 
-                    audio: false 
-                });
-                video.srcObject = cameraStream;
-                modal.classList.remove('hidden');
-                modal.classList.add('flex');
-            } catch (err) {
-                console.error("Erro ao acessar câmera:", err);
-                UI.showToast("Acesso à câmera negado ou indisponível.", "error");
-            }
-        };
-
-        window.fecharModalCamera = () => {
-            const modal = document.getElementById('modal-camera');
-            if (cameraStream) {
-                cameraStream.getTracks().forEach(track => track.stop());
-                cameraStream = null;
-            }
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        };
 
         async function init() {
             const session = Auth.checkSession();
@@ -925,6 +898,7 @@
             let tempLat = null;
             let tempLng = null;
             let tempGpsOculto = false;
+            let cameraStream = null;
 
             window.abrirModalCamera = async (type, lat, lng, gpsOculto) => {
                 tempNextType = type;
@@ -932,23 +906,33 @@
                 tempLng = lng;
                 tempGpsOculto = gpsOculto;
                 const modal = document.getElementById('modalCamera');
-                modal.classList.remove('hidden');
-                modal.classList.add('flex');
+                if (modal) {
+                    modal.classList.remove('hidden');
+                    modal.classList.add('flex');
+                }
+                const video = document.getElementById('video-feed');
                 try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                    document.getElementById('video-feed').srcObject = stream;
-                } catch (e) {
-                    UI.showToast("Câmera é obrigatória para biometria.", "error");
-                    fecharModalCamera();
+                    cameraStream = await navigator.mediaDevices.getUserMedia({ 
+                        video: { facingMode: "user", width: 720, height: 720 }, 
+                        audio: false 
+                    });
+                    if (video) video.srcObject = cameraStream;
+                } catch (err) {
+                    console.error("Erro ao acessar câmera:", err);
+                    UI.showToast("Não foi possível acessar a câmera.", "error");
                 }
             };
 
             window.fecharModalCamera = () => {
                 const modal = document.getElementById('modalCamera');
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
-                const stream = document.getElementById('video-feed').srcObject;
-                if (stream) stream.getTracks().forEach(track => track.stop());
+                if (cameraStream) {
+                    cameraStream.getTracks().forEach(track => track.stop());
+                    cameraStream = null;
+                }
+                if (modal) {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                }
             };
 
             // Listener para Captura de Face

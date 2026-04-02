@@ -1470,12 +1470,8 @@
                 // Novo status: se for rascunho inicial = pendente. Se for alteração em aprovado = proposto.
                 const newStatus = 'pendente'; // CORREÇÃO: Unifica o status de entrada para 'pendente'
 
-                // Se for alteração, limpamos apenas as propostas anteriores antes de inserir a nova
-                if (isSubsequentEdit) {
-                    await supabase.from('ferias').delete().eq('funcionario_id', targetId).eq('status', 'proposto');
-                } else {
-                    await supabase.from('ferias').delete().eq('funcionario_id', targetId);
-                }
+                // Limpar solicitações pendentes anteriores antes de inserir a nova atualização
+                await supabase.from('ferias').delete().eq('funcionario_id', targetId).in('status', ['pendente', 'proposto']);
 
                 const inserts = currentParcelas.map((p, idx) => ({
                     funcionario_id: targetId,

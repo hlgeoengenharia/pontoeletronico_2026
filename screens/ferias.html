@@ -602,16 +602,14 @@
 
             employees = (fRes.data || []).map(f => {
                 const myFerias = feriasData.filter(v => v.funcionario_id === f.id);
-                let vacationStatus = 'nenhum';
+                const hasPendente = myFerias.some(v => v.status === 'pendente' || v.status === 'proposto');
+                const hasAprovadoFuturo = myFerias.some(v => v.status === 'aprovado' && v.data_inicio > today);
+                const isInRepouso = myFerias.some(v => v.status === 'aprovado' && today >= v.data_inicio && today <= v.data_fim);
 
-                myFerias.forEach(v => {
-                    if (v.status === 'aprovado') {
-                        if (today >= v.data_inicio && today <= v.data_fim) vacationStatus = 'repouso';
-                        else if (v.data_inicio > today && vacationStatus !== 'repouso') vacationStatus = 'aprovado';
-                    } else if (v.status === 'pendente' && vacationStatus === 'nenhum') {
-                        vacationStatus = 'pendente';
-                    }
-                });
+                let vacationStatus = 'nenhum';
+                if (isInRepouso) vacationStatus = 'repouso';
+                else if (hasPendente) vacationStatus = 'pendente';
+                else if (hasAprovadoFuturo) vacationStatus = 'aprovado';
 
                 return {
                     ...f,

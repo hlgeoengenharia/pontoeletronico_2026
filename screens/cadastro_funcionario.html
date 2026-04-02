@@ -514,7 +514,7 @@
             </div>
         </section>
     <!-- Modal de Câmera -->
-    <div id="modal-camera" class="fixed inset-0 bg-black/90 z-[200] hidden items-center justify-center p-6 backdrop-blur-md">
+    <div id="modalCamera" class="fixed inset-0 bg-black/90 z-[200] hidden items-center justify-center p-6 backdrop-blur-md">
         <div class="bg-background-dark border border-primary/30 rounded-3xl p-6 w-full max-w-lg space-y-6 shadow-2xl relative overflow-hidden">
             <div class="absolute top-0 left-0 w-full h-1 bg-primary"></div>
             <div class="text-center space-y-2">
@@ -714,7 +714,7 @@
             const isLocked = document.getElementById('nome_completo').disabled;
             if (isLocked) return;
 
-            const modal = document.getElementById('modal-camera');
+            const modal = document.getElementById('modalCamera');
             const video = document.getElementById('video-feed');
             
             try {
@@ -732,7 +732,7 @@
         };
 
         window.fecharModalCamera = () => {
-            const modal = document.getElementById('modal-camera');
+            const modal = document.getElementById('modalCamera');
             if (cameraStream) {
                 cameraStream.getTracks().forEach(track => track.stop());
                 cameraStream = null;

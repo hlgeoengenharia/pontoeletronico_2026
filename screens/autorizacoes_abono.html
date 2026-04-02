@@ -263,8 +263,7 @@
           } else if (type === 'GPS') {
             // Se for rejeição de 50% por esquecimento, invalida o ponto
             const result = await supabase.from('pontos').update({ 
-                status_validacao: status,
-                justificativa_admin: status === 'rejeitado' ? 'REJEITADO PELO GESTOR: GERA FALTA.' : 'ABONADO PELO GESTOR.'
+                status_validacao: status
             }).eq('id', id);
             error = result.error;
           } else {

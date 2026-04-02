@@ -723,7 +723,7 @@
                     const isLocked = document.getElementById('nome_completo').disabled;
                     if (isLocked) return;
 
-                    const modal = document.getElementById('modal-camera');
+                    const modal = document.getElementById('modalCamera');
                     const video = document.getElementById('video-feed');
                     
                     try {
@@ -741,7 +741,7 @@
                 };
 
                 window.fecharModalCamera = () => {
-                    const modal = document.getElementById('modal-camera');
+                    const modal = document.getElementById('modalCamera');
                     if (cameraStream) {
                         cameraStream.getTracks().forEach(track => track.stop());
                         cameraStream = null;
@@ -1857,7 +1857,7 @@
 
 
     <!-- Modal Câmera -->
-    <div id="modal-camera" class="fixed inset-0 bg-black/90 z-[100] hidden items-center justify-center p-4 backdrop-blur-md">
+    <div id="modalCamera" class="fixed inset-0 bg-black/90 z-[100] hidden items-center justify-center p-4 backdrop-blur-md">
         <div class="bg-slate-900 border border-primary/30 rounded-3xl w-full max-w-lg overflow-hidden flex flex-col shadow-[0_0_50px_rgba(13,89,242,0.2)] animate-in zoom-in-95 duration-300">
             <div class="p-4 border-b border-white/5 flex justify-between items-center bg-primary/5">
                 <h3 class="text-xs font-black uppercase tracking-[0.2em] text-primary">Captura de Imagem Facial</h3>
