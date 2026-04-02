@@ -1078,10 +1078,16 @@
             const hasProposto = currentItems && currentItems.some(i => i.status === 'proposto');
 
             if (hasProposto) {
-                // Se for rejeição de edição, apenas removemos o que era 'proposto'
-                // O que era 'aprovado' permanece intacto
+                // Se for rejeição de edição, removemos apenas as parcelas 'proposto'
+                // e congelamos definitivamente o plano anteriormente aprovado (não pode mais ser alterado)
                 await supabase.from('ferias').delete().eq('funcionario_id', targetEmployee.id).eq('status', 'proposto');
-                UI.showToast('Alteração rejeitada. Plano original mantido.', 'info');
+                // Atualizar registros aprovados para marcar como congelados permanentemente
+                try {
+                    await supabase.from('ferias').update({ status: 'congelado' }).eq('funcionario_id', targetEmployee.id).eq('status', 'aprovado');
+                } catch (e) {
+                    console.warn('Não foi possível marcar como congelado:', e);
+                }
+                UI.showToast('Alteração rejeitada. Plano original mantido e congelado permanentemente.', 'info');
             } else {
                 // Se for a primeira análise, marcamos tudo como rejeitado conforme regra original
                 await supabase.from('ferias').delete().eq('funcionario_id', targetEmployee.id);

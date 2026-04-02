@@ -901,7 +901,12 @@
 
         } catch (err) {
             console.error('Erro fatal no sync:', err);
-            UI.showToast('Algumas camadas não puderam ser carregadas.', 'warning');
+            try {
+                console.error('Detalhes do erro de sync:', err && (err.message || JSON.stringify(err)));
+            } catch (e) {
+                console.error('Erro ao imprimir detalhes do erro de sync');
+            }
+            UI.showToast(`Erro no sync: ${err?.message || 'verifique o console'}`, 'warning');
         }
     }
 
@@ -1454,7 +1459,8 @@
 
         } catch (err) {
             console.error('Erro ao carregar histórico:', err);
-            container.innerHTML = `<p class="text-[9px] text-rose-500 uppercase text-center py-4">Erro ao carregar histórico</p>`;
+            try { console.error('Detalhes do erro do histórico:', err && (err.message || JSON.stringify(err))); } catch (e) {}
+            container.innerHTML = `<p class="text-[9px] text-rose-500 uppercase text-center py-4">Erro ao carregar histórico: ${err?.message || 'verifique console'}</p>`;
         }
     };
 
@@ -1752,30 +1758,51 @@
                     return;
                 }
 
-                // 1. Inserir em feriados_folgas
+                // 1. Criar um único comunicado-resumo que representa o conjunto de dias
+                const summaryContent = selectedSpecialDays
+                    .sort((a,b) => a.data.localeCompare(b.data))
+                    .map(sd => `${sd.data.split('-').reverse().slice(0,2).join('/')}: ${sd.tipo.replace('_', ' ').toUpperCase()} - ${sd.descricao}`)
+                    .join(' | ');
+
+                const comunicadoPayload = {
+                    remetente_id: localStorage.getItem('userId'),
+                    tipo: activeComunicado.tipo,
+                    subtipo: 'ferias_folgas',
+                    conteudo: summaryContent,
+                    destinatario_id: activeComunicado.tipo === 'individual' ? activeComunicado.targetId : null,
+                    setor_id: activeComunicado.tipo === 'setorial' ? activeComunicado.targetId : null
+                };
+
+                const { data: comData, error: comErr } = await supabase.from('comunicados').insert([comunicadoPayload]).select('*').single();
+                if (comErr) throw comErr;
+
+                // 2. Inserir os dias em feriados_folgas em um único batch, forçando o mesmo created_at
+                const createdAt = comData?.created_at || new Date().toISOString();
                 const feriasData = selectedSpecialDays.map(sd => ({
                     data: sd.data,
                     tipo: sd.tipo,
                     descricao: sd.descricao,
                     funcionario_id: activeComunicado.tipo === 'individual' ? activeComunicado.targetId : null,
                     setor_id: activeComunicado.tipo === 'setorial' ? activeComunicado.targetId : null,
-                    escopo: activeComunicado.tipo
+                    escopo: activeComunicado.tipo,
+                    created_at: createdAt
                 }));
 
                 const { data: insertedData, error: ferError } = await supabase.from('feriados_folgas').insert(feriasData).select('id');
                 if (ferError) throw ferError;
 
-                // Auto-Ciente: Marcar como visto para o próprio remetente (evita badge no próprio sino)
-                if (insertedData) {
-                    insertedData.forEach(item => {
-                        localStorage.setItem(`visto_feriado_${item.id}`, 'true');
-                    });
+                // Marcar visto apenas para o comunicado-resumo localmente (o usuário remetente não precisa do badge)
+                if (comData && comData.id) {
+                    localStorage.setItem(`ciente_${comData.id}`, 'true');
                 }
 
                 UI.showToast('Cronograma registrado com sucesso!', 'success');
+                // Limpar seleção e UI
                 selectedSpecialDays = [];
                 renderSelectedDaysTable();
                 fecharModalComunicado();
+                // Forçar atualização geral
+                window.dispatchEvent(new StorageEvent('storage', { key: 'badgeRefresh', newValue: Date.now().toString() }));
                 UI.hideLoader();
                 return;
             }

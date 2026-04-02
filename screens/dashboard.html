@@ -460,7 +460,51 @@
                 supabase.from('ferias').select('*').eq('funcionario_id', currentUser.id).eq('status', 'aprovado')
             ]);
 
-            renderCalendar(feriadosRes.data || [], pontosRes.data || [], feriasRes.data || [], month, year);
+            // Carregar feriados nacionais usando a mesma lógica do calendário de FERIADOS/FOLGAS
+            function getBrazilianHolidaysLocal(year) {
+                const holidays = {};
+                holidays[`${year}-01-01`] = 'Confraternização Universal';
+                holidays[`${year}-04-21`] = 'Tiradentes';
+                holidays[`${year}-05-01`] = 'Dia do Trabalho';
+                holidays[`${year}-09-07`] = 'Independência do Brasil';
+                holidays[`${year}-10-12`] = 'Nossa Senhora Aparecida';
+                holidays[`${year}-11-02`] = 'Finados';
+                holidays[`${year}-11-15`] = 'Proclamação da República';
+                holidays[`${year}-12-25`] = 'Natal';
+
+                // Datas móveis baseadas na Páscoa
+                const a = year % 19;
+                const b = Math.floor(year / 100);
+                const c = year % 100;
+                const d = Math.floor(b / 4);
+                const e = b % 4;
+                const f = Math.floor((b + 8) / 25);
+                const g = Math.floor((b - f + 1) / 3);
+                const h = (19 * a + b - d - g + 15) % 30;
+                const i = Math.floor(c / 4);
+                const k = c % 4;
+                const l = (32 + 2 * e + 2 * i - h - k) % 7;
+                const m = Math.floor((a + 11 * h + 22 * l) / 451);
+                const pMeso = Math.floor((h + l - 7 * m + 114) / 31);
+                const pDia = ((h + l - 7 * m + 114) % 31) + 1;
+                const pascoa = new Date(year, pMeso - 1, pDia);
+                const addDays = (date, days) => { const result = new Date(date); result.setDate(result.getDate() + days); return result.toISOString().split('T')[0]; };
+                holidays[addDays(pascoa, -47)] = 'Carnaval';
+                holidays[addDays(pascoa, -48)] = 'Carnaval';
+                holidays[addDays(pascoa, -2)] = 'Sexta-feira Santa';
+                holidays[addDays(pascoa, 60)] = 'Corpus Christi';
+                return holidays;
+            }
+
+            const nationalMap = getBrazilianHolidaysLocal(year);
+            const nationalHolidays = Object.keys(nationalMap).map(d => ({ data: d, tipo: 'feriado_nacional', descricao: nationalMap[d] }));
+
+            // Mesclar sem duplicatas por data (priorizando registros do banco)
+            const existingDates = new Set((feriadosRes.data || []).map(f => f.data));
+            const mergedFeriados = [ ...(feriadosRes.data || []) ];
+            (nationalHolidays || []).forEach(n => { if (!existingDates.has(n.data)) mergedFeriados.push(n); });
+
+            renderCalendar(mergedFeriados, pontosRes.data || [], feriasRes.data || [], month, year);
         }
 
         async function setupCalendarNavigation() {
@@ -475,7 +519,9 @@
                 calendarGrid.classList.add(outClass);
                 
                 setTimeout(async () => {
-                    calendarDate.setMonth(calendarDate.getMonth() + offset);
+                    // FIX: Define o dia como 1 para evitar pular meses (ex: 31 de Março -> 1 de Maio)
+                    calendarDate.setDate(1);
+                    calendarDate.setMonth(calendarDate.getMonth() + offset);                    
                     await refreshCalendar();
                     calendarGrid.classList.remove(outClass);
                     calendarGrid.classList.add(inClass);

@@ -21,6 +21,10 @@
         .premium-border-sky { border-left: 4px solid #38BDF8 !important; }
         .premium-border-blue { border-left: 4px solid #0d59f2 !important; }
         .premium-border-amber { border-left: 4px solid #f59e0b !important; }
+        .premium-border-green { border-left: 4px solid #10b981 !important; }
+        .premium-border-rose { border-left: 4px solid #f43f5e !important; }
+        .premium-border-purple { border-left: 4px solid #a855f7 !important; }
+        .premium-border-emerald { border-left: 4px solid #059669 !important; }
         
         .bg-vacation-soft { background: rgba(56, 189, 248, 0.05); }
         .border-vacation { border-color: rgba(56, 189, 248, 0.3); }
@@ -58,20 +62,36 @@
 
         .card-history {
             position: relative;
-            padding-left: 16px !important;
+            padding-left: 20px !important;
             transition: all 0.3s ease;
         }
+        /* Lateral estilizada com faixa suavizada (gradiente) — utiliza a variável --accent-rgb definida nas classes accent-*
+           Essa faixa se mistura ao interior do card e cria o efeito arredondado suave solicitado. */
         .card-history::before {
             content: '';
             position: absolute;
-            left: 0;
-            top: 4px;
-            bottom: 4px;
-            width: 4px;
-            border-radius: 10px;
-            background: currentColor;
-            opacity: 0.8;
+            left: -8px;
+            top: 8px;
+            bottom: 8px;
+            width: 18px;
+            border-radius: 12px;
+            background: linear-gradient(90deg, rgba(var(--accent-rgb),1) 0%, rgba(var(--accent-rgb),0.18) 36%, rgba(var(--accent-rgb),0) 100%);
+            box-shadow: 0 8px 20px rgba(var(--accent-rgb),0.06);
+            pointer-events: none;
         }
+
+        /* Quando queremos usar o estilo de borda esquerda "feriado/folgas" (border-left sólido)
+           escondemos a faixa gradient e aplicamos a borda sólida definida em premium-border-* */
+        .card-history.no-gradient::before { display: none; }
+
+
+        /* Classes de cor por evento — definem a cor base (RGB) usada pelo gradiente */
+        .accent-amber { --accent-rgb: 245,158,11; color: rgb(var(--accent-rgb)); }
+        .accent-blue  { --accent-rgb: 13,89,242; color: rgb(var(--accent-rgb)); }
+        .accent-rose  { --accent-rgb: 236,72,153; color: rgb(var(--accent-rgb)); }
+        .accent-violet{ --accent-rgb: 139,92,246; color: rgb(var(--accent-rgb)); }
+        .accent-cyan  { --accent-rgb: 6,182,212; color: rgb(var(--accent-rgb)); }
+        .accent-emerald{ --accent-rgb: 16,185,129; color: rgb(var(--accent-rgb)); }
         .map-container-card {
             height: 0;
             overflow: hidden;
@@ -374,6 +394,9 @@
                         </div>
                     </div>
 
+                    <div class="grid grid-cols-7 text-center text-[9px] font-bold text-slate-500 uppercase mb-2">
+                        <span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span>
+                    </div>
                     <div id="grid-calendar-ferias" class="grid grid-cols-7 gap-1"></div>
 
                     <div id="current-selection-panel" class="hidden p-4 bg-primary/10 border border-primary/20 rounded-2xl flex items-center justify-between animate-in zoom-in-95 duration-300">
@@ -407,7 +430,7 @@
                         <span class="material-symbols-outlined text-sm text-primary">analytics</span>
                         Resumo Visual (Foto Cards)
                     </h3>
-                    <span id="parcela-count" class="text-[10px] text-slate-500 font-bold uppercase">0/3 Parcelas</span>
+                    <span id="parcela-count" class="text-[12px] text-amber-400 font-extrabold uppercase">0/3 Parcelas</span>
                 </div>
 
                 <div id="photo-cards-container" class="space-y-6"></div>
@@ -577,6 +600,12 @@
                     supabase.from('ferias').select('*').eq('funcionario_id', targetId)
                 ]);
 
+                const getLocalISO = (dStr) => {
+                    if (!dStr) return '';
+                    const d = new Date(dStr);
+                    return new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+                };
+
                 const feriasData = resFerP.data || [];
                 let groupedFerias = null;
                 if (feriasData.length > 0) {
@@ -590,44 +619,120 @@
                     else if (statusCounts['pendente']) globalStatus = 'pendente';
                     else if (statusCounts['aprovado']) globalStatus = 'aprovado';
 
+                    // Encontrar a data da última ação (criação ou análise via logs) para posicionar o card
+                    const feriasLogs = (resLogs.data || []).filter(l => l.tipo === 'aviso_ferias' || l.tipo === 'ferias');
+                    let latestActionDate = feriasData[0].created_at || new Date().toISOString();
+                    
+                    if (feriasLogs.length > 0) {
+                        feriasLogs.sort((a,b) => new Date(b.created_at || b.data_hora) - new Date(a.created_at || a.data_hora));
+                        latestActionDate = feriasLogs[0].created_at || feriasLogs[0].data_hora;
+                    } else if (feriasData[0].created_at) {
+                        const sortedFerias = [...feriasData].sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+                        latestActionDate = sortedFerias[0].created_at;
+                    }
+
                     groupedFerias = {
                         id: 'grouped_ferias_' + targetId,
                         itemType: 'CRONOGRAMA_FERIAS',
-                        data_item: feriasData[0].data_inicio,
+                        created_at: latestActionDate,
+                        data_item: getLocalISO(latestActionDate),
                         status: globalStatus,
                         parcelas: feriasData.sort((a,b) => a.parcela_numero - b.parcela_numero),
                         conteudo: 'CRONOGRAMA DE FÉRIAS'
                     };
                 }
 
-                // 5. Unificar e Agrupar Feriados/Folgas por Data Alvo (data)
+                // 5. Unificar Feriados/Folgas por TRANSMISSÃO (created_at) para criar um único card por envio
                 const ferRes = await supabase.from('feriados_folgas').select('*').or(`funcionario_id.eq.${targetId},setor_id.eq.${sId},escopo.eq.geral`);
-                const groupedFerRes = (ferRes.data || []).reduce((acc, f) => {
-                    const key = f.data; 
+                // Carregar feriados nacionais usando a mesma lógica do calendário de FERIADOS/FOLGAS
+                try {
+                    const yearLocal = (typeof feriasCalendarYear !== 'undefined' && feriasCalendarYear) ? feriasCalendarYear : (new Date()).getFullYear();
+                    function getBrazilianHolidaysLocal(year) {
+                        const holidays = {};
+                        holidays[`${year}-01-01`] = 'Confraternização Universal';
+                        holidays[`${year}-04-21`] = 'Tiradentes';
+                        holidays[`${year}-05-01`] = 'Dia do Trabalho';
+                        holidays[`${year}-09-07`] = 'Independência do Brasil';
+                        holidays[`${year}-10-12`] = 'Nossa Senhora Aparecida';
+                        holidays[`${year}-11-02`] = 'Finados';
+                        holidays[`${year}-11-15`] = 'Proclamação da República';
+                        holidays[`${year}-12-25`] = 'Natal';
+                        const a = year % 19; const b = Math.floor(year / 100); const c = year % 100; const d = Math.floor(b / 4);
+                        const e = b % 4; const f = Math.floor((b + 8) / 25); const g = Math.floor((b - f + 1) / 3);
+                        const h = (19 * a + b - d - g + 15) % 30; const i = Math.floor(c / 4); const k = c % 4;
+                        const l = (32 + 2 * e + 2 * i - h - k) % 7; const m = Math.floor((a + 11 * h + 22 * l) / 451);
+                        const pMeso = Math.floor((h + l - 7 * m + 114) / 31); const pDia = ((h + l - 7 * m + 114) % 31) + 1;
+                        const pascoa = new Date(year, pMeso - 1, pDia);
+                        const addDays = (date, days) => { const result = new Date(date); result.setDate(result.getDate() + days); return result.toISOString().split('T')[0]; };
+                        holidays[addDays(pascoa, -47)] = 'Carnaval'; holidays[addDays(pascoa, -48)] = 'Carnaval';
+                        holidays[addDays(pascoa, -2)] = 'Sexta-feira Santa'; holidays[addDays(pascoa, 60)] = 'Corpus Christi';
+                        return holidays;
+                    }
+
+                    const nationalMap = getBrazilianHolidaysLocal(yearLocal);
+                    const national = Object.keys(nationalMap).map(d => ({ data: d, tipo: 'feriado_nacional', descricao: nationalMap[d] }));
+                    // Construir o array 'holidays' usado pelo renderCalendar de Minhas Férias
+                    const dbHolidays = (ferRes.data || []).map(f => ({ data: f.data, tipo: f.tipo || 'folga', descricao: f.descricao || '' }));
+                    const existing = new Set(dbHolidays.map(h => h.data));
+                    holidays = [ ...dbHolidays ];
+                    (national || []).forEach(n => { if (!existing.has(n.data)) holidays.push(n); });
+                } catch (e) {
+                    console.warn('[Diário] Não foi possível carregar feriados nacionais estáticos:', e);
+                    holidays = (ferRes.data || []).map(f => ({ data: f.data, tipo: f.tipo || 'folga', descricao: f.descricao || '' }));
+                }
+                // Evitar duplicidade quando já existe um comunicado do tipo 'ferias_folgas' (usar o comunicado como o evento principal)
+                const comCreatedSet = new Set((resCom.data || []).filter(c => c.subtipo === 'ferias_folgas').map(c => c.created_at));
+
+                const groupedBySend = (ferRes.data || []).reduce((acc, f) => {
+                    // Agrupar pelo timestamp de criação (transmissão). Se não existir, cair de volta para a data alvo.
+                    const key = f.created_at || f.data;
+                    // Se já tivermos um comunicado que representa esse envio, pule a criação do grupo (evita duplicidade)
+                    if (comCreatedSet.has(f.created_at)) return acc;
                     if (!acc[key]) acc[key] = [];
                     acc[key].push(f);
                     return acc;
                 }, {});
 
-                const feriadoItems = Object.entries(groupedFerRes).map(([key, list]) => ({
-                    id: 'group_' + key.replace(/[:.-]/g, ''),
-                    created_at: list[0].created_at,
-                    data_item: key,
-                    itemType: 'FERIAS_FOLGA_GROUP',
-                    list: list,
-                    conteudo: list.map(f => `${f.data.split('-').reverse().slice(0,2).join('/')}: ${f.tipo.replace('_', ' ').toUpperCase()}`).join(' | ')
-                }));
+                // Representar cada transmissão de Feriados/Folgas por UM único item
+                // (data_item = data de envio / created_at). O card aparecerá apenas
+                // na data do envio (hoje), sem replicar para cada data marcada.
+                const feriadoItems = [];
+                Object.entries(groupedBySend).forEach(([key, list]) => {
+                    const groupId = 'group_' + String(key).replace(/[:.\-T]/g, '').replace(/[^0-9a-zA-Z]/g, '');
+                    const createdAt = list[0].created_at || list[0].data;
 
-                const getLocalISO = (dStr) => {
-                    if (!dStr) return '';
-                    const d = new Date(dStr);
-                    return new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
-                };
+                    feriadoItems.push({
+                        id: groupId,
+                        created_at: createdAt,
+                        // data_item será a data de envio (ISO local) para que o card
+                        // seja exibido no dia em que o usuário registrou (hoje)
+                        data_item: (new Date(createdAt).getTime() ? (new Date(createdAt).toISOString().split('T')[0]) : list[0].data),
+                        itemType: 'FERIAS_FOLGA_GROUP',
+                        list: list,
+                        conteudo: ''
+                    });
+                });
 
                 const itemsRaw = [
                     ...(resAnot.data || []).map(a => ({ ...a, itemType: 'ATIVIDADE', data_item: a.data, conteudo: a.conteudo })),
                     ...(resJust.data || []).map(j => ({ ...j, itemType: 'JUSTIFICATIVA', data_item: j.data_incidente, conteudo: j.descricao })),
-                    ...(resCom.data || []).map(c => ({ ...c, itemType: 'COMUNICADO', data_item: getLocalISO(c.created_at), conteudo: c.conteudo })),
+                    // Mapear comunicados: se for um resumo de feriados/folgas, convertê-lo
+                    // em um item do tipo FERIAS_FOLGA_GROUP vinculando a lista de feriados
+                    ...(resCom.data || []).map(c => {
+                        if (c.subtipo === 'ferias_folgas') {
+                            // encontrar itens de feriados_folgas que compartilham o mesmo created_at
+                            const related = (ferRes.data || []).filter(f => f.created_at === c.created_at);
+                            return {
+                                id: 'com_' + c.id,
+                                created_at: c.created_at,
+                                data_item: getLocalISO(c.created_at),
+                                itemType: 'FERIAS_FOLGA_GROUP',
+                                list: related,
+                                conteudo: c.conteudo
+                            };
+                        }
+                        return { ...c, itemType: 'COMUNICADO', data_item: getLocalISO(c.created_at), conteudo: c.conteudo };
+                    }),
                     ...(resLogs.data || []).map(l => ({ ...l, itemType: 'SISTEMA', data_item: getLocalISO(l.data_hora), conteudo: l.mensagem_padrao })),
                     ...(groupedFerias ? [groupedFerias] : []),
                     ...feriadoItems
@@ -696,7 +801,23 @@
                 return acc;
             }, {});
 
-            const sortedDates = Object.keys(grouped).sort((a,b) => new Date(b) - new Date(a));
+            // Garantir que os itens dentro de cada data estejam ordenados do mais recente
+            // para o mais antigo (por created_at / data_hora / data_item)
+            const parseItemTime = (it) => {
+                const ts = it.created_at || it.data_hora || it.time_raw || (it.data_item ? (it.data_item + 'T00:00:00') : null);
+                const d = ts ? new Date(ts) : new Date(0);
+                return d.getTime();
+            };
+
+            Object.keys(grouped).forEach(k => {
+                grouped[k].sort((a,b) => parseItemTime(b) - parseItemTime(a));
+            });
+
+            const sortedDates = Object.keys(grouped).sort((a,b) => {
+                const da = new Date(a + 'T00:00:00');
+                const db = new Date(b + 'T00:00:00');
+                return db - da; // mais recente primeiro
+            });
             const todayDateStr = new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().split('T')[0];
             
             const viewDates = historyExpanded ? sortedDates : sortedDates.filter(d => {
@@ -743,10 +864,16 @@
                                 if (isJustificativa) icon = 'history_edu';
                                 
                                 // Determinar Cor da Borda Lateral
-                                let sideBorder = '';
-                                if (isAtividade) sideBorder = 'premium-border-blue';
-                                else if (isJustificativa) sideBorder = 'premium-border-amber';
-                                else if (isFerias) sideBorder = 'premium-border-sky';
+                                // Use a configuração do EventManager por padrão para garantir consistência
+                                let sideBorder = config && config.premiumBorder ? config.premiumBorder : '';
+
+                                // Determinar classe de cor (faixa lateral estilizada) — mantemos classes separadas
+                                let accentClass = '';
+                                if (isAtividade) accentClass = 'accent-blue';
+                                else if (isJustificativa) accentClass = 'accent-amber';
+                                else if (isFerias) accentClass = 'accent-emerald';
+                                else if (item.itemType === 'SISTEMA') accentClass = 'accent-violet';
+                                else accentClass = 'accent-cyan';
                                 
                                 // Badge de Status para Justificativas e Férias
                                 let statusBadge = '';
@@ -760,41 +887,49 @@
 
                                 const canEdit = EventManager.canEdit(item);
 
-                                // Renderização do Card de Feriados/Folgas Agrupados
+                                // Renderização do Card de Feriados/Folgas Agrupados (um card por transmissão)
                                 if (item.itemType === 'FERIAS_FOLGA_GROUP') {
                                     return `
                                         ${ (() => {
-                                        const date = new Date(item.created_at);
-                                        const cienteFlag = item.list.every(f => f.lido === true || localStorage.getItem('visto_feriado_' + f.id));
-                                        
-                                        return `
-                                            <div class="bg-white/5 border border-white/5 rounded-2xl p-4 space-y-3 group border-l-4 ${cienteFlag ? 'border-l-rose-500' : 'border-l-amber-500 bg-amber-500/5'} shadow-lg relative">
-                                                <div class="flex justify-between items-start">
-                                                    <div class="flex items-center gap-2">
-                                                        <span class="material-symbols-outlined text-sm ${cienteFlag ? 'text-rose-500' : 'text-amber-500'}">event_note</span>
-                                                        <span class="text-[9px] font-black uppercase tracking-widest ${cienteFlag ? 'text-rose-500' : 'text-amber-500'}">FERIADOS / FOLGAS</span>
-                                                        <span class="text-[8px] font-bold text-slate-500 ml-2">
-                                                            ${date.toLocaleDateString('pt-BR')} | ${date.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})}
-                                                        </span>
+                                            const date = new Date(item.created_at || item.data_item + 'T00:00:00');
+                                            const cienteFlag = item.list.every(f => f.lido === true || localStorage.getItem('visto_feriado_' + f.id));
+
+                                            const dayBadges = item.list.map(f => {
+                                                const dateLabel = f.data.split('-').reverse().slice(0,2).join('/');
+                                                const tipo = (f.tipo || '').toLowerCase();
+                                                let badgeClass = 'bg-amber-500/10 text-amber-500 border border-amber-500/20';
+                                                if (tipo.includes('folga')) badgeClass = 'bg-rose-500/10 text-rose-500 border border-rose-500/20';
+                                                else if (tipo.includes('regional')) badgeClass = 'bg-violet-500/10 text-violet-400 border border-violet-500/20';
+                                                else if (tipo.includes('nacional')) badgeClass = 'bg-amber-500/10 text-amber-500 border border-amber-500/20';
+
+                                                return `<div class="inline-block mr-2 mb-2 px-2 py-1 rounded-md text-[10px] font-black uppercase ${badgeClass}">${dateLabel} • ${f.tipo.replace('_',' ').toUpperCase()}${f.descricao ? ' - ' + f.descricao : ''}</div>`;
+                                            }).join('');
+
+                                            return `
+                                                <div class="bg-white/5 border border-white/5 rounded-2xl p-4 space-y-3 group ${cienteFlag ? 'border-l-4 border-l-rose-500' : 'border-l-4 border-l-amber-500 bg-amber-500/5'} shadow-lg relative">
+                                                    <div class="flex justify-between items-start">
+                                                        <div class="flex items-center gap-2">
+                                                            <span class="material-symbols-outlined text-sm ${cienteFlag ? 'text-rose-500' : 'text-amber-500'}">event_note</span>
+                                                            <span class="text-[9px] font-black uppercase tracking-widest ${cienteFlag ? 'text-rose-500' : 'text-amber-500'}">FERIADOS / FOLGAS</span>
+                                                            <span class="text-[8px] font-bold text-slate-500 ml-2">${date.toLocaleDateString('pt-BR')} | ${date.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})}</span>
+                                                        </div>
+                                                        <div class="flex items-center gap-3">
+                                                            <!-- Informational only: removido botão 'ESTOU CIENTE' para FERIADOS/FOLGAS -->
+                                                            ${cienteFlag ? `
+                                                                <div class="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                                                    <span class="material-symbols-outlined text-[10px]">verified</span>
+                                                                    <span class="text-[7px] font-black uppercase tracking-tighter">REGISTRADO</span>
+                                                                </div>
+                                                            ` : ''}
+                                                        </div>
                                                     </div>
-                                                    <div class="flex items-center gap-3">
-                                                        ${!cienteFlag ? `
-                                                            <button onclick="window.marcarCiente('${item.id}', 'FERIADO')" class="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-500 border border-amber-500/20 shadow-lg shadow-amber-500/10 hover:bg-amber-500/20 transition-all">
-                                                                <span class="material-symbols-outlined text-[10px]">pending</span>
-                                                                <span class="text-[7px] font-black uppercase tracking-tighter">ESTOU CIENTE</span>
-                                                            </button>
-                                                        ` : `
-                                                            <div class="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                                                                <span class="material-symbols-outlined text-[10px]">verified</span>
-                                                                <span class="text-[7px] font-black uppercase tracking-tighter">CIENTE</span>
-                                                            </div>
-                                                        `}
+                                                    <div class="pt-2">
+                                                        ${dayBadges}
                                                     </div>
                                                 </div>
-                                                <p class="text-[11px] text-slate-300 leading-relaxed italic line-clamp-3">"${item.conteudo}"</p>
-                                            </div>
-                                        `;
-                                    })() }`;
+                                            `;
+                                        })() }
+                                    `;
                                 }
 
                                 if (item.itemType === 'CRONOGRAMA_FERIAS') {
@@ -808,7 +943,7 @@
                                                     </div>
                                                     <div>
                                                         <h6 class="text-[11px] font-black uppercase tracking-widest text-white leading-none">CRONOGRAMA DE FÉRIAS</h6>
-                                                        <p class="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-1">PLANEJAMENTO ${new Date(item.data_item).getFullYear()}</p>
+                                                        <p class="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-1">PLANEJAMENTO ${new Date(item.parcelas[0].data_inicio).getFullYear()}</p>
                                                     </div>
                                                 </div>
                                                 ${statusBadge}
@@ -843,7 +978,7 @@
                                                     </button>
                                                 ` : `
                                                     <div class="flex-1 flex items-center justify-center gap-2 py-4 bg-white/5 rounded-2xl border border-white/5 text-[8px] font-bold text-slate-500 uppercase tracking-widest opacity-50 cursor-not-allowed">
-                                                        <span class="material-symbols-outlined text-xs">lock</span> Mudança Bloqueada (+15d)
+                                                        <span class="material-symbols-outlined text-xs">lock</span> Mudança Bloqueada (+20d)
                                                     </div>
                                                 `}
                                                 ${item.status === 'pendente' ? `
@@ -864,12 +999,14 @@
 
                                 let bgClass = isFerias ? 'bg-vacation-soft' : '';
                                 if (isHE) {
+                                    // Hora extra deve usar a cor âmbar como faixa lateral
+                                    accentClass = 'accent-amber';
                                     if (!isCiente) { sideBorder = 'premium-border-amber'; bgClass = 'bg-amber-500/10'; }
                                     else { sideBorder = 'premium-border-emerald'; }
                                 }
 
                                 return `
-                                    <div class="card-history slim-mode ${sideBorder} ${bgClass} shadow-lg relative">
+                                    <div class="card-history slim-mode ${bgClass} ${accentClass} ${sideBorder} no-gradient shadow-lg relative">
                                         <div class="flex justify-between items-start mb-2">
                                             <div class="flex flex-col gap-0.5">
                                                 <div class="flex items-center gap-1.5">
@@ -1067,6 +1204,14 @@
             if (!confirm('Deseja realmente excluir todo o planejamento de férias?')) return;
             UI.showLoader();
             try {
+                // Não permitir exclusão se já existir planejamento enviado/avaliado.
+                const { data: existing } = await supabase.from('ferias').select('id,status').eq('funcionario_id', targetId);
+                const blocked = (existing || []).some(f => ['pendente','proposto','aprovado'].includes((f.status || '').toLowerCase()));
+                if (blocked) {
+                    UI.showToast('Não é possível excluir: planejamento já enviado. Edite a solicitação em vez de excluir.', 'warning');
+                    return;
+                }
+
                 const { error } = await supabase.from('ferias').delete().eq('funcionario_id', targetId);
                 if (error) throw error;
                 UI.showToast('Planejamento removido!', 'success');
@@ -1098,7 +1243,42 @@
                 supabase.from('feriados_folgas').select('*').or(`funcionario_id.eq.${targetId},escopo.eq.geral`),
                 supabase.from('ferias').select('*').eq('funcionario_id', targetId)
             ]);
-            holidays = resH.data || [];
+            // Começa com os feriados do banco
+            const dbHolidays = (resH.data || []).map(f => ({ data: f.data, tipo: f.tipo || 'Folga', descricao: f.descricao || '', id: f.id }));
+            // Mesclar com feriados nacionais locais (sem duplicar por data)
+            try {
+                const yearLocal = (typeof feriasCalendarYear !== 'undefined' && feriasCalendarYear) ? feriasCalendarYear : (new Date()).getFullYear();
+                function getBrazilianHolidaysLocal(year) {
+                    const holidays = {};
+                    holidays[`${year}-01-01`] = 'Confraternização Universal';
+                    holidays[`${year}-04-21`] = 'Tiradentes';
+                    holidays[`${year}-05-01`] = 'Dia do Trabalho';
+                    holidays[`${year}-09-07`] = 'Independência do Brasil';
+                    holidays[`${year}-10-12`] = 'Nossa Senhora Aparecida';
+                    holidays[`${year}-11-02`] = 'Finados';
+                    holidays[`${year}-11-15`] = 'Proclamação da República';
+                    holidays[`${year}-12-25`] = 'Natal';
+                    const a = year % 19; const b = Math.floor(year / 100); const c = year % 100; const d = Math.floor(b / 4);
+                    const e = b % 4; const f = Math.floor((b + 8) / 25); const g = Math.floor((b - f + 1) / 3);
+                    const h = (19 * a + b - d - g + 15) % 30; const i = Math.floor(c / 4); const k = c % 4;
+                    const l = (32 + 2 * e + 2 * i - h - k) % 7; const m = Math.floor((a + 11 * h + 22 * l) / 451);
+                    const pMeso = Math.floor((h + l - 7 * m + 114) / 31); const pDia = ((h + l - 7 * m + 114) % 31) + 1;
+                    const pascoa = new Date(year, pMeso - 1, pDia);
+                    const addDays = (date, days) => { const result = new Date(date); result.setDate(result.getDate() + days); return result.toISOString().split('T')[0]; };
+                    holidays[addDays(pascoa, -47)] = 'Carnaval'; holidays[addDays(pascoa, -48)] = 'Carnaval';
+                    holidays[addDays(pascoa, -2)] = 'Sexta-feira Santa'; holidays[addDays(pascoa, 60)] = 'Corpus Christi';
+                    return holidays;
+                }
+
+                const nationalMap = getBrazilianHolidaysLocal(yearLocal);
+                const national = Object.keys(nationalMap).map(d => ({ data: d, tipo: 'Nacional', descricao: nationalMap[d] }));
+                const existingDates = new Set(dbHolidays.map(h => h.data));
+                holidays = [ ...dbHolidays ];
+                national.forEach(n => { if (!existingDates.has(n.data)) holidays.push(n); });
+            } catch (e) {
+                console.warn('[Ferias] Falha ao mesclar feriados nacionais:', e);
+                holidays = dbHolidays;
+            }
             currentParcelas = (resF.data || []).map(f => ({
                 id: f.id,
                 start: new Date(f.data_inicio + 'T12:00:00'),
@@ -1229,7 +1409,7 @@
             const today = new Date();
             today.setHours(0,0,0,0);
             const freezeLimit = new Date(today);
-            freezeLimit.setDate(today.getDate() + 15);
+            freezeLimit.setDate(today.getDate() + 20);
 
             c.innerHTML = currentParcelas.map((p, i) => {
                 const isFrozen = new Date(p.start) < freezeLimit;
@@ -1269,7 +1449,7 @@
             const today = new Date();
             today.setHours(0,0,0,0);
             const freezeLimit = new Date(today);
-            freezeLimit.setDate(today.getDate() + 15);
+            freezeLimit.setDate(today.getDate() + 20);
             
             if (new Date(currentParcelas[i].start) < freezeLimit) {
                 UI.showToast('Esta parcela está congelada e não pode ser removida!', 'warning');
@@ -1288,7 +1468,7 @@
                 const isSubsequentEdit = existing && existing.some(f => f.status === 'aprovado' || f.status === 'rejeitado');
                 
                 // Novo status: se for rascunho inicial = pendente. Se for alteração em aprovado = proposto.
-                const newStatus = isSubsequentEdit ? 'proposto' : 'pendente';
+                const newStatus = 'pendente'; // CORREÇÃO: Unifica o status de entrada para 'pendente'
 
                 // Se for alteração, limpamos apenas as propostas anteriores antes de inserir a nova
                 if (isSubsequentEdit) {
@@ -1306,14 +1486,10 @@
                 }));
                 await supabase.from('ferias').insert(inserts);
 
-                // --- REGISTRO NA CENTRAL DE EVENTOS ---
-                await supabase.from('diario_logs').insert([{
-                    funcionario_id: targetId,
-                    tipo: 'aviso_ferias',
-                    mensagem_padrao: isSubsequentEdit ? 'Alteração no planejamento de férias enviada para análise.' : 'Novo planejamento de férias enviado para análise.',
-                    status_pendencia: 'pendente'
-                }]);
-
+                // Não registrar imediatamente no Diário — o registro no Diário será criado
+                // quando o Admin/Gestor realizar a análise (aprovou/rejeitou/alterou).
+                // Atualiza badges/contadores para que o dashboard exiba FÉRIAS (PENDENTES).
+                if (typeof Notifications !== 'undefined' && Notifications.updateBadges) await Notifications.updateBadges();
                 UI.showToast(isSubsequentEdit ? 'Alteração enviada para análise!' : 'Planejamento enviado com sucesso!', 'success');
                 window.fecharModalFerias();
                 if (window.init) await window.init();

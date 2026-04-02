@@ -18,14 +18,17 @@ export const Notifications = {
             // A. Justificativas e Pendências (Badge Sino)
             let sinoCount = 0;
             const role = (userRole || '').toLowerCase();
+            let justCount = 0;
+            let feriasCount = 0;
+            const isManagement = role === 'admin' || role === 'gestor' || role === 'manager';
             
             try {
                 const isManagement = role === 'admin' || role === 'gestor' || role === 'manager';
                 const isGestorOnly = (role === 'gestor' || role === 'manager');
                 
                 if (isManagement) {
-                    let queryJust = supabase.from('justificativas').select('id, funcionarios!inner(setor_id)', { count: 'exact', head: true }).eq('status', 'pendente');
-                    let queryFerias = supabase.from('ferias').select('id, funcionarios!inner(setor_id)', { count: 'exact', head: true }).eq('status', 'pendente');
+                    let queryJust = supabase.from('justificativas').select('id, funcionarios!funcionario_id!inner(setor_id)', { count: 'exact', head: true }).eq('status', 'pendente');
+                    let queryFerias = supabase.from('ferias').select('funcionario_id, funcionarios!funcionario_id!inner(setor_id)').eq('status', 'pendente');
                     
                     if (isGestorOnly) {
                         const { data: userDat } = await supabase.from('funcionarios').select('setor_id').eq('id', safeUserId).maybeSingle();
@@ -36,7 +39,16 @@ export const Notifications = {
                     }
                     
                     const [resJust, resFerias] = await Promise.all([queryJust, queryFerias]);
-                    sinoCount = (resJust.count || 0) + (resFerias.count || 0);
+                    justCount = resJust.count || 0;
+                    
+                    // Agrupa por funcionário para não contar as parcelas repetidas
+                    if (resFerias.data) {
+                        feriasCount = new Set(resFerias.data.map(f => f.funcionario_id)).size;
+                    } else {
+                        feriasCount = 0;
+                    }
+                    
+                    sinoCount = justCount; // Férias não somam no sino, têm botão próprio
                 } else {
                     const [resJust, resLogs] = await Promise.all([
                         supabase.from('justificativas').select('id', { count: 'exact', head: true }).eq('funcionario_id', safeUserId).eq('status', 'pendente'),
@@ -103,12 +115,21 @@ export const Notifications = {
                 diarioCount = cC + cL + cF + cJ;
             } catch (e) { console.warn('[Notifications] Erro ao carregar contagem do Diário:', e); }
 
-            console.log('Badge counts -> Diario:', diarioCount, 'Sino:', sinoCount);
+            // Log Aprimorado para clareza
+            if (isManagement) {
+                console.log(`Contagem de Badges -> Diário: ${diarioCount}, Justificativas (Sino): ${justCount}, Férias (Dashboard): ${feriasCount}`);
+            } else {
+                console.log(`Contagem de Badges -> Diário: ${diarioCount}, Pendências (Sino): ${sinoCount}`);
+            }
+
             // C. Atualização da UI
             this.setBadge('notif-badge', sinoCount);
             this.setBadge('notif-badge-footer', diarioCount);
             this.setBadge('badge-sino', sinoCount);
             this.setBadge('badge-diario', diarioCount);
+            
+            // Atualiza o stat/badge específico do botão de Férias Pendentes no dashboard
+            this.setBadge('stat-ferias-mes', feriasCount);
 
             const sinoIcon = document.getElementById('sino-icon');
             if (sinoIcon) {

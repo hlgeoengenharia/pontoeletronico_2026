@@ -96,16 +96,24 @@ export const EventManager = {
         const now = new Date();
         const typeKey = item.itemType || item.type;
 
-        // Regra 1: Férias (Parcelas) - Congelar 15 dias antes do início
+        // Regra 1: Férias (Parcelas)
+        // - Se o cronograma estiver 'aprovado' apenas permitir edição quando
+        //   a parcela mais próxima estiver a >= 20 dias (congelamento a 20 dias).
+        // - Para status pendente/proposto/rejeitado permitir edição (usuário deve poder atualizar).
         if (typeKey === 'CRONOGRAMA_FERIAS') {
-            // Se houver múltiplas parcelas, verificamos se a mais próxima está a menos de 15 dias
             if (!item.parcelas || !Array.isArray(item.parcelas)) return false;
-            
-            return item.parcelas.every(p => {
-                const start = new Date(p.data_inicio + 'T00:00:00');
-                const diffDays = (start - now) / (1000 * 60 * 60 * 24);
-                return diffDays >= 15;
-            });
+            const status = (item.status || '').toLowerCase();
+            // Se estiver congelado permanentemente, não permite edição
+            if (status.indexOf('congel') !== -1) return false;
+            if (status === 'aprovado') {
+                return item.parcelas.every(p => {
+                    const start = new Date(p.data_inicio + 'T00:00:00');
+                    const diffDays = (start - now) / (1000 * 60 * 60 * 24);
+                    return diffDays >= 20;
+                });
+            }
+            // pendente/proposto/rejeitado/undefined => permitir edição (não exclusão)
+            return true;
         }
 
         // Regra 2: Atividades e Justificativas - 24 Horas
