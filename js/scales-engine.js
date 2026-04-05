@@ -4,6 +4,10 @@
  */
 
 const ScalesEngine = {
+    // Constantes Globais de Geofence
+    GEOFENCE_DEFAULT_RADIUS: 150, // metros
+    GPS_MIN_ACCURACY: 80,         // metros (limite para considerar sinal confiável)
+
     /**
      * Projeta os dias de trabalho para um mês/ano específico
      * @param {Object} escala Objeto da escala (tipo, config, etc)
@@ -121,12 +125,14 @@ const ScalesEngine = {
     },
 
     /**
-     * Verifica se o horário atual está dentro da janela de tolerância
-     * @param {string} scheduledTime "HH:mm:ss" ou "HH:mm"
+     * Verifica se o horário atual é divergente (Atraso no In ou Antecipado no Out)
+     * @param {string} type "check-in" ou "check-out"
+     * @param {string} scheduledTime "HH:mm:ss"
      * @param {number} tolMinutos Minutos de tolerância
+     * @returns {boolean} true se for divergente (fora da regra)
      */
-    isWithinTimeWindow(scheduledTime, tolMinutos) {
-        if (!scheduledTime) return true;
+    isDivergentTime(type, scheduledTime, tolMinutos = 15) {
+        if (!scheduledTime) return false;
 
         const now = new Date();
         const [h, m] = scheduledTime.split(':').map(Number);
@@ -134,8 +140,17 @@ const ScalesEngine = {
         const scheduled = new Date();
         scheduled.setHours(h, m, 0, 0);
 
-        const diffMinutes = Math.abs(now - scheduled) / (1000 * 60);
-        return diffMinutes <= tolMinutos;
+        const diffMinutes = (now - scheduled) / (1000 * 60);
+
+        if (type === 'check-in') {
+            // Divergente APENAS se chegar DEPOIS do horário + tolerância (Atraso)
+            return diffMinutes > tolMinutos;
+        } else if (type === 'check-out') {
+            // Divergente APENAS se sair ANTES do horário - tolerância (Saída Antecipada)
+            return diffMinutes < -tolMinutos;
+        }
+
+        return false;
     },
 
     /**
@@ -189,10 +204,23 @@ const ScalesEngine = {
     },
 
     /**
+     * Calcula o horário de término real da jornada considerando extensões de Hora Extra.
+     * @param {Object} escala 
+     * @param {number} extraMinutes Minutos de HE autorizados (ex: do comunicado [LIMITE:XX])
+     */
+    getShiftEndWithHE(escala, extraMinutes = 0) {
+        if (!escala || !escala.horario_saida) return null;
+        const [h, m] = escala.horario_saida.split(':').map(Number);
+        const exitTime = new Date();
+        exitTime.setHours(h, m + Number(extraMinutes), 0, 0);
+        return exitTime;
+    },
+
+    /**
      * Verifica se o expediente de um determinado dia já foi encerrado.
      * Útil para não contabilizar ausência em dias futuros ou no mesmo dia antes da hora de saída.
      */
-    isDayFinished(dateStr, escala) {
+    isDayFinished(dateStr, escala, extraMinutes = 0) {
         const now = new Date();
         // Em vez de ISO (UTC), usamos o fuso local para bater com a data local do browser
         const todayStr = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
@@ -200,11 +228,9 @@ const ScalesEngine = {
         if (dateStr < todayStr) return true;
         if (dateStr > todayStr) return false;
         
-        // É hoje. Verifica se já passou da hora de saída.
-        if (escala && escala.horario_saida) {
-            const [h, m] = escala.horario_saida.split(':').map(Number);
-            const exitTime = new Date();
-            exitTime.setHours(h, m, 0, 0);
+        // É hoje. Verifica se já passou da hora de saída (considerando HE).
+        const exitTime = this.getShiftEndWithHE(escala, extraMinutes);
+        if (exitTime) {
             return now >= exitTime;
         }
         

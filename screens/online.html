@@ -252,7 +252,7 @@
             <span class="material-symbols-outlined text-primary text-3xl">satellite_alt</span>
             <div>
                 <h2 id="neural-title" class="text-sm font-black tracking-widest uppercase">Rede Neural</h2>
-                <p id="neural-subtitle" class="text-[9px] text-slate-500 font-bold uppercase tracking-tight">Monitoramento em Tempo Real</p>
+                <p id="neural-subtitle" class="text-[10px] text-slate-500 font-bold uppercase tracking-tight">Monitoramento em Tempo Real</p>
             </div>
         </div>
         <!-- Busca Rápida -->
@@ -302,7 +302,7 @@
                   <span id="label-tipo-icon" class="material-symbols-outlined text-primary text-3xl">sms</span>
                   <div>
                       <h3 class="text-sm font-black uppercase tracking-widest" id="label-tipo-comunicado">COMUNICADO</h3>
-                      <p id="label-alvo-comunicado" class="text-[9px] text-slate-500 font-bold uppercase">ALCANCE: TODOS OS FUNCIONÁRIOS</p>
+                      <p id="label-alvo-comunicado" class="text-[10px] text-slate-500 font-bold uppercase">ALCANCE: TODOS OS FUNCIONÁRIOS</p>
                   </div>
               </div>
               <button onclick="fecharModalComunicado()" class="text-slate-500 hover:text-white transition-colors">
@@ -328,7 +328,7 @@
               </div>
 
               <div id="container-comunicado-padrao" class="space-y-3">
-                  <label id="label-conteudo-mensagem" class="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">Conteúdo da Transmissão</label>
+                  <label id="label-conteudo-mensagem" class="text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1">Conteúdo da Transmissão</label>
                   <textarea id="comunicado-texto" rows="4" 
                       class="w-full bg-background-dark/50 border border-white/10 rounded-2xl p-4 text-xs text-slate-100 placeholder:text-slate-700 focus:border-primary outline-none transition-all"
                       placeholder="Digite a mensagem ou instruções da solicitação..."></textarea>
@@ -372,7 +372,7 @@
                       <div id="box-mudar-data-feriado" class="flex items-center justify-between p-3 bg-white/5 rounded-2xl border border-white/5 opacity-40 pointer-events-none transition-all">
                           <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-tight">Mudar data do feriado?</label>
                           <label class="relative inline-flex items-center cursor-pointer">
-                              <input type="checkbox" id="toggle-mudar-data" class="sr-only peer">
+                              <input type="checkbox" id="toggle-mudar-data" class="sr-only peer" onchange="syncFeriadoToggles('mudar')">
                               <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                           </label>
                       </div>
@@ -383,14 +383,14 @@
                       <div class="flex items-center justify-between p-3 bg-white/5 rounded-2xl border border-white/5">
                           <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Feriado Regional/Local?</label>
                           <label class="relative inline-flex items-center cursor-pointer">
-                              <input type="checkbox" id="toggle-regional" class="sr-only peer">
+                              <input type="checkbox" id="toggle-regional" class="sr-only peer" onchange="syncFeriadoToggles('regional')">
                               <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
                           </label>
                       </div>
                       <div class="flex items-center justify-between p-3 bg-white/5 rounded-2xl border border-white/5">
                           <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Atribuir Folga?</label>
                           <label class="relative inline-flex items-center cursor-pointer">
-                              <input type="checkbox" id="toggle-folga" class="sr-only peer">
+                              <input type="checkbox" id="toggle-folga" class="sr-only peer" onchange="syncFeriadoToggles('folga')">
                               <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-rose-500"></div>
                           </label>
                       </div>
@@ -589,6 +589,9 @@
     import { Auth } from '../js/auth.js';
     import { UI } from '../js/ui-utils.js';
     import { GPSTracker } from '../js/gps-tracker.js';
+    import { HistoryRenderer } from '../js/core/history.renderer.js';
+
+    window.HistoryRenderer = HistoryRenderer;
 
     // --- CONFIGURAÇÃO DO MAPA ---
     const map = L.map('map', {
@@ -803,7 +806,15 @@
                     if (!pulseMap[p.funcionario_id]) pulseMap[p.funcionario_id] = p;
                 });
 
-            // 6. Buscar Todos os Comunicados (Histórico de H.E e Mensagens)
+            // 6. Consultar Alertas já visualizados (Awareness)
+            const { data: seenItems } = await supabase.from('config_notificacoes_lidas').select('funcionario_id, item_id');
+            const seenMap = {};
+            (seenItems || []).forEach(s => {
+                if (!seenMap[s.funcionario_id]) seenMap[s.funcionario_id] = new Set();
+                seenMap[s.funcionario_id].add(s.item_id);
+            });
+
+            // 7. Buscar Todos os Comunicados (Filtrar já vistos para o monitoramento)
             let queryHE = supabase
                 .from('comunicados')
                 .select('*, funcionarios!inner(setor_id)')
@@ -811,15 +822,21 @@
             
             if (isGestorOnly && sId) queryHE = queryHE.eq('funcionarios.setor_id', sId);
 
-            const { data: heData } = await queryHE;
-
+            const { data: heRes } = await queryHE;
             const heMap = {};
-                (heData || []).forEach(he => {
-                    if (!heMap[he.destinatario_id]) heMap[he.destinatario_id] = [];
-                    heMap[he.destinatario_id].push(he);
-                });
+            (heRes || []).forEach(he => {
+                const sub = (he.subtipo || '').toLowerCase();
+                if (sub === 'ferias_folgas') return;
 
-            // 7. Dados de Férias
+                // Verificar se o destinatário já viu (Awareness Sync)
+                const isSeenByTarget = (seenMap[he.destinatario_id] && seenMap[he.destinatario_id].has(he.id.toString()));
+                if (isSeenByTarget) return;
+
+                if (!heMap[he.destinatario_id]) heMap[he.destinatario_id] = [];
+                heMap[he.destinatario_id].push(he);
+            });
+
+            // 8. Dados de Férias
             let vData = [];
             try {
                 let queryV = supabase.from('ferias').select('*, funcionarios!inner(setor_id)');
@@ -1080,63 +1097,23 @@
                 // Lógica de Histórico Unificado no Popup (Horas Extras e Comunicados)
                 const hasHE = e.heHistory.length > 0;
                 
-                let heHtml = '';
-                if (hasHE) {
-                    heHtml = `
-                        <div class="mt-3 pt-3 border-t border-white/10 space-y-3">
-                            <h4 class="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-1.5 mb-2">
-                                <span class="material-symbols-outlined text-sm">history</span> HISTÓRICO
-                            </h4>
-                            <div class="space-y-4 max-h-[160px] overflow-y-auto pr-1 custom-scrollbar">
-                                ${e.heHistory.map((h, idx) => {
-                                    const hDate = new Date(h.created_at);
-                                    const isRecent = (new Date() - hDate) < 24 * 60 * 60 * 1000;
-                                    const isToday = h.created_at.startsWith(new Date().toISOString().split('T')[0]);
-                                    
-                                    // Mapeamento de Cores e Títulos do Diário de Bordo
-                                    let colorClass = 'text-primary';
-                                    let title = 'ATIVIDADE DO DIA';
-
-                                    if (h.subtipo === 'hora_extra') {
-                                        colorClass = 'text-amber-500';
-                                        title = 'SOLICITAÇÃO DE HORA EXTRA';
-                                    } else if (h.subtipo === 'mensagem') {
-                                        colorClass = 'text-emerald-500';
-                                        title = 'COMUNICADO OFICIAL';
-                                    } else if (h.subtipo === 'ferias_folgas') {
-                                        colorClass = 'text-blue-500';
-                                        title = 'FERIADOS/FOLGAS';
-                                    }
-
-                                    return `
-                                        <div class="card-history ${colorClass} bg-white/5 p-2 rounded-r-lg">
-                                            <div class="flex items-center gap-2 mb-1">
-                                                <h5 class="text-[8px] font-black uppercase tracking-wider ${colorClass}">${title}</h5>
-                                                <span class="text-[8px] font-black text-slate-500 uppercase">
-                                                    ${new Date(h.created_at).toLocaleDateString('pt-BR')} | ${new Date(h.created_at).toLocaleTimeString('pt-BR')}
-                                                </span>
-                                            </div>
-                                            <p class="text-[9px] text-slate-300 italic mb-2 leading-tight">"${h.conteudo}"</p>
-                                            
-                                            ${isRecent ? `
-                                                <div class="flex gap-1 justify-end">
-                                                    <button onclick="window.editarHoraExtra('${h.id}', '${e.id}', \`${h.conteudo.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)" 
-                                                            class="p-1.5 bg-white/5 border border-white/10 rounded text-slate-400 hover:text-primary transition-all">
-                                                        <span class="material-symbols-outlined text-[12px]">edit</span>
-                                                    </button>
-                                                    <button onclick="window.excluirHoraExtra('${h.id}', '${e.id}')" 
-                                                            class="p-1.5 bg-white/5 border border-white/10 rounded text-slate-400 hover:text-rose-500 transition-all">
-                                                        <span class="material-symbols-outlined text-[12px]">delete</span>
-                                                    </button>
-                                                </div>
-                                            ` : ''}
-                                        </div>
-                                    `;
-                                }).join('')}
-                            </div>
+                const historyHtml = !hasHE ? '' : `
+                    <div class="mt-3 pt-3 border-t border-white/10 space-y-3">
+                        <h4 class="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-1.5 mb-2">
+                            <span class="material-symbols-outlined text-sm">history</span> HISTÓRICO
+                        </h4>
+                        <div class="space-y-4 max-h-[160px] overflow-y-auto pr-1 custom-scrollbar">
+                            ${HistoryRenderer.renderList(e.heHistory.map(h => ({
+                                id: h.id,
+                                db: 'comunicados',
+                                tipo: h.subtipo === 'hora_extra' ? 'hora_extra' : 'mensagem',
+                                content: h.conteudo,
+                                data_ref: h.created_at,
+                                target: e.nickname || e.nome_completo
+                            })), { isAdmin: true })}
                         </div>
-                    `;
-                }
+                    </div>
+                `;
 
                 marker.bindPopup(`
                     <div class="p-2 space-y-3 min-w-[220px]">
@@ -1164,7 +1141,7 @@
                         <button onclick="window.abrirModalComunicado('individual', '${e.id}', '${e.nickname || e.nome_completo}')" class="w-full py-3 bg-primary/20 hover:bg-primary/30 text-primary border border-primary/30 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all btn-touch">
                             COMUNICAÇÃO
                         </button>
-                        ${heHtml}
+                        ${historyHtml}
                     </div>
                 `);
             }
@@ -1316,152 +1293,132 @@
         try {
             const remetenteId = localStorage.getItem('userId');
             
-            // 1. Buscar Comunicados e Feriados Recentemente Criados
-            const [comsRes, ferRes, allFerRes] = await Promise.all([
-                supabase.from('comunicados')
-                    .select('*, funcionarios!destinatario_id(nome_completo)')
-                    .eq('remetente_id', remetenteId)
-                    .order('created_at', { ascending: false })
-                    .limit(20),
-                supabase.from('feriados_folgas')
-                    .select('*')
-                    .order('created_at', { ascending: false })
-                    .limit(20),
-                supabase.from('feriados_folgas').select('*') // Para o calendário inteligente
-            ]);
+            // Construir Query Dinâmica para Comunicados
+            let queryCom = supabase.from('comunicados')
+                .select('*, funcionarios:funcionarios!remetente_id(id, nome_completo, nickname)')
+                .eq('remetente_id', remetenteId)
+                .order('created_at', { ascending: false });
 
-            allSavedSpecialDays = allFerRes.data || [];
+            if (activeComunicado.tipo === 'setorial') {
+                queryCom = queryCom.eq('tipo', 'setorial').eq('setor_id', activeComunicado.targetId);
+            } else if (activeComunicado.tipo === 'individual') {
+                queryCom = queryCom.eq('tipo', 'individual').eq('funcionario_id', activeComunicado.targetId);
+            }
+            // No caso 'geral', não aplicamos filtro para mostrar todos os envios do gestor conforme pedido
+            
+            const { data: resCom } = await queryCom.limit(20);
+            
+            // Construir Query Dinâmica para Feriados/Folgas
+            let queryFer = supabase.from('feriados_folgas')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (activeComunicado.tipo === 'setorial') {
+                queryFer = queryFer.eq('escopo', 'setorial').eq('setor_id', activeComunicado.targetId);
+            } else if (activeComunicado.tipo === 'individual') {
+                queryFer = queryFer.eq('escopo', 'individual').eq('funcionario_id', activeComunicado.targetId);
+            }
+
+            const { data: resFer } = await queryFer.limit(50);
+            
+            // 0. Atualizar calendário de feriados administrativo
+            allSavedSpecialDays = resFer || [];
             if (activeComunicado.subtipo === 'ferias_folgas') renderFeriasCalendar();
 
-            // 2. Unificar e Agrupar Feriados por Transmissão (mesmo created_at)
-            const groupedFer = (ferRes.data || []).reduce((acc, f) => {
-                const key = f.created_at || f.data; 
+            // 1. Agrupar Feriados por 'created_at' (pode ser o ID se created_at for nulo)
+            const groupedFer = (resFer || []).reduce((acc, f) => {
+                const key = f.created_at || f.id;
                 if (!acc[key]) acc[key] = [];
                 acc[key].push(f);
                 return acc;
             }, {});
 
-            const now = new Date();
-            allHistoryItems = [
-                ...(comsRes.data || []).map(c => ({
+            // 2. Mapear Comunicados e casar com Feriados (Deduplicação)
+            const feriadosUsados = new Set();
+            const itemsWithFer = (resCom || []).map(c => {
+                const relatedFer = groupedFer[c.created_at];
+                if (relatedFer) feriadosUsados.add(c.created_at);
+                
+                return {
                     id: c.id,
                     db: 'comunicados',
-                    tipo: c.subtipo,
+                    tipo: c.subtipo || 'mensagem',
                     content: c.conteudo,
                     data_ref: c.created_at,
                     target: c.funcionarios?.nome_completo || (c.tipo === 'setorial' ? 'SETOR' : 'GERAL'),
-                    lido: c.lido
-                })),
-                ...Object.entries(groupedFer).map(([createdAt, list]) => ({
-                    id: list[0].id, 
-                    db: 'feriados_folgas',
-                    tipo: 'ferias_folgas',
-                    content: list.map(f => `${f.data.split('-').reverse().slice(0,2).join('/')}: ${f.tipo.replace('_', ' ').toUpperCase()}`).join(' | '),
-                    data_ref: createdAt,
-                    target: list[0].escopo === 'individual' ? 'INDIVIDUAL' : (list[0].escopo === 'setorial' ? 'SETORIAL' : 'GERAL'),
-                    list: list 
-                }))
+                    lido: c.lido,
+                    list: relatedFer || [] // Anexa a lista de dias se houver
+                };
+            });
+
+            // 3. Adicionar Feriados que não possuem comunicado associado (se houver algum)
+            const groupedFerItems = [];
+            Object.entries(groupedFer).forEach(([createdAt, list]) => {
+                if (!feriadosUsados.has(createdAt)) {
+                    groupedFerItems.push({
+                        id: list[0].id,
+                        db: 'feriados_folgas',
+                        tipo: 'ferias_folgas',
+                        content: list.map(f => `${f.data.split('-').reverse().slice(0,2).join('/')}: ${f.tipo.replace('_', ' ').toUpperCase()}`).join(' | '),
+                        data_ref: createdAt,
+                        target: list[0].escopo === 'individual' ? 'INDIVIDUAL' : (list[0].escopo === 'setorial' ? 'SETORIAL' : 'GERAL'),
+                        list: list
+                    });
+                }
+            });
+
+            window.allHistoryItems = [
+                ...itemsWithFer,
+                ...groupedFerItems
             ].sort((a, b) => new Date(b.data_ref) - new Date(a.data_ref));
 
-            if (allHistoryItems.length === 0) {
+            if (window.allHistoryItems.length === 0) {
                 container.innerHTML = `<p class="text-[9px] text-slate-600 uppercase text-center py-10 italic">Nenhum envio recente</p>`;
                 return;
             }
 
-            container.innerHTML = allHistoryItems.map(item => {
-                const date = new Date(item.data_ref);
-                const isEditing = editingHistoryId === item.id;
-                let colorClass = 'text-primary';
-                let icon = 'campaign';
-                
-                if (item.tipo === 'hora_extra') { colorClass = 'text-amber-500'; icon = 'timer'; }
-                else if (item.tipo === 'ferias_folgas') { colorClass = 'text-rose-500'; icon = 'event_note'; }
-
-                if (isEditing) {
-                    if (item.db === 'comunicados') {
-                        return `
-                            <div class="bg-background-dark/50 border border-primary/40 rounded-3xl p-6 space-y-6 shadow-2xl relative animate-in zoom-in-95 duration-300">
-                                <div class="flex items-center justify-between">
-                                    <h4 class="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Editar ${item.tipo === 'hora_extra' ? 'Hora Extra' : 'Comunicado'}</h4>
-                                    <span class="text-[8px] font-bold text-slate-500">${item.target}</span>
-                                </div>
-                                <div class="flex gap-2">
-                                    <button class="flex-1 py-3 px-4 rounded-xl bg-primary text-white text-[9px] font-black uppercase tracking-widest transition-all shadow-lg shadow-primary/20">${item.tipo.replace('_', ' ').toUpperCase()}</button>
-                                </div>
-                                ${item.tipo === 'hora_extra' ? `
-                                    <div class="space-y-2">
-                                        <label class="text-[9px] font-black text-amber-500 uppercase tracking-widest ml-1">Minutos Liberados</label>
-                                        <input type="number" id="edit-limit-${item.id}" value="${item.content.match(/\[LIMITE:(\d+)\]/) ? item.content.match(/\[LIMITE:(\d+)\]/)[1] : 120}" 
-                                            class="w-full bg-slate-900/80 border border-white/10 rounded-xl py-3 px-4 text-xs text-white outline-none focus:border-amber-500 shadow-inner">
-                                    </div>
-                                ` : ''}
-                                <textarea id="edit-content-${item.id}" 
-                                    class="w-full bg-slate-900/80 border border-white/10 rounded-2xl p-4 text-[12px] text-slate-200 outline-none focus:border-primary min-h-[120px] shadow-inner italic">${item.content.replace(/\[LIMITE:\d+\]\s*/, '')}</textarea>
-                                <div class="flex gap-3 pt-2">
-                                    <button onclick="cancelarEdicaoInline()" class="flex-1 py-4 bg-white/5 border border-white/10 rounded-2xl text-slate-400 text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all">Cancelar</button>
-                                    <button onclick="salvarEdicaoInline('${item.id}', '${item.db}')" class="flex-1 py-4 bg-primary text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all">Salvar</button>
-                                </div>
-                            </div>
-                        `;
-                    } else {
-                        // Edição de Férias/Folgas (Full UI) - Removido o botão de edição inline
-                        return `
-                            <div class="bg-background-dark/50 border border-rose-500/40 rounded-3xl p-6 space-y-6 shadow-2xl relative animate-in zoom-in-95 duration-300">
-                                <h4 class="text-[10px] font-black text-rose-500 uppercase tracking-[0.2em]">Editar Cronograma</h4>
-                                <p class="text-[9px] text-slate-500 italic">O sistema carregou os dias no calendário acima para alteração.</p>
-                                
-                                <div class="flex gap-3 pt-2">
-                                    <button onclick="cancelarEdicaoInline()" class="flex-1 py-4 bg-white/5 border border-white/10 rounded-2xl text-slate-400 text-[10px] font-black uppercase tracking-widest">Cancelar Edição</button>
-                                    <button onclick="document.querySelector('#modal-comunicado > div').scrollTo({ top: 0, behavior: 'smooth' });" class="flex-1 py-4 bg-rose-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-rose-500/20">Ajustar no Topo</button>
-                                </div>
+            // Renderização Modular via HistoryRenderer
+            container.innerHTML = window.allHistoryItems.map(item => {
+                if (editingHistoryId === item.id) {
+                    let extraFields = '';
+                    let initialLimit = 120;
+                    if (item.tipo === 'hora_extra') {
+                        const match = (item.content || '').match(/\[LIMITE:(\d+)\]/);
+                        if (match) initialLimit = match[1];
+                        extraFields = `
+                            <div class="space-y-2">
+                                <label class="text-[9px] font-black text-amber-500 uppercase tracking-widest ml-1">Limite de Minutos Extras</label>
+                                <input type="number" id="edit-limit-${item.id}" value="${initialLimit}" 
+                                    class="w-full bg-slate-900/80 border border-white/10 rounded-2xl p-4 text-[12px] text-slate-200 outline-none focus:border-amber-500 transition-all font-bold"
+                                    placeholder="Ex: 120">
                             </div>
                         `;
                     }
+
+                    return `
+                        <div class="bg-[#0f1115] border border-primary/40 rounded-[32px] p-6 space-y-6 shadow-2xl relative animate-in zoom-in-95 duration-300">
+                             <div class="flex items-center gap-2">
+                                 <span class="material-symbols-outlined text-primary text-sm">edit_note</span>
+                                 <h4 class="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Editar ${item.tipo.replace('_',' ')}</h4>
+                             </div>
+                             
+                             ${extraFields}
+
+                             <div class="space-y-2">
+                                 <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">Conteúdo da Transmissão</label>
+                                 <textarea id="edit-content-${item.id}" 
+                                     class="w-full bg-slate-900/80 border border-white/10 rounded-2xl p-4 text-[12px] text-slate-200 outline-none focus:border-primary min-h-[120px] shadow-inner font-medium">${item.content.replace(/\[LIMITE:\d+\]\s*/, '')}</textarea>
+                             </div>
+
+                             <div class="flex gap-3">
+                                 <button onclick="cancelarEdicaoInline()" class="flex-1 py-4 bg-white/5 border border-white/10 rounded-2xl text-slate-400 text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all">Cancelar</button>
+                                 <button onclick="salvarEdicaoInline('${item.id}', '${item.db}')" class="flex-1 py-4 bg-primary text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:brightness-110 active:scale-[0.98] transition-all">Salvar Alterações</button>
+                             </div>
+                        </div>
+                    `;
                 }
 
-                const diffHours = (now - date) / (1000 * 60 * 60);
-                const canModify = diffHours < 24;
-
-                return `
-                    <div class="bg-white/5 border border-white/5 rounded-2xl p-4 space-y-3 group border-l-4 ${colorClass.replace('text-', 'border-l-')}">
-                        <div class="flex justify-between items-start">
-                            <div class="flex items-center gap-2">
-                                <span class="material-symbols-outlined text-sm ${colorClass}">${icon}</span>
-                                <span class="text-[9px] font-black uppercase tracking-widest ${colorClass}">${item.tipo.replace('_', ' ')}</span>
-                                <span class="text-[8px] font-bold text-slate-500 ml-2">
-                                    ${date.toLocaleDateString('pt-BR')} | ${date.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})}
-                                </span>
-                            </div>
-                            <div class="flex items-center gap-3">
-                                <span class="text-[8px] font-bold px-2 py-0.5 bg-white/5 rounded text-slate-500 uppercase">${item.target}</span>
-                                ${item.tipo === 'hora_extra' ? `
-                                    <div class="flex items-center gap-1.5 px-2 py-0.5 rounded-md ${item.lido ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-500 border border-amber-500/20'} animate-pulse-slow">
-                                        <span class="material-symbols-outlined text-[10px]">${item.lido ? 'verified' : 'pending'}</span>
-                                        <span class="text-[7px] font-black uppercase tracking-tighter">${item.lido ? 'CIENTE' : 'AGUARDANDO'}</span>
-                                    </div>
-                                ` : ''}
-                            </div>
-                        </div>
-                        <p class="text-[11px] text-slate-300 leading-relaxed italic line-clamp-3">"${item.content}"</p>
-                        
-                        ${canModify ? `
-                            <div class="flex gap-2 justify-end pt-3 border-t border-white/5">
-                                ${item.db === 'comunicados' ? `
-                                    <button onclick="prepararEdicaoInline('${item.id}')" 
-                                        class="h-10 px-4 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-primary transition-all flex items-center gap-2 text-[9px] font-black uppercase tracking-widest">
-                                        <span class="material-symbols-outlined text-sm">edit</span>
-                                        <span>Editar</span>
-                                    </button>
-                                ` : ''}
-                                <button onclick="excluirItemHistorico('${item.id}')" 
-                                    class="h-10 px-4 bg-white/5 border border-white/10 rounded-xl text-slate-400 hover:text-rose-500 transition-all flex items-center gap-2 text-[9px] font-black uppercase tracking-widest">
-                                    <span class="material-symbols-outlined text-sm">delete</span>
-                                    <span>Excluir</span>
-                                </button>
-                            </div>
-                        ` : ''}
-                    </div>
-                `;
+                return HistoryRenderer.renderList([item], { isAdmin: true });
             }).join('');
 
         } catch (err) {
@@ -1482,7 +1439,7 @@
     };
 
     window.salvarEdicaoInline = async (id, db) => {
-        const item = allHistoryItems.find(i => i.id === id);
+        const item = window.allHistoryItems.find(i => i.id === id);
         const el = document.getElementById(`edit-content-${id}`);
         if (!item || !el) return alert('Erro: Item não encontrado.');
         
@@ -1502,52 +1459,68 @@
             const { error: errCom } = await supabase.from('comunicados').update({ conteudo: newContent }).eq('id', id);
             if (errCom) throw errCom;
 
-            // Nota: Comunicados Oficiais não usam diario_logs para histórico, 
-            // eles são carregados diretamente da tabela 'comunicados' no Dashboard/Diário.
-
             window.editingHistoryId = null;
             UI.showToast('Alteração salva!', 'success');
             await carregarHistoricoComunicados();
             if (typeof fetchData === 'function') await fetchData();
             if (typeof renderSidebar === 'function') renderSidebar();
             if (typeof renderMapLayers === 'function') renderMapLayers();
+        } catch (err) { console.error('Erro ao salvar:', err); UI.showToast('Falha ao salvar.', 'error'); }
+        finally { UI.hideLoader(); }
+    };
+
+    window.marcarCiente = async (id, type) => {
+        UI.showLoader();
+        try {
+            if (type === 'HE') {
+                localStorage.setItem(`ciente_${id}`, 'true');
+                await supabase.from('comunicados').update({ lido: true }).eq('id', id);
+            } else {
+                localStorage.setItem(`visto_feriado_${id}`, 'true');
+            }
+            UI.showToast('Ciência confirmada!', 'success');
+            await carregarHistoricoComunicados(); // Recarrega se o modal estiver aberto
+            if (typeof fetchData === 'function') await fetchData(); // Atualiza o mapa
         } catch (err) {
-            console.error('Erro ao salvar edição:', err);
-            UI.showToast('Falha ao salvar alteração.', 'error');
+            console.error('Erro ao marcar ciente:', err);
+            UI.showToast('Erro ao processar ciência.', 'error');
         } finally {
             UI.hideLoader();
         }
     };
 
     window.excluirItemHistorico = async (id) => {
-        const item = allHistoryItems.find(i => i.id === id);
+        const item = window.allHistoryItems.find(i => i.id === id);
         if (!item) return UI.showToast('Erro: Item não encontrado.', 'error');
 
         if (!confirm('Deseja excluir permanentemente este registro?')) return;
         
         UI.showLoader();
         try {
-            if (item.db === 'comunicados') {
-                // 1. Deletar comunicado
-                const { error: err1 } = await supabase.from('comunicados').delete().eq('id', id);
-                if (err1) throw err1;
-
-                // Nota: Comunicados oficiais não possuem logs vinculados em diario_logs.
-            } else {
-                // Feriados/Folgas: Exclusão em grupo (baseada na lista agrupada)
+            // 1. Excluir dados de Feriados/Folgas vinculados (se houver lote)
+            if (item.list && item.list.length > 0) {
                 const ids = item.list.map(f => f.id);
-                const { error: err2 } = await supabase.from('feriados_folgas').delete().in('id', ids);
-                if (err2) throw err2;
+                const { error: errFer } = await supabase.from('feriados_folgas').delete().in('id', ids);
+                if (errFer) throw errFer;
 
-                // Limpar logs do diário baseados na data e tipo
-                if (item.date) {
-                    const d = item.date.split('/').reverse().join('-');
+                // Limpar logs do diário para CADA dia do bloco
+                for (const f of item.list) {
                     await supabase.from('diario_logs').delete()
                         .eq('tipo', 'comunicado')
                         .ilike('mensagem_padrao', '%RECESSO/FOLGA AGENDADO%')
-                        .filter('data_hora', 'gte', `${d}T00:00:00`)
-                        .filter('data_hora', 'lte', `${d}T23:59:59`);
+                        .filter('data_hora', 'gte', `${f.data}T00:00:00`)
+                        .filter('data_hora', 'lte', `${f.data}T23:59:59`);
                 }
+            }
+
+            // 2. Excluir o registro principal na tabela 'comunicados'
+            if (item.db === 'comunicados') {
+                const { error: err1 } = await supabase.from('comunicados').delete().eq('id', id);
+                if (err1) throw err1;
+            } else if (!item.list || item.list.length === 0) {
+                // Se não houver lista mas for da tabela feriados_folgas (exclusão unitária rara)
+                const { error: err2 } = await supabase.from('feriados_folgas').delete().eq('id', id);
+                if (err2) throw err2;
             }
             
             UI.showToast('Registro excluído com sucesso!', 'success');
@@ -1569,11 +1542,35 @@
     window.toggleFeriadoStatus = () => {
         const isValidar = document.getElementById('toggle-validar-feriado').checked;
         const boxMudar = document.getElementById('box-mudar-data-feriado');
+        const toggMudar = document.getElementById('toggle-mudar-data');
+        const toggRegional = document.getElementById('toggle-regional');
+        const toggFolga = document.getElementById('toggle-folga');
+
         if (isValidar) {
             boxMudar.classList.remove('opacity-40', 'pointer-events-none');
         } else {
             boxMudar.classList.add('opacity-40', 'pointer-events-none');
-            document.getElementById('toggle-mudar-data').checked = false;
+            toggMudar.checked = false;
+        }
+        syncFeriadoToggles('validar');
+    };
+
+    window.syncFeriadoToggles = (source) => {
+        const toggMudar = document.getElementById('toggle-mudar-data');
+        const toggRegional = document.getElementById('toggle-regional');
+        const toggFolga = document.getElementById('toggle-folga');
+
+        if (source === 'mudar' && toggMudar.checked) {
+            toggRegional.checked = false;
+            toggFolga.checked = false;
+            toggRegional.closest('div').classList.add('opacity-40', 'pointer-events-none');
+            toggFolga.closest('div').classList.add('opacity-40', 'pointer-events-none');
+        } else if (!toggMudar.checked) {
+            toggRegional.closest('div').classList.remove('opacity-40', 'pointer-events-none');
+            toggFolga.closest('div').classList.remove('opacity-40', 'pointer-events-none');
+            
+            if (source === 'regional' && toggRegional.checked) toggFolga.checked = false;
+            if (source === 'folga' && toggFolga.checked) toggRegional.checked = false;
         }
     };
 
@@ -1653,12 +1650,17 @@
             const isNationalHoliday = holidays[dateStr];
             const isSelected = selectedSpecialDays.find(sd => sd.data === dateStr);
             const savedDay = allSavedSpecialDays.find(sd => sd.data === dateStr);
+            const isMudarData = document.getElementById('toggle-mudar-data').checked;
+            const hasNewNationalSelected = selectedSpecialDays.some(sd => sd.tipo === 'feriado_nacional');
             
             let colorClass = 'bg-white/5 text-slate-400 hover:bg-white/10';
             let icon = '';
             let cursorClass = 'cursor-pointer';
 
-            if (isNationalHoliday) {
+            // Regra Visual: Se Mudar Data ON e já escolhi um novo dia, não destaco mais o BR original
+            const highlightNational = isNationalHoliday && (!isMudarData || !hasNewNationalSelected || isSelected);
+
+            if (highlightNational) {
                 colorClass = 'bg-primary/20 text-primary border border-primary/30';
                 icon = '<span class="text-[6px] absolute top-1 right-1 font-black">BR</span>';
             }
@@ -1715,6 +1717,11 @@
             } else if (isValidar && (nationalHolidayName || isMudarData)) {
                 tipo = 'feriado_nacional';
                 desc = nationalHolidayName || 'Feriado Nacional (Ajustado)';
+                
+                // --- REGRA DE MUDANÇA DE DATA: Limpar outros feriados nacionais temporários ---
+                if (isMudarData) {
+                    selectedSpecialDays = selectedSpecialDays.filter(sd => sd.tipo !== 'feriado_nacional');
+                }
             } else {
                 UI.showToast('Selecione uma opção (Regional, Folga ou Validar Feriado) acima.', 'info');
                 return;
@@ -1766,13 +1773,25 @@
             const remetenteId = localStorage.getItem('userId');
             
             if (activeComunicado.subtipo === 'ferias_folgas') {
-                if (selectedSpecialDays.length === 0) {
+                const isNacional = activeComunicado.tipo === 'geral';
+                if (selectedSpecialDays.length === 0 && !isNacional) {
                     UI.hideLoader();
                     UI.showToast('Selecione ao menos um dia no calendário.', 'warning');
                     return;
                 }
 
-                // 1. Criar um único comunicado-resumo que representa o conjunto de dias
+                // 1. Limpeza Atômica de Feriados Nacionais (Se aplicável)
+                // Se for um Feriado Nacional (Escopo Geral), removemos os que já existem no mesmo ano para evitar duplicatas ao "Mudar Data"
+                if (activeComunicado.tipo === 'geral') {
+                    const currentYear = new Date().getFullYear();
+                    await supabase.from('feriados_folgas')
+                        .delete()
+                        .eq('escopo', 'geral')
+                        .filter('data', 'gte', `${currentYear}-01-01`)
+                        .filter('data', 'lte', `${currentYear}-12-31`);
+                }
+
+                // 2. Criar um único comunicado-resumo que representa o conjunto de dias
                 const summaryContent = selectedSpecialDays
                     .sort((a,b) => a.data.localeCompare(b.data))
                     .map(sd => `${sd.data.split('-').reverse().slice(0,2).join('/')}: ${sd.tipo.replace('_', ' ').toUpperCase()} - ${sd.descricao}`)

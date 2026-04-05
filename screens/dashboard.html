@@ -6,60 +6,133 @@
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <title>Painel Unificado | ChronoSync</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet">
     <script src="../js/theme.js?v=1.0"></script>
     <style>
-        .font-variation-settings-fill { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
-        .role-hidden { display: none !important; }
-        
+        .font-variation-settings-fill {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .role-hidden {
+            display: none !important;
+        }
+
         /* Animação de Pulsação Celestial (Glow) */
         @keyframes celestial-glow {
-            0% { box-shadow: 0 0 5px rgba(224, 242, 254, 0.2); transform: scale(1); }
-            50% { box-shadow: 0 0 25px rgba(224, 242, 254, 0.6); transform: scale(1.02); }
-            100% { box-shadow: 0 0 5px rgba(224, 242, 254, 0.2); transform: scale(1); }
+            0% {
+                box-shadow: 0 0 5px rgba(224, 242, 254, 0.2);
+                transform: scale(1);
+            }
+
+            50% {
+                box-shadow: 0 0 25px rgba(224, 242, 254, 0.6);
+                transform: scale(1.02);
+            }
+
+            100% {
+                box-shadow: 0 0 5px rgba(224, 242, 254, 0.2);
+                transform: scale(1);
+            }
         }
+
         .animate-celestial {
             animation: celestial-glow 2s infinite ease-in-out;
             border-color: rgba(224, 242, 254, 0.5) !important;
         }
-        
+
         /* Cores por Perfil (Fundo do Botão) */
-        .punch-admin { background-color: #0D59F2 !important; border-color: rgba(13, 89, 242, 0.3) !important; }
-        .punch-gestor { background-color: #10B981 !important; border-color: rgba(16, 185, 129, 0.3) !important; }
-        .punch-funcionario { background-color: #334155 !important; border-color: rgba(51, 65, 85, 0.3) !important; }
-        
+        .punch-admin {
+            background-color: #0D59F2 !important;
+            border-color: rgba(13, 89, 242, 0.3) !important;
+        }
+
+        .punch-gestor {
+            background-color: #10B981 !important;
+            border-color: rgba(16, 185, 129, 0.3) !important;
+        }
+
+        .punch-funcionario {
+            background-color: #334155 !important;
+            border-color: rgba(51, 65, 85, 0.3) !important;
+        }
+
         /* Estado Congelado */
-        .punch-frozen { 
-            opacity: 0.4 !important; 
-            filter: grayscale(0.8); 
-            cursor: not-allowed !important; 
+        .punch-frozen {
+            opacity: 0.4 !important;
+            filter: grayscale(0.8);
+            cursor: not-allowed !important;
             pointer-events: none;
             transform: scale(0.95);
         }
 
         /* Animações de Transição de Calendário */
         @keyframes slide-to-left {
-            0% { transform: translateX(0); opacity: 1; }
-            100% { transform: translateX(-20px); opacity: 0; }
-        }
-        @keyframes slide-from-right {
-            0% { transform: translateX(20px); opacity: 0; }
-            100% { transform: translateX(0); opacity: 1; }
-        }
-        @keyframes slide-to-right {
-            0% { transform: translateX(0); opacity: 1; }
-            100% { transform: translateX(20px); opacity: 0; }
-        }
-        @keyframes slide-from-left {
-            0% { transform: translateX(-20px); opacity: 0; }
-            100% { transform: translateX(0); opacity: 1; }
+            0% {
+                transform: translateX(0);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateX(-20px);
+                opacity: 0;
+            }
         }
 
-        .anim-slide-out-left { animation: slide-to-left 0.2s forwards ease-in; }
-        .anim-slide-in-right { animation: slide-from-right 0.3s forwards ease-out; }
-        .anim-slide-out-right { animation: slide-to-right 0.2s forwards ease-in; }
-        .anim-slide-in-left { animation: slide-from-left 0.3s forwards ease-out; }
+        @keyframes slide-from-right {
+            0% {
+                transform: translateX(20px);
+                opacity: 0;
+            }
+
+            100% {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slide-to-right {
+            0% {
+                transform: translateX(0);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateX(20px);
+                opacity: 0;
+            }
+        }
+
+        @keyframes slide-from-left {
+            0% {
+                transform: translateX(-20px);
+                opacity: 0;
+            }
+
+            100% {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .anim-slide-out-left {
+            animation: slide-to-left 0.2s forwards ease-in;
+        }
+
+        .anim-slide-in-right {
+            animation: slide-from-right 0.3s forwards ease-out;
+        }
+
+        .anim-slide-out-right {
+            animation: slide-to-right 0.2s forwards ease-in;
+        }
+
+        .anim-slide-in-left {
+            animation: slide-from-left 0.3s forwards ease-out;
+        }
 
         /* Cards Métricos Premium 3D */
         .metric-card-3d {
@@ -68,52 +141,90 @@
             overflow: hidden;
             transform: translateY(0);
         }
-        .metric-card-3d:active { transform: translateY(2px) scale(0.98); }
+
+        .metric-card-3d:active {
+            transform: translateY(2px) scale(0.98);
+        }
+
         .metric-card-3d::after {
             content: '';
             position: absolute;
-            top: 0; left: -100%; width: 100%; height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
             transition: 0.5s;
         }
-        .metric-card-3d:hover::after { left: 100%; }
 
-        .card-3d-blue { 
-            background: rgba(59, 130, 246, 0.12) !important; 
-            border-color: rgba(59, 130, 246, 0.4) !important; 
+        .metric-card-3d:hover::after {
+            left: 100%;
+        }
+
+        .card-3d-blue {
+            background: rgba(59, 130, 246, 0.12) !important;
+            border-color: rgba(59, 130, 246, 0.4) !important;
             box-shadow: 0 10px 20px -5px rgba(59, 130, 246, 0.3), inset 0 0 15px rgba(59, 130, 246, 0.1);
         }
-        .card-3d-emerald { 
-            background: rgba(16, 185, 129, 0.12) !important; 
-            border-color: rgba(16, 185, 129, 0.4) !important; 
+
+        .card-3d-emerald {
+            background: rgba(16, 185, 129, 0.12) !important;
+            border-color: rgba(16, 185, 129, 0.4) !important;
             box-shadow: 0 10px 20px -5px rgba(16, 185, 129, 0.3), inset 0 0 15px rgba(16, 185, 129, 0.1);
         }
-        .card-3d-amber { 
-            background: rgba(245, 158, 11, 0.08) !important; 
-            border-color: rgba(245, 158, 11, 0.3) !important; 
+
+        .card-3d-amber {
+            background: rgba(245, 158, 11, 0.08) !important;
+            border-color: rgba(245, 158, 11, 0.3) !important;
             box-shadow: 0 10px 20px -5px rgba(245, 158, 11, 0.3), inset 0 0 15px rgba(245, 158, 11, 0.05);
         }
 
-        .icon-3d-glow { filter: drop-shadow(0 0 5px currentColor); }
+        .icon-3d-glow {
+            filter: drop-shadow(0 0 5px currentColor);
+        }
+
+        /* Status GPS LED */
+        .gps-led-green {
+            background-color: #10B981 !important;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.6);
+        }
+
+        .gps-led-amber {
+            background-color: #F59E0B !important;
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.6);
+        }
+
+        .gps-led-rose {
+            background-color: #F43F5E !important;
+            box-shadow: 0 0 10px rgba(244, 63, 94, 0.6);
+        }
     </style>
 </head>
 
-<body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen flex flex-col pb-24 items-center opacity-0 transition-opacity duration-500" id="main-body">
+<body
+    class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen flex flex-col pb-24 items-center opacity-0 transition-opacity duration-500"
+    id="main-body">
 
     <!-- HEADER: Minimal e Funcional -->
-    <header class="w-full max-w-md p-4 flex items-center justify-between sticky top-0 bg-background-dark/80 backdrop-blur-md z-[60] border-b border-white/5">
-        <button id="openSidebar" class="size-10 flex items-center justify-center bg-white/5 rounded-xl text-slate-400 hover:text-primary transition-all">
+    <header
+        class="w-full max-w-md p-4 flex items-center justify-between sticky top-0 bg-background-dark/80 backdrop-blur-md z-[60] border-b border-white/5">
+        <button id="openSidebar"
+            class="size-10 flex items-center justify-center bg-white/5 rounded-xl text-slate-400 hover:text-primary transition-all">
             <span class="material-symbols-outlined">menu</span>
         </button>
-        
+
         <h1 class="text-xs font-black text-slate-500 uppercase tracking-[0.3em]">ChronoSync</h1>
 
         <div class="flex items-center gap-2">
-            <a href="autorizacoes_abono.html" class="size-10 flex items-center justify-center bg-white/5 rounded-xl text-slate-400 hover:text-amber-500 transition-all relative role-gestor role-hidden">
+            <a href="autorizacoes_abono.html"
+                class="size-10 flex items-center justify-center bg-white/5 rounded-xl text-slate-400 hover:text-amber-500 transition-all relative role-gestor role-hidden">
                 <span id="sino-icon" class="material-symbols-outlined">notifications</span>
-                <span id="notif-badge" class="absolute -top-1 -right-1 size-4 bg-amber-500 text-white text-[8px] font-black rounded-full flex items-center justify-center border-2 border-background-dark hidden">0</span>
+                <span id="notif-badge"
+                    class="absolute -top-1 -right-1 size-4 bg-amber-500 text-white text-[8px] font-black rounded-full flex items-center justify-center border-2 border-background-dark hidden">0</span>
             </a>
-            <div id="status-badge" class="px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-500 text-[8px] font-black uppercase hidden border border-emerald-500/20">Online</div>
+            <div id="status-badge"
+                class="px-2 py-1 rounded-full bg-emerald-500/10 text-emerald-500 text-[8px] font-black uppercase hidden border border-emerald-500/20">
+                Online</div>
         </div>
     </header>
 
@@ -121,22 +232,26 @@
 
         <!-- SEÇÃO: CARD DE IDENTIDADE PREMIUM v4.0 (ALTA FIDELIDADE) -->
         <section class="relative group px-1">
-            <div class="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-2xl shadow-black/80 overflow-hidden relative transition-all duration-500 border-b-amber-500/20">
+            <div
+                class="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-2xl shadow-black/80 overflow-hidden relative transition-all duration-500 border-b-amber-500/20">
                 <!-- Efeito 3D de brilho Âmbar -->
                 <div class="absolute -top-24 -left-24 size-48 bg-amber-500/10 blur-[100px] pointer-events-none"></div>
-                
+
                 <div class="space-y-6 relative z-10">
                     <!-- PARTE 1: IDENTIDADE (TOPO) -->
                     <div class="flex gap-6 items-center">
                         <!-- Foto 3x4 -->
-                        <div class="w-24 aspect-[3/4] rounded-2xl overflow-hidden border-2 border-white/10 bg-slate-800 shadow-xl shrink-0 group-hover:border-amber-500/50 transition-all">
-                            <img id="user-photo" src="https://ui-avatars.com/api/?name=User&background=0D59F2&color=fff" class="w-full h-full object-cover">
+                        <div
+                            class="w-24 aspect-[3/4] rounded-2xl overflow-hidden border-2 border-white/10 bg-slate-800 shadow-xl shrink-0 group-hover:border-amber-500/50 transition-all">
+                            <img id="user-photo" src="https://ui-avatars.com/api/?name=User&background=0D59F2&color=fff"
+                                class="w-full h-full object-cover">
                         </div>
 
                         <!-- Info de Identidade -->
                         <div class="flex-1 space-y-2">
                             <div class="inline-block border-b-2 border-white pb-1 pr-8">
-                                <h2 class="text-3xl font-black text-white uppercase tracking-tighter leading-none" id="user-nickname">Usuário</h2>
+                                <h2 class="text-3xl font-black text-white uppercase tracking-tighter leading-none"
+                                    id="user-nickname">Usuário</h2>
                             </div>
                             <div class="space-y-0.5">
                                 <p class="text-[9px] font-black text-amber-500 uppercase tracking-widest">
@@ -163,7 +278,8 @@
                         <!-- Nível (Separador Esquerdo) -->
                         <div class="space-y-1 border-l border-white/10">
                             <p class="text-[8px] font-black text-slate-500 uppercase tracking-[0.2em]">Nível</p>
-                            <p id="dashboard-title" class="text-sm font-black text-amber-500 tracking-widest uppercase">PERFIL</p>
+                            <p id="dashboard-title" class="text-sm font-black text-amber-500 tracking-widest uppercase">
+                                PERFIL</p>
                         </div>
 
                         <!-- Status (Separador Esquerdo) -->
@@ -194,7 +310,8 @@
                     <span id="stat-online-equipe">0</span>
                 </p>
             </a>
-            <a id="link-setores" href="relacao_funcionarios.html" class="metric-card-3d card-3d-amber rounded-2xl p-4 text-center block">
+            <a id="link-setores" href="relacao_funcionarios.html"
+                class="metric-card-3d card-3d-amber rounded-2xl p-4 text-center block">
                 <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Setores</p>
                 <p class="text-xl font-black text-amber-500 flex items-center justify-center gap-2">
                     <span class="material-symbols-outlined text-lg icon-3d-glow">domain</span>
@@ -205,12 +322,25 @@
 
         <!-- SEÇÃO: REGISTRO DE PONTO -->
         <section class="flex flex-col items-center py-4">
-            <button id="punchButton" class="relative group size-40 rounded-full flex flex-col items-center justify-center text-center p-6 shadow-2xl transition-all duration-500">
-                <span class="material-symbols-outlined text-4xl mb-2 text-white font-variation-settings-fill">power_settings_new</span>
-                <span class="text-[10px] font-black text-white leading-tight tracking-wider uppercase">REGISTRAR<br>PONTO</span>
-                
+            <!-- Indicador de GPS Status -->
+            <div id="gps-status-container"
+                class="flex items-center gap-2 mb-4 bg-white/5 px-3 py-1.5 rounded-full border border-white/5 transition-all duration-500">
+                <div id="gps-led" class="size-2 rounded-full bg-slate-600 animate-pulse transition-all duration-500">
+                </div>
+                <span id="gps-text" class="text-[8px] font-black uppercase tracking-widest text-slate-500">Localizando
+                    GPS...</span>
+            </div>
+
+            <button id="punchButton"
+                class="relative group size-40 rounded-full flex flex-col items-center justify-center text-center p-6 shadow-2xl transition-all duration-500">
+                <span
+                    class="material-symbols-outlined text-4xl mb-2 text-white font-variation-settings-fill">power_settings_new</span>
+                <span
+                    class="text-[10px] font-black text-white leading-tight tracking-wider uppercase">REGISTRAR<br>PONTO</span>
+
                 <!-- Timer flutuante -->
-                <div id="user-timer" class="absolute -bottom-2 bg-background-dark border border-white/10 px-4 py-1 rounded-full text-[10px] font-black text-primary shadow-xl hidden">
+                <div id="user-timer"
+                    class="absolute -bottom-2 bg-background-dark border border-white/10 px-4 py-1 rounded-full text-[10px] font-black text-primary shadow-xl hidden">
                     00
                 </div>
             </button>
@@ -236,7 +366,7 @@
                 </div>
             </div>
         </section>
-        
+
 
         <!-- SEÇÃO: CRONOGRAMA CENTRAL (Comum a todos) -->
         <section class="border-t border-white/5 pt-8 space-y-4">
@@ -245,12 +375,15 @@
             </h3>
             <div class="bg-white/5 border border-white/10 rounded-3xl p-6 shadow-inner">
                 <div class="flex justify-between items-center mb-6 px-2">
-                    <p id="calendar-month" class="text-xs font-black text-slate-100 uppercase tracking-widest">Mês Exemplo</p>
+                    <p id="calendar-month" class="text-xs font-black text-slate-100 uppercase tracking-widest">Mês
+                        Exemplo</p>
                     <div class="flex gap-2">
-                        <button id="btn-prev-month" class="w-10 h-10 flex items-center justify-center bg-white/5 rounded-xl text-slate-400 hover:text-primary active:scale-90 transition-all">
+                        <button id="btn-prev-month"
+                            class="w-10 h-10 flex items-center justify-center bg-white/5 rounded-xl text-slate-400 hover:text-primary active:scale-90 transition-all">
                             <span class="material-symbols-outlined">chevron_left</span>
                         </button>
-                        <button id="btn-next-month" class="w-10 h-10 flex items-center justify-center bg-white/5 rounded-xl text-slate-400 hover:text-primary active:scale-90 transition-all">
+                        <button id="btn-next-month"
+                            class="w-10 h-10 flex items-center justify-center bg-white/5 rounded-xl text-slate-400 hover:text-primary active:scale-90 transition-all">
                             <span class="material-symbols-outlined">chevron_right</span>
                         </button>
                     </div>
@@ -265,90 +398,115 @@
 
     </main>
 
+    <!-- MODAIS DE PONTO (Reconstruídos V3.0) -->
+
     <!-- MODAL: JUSTIFICATIVA GEOFENCE -->
-    <div id="modalJustificativa" class="fixed inset-0 bg-black/90 z-[2000] hidden items-center justify-center p-6 backdrop-blur-md">
+    <div id="modalJustificativa"
+        class="fixed inset-0 bg-black/90 z-[2000] hidden items-center justify-center p-6 backdrop-blur-md">
         <div class="bg-background-dark border border-primary/30 rounded-3xl p-8 w-full max-w-md space-y-6 shadow-2xl">
             <div class="text-center space-y-2">
-                <div class="inline-flex items-center justify-center size-16 rounded-full bg-orange-500/20 text-orange-500 mb-2">
+                <div
+                    class="inline-flex items-center justify-center size-16 rounded-full bg-orange-500/20 text-orange-500 mb-2">
                     <span class="material-symbols-outlined text-4xl">location_off</span>
                 </div>
-                <h3 class="text-xl font-black text-slate-100 uppercase italic">Fora do Raio Permitido</h3>
-                <p class="text-[10px] text-slate-400 uppercase font-bold tracking-tight">Detectamos que você não está no seu setor de alocação.</p>
+                <h3 id="geofenceTitle" class="text-lg font-black text-slate-100 uppercase italic leading-tight">Fora do
+                    Raio Permitido</h3>
+                <p id="geofenceInstruction" class="text-[10px] text-slate-400 uppercase font-bold tracking-tight">
+                    Detectamos divergência na localização oficial.</p>
+
+                <!-- Feedback Digital de Distância -->
+                <div id="geofenceDistanceInfo"
+                    class="mt-4 bg-white/5 border border-white/10 rounded-2xl p-4 text-center hidden">
+                    <p class="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Precisão de
+                        Localização</p>
+                    <div class="flex items-center justify-center gap-2 text-sm font-black text-white tracking-widest">
+                        <span class="material-symbols-outlined text-sm text-primary">my_location</span>
+                        <span>AGUARDANDO...</span>
+                    </div>
+                </div>
             </div>
             <div class="space-y-4">
                 <label class="block">
-                    <span class="text-[10px] font-black text-primary uppercase tracking-widest ml-1 mb-2 block">Deseja justificar?</span>
-                    <textarea id="justificativaTexto" rows="3" class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm text-slate-100 placeholder:text-slate-600 focus:border-primary outline-none transition-all" placeholder="Explique por que está batendo ponto neste local..."></textarea>
+                    <span class="text-[10px] font-black text-primary uppercase tracking-widest ml-1 mb-2 block">Deseja
+                        justificar? (Opcional)</span>
+                    <textarea id="justificativaTexto" rows="3"
+                        class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-sm text-slate-100 placeholder:text-slate-600 focus:border-primary outline-none transition-all"
+                        placeholder="Opcional: Informe o motivo da divergência local ou envie sem comentário..."></textarea>
                 </label>
             </div>
             <div class="flex gap-3">
-                <button id="btnFecharModal" class="flex-1 py-4 rounded-2xl border border-white/10 text-xs font-black uppercase text-slate-400 hover:bg-white/5 transition-all">Cancelar</button>
-                <button id="btnConfirmarPontoForaRaio" class="flex-1 py-4 rounded-2xl bg-orange-500 text-white text-xs font-black uppercase shadow-lg shadow-orange-500/20 hover:bg-orange-600 transition-all">Registrar Ponto</button>
+                <button id="btnFecharModal"
+                    class="flex-1 py-4 rounded-2xl border border-white/10 text-xs font-black uppercase text-slate-400 hover:bg-white/5 transition-all">Cancelar</button>
+                <button id="btnConfirmarPontoForaRaio"
+                    class="flex-1 py-4 rounded-2xl bg-orange-500 text-white text-xs font-black uppercase shadow-lg shadow-orange-500/20 hover:bg-orange-600 transition-all">Confirmar
+                    Registro</button>
             </div>
+        </div>
+    </div>
+
+    <!-- MODAL: CÂMERA (Biometria Facial) -->
+    <div id="modalCamera"
+        class="fixed inset-0 bg-black/95 z-[3000] hidden items-center justify-center p-4 backdrop-blur-xl">
+        <div
+            class="bg-background-dark border border-primary/30 rounded-3xl p-6 w-full max-w-sm flex flex-col items-center gap-6 shadow-2xl relative">
+            <button onclick="PunchEngine.closeBiometriaModal()"
+                class="absolute top-4 right-4 text-slate-500 hover:text-white">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+            <div class="text-center">
+                <h3 class="text-sm font-black text-primary uppercase tracking-[0.2em] mb-1">Reconhecimento Facial</h3>
+                <p class="text-[9px] text-slate-500 uppercase font-bold tracking-widest">Posicione seu rosto no centro
+                </p>
+            </div>
+
+            <div
+                class="relative size-64 rounded-full overflow-hidden border-2 border-primary/50 shadow-[0_0_50px_rgba(13,89,242,0.3)]">
+                <video id="video-feed" autoplay playsinline
+                    class="size-full object-cover grayscale brightness-110"></video>
+                <div class="absolute inset-0 border-[16px] border-background-dark/80 rounded-full"></div>
+                <div class="absolute inset-0 scan-line"></div>
+            </div>
+
+            <canvas id="canvas-snapshot" class="hidden"></canvas>
+
+            <button id="btn-capturar-face" onclick="PunchEngine.captureAndProcess(currentUser)"
+                class="w-full py-4 rounded-2xl bg-primary text-white text-[11px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all">
+                Capturar e Registar Ponto
+            </button>
         </div>
     </div>
 
     <!-- Sidebar Menu Overlay (Injetado via UI.initSidebar no final do arquivo) -->
 
     <!-- Bottom Navigation (Links dinâmicos) -->
-    <nav class="fixed bottom-0 left-0 right-0 bg-background-dark/90 border-t border-white/5 py-4 z-50 flex justify-center backdrop-blur-xl">
+    <nav
+        class="fixed bottom-0 left-0 right-0 bg-background-dark/90 border-t border-white/5 py-4 z-50 flex justify-center backdrop-blur-xl">
         <div class="flex items-center justify-around w-full max-w-md px-6">
             <a href="dashboard.html" class="flex flex-col items-center gap-1.5 text-primary">
                 <span class="material-symbols-outlined text-2xl font-variation-settings-fill">home</span>
                 <span class="text-[9px] font-black uppercase tracking-widest text-center">Início</span>
             </a>
-            <a href="estatistica_funcionario.html" class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+            <a href="estatistica_funcionario.html"
+                class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
                 <span class="material-symbols-outlined text-2xl">bar_chart</span>
                 <span class="text-[9px] font-black uppercase tracking-widest text-center">Estatística</span>
             </a>
-            <a href="diario_funcionario.html" class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors relative">
+            <a href="diario_funcionario.html"
+                class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors relative">
                 <span class="material-symbols-outlined text-2xl">edit_note</span>
                 <span class="text-[9px] font-black uppercase tracking-widest text-center">Diário</span>
-                <span id="badge-diario" class="absolute top-0 right-0 size-3.5 bg-amber-500 text-white text-[7px] font-black rounded-full flex items-center justify-center border border-background-dark hidden">0</span>
+                <span id="badge-diario"
+                    class="absolute top-0 right-0 size-3.5 bg-amber-500 text-white text-[7px] font-black rounded-full flex items-center justify-center border border-background-dark hidden">0</span>
             </a>
-            <a id="nav-perfil-link" href="perfil_funcionario.html" class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+            <a id="nav-perfil-link" href="perfil_funcionario.html"
+                class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
                 <span class="material-symbols-outlined text-2xl">person</span>
                 <span class="text-[9px] font-black uppercase tracking-widest text-center">Perfil</span>
             </a>
         </div>
     </nav>
 
-    <!-- Modal Câmera (Biometria Facial) -->
-    <div id="modalCamera" class="fixed inset-0 bg-black/95 z-[3000] hidden items-center justify-center p-4 backdrop-blur-xl">
-        <div class="bg-background-dark border border-primary/30 rounded-[3rem] w-full max-w-lg overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95 duration-300">
-            <div class="p-6 border-b border-white/5 flex justify-between items-center bg-primary/5">
-                <div class="flex items-center gap-3">
-                    <span class="material-symbols-outlined text-primary">face</span>
-                    <h3 class="text-xs font-black uppercase tracking-[0.2em] text-primary">Biometria Facial obrigatória</h3>
-                </div>
-                <button type="button" onclick="fecharModalCamera()" class="size-10 rounded-2xl flex items-center justify-center hover:bg-white/5 transition-all">
-                    <span class="material-symbols-outlined text-slate-400">close</span>
-                </button>
-            </div>
-            <div class="relative aspect-square md:aspect-video bg-black flex items-center justify-center">
-                <video id="video-feed" autoplay playsinline class="w-full h-full object-cover"></video>
-                <!-- Guia de Enquadramento -->
-                <div class="absolute inset-0 pointer-events-none flex items-center justify-center">
-                    <div class="w-64 h-80 border-2 border-primary/40 rounded-[4rem] relative">
-                        <div class="absolute -inset-1 border-4 border-primary/10 rounded-[4.5rem] animate-pulse"></div>
-                    </div>
-                </div>
-            </div>
-            <div class="p-8 space-y-4">
-                <button type="button" id="btn-capturar-face" class="w-full py-5 bg-primary text-white rounded-3xl text-sm font-black uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3">
-                    <span class="material-symbols-outlined text-2xl">photo_camera</span>
-                    Confirmar Identidade
-                </button>
-                <p class="text-[10px] text-slate-500 text-center uppercase font-black tracking-widest opacity-60">Posicione seu rosto dentro do guia e aguarde a estabilização</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Canvas Snapshot Oculto -->
-    <canvas id="canvas-snapshot" class="hidden"></canvas>
-
-    <!-- Overlay Modal Geral -->
-
+    <!-- Script Core -->
     <script type="module">
         import { supabase } from '../js/supabase-config.js';
         import { Auth } from '../js/auth.js';
@@ -356,6 +514,7 @@
         import { ScalesEngine } from '../js/scales-engine.js';
         import { EventManager } from '../js/event-manager.js';
         import { GPSTracker } from '../js/gps-tracker.js';
+        import { PunchEngine } from '../js/punch-engine.js';
         import { Notifications } from '../js/notifications.js';
 
         let currentUser = null;
@@ -367,12 +526,13 @@
 
         async function init() {
             const session = Auth.checkSession();
-            if (!session) return; 
+            if (!session) return;
 
             const urlParams = new URLSearchParams(window.location.search);
             const employeeIdParam = urlParams.get('id');
             const loggedUser = Auth.getUser();
-            const isAdminOrGestor = loggedUser && (loggedUser.role === 'Admin' || loggedUser.role === 'Gestor');
+            const role = String(loggedUser?.role || '').toLowerCase();
+            const isAdminOrGestor = role === 'admin' || role === 'gestor';
 
             // Definir ID alvo: Prioridade para o parâmetro da URL se for Admin/Gestor inspecionando
             const targetId = (employeeIdParam && isAdminOrGestor) ? employeeIdParam : session.userId;
@@ -382,7 +542,7 @@
 
             const { data: funcionario } = await supabase
                 .from('funcionarios')
-                .select('*, setores!setor_id(*), escalas!escala_id(*), perfis_tripulantes(foto_url, nickname)')
+                .select('*, setores!funcionarios_setor_id_fkey(*), escalas!escala_id(*), perfis_tripulantes(foto_url, nickname)')
                 .eq('id', targetId)
                 .single();
             if (!funcionario) {
@@ -393,13 +553,13 @@
 
             currentUser = funcionario;
             setupDashboard(funcionario);
-            
+
             // Iniciar Rastreamento GPS Automático
             GPSTracker.startTracking(funcionario);
 
             // Inicializar Sidebar Unificado
             UI.initSidebar(funcionario.nivel_acesso || 'Funcionário');
-            
+
             // Lógicas Condicionais por Perfil
             if (funcionario.nivel_acesso === 'Admin' || funcionario.nivel_acesso === 'Gestor') {
                 await loadGlobalStats();
@@ -407,17 +567,20 @@
             Notifications.updateBadges();
 
             await setupPunchLogic(funcionario.id);
-            
+
             // Inicializar Calendário e Navegação
             await refreshCalendar();
             setupCalendarNavigation();
+
+            // Ativar Monitoramento de GPS UI
+            setupGPSSignals();
 
             // Sincronização em Tempo Real via Evento Global
             window.addEventListener('sync-feriados', async () => {
                 console.log('[Dashboard] Sincronizando calendário por mudança remota...');
                 await refreshCalendar();
             });
-            
+
             document.getElementById('main-body').style.opacity = '1';
         }
 
@@ -426,58 +589,14 @@
             const month = calendarDate.getMonth();
             const startMonth = new Date(year, month, 1).toISOString();
             const endMonth = new Date(year, month + 1, 0).toISOString();
-            
+
             const [feriadosRes, pontosRes, feriasRes] = await Promise.all([
                 supabase.from('feriados_folgas').select('*').or(`funcionario_id.eq.${currentUser.id},setor_id.eq.${currentUser.setor_id},escopo.eq.geral`).gte('data', startMonth).lte('data', endMonth),
                 supabase.from('pontos').select('*').eq('funcionario_id', currentUser.id).gte('data_hora', startMonth + 'T00:00:00').lte('data_hora', endMonth + 'T23:59:59'),
                 supabase.from('ferias').select('*').eq('funcionario_id', currentUser.id).eq('status', 'aprovado')
             ]);
 
-            // Carregar feriados nacionais usando a mesma lógica do calendário de FERIADOS/FOLGAS
-            function getBrazilianHolidaysLocal(year) {
-                const holidays = {};
-                holidays[`${year}-01-01`] = 'Confraternização Universal';
-                holidays[`${year}-04-21`] = 'Tiradentes';
-                holidays[`${year}-05-01`] = 'Dia do Trabalho';
-                holidays[`${year}-09-07`] = 'Independência do Brasil';
-                holidays[`${year}-10-12`] = 'Nossa Senhora Aparecida';
-                holidays[`${year}-11-02`] = 'Finados';
-                holidays[`${year}-11-15`] = 'Proclamação da República';
-                holidays[`${year}-12-25`] = 'Natal';
-
-                // Datas móveis baseadas na Páscoa
-                const a = year % 19;
-                const b = Math.floor(year / 100);
-                const c = year % 100;
-                const d = Math.floor(b / 4);
-                const e = b % 4;
-                const f = Math.floor((b + 8) / 25);
-                const g = Math.floor((b - f + 1) / 3);
-                const h = (19 * a + b - d - g + 15) % 30;
-                const i = Math.floor(c / 4);
-                const k = c % 4;
-                const l = (32 + 2 * e + 2 * i - h - k) % 7;
-                const m = Math.floor((a + 11 * h + 22 * l) / 451);
-                const pMeso = Math.floor((h + l - 7 * m + 114) / 31);
-                const pDia = ((h + l - 7 * m + 114) % 31) + 1;
-                const pascoa = new Date(year, pMeso - 1, pDia);
-                const addDays = (date, days) => { const result = new Date(date); result.setDate(result.getDate() + days); return result.toISOString().split('T')[0]; };
-                holidays[addDays(pascoa, -47)] = 'Carnaval';
-                holidays[addDays(pascoa, -48)] = 'Carnaval';
-                holidays[addDays(pascoa, -2)] = 'Sexta-feira Santa';
-                holidays[addDays(pascoa, 60)] = 'Corpus Christi';
-                return holidays;
-            }
-
-            const nationalMap = getBrazilianHolidaysLocal(year);
-            const nationalHolidays = Object.keys(nationalMap).map(d => ({ data: d, tipo: 'feriado_nacional', descricao: nationalMap[d] }));
-
-            // Mesclar sem duplicatas por data (priorizando registros do banco)
-            const existingDates = new Set((feriadosRes.data || []).map(f => f.data));
-            const mergedFeriados = [ ...(feriadosRes.data || []) ];
-            (nationalHolidays || []).forEach(n => { if (!existingDates.has(n.data)) mergedFeriados.push(n); });
-
-            renderCalendar(mergedFeriados, pontosRes.data || [], feriasRes.data || [], month, year);
+            renderCalendar(feriadosRes.data || [], pontosRes.data || [], feriasRes.data || [], month, year);
         }
 
         async function setupCalendarNavigation() {
@@ -488,13 +607,13 @@
             const navigate = async (offset) => {
                 const outClass = offset > 0 ? 'anim-slide-out-left' : 'anim-slide-out-right';
                 const inClass = offset > 0 ? 'anim-slide-in-right' : 'anim-slide-in-left';
-                
+
                 calendarGrid.classList.add(outClass);
-                
+
                 setTimeout(async () => {
                     // FIX: Define o dia como 1 para evitar pular meses (ex: 31 de Março -> 1 de Maio)
                     calendarDate.setDate(1);
-                    calendarDate.setMonth(calendarDate.getMonth() + offset);                    
+                    calendarDate.setMonth(calendarDate.getMonth() + offset);
                     await refreshCalendar();
                     calendarGrid.classList.remove(outClass);
                     calendarGrid.classList.add(inClass);
@@ -517,10 +636,10 @@
             const handleEnd = async (e) => {
                 const endX = e.type.includes('touch') ? e.changedTouches[0].clientX : e.clientX;
                 const endY = e.type.includes('touch') ? e.changedTouches[0].clientY : e.clientY;
-                
+
                 const diffX = touchStartX - endX;
                 const diffY = touchStartY - endY;
-                
+
                 // Threshold de 80px e movimento predominante horizontal
                 if (Math.abs(diffX) > 80 && Math.abs(diffX) > Math.abs(diffY)) {
                     if (diffX > 0) await navigate(1);  // Swipe Left -> Próximo Mês
@@ -539,28 +658,28 @@
         function setupDashboard(user) {
             const role = user.nivel_acesso || 'Funcionário';
             const perfil = (user.perfis_tripulantes && Array.isArray(user.perfis_tripulantes)) ? user.perfis_tripulantes[0] : user.perfis_tripulantes;
-            
+
             // Nickname (Grande e Sublinhado)
             const nickname = perfil?.nickname || user.nickname || user.nome_completo.split(' ')[0];
             const nickEl = document.getElementById('user-nickname');
             if (nickEl) nickEl.innerText = nickname;
-            
+
             // Foto de Perfil (da tabela perfis_tripulantes)
             const fotoUrl = perfil?.foto_url || user.foto_url;
             if (fotoUrl) {
                 document.getElementById('user-photo').src = fotoUrl;
-                document.getElementById('user-photo').onerror = function() {
+                document.getElementById('user-photo').onerror = function () {
                     this.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(nickname)}&background=0D59F2&color=fff`;
                 };
             }
-            
+
             // Labels em Âmbar
             const roleLabel = document.getElementById('user-role-label');
             if (roleLabel) roleLabel.innerText = user.funcao || 'Colaborador';
-            
+
             const sectorLabel = document.getElementById('user-sector-label');
             if (sectorLabel) sectorLabel.innerText = user.setores?.nome || 'Geral';
-            
+
             // Métricas (Rodapé)
             const enrollEl = document.getElementById('user-enrollment');
             if (enrollEl) enrollEl.innerText = `#${user.matricula || '---'}`;
@@ -570,7 +689,7 @@
             if (titleEl) titleEl.innerText = titleMap[role] || 'USER';
 
             applyRBAC(role, isInspectionMode);
-            
+
             // Inicializar Sidebar Global (Apenas se não estiver em inspeção)
             if (!isInspectionMode) {
                 UI.initSidebar(role);
@@ -581,23 +700,25 @@
                 const btnSidebar = document.getElementById('openSidebar');
                 if (btnSidebar) btnSidebar.classList.add('hidden');
             }
-            
+
             // Badge Online
             const badge = document.getElementById('status-badge-container');
             if (badge) badge.classList.remove('opacity-0');
         }
 
-        function applyRBAC(role, forceHideManagement = false) {
+        function applyRBAC(roleRaw, forceHideManagement = false) {
+            const role = String(roleRaw || '').toLowerCase();
+            
             // Se estiver em modo inspeção, ocultamos blocos de gestão independente do cargo do usuário logado
             if (forceHideManagement) {
                 document.querySelectorAll('.role-gestor').forEach(el => el.classList.add('role-hidden'));
                 return;
             }
 
-            if (role === 'Admin') {
+            if (role === 'admin') {
                 document.querySelectorAll('.role-admin').forEach(el => el.classList.remove('role-hidden'));
                 document.querySelectorAll('.role-gestor').forEach(el => el.classList.remove('role-hidden'));
-            } else if (role === 'Gestor') {
+            } else if (role === 'gestor' || role === 'manager') {
                 document.querySelectorAll('.role-gestor').forEach(el => el.classList.remove('role-hidden'));
             }
         }
@@ -655,7 +776,7 @@
                 }
                 if (pulseRes.data) pulseRes.data.forEach(p => onlineSet.add(p.funcionario_id));
                 if (currentUser) onlineSet.add(currentUser.id);
-                
+
                 if (document.getElementById('stat-online-equipe'))
                     document.getElementById('stat-online-equipe').innerText = onlineSet.size || '0';
 
@@ -675,10 +796,10 @@
             async function refreshStatus() {
                 const today = new Date().toISOString().split('T')[0];
                 const { data } = await supabase.from('pontos').select('*').eq('funcionario_id', userId).gte('data_hora', `${today}T00:00:00`).order('data_hora', { ascending: true });
-                
+
                 const role = currentUser.nivel_acesso || 'Funcionário';
                 const isOnline = data && data.length % 2 !== 0;
-                
+
                 // --- VERIFICAÇÃO DE FÉRIAS (BLOQUEIO) ---
                 let isOnVacation = false;
                 try {
@@ -729,28 +850,64 @@
                     // Lógica de Janela de Ativação e Congelamento
                     await checkButtonWindow(btn);
                 }
-                
+
                 // Atualizar Stats de Sessão
                 if (data && data.length > 0) {
+                    // Início é sempre a primeira batida
                     document.getElementById('stats-inicio').innerText = new Date(data[0].data_hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-                    if (!isOnline && data.length >= 2) {
-                        document.getElementById('stats-fim').innerText = new Date(data[data.length - 1].data_hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-                    } else {
-                        document.getElementById('stats-fim').innerText = '--:--';
-                    }
 
-                    // Calcular Duração Total
+                    // Fim é a última batida (mesmo que seja o check-out atual ou um anterior)
+                    const lastOut = [...data].reverse().find(p => p.tipo === 'check-out');
+                    document.getElementById('stats-fim').innerText = lastOut
+                        ? new Date(lastOut.data_hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+                        : '--:--';
+
+                    // 1. Calcular Tempo Efetivo de Trabalho (Blocos ON)
                     let totalMs = 0;
                     for (let i = 0; i < data.length; i += 2) {
                         const inT = new Date(data[i].data_hora).getTime();
                         const outT = (i + 1 < data.length) ? new Date(data[i + 1].data_hora).getTime() : Date.now();
                         totalMs += (outT - inT);
                     }
-                    
-                    // Regra 3 das Diretrizes: Subtração Cega de Almoço (1 Hora) se > 6H.
+
+                    // 2. Buscar Ausências Abonadas (Saídas Intermediárias com status 'aprovado')
+                    try {
+                        const { data: logs } = await supabase
+                            .from('diario_logs')
+                            .select('id, data_hora, status_pendencia')
+                            .eq('funcionario_id', userId)
+                            .eq('tipo', 'saida_intermediaria')
+                            .eq('status_pendencia', 'aprovado')
+                            .gte('data_hora', `${today}T00:00:00`);
+
+                        if (logs && logs.length > 0) {
+                            // Para cada saída abonada, somamos o tempo até o próximo check-in
+                            // (Lógica simplificada: O abono "devolve" o tempo que ele ficou offline)
+                            // Nota: Como o cálculo acima já soma apenas os blocos IN, 
+                            // o abono deve somar os blocos OUT que foram autorizados.
+                            for (let i = 1; i < data.length; i += 2) {
+                                const outTime = new Date(data[i].data_hora);
+                                const nextInTime = (i + 1 < data.length) ? new Date(data[i + 1].data_hora) : new Date();
+
+                                // Verifica se existe um log de abono para este horário específico
+                                const foiAbonado = logs.some(l => {
+                                    const logTime = new Date(l.data_hora);
+                                    return Math.abs(logTime - outTime) < 60000; // Margem de 1min
+                                });
+
+                                if (foiAbonado) {
+                                    totalMs += (nextInTime.getTime() - outTime.getTime());
+                                }
+                            }
+                        }
+                    } catch (e) { console.warn('Erro ao processar abonos:', e); }
+
+                    // 3. Subtração Cega de Almoço (1 Hora) se jornada contínua > 6H (Regra de Negócio)
                     if (totalMs > 6 * 3600000) {
                         totalMs -= 3600000;
-                        document.getElementById('stats-total').classList.add('text-primary'); // Destaque visual
+                        document.getElementById('stats-total').classList.add('text-primary');
+                    } else {
+                        document.getElementById('stats-total').classList.remove('text-primary');
                     }
 
                     const h = Math.floor(totalMs / 3600000);
@@ -776,6 +933,39 @@
                 }
             }
 
+            async function getExtraMinutes() {
+                let extraLimit = 0;
+                try {
+                    // Regra: Comunicados de HE valem por 24 horas após a criação
+                    const fullDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+                    const sId = currentUser.setor_id || '00000000-0000-0000-0000-000000000000';
+
+                    const { data: coms } = await supabase.from('comunicados')
+                        .select('id, conteudo, lido, created_at')
+                        .or(`destinatario_id.eq.${userId},tipo.eq.geral,setor_id.eq.${sId}`)
+                        .eq('subtipo', 'hora_extra')
+                        .gte('created_at', fullDayAgo)
+                        .order('created_at', { ascending: false });
+
+                    if (coms && coms.length > 0) {
+                        // Pegar a HE mais recente (Não exige mais 'lido' para liberar o ponto)
+                        const validCom = coms[0];
+                        const match = validCom.conteudo.match(/\[LIMITE:(\d+)\]/);
+                        extraLimit = match ? parseInt(match[1], 10) : 120;
+                        console.log(`[Dashboard] Prorrogação ativa: +${extraLimit} min (ID: ${validCom.id})`);
+                    }
+                } catch (e) {
+                    console.warn('[Dashboard] Erro ao buscar minutos extras:', e);
+                }
+
+                // Sincronizar com o motor de registro
+                if (typeof PunchEngine !== 'undefined') {
+                    PunchEngine.activeExtraMinutes = extraLimit;
+                }
+
+                return extraLimit;
+            }
+
             async function checkButtonWindow(btn) {
                 const escala = currentUser.escalas;
                 if (!escala || !escala.horario_entrada) {
@@ -784,268 +974,42 @@
                 }
 
                 const now = new Date();
-                const [h, m] = escala.horario_entrada.split(':').map(Number);
-                const scheduled = new Date();
-                scheduled.setHours(h, m, 0, 0);
+                const [hE, mE] = escala.horario_entrada.split(':').map(Number);
+                const startShift = new Date();
+                startShift.setHours(hE, mE, 0, 0);
+
+                const extraMin = await getExtraMinutes();
+                const endShift = ScalesEngine.getShiftEndWithHE(escala, extraMin);
 
                 const janelaAntes = escala.janela_ativa_antes_minutos || 30;
                 const janelaDepois = escala.janela_ativa_depois_minutos || 30;
-                const tolEntrada = escala.tolerancia_entrada_minutos || 15;
 
-                const startWindow = new Date(scheduled.getTime() - janelaAntes * 60000);
-                const endWindow = new Date(scheduled.getTime() + janelaDepois * 60000);
-                const limitTolerance = new Date(scheduled.getTime() + tolEntrada * 60000);
+                const startWindow = new Date(startShift.getTime() - janelaAntes * 60000);
+                const endWindow = new Date(endShift.getTime() + janelaDepois * 60000);
 
-                // 1. Fora da Janela -> Congelado
-                if (now < startWindow || now > endWindow) {
-                    btn.classList.add('punch-frozen');
-                    return;
-                }
-
-                // 2. Após Tolerância -> Congelado
-                if (now > limitTolerance) {
-                    btn.classList.add('punch-frozen');
-                    return;
-                }
-
-                // 3. Ativo -> Pulsar
-                btn.classList.add('animate-celestial');
-            }
-
-            async function handlePunchAction(nextType) {
-                const { data: lastPoints } = await supabase.from('pontos').select('tipo, hora_extra_liberada').eq('funcionario_id', userId).order('data_hora', { ascending: false }).limit(1);
-                const lastPoint = lastPoints && lastPoints.length > 0 ? lastPoints[0] : null;
-
-                // --- VALIDAÇÃO DE CHECK-OUT (HORA EXTRA / BLOQUEIO) ---
-                if (nextType === 'check-out') {
-                    const escala = currentUser.escalas;
-                    if (escala && escala.horario_saida) {
-                        const now = new Date();
-                        const [hS, mS] = escala.horario_saida.split(':').map(Number);
-                        const exitTime = new Date();
-                        exitTime.setHours(hS, mS, 0, 0);
-                        
-                        const tolerance = escala.tolerancia_saida_minutos || 15;
-                        let extraLimit = 0;
-                        
-                        // Busca comunicados de H.E para garantir bypass se dado 'Ciente'
-                        const todayStr = new Date().toISOString().split('T')[0];
-                        const sId = currentUser.setor_id || '00000000-0000-0000-0000-000000000000';
-                        const { data: coms } = await supabase.from('comunicados')
-                            .select('id, conteudo, lido')
-                            .or(`destinatario_id.eq.${userId},tipo.eq.geral,setor_id.eq.${sId}`)
-                            .eq('subtipo', 'hora_extra')
-                            .gte('created_at', `${todayStr}T00:00:00`)
-                            .order('created_at', { ascending: false })
-                            .limit(1);
-
-                        if (coms && coms.length > 0) {
-                            const c = coms[0];
-                            const isLido = c.lido || localStorage.getItem(`ciente_${c.id}`) === 'true';
-                            if (isLido) {
-                                const match = c.conteudo.match(/\[LIMITE:(\d+)\]/);
-                                extraLimit = match ? parseInt(match[1], 10) : 120;
-                            }
-                        }
-                        
-                        const maxAllowed = new Date(exitTime.getTime() + (tolerance + extraLimit) * 60000);
-                        
-                        // Se passou do limite permitido e NÃO tem liberação
-                        if (now > maxAllowed && !lastPoint?.hora_extra_liberada) {
-                            UI.showToast('Check-out bloqueado por excesso de jornada. Confirme a solicitação no Diário ou contate seu gestor.', 'error');
-                            return;
-                        }
-                    }
-                }
-
-                // --- VALIDAÇÃO CENTRALIZADA (GEOFENCE & HORÁRIO) VIA EVENT MANAGER ---
-                const escala = currentUser.escalas;
-                let lat = null;
-                let lng = null;
-                let gpsOculto = false;
-
-                if (escala) {
-                    try {
-                        const pos = await GPSTracker.getCurrentPosition();
-                        lat = pos.coords.latitude;
-                        lng = pos.coords.longitude;
-                        
-                        // Validar via Central de Eventos
-                        const validation = EventManager.validatePointEvent(
-                            { tipo: nextType, latitude: lat, longitude: lng },
-                            escala
-                        );
-
-                        if (validation.status === 'divergente' && validation.alerts.includes('FORA DO RAIO')) {
-                            showGeofenceModal(lat, lng, nextType);
-                            return;
-                        }
-                    } catch (e) {
-                        console.warn('Falha no GPS (Oculto/Desligado):', e);
-                        gpsOculto = true;
-                    }
-                }
-
-                if (currentUser.biometria_cadastrada) {
-                    await abrirModalCamera(nextType, lat, lng, gpsOculto); // Precisamos adaptar opening da camera para carregar o state
+                // O botão fica ativo desde 'antes da entrada' até 'depois da saída + HE'
+                if (now >= startWindow && now <= endWindow) {
+                    btn.classList.add('animate-celestial');
+                    btn.classList.remove('punch-frozen', 'opacity-30', 'grayscale');
+                    btn.disabled = false;
                 } else {
-                    await executePunch(nextType, null, lat, lng, null, gpsOculto);
+                    btn.classList.add('punch-frozen', 'opacity-30', 'grayscale');
+                    btn.classList.remove('animate-celestial');
+                    btn.disabled = true;
                 }
             }
 
-            // Variáveis temporárias para a câmera
-            let tempNextType = null;
-            let tempLat = null;
-            let tempLng = null;
-            let tempGpsOculto = false;
-            let cameraStream = null;
+            // Configuração do Botão de Ponto conforme o próximo tipo calculado
+            btn.onclick = () => PunchEngine.startFlow(nextType, currentUser);
 
-            window.abrirModalCamera = async (type, lat, lng, gpsOculto) => {
-                tempNextType = type;
-                tempLat = lat;
-                tempLng = lng;
-                tempGpsOculto = gpsOculto;
-                const modal = document.getElementById('modalCamera');
-                if (modal) {
-                    modal.classList.remove('hidden');
-                    modal.classList.add('flex');
-                }
-                const video = document.getElementById('video-feed');
-                try {
-                    cameraStream = await navigator.mediaDevices.getUserMedia({ 
-                        video: { facingMode: "user", width: 720, height: 720 }, 
-                        audio: false 
-                    });
-                    if (video) video.srcObject = cameraStream;
-                } catch (err) {
-                    console.error("Erro ao acessar câmera:", err);
-                    UI.showToast("Não foi possível acessar a câmera.", "error");
-                }
-            };
+            // Listener para sucesso no registro do ponto
+            window.addEventListener('punch-success', () => {
+                refreshStatus();
+                if (currentUser.nivel_acesso !== 'Funcionário') Notifications.init();
+            });
 
-            window.fecharModalCamera = () => {
-                const modal = document.getElementById('modalCamera');
-                if (cameraStream) {
-                    cameraStream.getTracks().forEach(track => track.stop());
-                    cameraStream = null;
-                }
-                if (modal) {
-                    modal.classList.add('hidden');
-                    modal.classList.remove('flex');
-                }
-            };
-
-            // Listener para Captura de Face
-            document.getElementById('btn-capturar-face').onclick = async () => {
-                const video = document.getElementById('video-feed');
-                const canvas = document.getElementById('canvas-snapshot');
-                
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                canvas.getContext('2d').drawImage(video, 0, 0);
-                
-                const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-                const blob = await (await fetch(dataUrl)).blob();
-                const file = new File([blob], `biometria_${userId}_${Date.now()}.jpg`, { type: 'image/jpeg' });
-                
-                fecharModalCamera();
-                
-                if (!tempNextType) {
-                    const { data: lastPoints } = await supabase.from('pontos').select('tipo').eq('funcionario_id', userId).order('data_hora', { ascending: false }).limit(1);
-                    tempNextType = (lastPoints && lastPoints[0]?.tipo === 'check-in') ? 'check-out' : 'check-in';
-                }
-                
-                await executePunch(tempNextType, null, tempLat, tempLng, file, tempGpsOculto);
-            };
-
-            async function executePunch(tipo, justificativa = null, lat = null, lng = null, photoFile = null, gpsOculto = false) {
-                UI.showLoader();
-                try {
-                    let evidênciaUrl = null;
-
-                    // 1. Upload da Foto se fornecida
-                    if (photoFile) {
-                        const filePath = `biometria/${photoFile.name}`;
-                        const { error: uploadError } = await supabase.storage.from('evidencias').upload(filePath, photoFile);
-                        if (!uploadError) {
-                            const { data: pub } = supabase.storage.from('evidencias').getPublicUrl(filePath);
-                            evidênciaUrl = pub.publicUrl;
-                        }
-                    }
-
-                    // 2. Preparar Justificativa com Foto embutida (Contorno de Schema)
-                    let justificativaFinal = justificativa;
-                    if (evidênciaUrl) {
-                        justificativaFinal = `[FOTO:${evidênciaUrl}] ${justificativa || ''}`.trim();
-                    }
-
-                    // 3. Validação Final de Divergências para o Banco
-                    const escala = currentUser.escalas;
-                    const validation = escala ? EventManager.validatePointEvent({ 
-                        tipo, 
-                        latitude: lat,
-                        longitude: lng 
-                    }, escala) : { status: 'normal', alerts: [] };
-
-                    // 4. Se GPS Oculto, adiciona à lista de alertas
-                    if (gpsOculto) validation.alerts.push("Bateu Ponto com GPS Oculto/Desligado");
-
-                    const isDivergent = gpsOculto || validation.status === 'divergente' || (validation.alerts && validation.alerts.length > 0);
-
-                    const { error } = await supabase.from('pontos').insert([{ 
-                        funcionario_id: userId, 
-                        data_hora: new Date().toISOString(), 
-                        tipo: tipo, 
-                        status_validacao: (justificativaFinal || isDivergent) ? 'pendente' : 'aprovado', 
-                        dentro_do_raio: !validation.alerts.includes('FORA DO RAIO'),
-                        justificativa_usuario: justificativaFinal || (validation.alerts.length > 0 ? validation.alerts.join(' | ') : null),
-                        latitude: lat,
-                        longitude: lng
-                    }]);
-
-                    if (error) throw error;
-
-                    // 5. Se o GPS esteve oculto, joga no diário como pendência
-                    if (gpsOculto) {
-                        const msgGPSOculto = `O registro de ponto (${tipo.toUpperCase()}) foi efetuado sem o envio das coordenadas GPS obrigatórias, contrariando o regulamento da escala.`;
-                        await supabase.from('diario_logs').insert([{
-                            funcionario_id: userId,
-                            data_hora: new Date().toISOString(),
-                            tipo: 'gps_oculto',
-                            mensagem_padrao: msgGPSOculto,
-                            status_pendencia: 'pendente'
-                        }]);
-                    }
-
-                    UI.showToast('Ponto registrado com sucesso!', 'success');
-                    await refreshStatus();
-                    if (currentUser.nivel_acesso !== 'Funcionário') await loadGlobalStats();
-                } catch (e) {
-                    console.error('Erro no registro de ponto:', e);
-                    UI.showToast('Erro ao processar o registro.', 'error');
-                } finally { UI.hideLoader(); }
-            }
-
-            // Lógica do Modal de Justificativa
-            let pendingGeoNextType = null;
-            const modal = document.getElementById('modalJustificativa');
-            function showGeofenceModal(lat, lng, type) {
-                pendingGeoNextType = type;
-                modal.classList.remove('hidden');
-                modal.classList.add('flex');
-                document.getElementById('btnConfirmarPontoForaRaio').onclick = async () => {
-                    const text = document.getElementById('justificativaTexto').value;
-                    if (!text) { UI.showToast('Escreva uma justificativa', 'warning'); return; }
-                    modal.classList.add('hidden');
-                    
-                    if (currentUser.biometria_cadastrada) {
-                        await abrirModalCamera(pendingGeoNextType, lat, lng, false);
-                    } else {
-                        await executePunch(pendingGeoNextType, text, lat, lng, null, false);
-                    }
-                };
-                document.getElementById('btnFecharModal').onclick = () => modal.classList.add('hidden');
-            }
+            // Timer de Check Visual (desbloqueio/congelamento automático em tempo real)
+            setInterval(() => checkButtonWindow(btn), 30000);
 
             await refreshStatus();
         }
@@ -1070,28 +1034,31 @@
 
 
 
-        function renderCalendar(feriadosData = [], pontosData = [], feriasData = [], month, year) {
+        function renderCalendar(feriadosDataRaw = [], pontosData = [], feriasData = [], month, year) {
             const grid = document.getElementById('app-calendar');
             if (!grid) return;
 
+            // Deduplicação Visual: Ordenar feriados para que o .find pegue o mais recente caso haja duplicidade
+            const feriadosData = [...feriadosDataRaw].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+
             const now = new Date();
             const displayDate = new Date(year, month, 1);
-            
+
             document.getElementById('calendar-month').innerText = displayDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }).toUpperCase();
             grid.innerHTML = '';
-            
+
             const daysInMonth = new Date(year, month + 1, 0).getDate();
             const firstDay = new Date(year, month, 1).getDay();
-            
+
             // Projetar escala futura
             const currentScale = currentUser.escalas || currentUser;
             const futureScale = ScalesEngine.projectBaseDays(currentScale, currentUser.data_inicio_vigencia || currentScale.data_inicio_vigencia, month, year);
-            
+
             // Jornada Diária Teórica (em minutos)
             const jornadaDiariaMin = ScalesEngine.calculateDailyWorkMinutes(currentScale);
 
             for (let i = 0; i < firstDay; i++) grid.innerHTML += '<div></div>';
-            
+
             for (let d = 1; d <= daysInMonth; d++) {
                 const date = new Date(year, month, d);
                 const dateStr = date.toISOString().split('T')[0];
@@ -1108,7 +1075,7 @@
                 });
 
                 const event = feriadosData.find(f => f.data === dateStr);
-                
+
                 // 2. Calcular Saldo (Se passado ou hoje)
                 let balanceClass = '';
                 if (isPast || isToday) {
@@ -1116,10 +1083,10 @@
                     let workedMin = 0;
                     for (let i = 0; i < pontosDia.length; i += 2) {
                         const inT = new Date(pontosDia[i].data_hora).getTime();
-                        const outT = pontosDia[i+1] ? new Date(pontosDia[i+1].data_hora).getTime() : (isToday ? Date.now() : inT);
+                        const outT = pontosDia[i + 1] ? new Date(pontosDia[i + 1].data_hora).getTime() : (isToday ? Date.now() : inT);
                         workedMin += (outT - inT) / 60000;
                     }
-                    
+
                     if (workedMin > 0 || (isPast && !event)) {
                         balanceClass = workedMin >= jornadaDiariaMin ? 'bg-emerald-500' : 'bg-rose-500';
                     }
@@ -1133,7 +1100,7 @@
 
                 // Estilos de Círculo
                 let circleClass = 'h-10 w-10 flex flex-col items-center justify-center text-xs font-black rounded-full transition-all relative cursor-pointer active:scale-95 hover:brightness-110 ';
-                
+
                 if (isVacation) {
                     circleClass += 'bg-sky-500/30 text-sky-200 border border-sky-500/40 shadow-xl shadow-sky-500/10';
                 } else if (event) {
@@ -1168,18 +1135,18 @@
                 dayDiv.className = 'flex items-center justify-center p-1';
                 dayDiv.innerHTML = `<div class="${circleClass}">${d}${indicators}</div>`;
                 dayDiv.onclick = () => window.location.assign(`resumo_dia.html?id=${currentUser.id}&date=${dateStr}`);
-                
+
                 grid.appendChild(dayDiv);
             }
 
             // --- LEGENDA E LISTA DE EVENTOS ---
-            renderCalendarLegend(feriadosData);
+            renderCalendarLegend(feriadosData, feriasData, month, year);
         }
 
-        function renderCalendarLegend(feriadosData) {
+        function renderCalendarLegend(feriadosData, feriasData, month, year) {
             const container = document.getElementById('app-calendar').parentNode;
             let legendSection = document.getElementById('calendar-footer-section');
-            
+
             if (!legendSection) {
                 legendSection = document.createElement('div');
                 legendSection.id = 'calendar-footer-section';
@@ -1187,11 +1154,43 @@
                 container.appendChild(legendSection);
             }
 
-            // Ordenar eventos por data
-            const sortedEvents = [...feriadosData].sort((a,b) => a.data.localeCompare(b.data));
+            // 1. Filtrar Feriados/Folgas do Mês
+            const filteredFeriados = feriadosData.filter(f => {
+                const d = new Date(f.data + 'T12:00:00');
+                return d.getMonth() === month && d.getFullYear() === year;
+            });
+
+            // 2. Extrair e Filtrar Férias que se sobrepõem ao mês
+            const startOfMonth = new Date(year, month, 1);
+            const endOfMonth = new Date(year, month + 1, 0);
+
+            const filteredFerias = [];
+            feriasData.forEach(f => {
+                const s = new Date(f.data_inicio + 'T00:00:00');
+                const e = new Date(f.data_fim + 'T23:59:59');
+
+                // Se a parcela de férias toca o mês atual
+                if (s <= endOfMonth && e >= startOfMonth) {
+                    // Adicionamos como um evento na lista (usando a data de início ou a primeira data visível no mês)
+                    const displayDate = s < startOfMonth ? startOfMonth.toISOString().split('T')[0] : f.data_inicio;
+                    filteredFerias.push({
+                        data: displayDate,
+                        tipo: 'ferias',
+                        descricao: `Férias: ${new Date(f.data_inicio + 'T12:00:00').toLocaleDateString('pt-BR')} até ${new Date(f.data_fim + 'T12:00:00').toLocaleDateString('pt-BR')}`
+                    });
+                }
+            });
+
+            // 3. Unificar e Ordenar
+            const sortedEvents = [...filteredFeriados, ...filteredFerias].sort((a, b) => a.data.localeCompare(b.data));
 
             legendSection.innerHTML = `
                 <!-- Legenda de Cores (Horizontal e Centralizada) -->
+                ... (Omitido para brevidade, mantendo o HTML original da legenda) ...
+            `;
+
+            // Nota: Vou manter o HTML da legenda e reconstruir apenas a parte da lista para ser preciso
+            legendSection.innerHTML = `
                 <div class="flex flex-row flex-wrap justify-center items-center gap-x-6 gap-y-3 mb-6">
                     <div class="flex items-center gap-2">
                         <span class="size-2.5 rounded-full bg-sky-500/40 shadow-lg shadow-sky-500/20"></span>
@@ -1211,38 +1210,69 @@
                     </div>
                 </div>
 
-                <!-- Divisor Sutil -->
                 <div class="h-px bg-white/5 w-full"></div>
 
-                <!-- Lista de Detalhes -->
                 <div class="space-y-2 mt-4">
                     ${sortedEvents.length > 0 ? sortedEvents.map(ev => {
-                        const dateObj = new Date(ev.data + 'T12:00:00');
-                        const type = ev.tipo.toLowerCase();
-                        let typeColor = 'text-purple-400';
-                        if (type === 'feriado_nacional') typeColor = 'text-amber-500';
-                        else if (type === 'feriado_regional') typeColor = 'text-orange-500';
+                const dateObj = new Date(ev.data + 'T12:00:00');
+                const type = ev.tipo.toLowerCase();
+                let typeColor = 'text-purple-400';
+                if (type === 'feriado_nacional') typeColor = 'text-amber-500';
+                else if (type === 'feriado_regional') typeColor = 'text-orange-500';
+                else if (type === 'ferias') typeColor = 'text-sky-400';
 
-                        return `
+                return `
                             <div class="flex items-center gap-3 bg-white/5 p-3 rounded-xl border border-white/5">
                                 <span class="text-[10px] font-black text-slate-100 whitespace-nowrap">${dateObj.toLocaleDateString('pt-BR')}</span>
                                 <span class="h-3 w-px bg-white/10"></span>
                                 <span class="text-[9px] font-black uppercase tracking-tighter ${typeColor} shrink-0">${ev.tipo.replace('_', ' ')}</span>
                                 <span class="h-3 w-px bg-white/10"></span>
-                                <span class="text-[10px] text-slate-400 italic truncate font-medium">${ev.descricao || '---'}</span>
+                                <span class="text-[10px] text-slate-400 italic font-medium truncate">${ev.descricao || '---'}</span>
                             </div>
                         `;
-                    }).join('') : `
+            }).join('') : `
                         <p class="text-[9px] text-center text-slate-600 uppercase font-black tracking-widest py-4">Nenhum evento programado para este mês</p>
                     `}
                 </div>
             `;
         }
 
+        function setupGPSSignals() {
+            const container = document.getElementById('gps-status-container');
+            const led = document.getElementById('gps-led');
+            const text = document.getElementById('gps-text');
+
+            const updateUI = (status, msg) => {
+                led.className = `size-2 rounded-full animate-pulse transition-all duration-500 ${status}`;
+                text.innerText = msg;
+                if (status === 'gps-led-green') text.className = 'text-[8px] font-black uppercase tracking-widest text-emerald-500';
+                else if (status === 'gps-led-amber') text.className = 'text-[8px] font-black uppercase tracking-widest text-amber-500';
+                else text.className = 'text-[8px] font-black uppercase tracking-widest text-rose-500';
+            };
+
+            // Monitoramento contínuo para a UI
+            const checkSignal = async () => {
+                try {
+                    const pos = await GPSTracker.getCurrentPosition();
+                    const acc = pos.coords.accuracy;
+
+                    if (acc < 40) updateUI('gps-led-green', 'GPS: Sinal Forte');
+                    else if (acc < 100) updateUI('gps-led-amber', 'GPS: Sinal Instável');
+                    else updateUI('gps-led-rose', 'GPS: Sinal Fraco');
+                } catch (e) {
+                    updateUI('gps-led-rose', 'GPS: Desativado/Sem Sinal');
+                }
+            };
+
+            checkSignal();
+            setInterval(checkSignal, 30000); // Atualiza a cada 30 segundos na UI
+        }
+
         init();
     </script>
     <!-- Sidebar Menu Overlay -->
-    <aside id="sidebarMenu" class="fixed top-0 left-0 h-full w-80 bg-background-dark border-r border-primary/20 z-[160] -translate-x-full transition-all duration-500 ease-out shadow-[20px_0_50px_rgba(0,0,0,0.5)]">
+    <aside id="sidebarMenu"
+        class="fixed top-0 left-0 h-full w-80 bg-background-dark border-r border-primary/20 z-[160] -translate-x-full transition-all duration-500 ease-out shadow-[20px_0_50px_rgba(0,0,0,0.5)]">
         <div class="flex flex-col h-full">
             <div class="p-8 border-b border-primary/10">
                 <h3 class="text-primary font-black italic text-2xl tracking-tighter">CHRONOSYNC</h3>
@@ -1252,14 +1282,37 @@
                 <!-- Injetado via UI.initSidebar() -->
             </nav>
             <div class="p-4 border-t border-primary/10 bg-black/20">
-                <button id="logoutBtn" class="w-full flex items-center gap-3 px-4 py-3 text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all font-bold text-xs uppercase">
+                <button id="logoutBtn"
+                    class="w-full flex items-center gap-3 px-4 py-3 text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all font-bold text-xs uppercase">
                     <span class="material-symbols-outlined">logout</span> Sair do Sistema
                 </button>
             </div>
         </div>
     </aside>
-    <div id="sidebarOverlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[150] hidden opacity-0 transition-all duration-300"></div>
+    <div id="sidebarOverlay"
+        class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[150] hidden opacity-0 transition-all duration-300"></div>
 
-    <script type="module" src="../js/manager-context.js?v=3.0"></script>
+    <!-- BI-DIRECIONALIDADE: Sincronização de Badges e Governança Informativa -->
+    <script type="module">
+        import { Notifications } from '../js/notifications.js';
+        
+        const urlParams = new URLSearchParams(window.location.search);
+        const targetId = urlParams.get('id') || localStorage.getItem('userId');
+        
+        // Garante que o motor de notificações seja acionado assim que o Dashboard carregar
+        try {
+            // Inicializar Realtime e Sincronizar Badges
+            Notifications.init(targetId);
+            
+            // Ciclo de Refresh de Segurança (Incluso no init, mas reforçado aqui para persistência de UI)
+            console.log('[Dashboard] Motor de notificações acoplado com sucesso.');
+        } catch (e) {
+            console.error('[Dashboard] Alerta: Falha na sincronização de notificações:', e);
+        }
+
+        // Carregamento de contextos gerenciais/operativos
+        import '../js/manager-context.js?v=3.0';
+    </script>
 </body>
+
 </html>

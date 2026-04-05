@@ -235,7 +235,7 @@
                         href = 'perfil_funcionario.html';
                     } else if (link.innerText.toLowerCase().includes('estatística')) {
                         href = 'estatistica_funcionario.html';
-                    } else if (link.innerText.toLowerCase().includes('histórico')) {
+                    } else if (link.innerText.toLowerCase().includes('histórico') || link.innerText.toLowerCase().includes('diário')) {
                         href = 'diario_funcionario.html';
                     }
                 }

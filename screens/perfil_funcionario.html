@@ -1080,7 +1080,7 @@
                         *,
                         funcionarios!inner (
                             *,
-                            setores!setor_id (nome, raio),
+                            setores!funcionarios_setor_id_fkey (nome, raio),
                             cargos!cargo_id (nome, nivel)
                         )
                     `)

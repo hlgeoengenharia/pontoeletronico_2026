@@ -85,7 +85,7 @@
             UI.updateFooterNavigation(userObj.role);
 
             try {
-                const { data: user } = await supabase.from('funcionarios').select('*, setores!setor_id(nome)').eq('id', targetUserId).single();
+                const { data: user } = await supabase.from('funcionarios').select('*, setores!funcionarios_setor_id_fkey(nome)').eq('id', targetUserId).single();
                 if (user) {
                     document.getElementById('user-nome').innerText = user.nome_completo.toUpperCase();
                     document.getElementById('user-cargo').innerText = `CARGO/FUNÇÃO: ${(user.funcao || 'TRIPULANTE').toUpperCase()}`;

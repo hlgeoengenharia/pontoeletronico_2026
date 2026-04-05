@@ -109,7 +109,7 @@
             try {
                 let query = supabase
                     .from('pontos')
-                    .select('*, funcionarios!inner(*, setores(nome))')
+                    .select('*, funcionarios!inner(*, setores!funcionarios_setor_id_fkey(nome))')
                     .eq('status_validacao', 'pendente')
                     .order('data_hora', { ascending: false });
 

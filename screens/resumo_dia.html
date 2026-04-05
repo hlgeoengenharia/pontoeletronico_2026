@@ -256,7 +256,7 @@
             try {
                 const { data: perfil, error: errPerfil } = await supabase
                     .from('perfis_tripulantes')
-                    .select('*, funcionarios!inner(*, escalas(*), setores!setor_id(nome))')
+                    .select('*, funcionarios!inner(*, escalas(*), setores!funcionarios_setor_id_fkey(nome))')
                     .eq('funcionario_id', targetId)
                     .single();
                 

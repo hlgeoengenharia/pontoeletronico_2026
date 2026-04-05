@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reset de Sistema | ChronoSync</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <style>
+        body { font-family: 'Outfit', sans-serif; background: #020617; color: #f8fafc; }
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .btn-danger { background: linear-gradient(135deg, #ef4444 0%, #991b1b 100%); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .btn-danger:hover { transform: scale(1.02); box-shadow: 0 0 40px rgba(239, 68, 68, 0.2); }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-6 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-red-900/20 via-slate-950 to-slate-950">
+
+    <div class="max-w-2xl w-full space-y-8 animate-in fade-in zoom-in duration-700">
+        <div class="text-center space-y-4">
+            <div class="inline-flex items-center justify-center size-20 rounded-3xl bg-red-500/10 text-red-500 mb-4 border border-red-500/20 shadow-2xl">
+                <span class="material-symbols-outlined text-5xl">database_off</span>
+            </div>
+            <h1 class="text-4xl font-black italic tracking-tighter uppercase text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-500">Purga Atômica de Dados</h1>
+            <p class="text-slate-500 font-medium max-w-sm mx-auto leading-relaxed">Você está prestes a apagar todos os registros transacionais do sistema. Esta ação é irreversível e resetará todos os testes.</p>
+        </div>
+
+        <div class="glass rounded-[3rem] p-10 space-y-8 relative overflow-hidden group">
+            <div class="absolute inset-0 bg-gradient-to-br from-red-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 relative">
+                <div class="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5">
+                    <span class="material-symbols-outlined text-red-400">schedule</span>
+                    <div class="text-[10px] uppercase font-black tracking-widest text-slate-400">Pontos <span class="block text-white text-xs">Exclusão Total</span></div>
+                </div>
+                <div class="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5">
+                    <span class="material-symbols-outlined text-orange-400">notifications</span>
+                    <div class="text-[10px] uppercase font-black tracking-widest text-slate-400">Sino/Logs <span class="block text-white text-xs">Zerar Notificações</span></div>
+                </div>
+                <div class="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5">
+                    <span class="material-symbols-outlined text-blue-400">card_travel</span>
+                    <div class="text-[10px] uppercase font-black tracking-widest text-slate-400">Férias <span class="block text-white text-xs">Reset de Calendário</span></div>
+                </div>
+                <div class="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5">
+                    <span class="material-symbols-outlined text-emerald-400">forum</span>
+                    <div class="text-[10px] uppercase font-black tracking-widest text-slate-400">Comunicados <span class="block text-white text-xs">Pastas Limpas</span></div>
+                </div>
+                <div class="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5">
+                    <span class="material-symbols-outlined text-purple-400">edit_note</span>
+                    <div class="text-[10px] uppercase font-black tracking-widest text-slate-400">Atividades <span class="block text-white text-xs">Histórico Zerado</span></div>
+                </div>
+            </div>
+
+            <div class="space-y-4 pt-4">
+                <button id="btn-purge" class="w-full py-6 rounded-3xl btn-danger text-white font-black uppercase tracking-[0.3em] flex items-center justify-center gap-4 shadow-2xl relative overflow-hidden">
+                    <span id="label-btn">Confirmar Purga de Dados</span>
+                    <div id="loader" class="size-5 border-2 border-white/20 border-t-white rounded-full animate-spin hidden"></div>
+                </button>
+                <div class="flex justify-center">
+                    <a href="dashboard.html" class="text-[10px] uppercase font-black tracking-[0.2em] text-slate-500 hover:text-white transition-colors">Voltar para o Dashboard</a>
+                </div>
+            </div>
+        </div>
+
+        <div id="console-output" class="bg-black/50 border border-white/5 rounded-2xl p-6 font-mono text-[10px] text-emerald-500/80 max-h-48 overflow-y-auto hidden">
+            <div class="flex items-center gap-2 mb-2 text-emerald-500 font-bold">
+                <span class="size-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                TERMINAL DE LIMPEZA ATIVO
+            </div>
+            <div id="logs" class="space-y-1"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { supabase } from '../js/supabase-config.js';
+
+        const btn = document.getElementById('btn-purge');
+        const loader = document.getElementById('loader');
+        const output = document.getElementById('console-output');
+        const logs = document.getElementById('logs');
+        const label = document.getElementById('label-btn');
+
+        function addLog(msg, type = 'info') {
+            const div = document.createElement('div');
+            div.className = type === 'error' ? 'text-red-400' : (type === 'success' ? 'text-emerald-400' : 'text-slate-400');
+            div.innerText = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            logs.appendChild(div);
+            output.scrollTop = output.scrollHeight;
+        }
+
+        btn.onclick = async () => {
+            if (!confirm('VOCÊ TEM CERTEZA? Isso deletará todos os registros de ponto, atividades e justificativas enviados.')) return;
+
+            btn.disabled = true;
+            loader.classList.remove('hidden');
+            output.classList.remove('hidden');
+            label.innerText = 'LIMPANDO BANCO...';
+
+            const tables = ['pontos', 'diario_logs', 'justificativas', 'ferias', 'comunicados', 'feriados_folgas', 'anotacoes'];
+
+            for (const table of tables) {
+                addLog(`Limpando tabela: ${table.toUpperCase()}...`);
+                try {
+                    // Limpeza via delete com filtro que pega tudo (Supabase REST API requirement if no WHERE allows)
+                    const { error } = await supabase.from(table).delete().neq('id', '00000000-0000-0000-0000-000000000000');
+                    
+                    if (error) {
+                        addLog(`ERRO EM ${table}: ${error.message}`, 'error');
+                    } else {
+                        addLog(`CONCLUÍDO: ${table} está limpa.`, 'success');
+                    }
+                } catch (e) {
+                    addLog(`FALHA CRÍTICA EM ${table}: ${e.message}`, 'error');
+                }
+            }
+
+            // 2. Limpeza de LocalStorage (Cache do Diário e Badges)
+            addLog('Limpando Cache Local (Ciência de Diário)...');
+            const keysToRemove = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key.startsWith('ciente_') || key.startsWith('visto_feriado_') || key.startsWith('visto_')) {
+                    keysToRemove.push(key);
+                }
+            }
+            keysToRemove.forEach(k => localStorage.removeItem(k));
+            addLog(`REMOVIDO: ${keysToRemove.length} chaves de ciência local.`, 'success');
+
+            label.innerText = 'LIMPEZA CONCLUÍDA';
+            loader.classList.add('hidden');
+            addLog('PURGA FINALIZADA COM SUCESSO. O SISTEMA ESTÁ ZERADO.', 'success');
+        };
+    </script>
+</body>
+</html>

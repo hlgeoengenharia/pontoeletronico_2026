@@ -107,7 +107,7 @@
           // 1. Buscar Funcionários (com ou sem filtro de setor)
           let query = supabase
             .from('funcionarios')
-            .select('*, setores!setor_id(nome), cargos(nome, nivel), perfis_tripulantes(foto_url)')
+            .select('*, setores!funcionarios_setor_id_fkey(nome), cargos(nome, nivel), perfis_tripulantes(foto_url)')
             .order('nome_completo');
 
           if (setorId) {

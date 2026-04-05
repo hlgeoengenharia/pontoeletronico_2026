@@ -97,16 +97,25 @@
             .from('diario_logs')
             .select('*, funcionarios!inner(nome_completo, matricula, setor_id, funcao)')
             .eq('status_pendencia', 'pendente')
-            .neq('tipo', 'comunicado')
+            .not('tipo', 'in', '("comunicado","justificativa_resultado")')
             .neq('tipo', 'aviso_ferias');
 
           const role = (user.role || '').toLowerCase();
           const isGestorOnly = ['manager', 'gestor', 'comandante'].includes(role);
 
           if (isGestorOnly && user.setorId) {
-              queryJust = queryJust.eq('funcionarios.setor_id', user.setorId);
-              queryGps = queryGps.eq('funcionarios.setor_id', user.setorId);
-              queryLogs = queryLogs.eq('funcionarios.setor_id', user.setorId);
+              const { data: setorialEmployees } = await supabase.from('funcionarios').select('id').eq('setor_id', user.setorId);
+              const ids = (setorialEmployees || []).map(f => f.id);
+              if (ids.length > 0) {
+                  queryJust = queryJust.in('funcionario_id', ids);
+                  queryGps = queryGps.in('funcionario_id', ids);
+                  queryLogs = queryLogs.in('funcionario_id', ids);
+              } else {
+                  const z = '00000000-0000-0000-0000-000000000000';
+                  queryJust = queryJust.eq('funcionario_id', z);
+                  queryGps = queryGps.eq('funcionario_id', z);
+                  queryLogs = queryLogs.eq('funcionario_id', z);
+              }
           }
 
           const [{ data: dataJust, error: errJust }, { data: dataGps, error: errGps }, { data: dataLogs, error: errLogs }] = await Promise.all([
@@ -121,37 +130,44 @@
           const allPendencies = [
             ...(dataJust || []).map(j => ({ ...j, itemType: 'ABONO', file_url: j.evidencia_url })),
             ...((dataGps || []).map(g => {
-                // Extrair FOTO da justificativa se houver
-                let photoUrl = g.evidencia_url || g.arquivo_url;
-                let cleanDesc = g.justificativa_usuario || '';
+                let cleanDesc = g.justificativa_usuario || 'Divergência de localização registrada pelo sistema.';
                 
+                // Limpeza de resíduos de fotos em descrições antigas
                 if (cleanDesc.includes('[FOTO:')) {
-                    const match = cleanDesc.match(/\[FOTO:(.*?)\]/);
-                    if (match) {
-                        photoUrl = match[1];
-                        cleanDesc = cleanDesc.replace(match[0], '').trim();
-                    }
+                    cleanDesc = cleanDesc.replace(/\[FOTO:.*?\]/, '').trim();
                 }
 
                 return {
                     ...g, 
                     id: g.id, 
-                    itemType: 'GPS', 
+                    itemType: 'SISTEMA', 
                     data_incidente: g.data_hora, 
-                    tipo_divergencia: g.status === 'automatico_50' ? 'ESQUECIMENTO DE SAÍDA (PROPOSTA 50%)' : 'SOLICITAÇÃO DE PONTO FORA DO RAIO', 
-                    descricao: g.status === 'automatico_50' ? (cleanDesc || 'O sistema propôs 50% da jornada por falta de check-out.') : cleanDesc, 
-                    file_url: photoUrl || (g.geolocalizacao_json ? g.geolocalizacao_json.evidencia_url : null)
+                    tipo_divergencia: `SOLICITAÇÃO DE ${g.tipo.toUpperCase()} FORA DO RAIO`, 
+                    descricao: cleanDesc, 
+                    file_url: null // Fotos não são mais salvas conforme nova regra
                 };
             })),
-            ...(dataLogs || []).map(l => ({ 
-              ...l, 
-              itemType: 'SISTEMA', 
-              data_incidente: l.data_hora || l.created_at, 
-              tipo_divergencia: l.tipo === 'esquecimento_ponto' ? 'ALERTA DE ESQUECIMENTO' : (l.tipo_original || 'OCORRÊNCIA DE SISTEMA'), 
-              descricao: l.mensagem_padrao || l.conteudo || l.justificativa_colaborador,
-              file_url: l.evidencia_url || l.arquivo_url || l.foto_url
-            }))
-          ].sort((a, b) => new Date(b.data_incidente || b.created_at) - new Date(a.data_incidente || a.created_at));
+            ...(dataLogs || []).map(l => {
+                let tipoLabel = 'OCORRÊNCIA DE SISTEMA';
+                if (l.tipo === 'esquecimento_ponto') tipoLabel = 'ALERTA DE ESQUECIMENTO';
+                else if (l.tipo === 'saida_intermediaria') tipoLabel = 'SOLICITAÇÃO DE ABONO (SAÍDA ANTECIPADA)';
+                else if (l.tipo === 'gps_oculto') tipoLabel = 'DIVERGÊNCIA DE GPS (OCULTO)';
+                else if (l.tipo === 'geofence_in') tipoLabel = 'RETORNO AO PERÍMETRO';
+
+                return { 
+                  ...l, 
+                  itemType: 'SISTEMA', 
+                  data_incidente: l.data_hora || l.created_at, 
+                  tipo_divergencia: tipoLabel, 
+                  descricao: l.mensagem_padrao || l.conteudo || l.justificativa_colaborador,
+                  file_url: l.evidencia_url || l.arquivo_url || l.foto_url
+                };
+            })
+          ].filter(item => {
+              // Filtrar logs de pulso/hora ou resultados de análise que não requerem abono visual aqui
+              if (item.itemType === 'SISTEMA' && (item.tipo === 'gps_pulse' || item.tipo === 'gps_hora' || item.tipo === 'justificativa_resultado')) return false;
+              return true;
+          }).sort((a, b) => new Date(b.data_incidente || b.created_at) - new Date(a.data_incidente || a.created_at));
 
           if (allPendencies.length === 0) {
             container.innerHTML = `
@@ -202,7 +218,10 @@
                             <div class="flex items-center gap-2 mb-2">
                                 <p class="text-slate-200 text-xs leading-relaxed font-bold">${item.tipo_divergencia.toUpperCase()}</p>
                                 <span class="text-[9px] text-slate-500 font-bold">
-                                    ${new Date(item.data_incidente).toLocaleDateString('pt-BR')} | ${new Date(item.data_incidente).toLocaleTimeString('pt-BR')}
+                                    ${item.itemType === 'ABONO' 
+                                        ? `Ref: ${new Date(item.data_incidente + 'T12:00:00').toLocaleDateString('pt-BR')} | Enviado em: ${new Date(item.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`
+                                        : `${new Date(item.data_incidente).toLocaleDateString('pt-BR')} | ${new Date(item.data_incidente).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`
+                                    }
                                 </span>
                             </div>
                             <p class="text-slate-400 text-[10px] mt-2 italic leading-relaxed">${item.descricao || (isGps || item.itemType === 'SISTEMA' ? 'Localização registrada automaticamente pelo sistema para validar sua presença em serviço durante a jornada.' : 'Sem descrição detalhada.')}</p>
@@ -231,18 +250,14 @@
                         </div>
 
                         <div class="grid grid-cols-2 gap-3 mt-2">
-                            <button onclick="processarPendencia('${item.id}', 'rejeitado', '${item.itemType}')"
-                                class="flex items-center justify-center gap-2 h-[44px] rounded-xl bg-neon-red/10 hover:bg-neon-red/20 text-neon-red text-[11px] font-black tracking-widest transition-all border border-neon-red/20 uppercase">
-                                <span class="material-symbols-outlined text-lg">block</span> REJEITAR
-                            </button>
-                            <button onclick="processarPendencia('${item.id}', 'aprovado', '${item.itemType}')"
-                                class="flex items-center justify-center gap-2 h-[44px] rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-[11px] font-black tracking-widest transition-all shadow-lg uppercase">
-                                <span class="material-symbols-outlined text-lg">verified</span> ABONAR
-                            </button>
+                            <button onclick="processarPendencia('${item.id}', 'rejeitado', '${item.itemType}')" class="flex items-center justify-center gap-2 h-[44px] rounded-xl bg-neon-red/10 hover:bg-neon-red/20 text-neon-red text-[11px] font-black tracking-widest transition-all border border-neon-red/20 uppercase"><span class="material-symbols-outlined text-lg">block</span> REJEITAR</button>
+                            <button onclick="processarPendencia('${item.id}', 'aprovado', '${item.itemType}')" class="flex items-center justify-center gap-2 h-[44px] rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-[11px] font-black tracking-widest transition-all shadow-lg uppercase"><span class="material-symbols-outlined text-lg">verified</span> ABONAR</button>
                         </div>
                     </div>
                 `;
           }).join('');
+
+          if (typeof carregarResumoAlertas === 'function') await carregarResumoAlertas();
 
         } catch (err) {
           console.error('Erro ao carregar pendências:', err);
@@ -250,30 +265,91 @@
         }
       }
 
-      window.processarPendencia = async (id, status, type) => {
+      function showAnalysisModal(config) {
+          return new Promise((resolve) => {
+              const modal = document.getElementById('modal-analise');
+              const textarea = document.getElementById('obs-analise');
+              const btnConfirm = document.getElementById('btn-confirmar-analise');
+              const btnCancel = document.getElementById('btn-cancelar-analise');
+              const title = document.getElementById('modal-title');
+              
+              title.innerText = config.title.toUpperCase();
+              textarea.value = config.defaultValue || '';
+              
+              modal.classList.remove('hidden');
+              modal.classList.add('flex');
+              
+              const finish = (result) => {
+                  modal.classList.add('hidden');
+                  modal.classList.remove('flex');
+                  resolve(result);
+              };
+              
+              btnConfirm.onclick = () => {
+                  const val = textarea.value.trim();
+                  if (!val) {
+                      UI.showToast('Por favor, insira uma justificativa.', 'error');
+                      return;
+                  }
+                  finish(val);
+              };
+              btnCancel.onclick = () => finish(null);
+          });
+      }
+
+      window.processarPendencia = async (id, action, type) => {
+        const status = action === 'aprovado' ? 'abonado' : 'rejeitado';
+        const modalLabel = action === 'aprovado' ? 'Confirmar Abono' : 'MOTIVO DA RECUSA';
+        
         UI.showLoader();
         try {
+          // Buscar dados do incidente para a mensagem padrão (Query Flexível e Segura)
+          const table = type === 'ABONO' ? 'justificativas' : (type === 'GPS' ? 'pontos' : 'diario_logs');
+          // Selecionamos '*' para evitar erros de coluna inexistente dependendo da tabela (como data_hora)
+          const { data: item } = await supabase.from(table).select('*').eq('id', id).single();
+          UI.hideLoader();
+          
+          const rawDate = item?.data_incidente || item?.data_hora || item?.created_at;
+          const dataRef = rawDate ? new Date(rawDate).toLocaleDateString('pt-BR') : '---';
+          const msgPadrao = `Sua justificativa de ${dataRef} foi ${action === 'aprovado' ? 'ABONADA' : 'REJEITADA'}.`;
+          
+          const obs = await showAnalysisModal({ title: modalLabel, defaultValue: msgPadrao });
+          if (!obs) return;
+
+          if (action !== 'aprovado' && !confirm('Deseja realmente rejeitar esta solicitação?')) return;
+
+          UI.showLoader();
           let error;
-          if (type === 'SISTEMA') {
-            const result = await supabase.from('diario_logs').update({ status_pendencia: status }).eq('id', id);
-            error = result.error;
-          } else if (type === 'ABONO') {
-            const result = await supabase.from('justificativas').update({ status: status }).eq('id', id);
-            error = result.error;
-          } else if (type === 'GPS') {
-            // Se for rejeição de 50% por esquecimento, invalida o ponto
-            const result = await supabase.from('pontos').update({ 
-                status_validacao: status
+          if (type === 'ABONO') {
+            // 1. Atualizar a Justificativa Original com a análise do gestor (Persistência Nativa)
+            const { error: errJ } = await supabase.from('justificativas').update({ 
+                status: status,
+                observacao_admin: obs // Agora o campo existe no Supabase!
             }).eq('id', id);
+            
+            if (item?.funcionario_id) {
+               // 2. Criar Log de Alerta para o Diário (Gatilho de Badge)
+               await supabase.from('diario_logs').insert([{
+                   funcionario_id: item.funcionario_id,
+                   data_hora: new Date().toISOString(),
+                   tipo: 'justificativa_resultado',
+                   status_pendencia: 'pendente',
+                   mensagem_padrao: `[ANÁLISE] ${obs}`
+               }]);
+               
+               // 3. Limpar notificações antigas de solicitação
+               await supabase.from('diario_logs').update({ status_pendencia: 'visto' }).eq('funcionario_id', item.funcionario_id).eq('tipo', 'justificativa').eq('status_pendencia', 'pendente');
+            }
+            error = errJ;
+          } else if (type === 'SISTEMA') {
+            const result = await supabase.from('diario_logs').update({ status_pendencia: status }).eq('id', id);
             error = result.error;
           } else {
             const result = await supabase.from('pontos').update({ status_validacao: status }).eq('id', id);
             error = result.error;
           }
-
           if (error) throw error;
-
-          UI.showToast(status === 'aprovado' ? 'Operação concluída!' : 'Solicitação rejeitada!', 'success');
+          UI.showToast(status === 'abonado' ? 'Solicitação Abonada!' : 'Solicitação Rejeitada!', 'success');
           loadJustificativas();
         } catch (err) {
           console.error('Erro ao processar:', err);
@@ -282,58 +358,45 @@
           UI.hideLoader();
         }
       };
-      
+
       window.toggleMap = (id, coords, btn) => {
           const container = document.getElementById(`map-container-${id}`);
           const iframe = document.getElementById(`iframe-map-${id}`);
           const label = btn.querySelector('.label-map');
           const isHidden = container.classList.contains('hidden');
-
           if (isHidden) {
-              // Expandir
               container.classList.remove('hidden');
               container.classList.add('block');
               label.innerText = 'Recolher Mapa';
               btn.classList.add('bg-rose-500', 'text-white', 'border-rose-500');
-              btn.classList.remove('bg-rose-500/10', 'text-rose-500', 'border-rose-500/20');
-              
               const mapUrl = `https://maps.google.com/maps?q=${coords}&z=16&output=embed`;
-              if (iframe.src !== mapUrl) {
-                  iframe.src = mapUrl;
-              }
+              if (iframe.src !== mapUrl) iframe.src = mapUrl;
           } else {
-              // Recolher
               container.classList.add('hidden');
               container.classList.remove('block');
-              label.innerText = 'Ver Localização no Mapa';
+              label.innerText = 'Ver Localização';
               btn.classList.remove('bg-rose-500', 'text-white', 'border-rose-500');
-              btn.classList.add('bg-rose-500/10', 'text-rose-500', 'border-rose-500/20');
           }
       };
 
       loadJustificativas();
     </script>
     <!-- Bottom Navigation -->
-    <!-- Bottom Navigation -->
-    <nav
-      class="fixed bottom-0 left-0 right-0 bg-background-dark/90 border-t border-white/5 py-4 z-50 flex justify-center backdrop-blur-xl">
+    <nav class="fixed bottom-0 left-0 right-0 bg-background-dark/90 border-t border-white/5 py-4 z-50 flex justify-center backdrop-blur-xl">
       <div class="flex items-center justify-around w-full max-w-md px-6">
-        <a id="nav-inicio" href="dashboard.html"
-          class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+        <a id="nav-inicio" href="dashboard.html" class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
           <span class="material-symbols-outlined text-2xl">home</span>
           <span class="text-[9px] font-black uppercase tracking-widest text-center">Início</span>
         </a>
-        <a href="estatistica_funcionario.html"
-          class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+        <a href="estatistica_funcionario.html" class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
           <span class="material-symbols-outlined text-2xl">bar_chart</span>
           <span class="text-[9px] font-black uppercase tracking-widest text-center">Estatística</span>
         </a>
-            <a href="diario_funcionario.html" class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
-                <span class="material-symbols-outlined text-2xl">edit_note</span>
-                <span class="text-[9px] font-black uppercase tracking-widest">Diário</span>
-            </a>
-        <a id="nav-perfil-link" href="perfil_funcionario.html"
-          class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+        <a href="diario_funcionario.html" class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+            <span class="material-symbols-outlined text-2xl">edit_note</span>
+            <span class="text-[9px] font-black uppercase tracking-widest">Diário</span>
+        </a>
+        <a id="nav-perfil-link" href="perfil_funcionario.html" class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
           <span class="material-symbols-outlined text-2xl font-variation-settings-fill">person</span>
           <span class="text-[9px] font-black uppercase tracking-widest text-center">Perfil</span>
         </a>
@@ -348,6 +411,31 @@
       });
     </script>
     <script type="module" src="../js/manager-context.js?v=2.7"></script>
-</body>
 
+    <!-- Modais do Sistema -->
+    <div id="modal-resumo" class="fixed inset-0 bg-black/60 backdrop-blur-md hidden items-center justify-center p-6 z-[2000]">
+      <div id="modal-content" class="bg-slate-900 border border-primary/30 rounded-3xl w-full max-w-sm p-6 shadow-2xl"></div>
+    </div>
+
+    <!-- Modal de Análise Premium -->
+    <div id="modal-analise" class="fixed inset-0 bg-black/80 backdrop-blur-xl hidden items-center justify-center p-6 z-[3000] animate-in fade-in duration-300">
+        <div class="w-full max-w-sm bg-[#0f172a] border border-white/10 rounded-[2rem] p-8 shadow-[0_0_50px_rgba(13,89,242,0.15)] relative overflow-hidden group">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary via-neon-blue to-primary"></div>
+            <div class="flex flex-col items-center gap-4 mb-8">
+                <div class="size-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary group-hover:scale-110 transition-transform"><span class="material-symbols-outlined text-4xl">inventory_2</span></div>
+                <h3 id="modal-title" class="text-[10px] font-black tracking-[0.3em] uppercase text-slate-100 text-center uppercase tracking-widest">ANALISAR PENDÊNCIA</h3>
+            </div>
+            <div class="space-y-6">
+                <div class="space-y-2">
+                    <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest px-2">Resposta ao Funcionário</label>
+                    <textarea id="obs-analise" class="w-full bg-black/40 border border-white/5 rounded-2xl p-4 text-xs text-slate-200 outline-none focus:ring-1 focus:ring-primary/50 transition-all min-h-[140px] resize-none" placeholder="Insira o motivo da análise..."></textarea>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <button id="btn-cancelar-analise" class="h-14 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 text-slate-400 text-[10px] font-black uppercase tracking-widest transition-all">Cancelar</button>
+                    <button id="btn-confirmar-analise" class="h-14 rounded-2xl bg-primary text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 transition-all hover:brightness-110">Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
 </html>

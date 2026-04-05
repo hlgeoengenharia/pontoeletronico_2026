@@ -76,9 +76,12 @@ class GPSTracker {
                          lat, lng, 
                          user.setores.latitude, user.setores.longitude
                      );
-                     // Usa o raio do setor, ou 100m como fallback
-                     const raio = user.setores.raio || 100;
-                     const isInside = distance <= raio;
+                     // Usa o raio do setor, ou a constante global como fallback
+                     const raio = user.setores.raio || ScalesEngine.GEOFENCE_DEFAULT_RADIUS;
+                     const accuracy = position.coords.accuracy || 0;
+                     
+                     // Lógica de "Falsa Divergência": Se a imprecisão for maior que o raio, ignoramos a saída
+                     const isInside = (distance <= raio) || (accuracy > raio * 1.5);
                      const currentStatus = isInside ? 'inside' : 'outside';
 
                      if (this.lastGeofenceStatus !== null && this.lastGeofenceStatus !== currentStatus) {

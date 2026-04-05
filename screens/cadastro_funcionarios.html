@@ -197,7 +197,7 @@
 
     async function carregarLista() {
         try {
-            const { data, error } = await supabase.from('funcionarios').select('*, setores(nome)').order('nome_completo');
+            const { data, error } = await supabase.from('funcionarios').select('*, setores!funcionarios_setor_id_fkey(nome)').order('nome_completo');
             if (error) throw error;
             funcsCache = data;
             document.getElementById('total-funcs').innerText = data.length;

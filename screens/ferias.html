@@ -326,7 +326,7 @@
           <header class="p-8 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
               <div class="flex items-center gap-6">
                   <div class="size-20 rounded-full border-2 border-blue-500/30 p-1 bg-slate-800 overflow-hidden shadow-2xl">
-                    <img id="ferias-foto" src="" class="w-full h-full object-cover rounded-full">
+                    <img id="ferias-foto" src="" class="w-full h-full object-cover rounded-full" onerror="this.src='https://ui-avatars.com/api/?name='+document.getElementById('ferias-nome').innerText+'&background=101622&color=60A5FA'">
                   </div>
                   <div>
                       <h2 class="text-2xl font-black italic tracking-tighter text-white uppercase">Meus Períodos de Férias</h2>
@@ -428,7 +428,7 @@
                               <span class="material-symbols-outlined text-sm text-blue-500">photo_library</span>
                               Resumo Visual (Foto Cards)
                           </h3>
-                          <span id="parcela-count" class="text-[8px] text-slate-600 font-black uppercase tracking-widest">0/3 Parcelas</span>
+                          <span id="parcela-count" class="text-[10px] text-slate-500 font-black uppercase tracking-widest">0/3 Parcelas</span>
                       </div>
 
                       <div id="photo-cards-container" class="space-y-4 max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
@@ -515,11 +515,18 @@
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
   <script type="module">
     import { supabase } from '../js/supabase-config.js';
     import { Auth } from '../js/auth.js';
     import { UI } from '../js/ui-utils.js';
+    import { FeriasEngine } from '../js/modules/ferias/ferias.engine.js';
+
+    // --- ESTADO ---
+    let sectors = [];
+    let employees = [];
+    let currentFilter = 'all';
+    let expandedSectorsFerias = new Set();
+    let activeSectorId = null;
 
     // --- CONFIGURAÇÃO DO MAPA ---
     const map = L.map('map', { zoomControl: false, attributionControl: false }).setView([-23.5505, -46.6333], 15);
@@ -527,26 +534,7 @@
       subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
       maxZoom: 20
     }).addTo(map);
-
     const sectorsGroup = L.featureGroup().addTo(map);
-
-    // --- ESTADO ---
-    let sectors = [];
-    let employees = [];
-    let feriasData = [];
-    let currentFilter = 'all';
-    let expandedSectorsFerias = new Set();
-
-    // Estado do Modal de Planejamento (Sincronizado com Diário)
-    let holidays = [];
-    let currentParcelas = [];
-    let currentMonth = new Date().getMonth();
-    let currentYear = new Date().getFullYear();
-    let selection = { start: null, end: null };
-    let sectorRule = 1;
-    let targetEmployee = null;
-
-    const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 
     async function init() {
         UI.showLoader();
@@ -554,17 +542,6 @@
         renderSidebar();
         renderMapLayers();
         UI.hideLoader();
-
-        // Controladores de UI
-        const btnToggleMenu = document.getElementById('btn-toggle-menu');
-        const menuLateral = document.getElementById('menu-lateral');
-        btnToggleMenu.onclick = () => {
-            const isCollapsed = menuLateral.classList.toggle('collapsed');
-            btnToggleMenu.classList.toggle('active', !isCollapsed);
-            btnToggleMenu.querySelector('span').innerText = isCollapsed ? 'menu' : 'close';
-        };
-
-        document.getElementById('search-ferias').oninput = (e) => filterSidebar(e.target.value);
     }
 
     async function fetchData() {
@@ -583,17 +560,14 @@
             }
 
             const [sRes, fRes, ferRes, cRes, eRes, pRes] = await Promise.all([
-                queryS,
-                queryF,
-                supabase.from('ferias').select('*'),
+                queryS, queryF, supabase.from('ferias').select('*'),
                 supabase.from('cargos').select('id, nome'),
                 supabase.from('especialidades').select('id, nome'),
                 supabase.from('perfis_tripulantes').select('funcionario_id, foto_url')
             ]);
 
             sectors = sRes.data || [];
-            feriasData = ferRes.data || [];
-            
+            const feriasData = ferRes.data || [];
             const cargosMap = {}; (cRes.data || []).forEach(c => cargosMap[c.id] = c.nome);
             const espMap = {}; (eRes.data || []).forEach(e => espMap[e.id] = e.nome);
             const fotosMap = {}; (pRes.data || []).forEach(p => fotosMap[p.funcionario_id] = p.foto_url);
@@ -611,31 +585,20 @@
                 else if (hasPendente) vacationStatus = 'pendente';
                 else if (hasAprovadoFuturo) vacationStatus = 'aprovado';
 
-                return {
-                    ...f,
-                    foto_url: fotosMap[f.id] || null,
-                    cargo_nome: cargosMap[f.cargo_id] || 'Tripulante',
-                    especialidade_nome: espMap[f.especialidade_id] || 'N/A',
-                    vacationStatus
-                };
+                return { ...f, foto_url: fotosMap[f.id] || null, cargo_nome: cargosMap[f.cargo_id] || 'Tripulante', vacationStatus };
             });
 
             updateFilterIndicators();
-        } catch (err) { console.error('Erro fetchData:', err); }
-        updateSidebarHeader();
+            updateSidebarHeader();
+        } catch (err) { console.error('Error fetchData:', err); }
     }
 
     function updateSidebarHeader() {
         const display = document.getElementById('regra-salva-display');
         if (!display) return;
-        
-        // Ler a regra geral do localStorage (prioridade) ou usar a do primeiro setor como fallback
         const globalRule = localStorage.getItem('ferias_global_rule') || (sectors.length > 0 ? sectors[0].regra_ferias : 1);
         const ruleVal = parseInt(globalRule) || 1;
-        
         display.innerText = `REGRA GERAL: ${ruleVal} PARCELA${ruleVal > 1 ? 'S' : ''}`;
-        display.classList.remove('text-amber-500');
-        display.classList.add('text-blue-400');
     }
 
     function updateFilterIndicators() {
@@ -645,23 +608,16 @@
             aprovado: employees.filter(e => e.vacationStatus === 'aprovado').length,
             pendente: employees.filter(e => e.vacationStatus === 'pendente').length
         };
-
-        // Atualizar textos e contadores
-        const btnAll = document.getElementById('filter-all');
-        const btnRepouso = document.getElementById('filter-repouso');
-        const btnAprovado = document.getElementById('filter-aprovado');
-        const btnPendente = document.getElementById('filter-pendente');
-
-        if (btnAll) btnAll.querySelector('.count').innerText = `(${counts.all})`;
-        if (btnRepouso) {
-            btnRepouso.querySelector('.count').innerText = `(${counts.repouso})`;
-            btnRepouso.classList.toggle('btn-pulse-rose', counts.repouso > 0);
-        }
-        if (btnAprovado) btnAprovado.querySelector('.count').innerText = `(${counts.aprovado})`;
-        if (btnPendente) {
-            btnPendente.querySelector('.count').innerText = `(${counts.pendente})`;
-            btnPendente.classList.toggle('btn-pulse-amber', counts.pendente > 0);
-        }
+        const updateBtn = (id, count) => {
+            const btn = document.getElementById(id);
+            if (btn) btn.querySelector('.count').innerText = `(${count})`;
+        };
+        updateBtn('filter-all', counts.all);
+        updateBtn('filter-repouso', counts.repouso);
+        updateBtn('filter-aprovado', counts.aprovado);
+        updateBtn('filter-pendente', counts.pendente);
+        document.getElementById('filter-repouso')?.classList.toggle('btn-pulse-rose', counts.repouso > 0);
+        document.getElementById('filter-pendente')?.classList.toggle('btn-pulse-amber', counts.pendente > 0);
     }
 
     function renderMapLayers() {
@@ -670,54 +626,18 @@
             if (s.latitude && s.longitude) {
                 const sectorEmployees = employees.filter(e => e.setor_id === s.id);
                 const onVacation = sectorEmployees.filter(e => e.vacationStatus === 'repouso').length;
-
                 L.circle([s.latitude, s.longitude], { color: '#3b82f6', fillOpacity: 0.1, radius: s.raio || 100 }).addTo(sectorsGroup);
-
                 const icon = L.divIcon({
                     className: 'custom-div-icon',
-                    html: `<div class="pin-container">
-                             <div class="pin-badge">${onVacation}</div>
-                             <div class="pin-drop"><div class="pin-content"><span class="material-symbols-outlined text-blue-500 text-2xl">domain</span></div></div>
-                           </div>`,
+                    html: `<div class="pin-container"><div class="pin-badge">${onVacation}</div><div class="pin-drop"><div class="pin-content"><span class="material-symbols-outlined text-blue-500 text-2xl">domain</span></div></div></div>`,
                     iconSize: [50, 60], iconAnchor: [25, 60]
                 });
-
                 const marker = L.marker([s.latitude, s.longitude], { icon }).addTo(sectorsGroup);
-                marker.bindPopup(`
-                    <div class="p-2 space-y-4">
-                        <div class="flex items-center gap-3 border-b border-white/10 pb-3">
-                            <span class="material-symbols-outlined text-blue-500 text-2xl">domain</span>
-                            <div>
-                                <h3 class="text-xs font-black uppercase tracking-widest text-white leading-none">${s.nome}</h3>
-                                <p class="text-[8px] text-slate-500 font-bold uppercase mt-1 tracking-tight">Gestor: ${s.gestor?.nome_completo || 'N/A'}</p>
-                            </div>
-                        </div>
-                        
-                        <div class="grid grid-cols-2 gap-3 bg-white/5 p-3 rounded-2xl">
-                            <div class="text-center">
-                                <p class="text-[7px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">Equipe</p>
-                                <p class="text-[10px] font-black text-white">${sectorEmployees.length}</p>
-                            </div>
-                            <div class="text-center border-l border-white/10">
-                                <p class="text-[7px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">Em Férias</p>
-                                <p class="text-[10px] font-black text-blue-400">${onVacation}</p>
-                            </div>
-                        </div>
-
-                        <div class="flex flex-col gap-2">
-                            <div class="flex justify-between items-center px-1">
-                                <span class="text-[8px] font-bold text-slate-500 uppercase">Regra Ativa</span>
-                                <span class="text-[9px] font-black text-blue-400 uppercase">${s.regra_ferias || 1} PARCELA${(s.regra_ferias || 1) > 1 ? 'S' : ''}</span>
-                            </div>
-
-                            <button onclick="window.abrirModalRegrasGerais('${s.id}')" 
-                                class="w-full py-3 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 border border-blue-500/20 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2">
-                                <span class="material-symbols-outlined text-sm">settings</span>
-                                <span>Gestão do Setor</span>
-                            </button>
-                        </div>
-                    </div>
-                `);
+                marker.bindPopup(`<div class="p-2 space-y-4">
+                    <div class="flex items-center gap-3 border-b border-white/10 pb-3"><span class="material-symbols-outlined text-blue-500 text-2xl">domain</span><div><h3 class="text-xs font-black uppercase tracking-widest text-white leading-none">${s.nome}</h3></div></div>
+                    <div class="grid grid-cols-2 gap-3 bg-white/5 p-3 rounded-2xl"><div class="text-center"><p class="text-[7px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">Equipe</p><p class="text-[10px] font-black text-white">${sectorEmployees.length}</p></div><div class="text-center border-l border-white/10"><p class="text-[7px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">Em Férias</p><p class="text-[10px] font-black text-blue-400">${onVacation}</p></div></div>
+                    <div class="flex flex-col gap-2"><button onclick="window.abrirModalRegrasGerais('${s.id}')" class="w-full py-3 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 border border-blue-500/20 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"><span class="material-symbols-outlined text-sm">settings</span><span>Gestão do Setor</span></button></div>
+                </div>`);
             }
         });
         if (sectors.length > 0) map.fitBounds(sectorsGroup.getBounds(), { padding: [50, 50] });
@@ -725,9 +645,7 @@
 
     window.filterFeriasStatus = (status) => {
         currentFilter = status;
-        document.querySelectorAll('.status-filter').forEach(btn => {
-            btn.classList.remove('active');
-        });
+        document.querySelectorAll('.status-filter').forEach(btn => btn.classList.remove('active'));
         const activeBtn = event.currentTarget || document.getElementById(`filter-${status}`);
         if (activeBtn) activeBtn.classList.add('active');
         renderSidebar();
@@ -739,51 +657,26 @@
             let sectorEmployees = employees.filter(e => e.setor_id === s.id);
             if (currentFilter !== 'all') sectorEmployees = sectorEmployees.filter(e => e.vacationStatus === currentFilter);
             if (sectorEmployees.length === 0 && currentFilter !== 'all') return '';
-
             const isExpanded = expandedSectorsFerias.has(s.id);
-
-            return `
-            <div class="setor-group ${isExpanded ? 'active' : ''}">
+            return `<div class="setor-group ${isExpanded ? 'active' : ''}">
                 <div onclick="window.toggleSetorFerias('${s.id}')" class="flex items-center justify-between px-3 py-3 bg-white/5 border border-white/5 rounded-2xl cursor-pointer hover:bg-blue-500/5 transition-all group">
-                    <div class="flex items-center gap-3">
-                        <div class="size-8 bg-blue-500/10 rounded-lg flex items-center justify-center text-blue-500 transition-all group-hover:bg-blue-500/20">
-                            <span class="material-symbols-outlined text-lg">domain</span>
-                        </div>
-                        <div>
-                            <h4 class="text-[10px] font-black text-slate-100 uppercase tracking-widest leading-none">${s.nome}</h4>
-                            <p class="text-[8px] text-slate-500 font-bold uppercase mt-1">${sectorEmployees.length} TRIPULANTES</p>
-                        </div>
-                    </div>
+                    <div class="flex items-center gap-3"><div class="size-8 bg-blue-500/10 rounded-lg flex items-center justify-center text-blue-500 transition-all group-hover:bg-blue-500/20"><span class="material-symbols-outlined text-lg">domain</span></div><div><h4 class="text-[10px] font-black text-slate-100 uppercase tracking-widest leading-none">${s.nome}</h4><p class="text-[8px] text-slate-500 font-bold uppercase mt-1">${sectorEmployees.length} TRIPULANTES</p></div></div>
                     <span class="material-symbols-outlined text-slate-600 text-sm chevron-icon">expand_more</span>
                 </div>
-                
                 <div class="setor-content space-y-2 mt-2 ml-4 border-l border-blue-500/20 pl-4">
-                    ${sectorEmployees.map(e => `
-                        <div onclick="event.stopPropagation(); abrirCardFerias('${e.id}')" class="flex items-center gap-3 p-3 bg-white/5 border border-white/5 rounded-xl hover:bg-blue-500/10 hover:border-blue-500/30 transition-all cursor-pointer group">
-                            <img src="${e.foto_url || `https://ui-avatars.com/api/?name=${e.nome_completo}&background=101622&color=60A5FA`}" class="size-8 rounded-full border border-white/10 shrink-0 object-cover">
-                            <div class="flex-1 min-w-0">
-                                <p class="text-[10px] font-black text-slate-100 uppercase truncate">${e.nickname || e.nome_completo}</p>
-                                <p class="text-[8px] text-slate-500 font-bold uppercase truncate">${e.cargo_nome}</p>
-                            </div>
-                            <span class="status-dot ${e.vacationStatus === 'repouso' ? 'status-repouso' : (e.vacationStatus === 'aprovado' ? 'status-aprovado' : (e.vacationStatus === 'pendente' ? 'status-pendente' : 'bg-slate-700'))}"></span>
-                        </div>
-                    `).join('')}
+                    ${sectorEmployees.map(e => `<div onclick="event.stopPropagation(); abrirCardFerias('${e.id}')" class="flex items-center gap-3 p-3 bg-white/5 border border-white/5 rounded-xl hover:bg-blue-500/10 hover:border-blue-500/30 transition-all cursor-pointer group">
+                        <img src="${e.foto_url || `https://ui-avatars.com/api/?name=${e.nome_completo}&background=101622&color=60A5FA`}" class="size-8 rounded-full border border-white/10 shrink-0 object-cover">
+                        <div class="flex-1 min-w-0"><p class="text-[10px] font-black text-slate-100 uppercase truncate">${e.nickname || e.nome_completo}</p><p class="text-[8px] text-slate-500 font-bold uppercase truncate">${e.cargo_nome}</p></div>
+                        <span class="status-dot ${e.vacationStatus === 'repouso' ? 'status-repouso' : (e.vacationStatus === 'aprovado' ? 'status-aprovado' : (e.vacationStatus === 'pendente' ? 'status-pendente' : 'bg-slate-700'))}"></span>
+                    </div>`).join('')}
                 </div>
             </div>`;
         }).join('');
     }
 
     window.toggleSetorFerias = (id) => {
-        // Encontrar o setor
         const sector = sectors.find(s => s.id === id);
-        if (sector && sector.latitude && sector.longitude) {
-            // Direcionar no mapa para o ícone do setor com um zoom apropriado
-            map.flyTo([sector.latitude, sector.longitude], 17, {
-                animate: true,
-                duration: 1.5
-            });
-        }
-
+        if (sector && sector.latitude && sector.longitude) map.flyTo([sector.latitude, sector.longitude], 17, { animate: true });
         if (expandedSectorsFerias.has(id)) expandedSectorsFerias.delete(id);
         else expandedSectorsFerias.add(id);
         renderSidebar();
@@ -797,333 +690,32 @@
         });
     }
 
-    // --- LÓGICA DE CARD DE FÉRIAS ---
-
     window.abrirCardFerias = async (empId) => {
         UI.showLoader();
-        targetEmployee = employees.find(e => e.id === empId);
+        const targetEmployee = employees.find(e => e.id === empId);
         const sector = sectors.find(s => s.id === targetEmployee.setor_id);
-        sectorRule = sector?.regra_ferias || 1;
-
-        document.getElementById('ferias-foto').src = targetEmployee.foto_url || `https://ui-avatars.com/api/?name=${targetEmployee.nome_completo}`;
-        document.getElementById('ferias-nome').innerText = targetEmployee.nome_completo.toUpperCase();
-        document.getElementById('ferias-cargo').innerText = `${targetEmployee.cargo_nome} / ${targetEmployee.foco_tecnico || 'FOCO TÉCNICO'}`;
         
-        const regraTxtMap = { 1: "Integral: 30 dias corridos.", 2: "2 Parcelas: Mín 10 dias.", 3: "3 Parcelas de 10 dias." };
-        document.getElementById('ferias-regras-info').innerText = `REGRA DO SETOR: ${regraTxtMap[sectorRule]}`;
-
-        // Resetar Estado de Seleção
-        selection = { start: null, end: null };
-        
-        // Carregar Dados de Férias do Funcionário
-        try {
-            const { data: hData } = await supabase.from('feriados_folgas').select('*').or(`escopo.eq.geral,funcionario_id.eq.${empId}`);
-            holidays = hData || [];
-
-            const { data: vData } = await supabase.from('ferias').select('*').eq('funcionario_id', empId).order('parcela_numero', {ascending: true});
-            currentParcelas = (vData || []).map(f => ({
-                id: f.id,
-                start: new Date(f.data_inicio + 'T12:00:00'),
-                end: new Date(f.data_fim + 'T12:00:00'),
-                days: Math.ceil(Math.abs(new Date(f.data_fim) - new Date(f.data_inicio)) / (1000 * 60 * 60 * 24)) + 1,
-                status: f.status
-            }));
-
-            renderCalendar();
-            updateSelectionPanel();
-            updateProgress();
-            renderPhotoCards();
-        } catch (err) {
-            console.error("Erro abrirCardFerias:", err);
-        }
+        await FeriasEngine.init({ 
+            role: 'manager', 
+            targetEmployee: { ...targetEmployee, setores: sector } 
+        });
 
         document.getElementById('modal-card-ferias').classList.replace('hidden', 'flex');
         UI.hideLoader();
     };
 
-    function calculateDays(start, end) {
-        const diff = Math.abs(end - start);
-        return Math.ceil(diff / (1000 * 60 * 60 * 24)) + 1;
-    }
-
-    function renderCalendar() {
-        const grid = document.getElementById('grid-calendar-ferias');
-        const txtMonth = document.getElementById('txt-month-year');
-        if (!grid) return;
-        
-        grid.innerHTML = '';
-        txtMonth.innerText = `${monthNames[currentMonth]} ${currentYear}`;
-
-        const firstDay = new Date(currentYear, currentMonth, 1).getDay();
-        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-
-        for (let i = 0; i < firstDay; i++) grid.appendChild(document.createElement('div'));
-
-        for (let d = 1; d <= daysInMonth; d++) {
-            const date = new Date(currentYear, currentMonth, d);
-            const dateISO = date.toISOString().split('T')[0];
-            const dayEl = document.createElement('div');
-            dayEl.className = 'glass-calendar-day';
-            dayEl.innerText = d;
-
-            const h = holidays.find(h => h.data === dateISO);
-            if (h) {
-                const t = (h.tipo || '').toLowerCase();
-                if (t.includes('nacional')) dayEl.classList.add('holiday-national');
-                else if (t.includes('regional')) dayEl.classList.add('holiday-regional');
-                else if (t.includes('folga')) dayEl.classList.add('day-off');
-                else dayEl.classList.add('holiday-national'); // Fallback
-            }
-            
-            const isMarked = currentParcelas.find(p => date >= p.start && date <= p.end);
-            if (isMarked) dayEl.classList.add('marked');
-
-            if (selection.start && selection.end) {
-                if (date >= selection.start && date <= selection.end) dayEl.classList.add('selected');
-            } else if (selection.start && date.getTime() === selection.start.getTime()) {
-                dayEl.classList.add('selected');
-            }
-
-            dayEl.onclick = () => handleDayClick(date);
-            grid.appendChild(dayEl);
-        }
-
-        updateMonthlyCountersAdmin();
-    }
-
-    function updateMonthlyCountersAdmin() {
-        if (!document.getElementById('monthly-stats-panel-admin')) return;
-        
-        const currentMonthHolidays = holidays.filter(h => {
-            const d = new Date(h.data + 'T12:00:00');
-            return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-        });
-
-        const counts = {
-            nacional: currentMonthHolidays.filter(h => (h.tipo||'').includes('nacional')).length,
-            regional: currentMonthHolidays.filter(h => (h.tipo||'').includes('regional')).length,
-            folga: currentMonthHolidays.filter(h => (h.tipo||'').includes('folga')).length
-        };
-
-        const panel = document.getElementById('monthly-stats-panel-admin');
-        if (counts.nacional > 0 || counts.regional > 0 || counts.folga > 0) {
-            panel.classList.remove('hidden');
-            document.getElementById('count-nacionais-admin').innerText = counts.nacional;
-            document.getElementById('count-regionais-admin').innerText = counts.regional;
-            document.getElementById('count-folgas-admin').innerText = counts.folga;
-        } else {
-            panel.classList.add('hidden');
-        }
-    }
-
-    function handleDayClick(date) {
-        // Bloquear clique em dias já marcados
-        if (currentParcelas.find(p => date >= p.start && date <= p.end)) return;
-
-        if (!selection.start || (selection.start && selection.end)) {
-            selection.start = date;
-            selection.end = null;
-        } else {
-            selection.end = date < selection.start ? selection.start : date;
-            selection.start = date < selection.start ? date : selection.start;
-        }
-        updateSelectionPanel();
-        renderCalendar();
-    }
-
-    function updateSelectionPanel() {
-        const panel = document.getElementById('current-selection-panel');
-        const btn = document.getElementById('btn-gravar-parcela');
-        if (!panel || !btn) return;
-
-        if (!selection.start || !selection.end) {
-            panel.classList.add('hidden');
-            btn.disabled = true;
-            btn.innerText = 'Selecione o Período';
-            return;
-        }
-
-        panel.classList.remove('hidden');
-        const days = calculateDays(selection.start, selection.end);
-        document.getElementById('selection-start').innerText = selection.start.toLocaleDateString('pt-BR');
-        document.getElementById('selection-end').innerText = selection.end.toLocaleDateString('pt-BR');
-        document.getElementById('selection-days').innerText = days;
-
-        if (days >= 10) {
-            btn.disabled = false;
-            btn.innerText = `Gravar ${currentParcelas.length + 1}ª Parcela (${days} dias)`;
-        } else {
-            btn.disabled = true;
-            btn.innerText = 'Mínimo de 10 dias';
-        }
-    }
-
-    document.getElementById('btn-prev-month').onclick = () => {
-        currentMonth--;
-        if (currentMonth < 0) { currentMonth = 11; currentYear--; }
-        renderCalendar();
+    window.fecharCardFerias = () => {
+        document.getElementById('modal-card-ferias').classList.replace('flex', 'hidden');
+        init(); // Refresh data
     };
-
-    document.getElementById('btn-next-month').onclick = () => {
-        currentMonth++;
-        if (currentMonth > 11) { currentMonth = 0; currentYear++; }
-        renderCalendar();
-    };
-
-    document.getElementById('btn-gravar-parcela').onclick = () => {
-        const days = calculateDays(selection.start, selection.end);
-        const already = currentParcelas.reduce((acc, p) => acc + p.days, 0);
-        if (already + days > 30) { UI.showToast('Limite de 30 dias excedido', 'error'); return; }
-
-        currentParcelas.push({ start: selection.start, end: selection.end, days: days, status: 'pendente' });
-        selection = { start: null, end: null };
-        updateSelectionPanel();
-        updateProgress();
-        renderCalendar();
-        renderPhotoCards();
-    };
-
-    function updateProgress() {
-        const total = currentParcelas.reduce((acc, p) => acc + p.days, 0);
-        document.getElementById('txt-dias-marcados').innerText = total;
-        document.getElementById('parcela-count').innerText = `${currentParcelas.length} Parcela(s) Grau: ${sectorRule}`;
-        document.getElementById('final-status-display').classList.toggle('hidden', total < 30);
-    }
-
-    window.focarParcela = (i) => {
-        const p = currentParcelas[i];
-        if (!p) return;
-        currentMonth = p.start.getMonth();
-        currentYear = p.start.getFullYear();
-        renderCalendar();
-        UI.showToast(`Visualizando ${i+1}ª Parcela`, 'info');
-    };
-
-    function renderPhotoCards() {
-        const container = document.getElementById('photo-cards-container');
-        if (!container) return;
-
-        if (currentParcelas.length === 0) {
-            container.innerHTML = `<div class="p-8 border border-dashed border-white/5 rounded-2xl opacity-20 text-center"><p class="text-[9px] font-black uppercase tracking-widest text-slate-500">Nenhuma parcela gravada</p></div>`;
-            return;
-        }
-
-        container.innerHTML = currentParcelas.map((p, i) => `
-            <div onclick="window.focarParcela(${i})" class="bg-white/5 p-4 rounded-xl border border-white/5 flex justify-between items-center mb-2 cursor-pointer hover:bg-white/10 hover:border-blue-500/30 transition-all group">
-                <div>
-                    <p class="text-[10px] font-black text-white group-hover:text-blue-400 transition-colors">${i+1}ª PARCELA (${p.days}d)</p>
-                    <p class="text-[8px] text-slate-500">${p.start.toLocaleDateString('pt-BR')} - ${p.end.toLocaleDateString('pt-BR')}</p>
-                </div>
-                <button onclick="event.stopPropagation(); window.removerParcela(${i})" class="size-10 flex items-center justify-center rounded-xl bg-rose-500/5 text-rose-500/40 hover:text-rose-500 hover:bg-rose-500/10 transition-all group/del">
-                    <span class="material-symbols-outlined text-[20px] group-hover/del:scale-110 transition-transform">delete</span>
-                </button>
-            </div>
-        `).join('');
-    }
-
-    window.removerParcela = (idx) => {
-        currentParcelas.splice(idx, 1);
-        updateProgress();
-        renderCalendar();
-        renderPhotoCards();
-    };
-
-    document.getElementById('btn-aprovar-ferias').onclick = async () => {
-        if (currentParcelas.reduce((acc, p) => acc + p.days, 0) < 30) { UI.showToast('Planejamento incompleto', 'warning'); return; }
-        UI.showLoader();
-        try {
-            // Verificar se existem parcelas propostas
-            const { data: currentItems } = await supabase.from('ferias').select('status').eq('funcionario_id', targetEmployee.id);
-            const hasProposto = currentItems && currentItems.some(i => i.status === 'proposto');
-
-            if (hasProposto) {
-                // Se era uma edição, removemos as antigas (aprovado) e as novas (proposto) para reinserir como aprovado
-                await supabase.from('ferias').delete().eq('funcionario_id', targetEmployee.id);
-            } else {
-                // Se era rascunho inicial, limpamos tudo (pendente/rejeitado)
-                await supabase.from('ferias').delete().eq('funcionario_id', targetEmployee.id);
-            }
-
-            const toInsert = currentParcelas.map((p, i) => ({
-                funcionario_id: targetEmployee.id,
-                data_inicio: p.start instanceof Date ? p.start.toISOString().split('T')[0] : p.start,
-                data_fim: p.end instanceof Date ? p.end.toISOString().split('T')[0] : p.end,
-                parcela_numero: i + 1,
-                status: 'aprovado'
-            }));
-            await supabase.from('ferias').insert(toInsert);
-            
-            // Central de Eventos: Notificar Funcionário
-            await supabase.from('diario_logs').insert([{
-                funcionario_id: targetEmployee.id,
-                tipo: 'aviso_ferias',
-                mensagem_padrao: 'Suas férias foram abonadas pelo gestor!',
-                status_pendencia: 'pendente'
-            }]);
-
-            UI.showToast('Férias abonadas!', 'success');
-            fecharCardFerias();
-            await init();
-        } catch (err) { console.error(err); } finally { UI.hideLoader(); }
-    };
-
-    document.getElementById('btn-rejeitar-ferias').onclick = async () => {
-        if (!confirm('Rejeitar este planejamento?')) return;
-        UI.showLoader();
-        try {
-            // Verificar se existem parcelas propostas (edição de aprovado)
-            const { data: currentItems } = await supabase.from('ferias').select('*').eq('funcionario_id', targetEmployee.id);
-            const hasProposto = currentItems && currentItems.some(i => i.status === 'proposto');
-
-            if (hasProposto) {
-                // Se for rejeição de edição, removemos apenas as parcelas 'proposto'
-                // e congelamos definitivamente o plano anteriormente aprovado (não pode mais ser alterado)
-                await supabase.from('ferias').delete().eq('funcionario_id', targetEmployee.id).eq('status', 'proposto');
-                // Atualizar registros aprovados para marcar como congelados permanentemente
-                try {
-                    await supabase.from('ferias').update({ status: 'congelado' }).eq('funcionario_id', targetEmployee.id).eq('status', 'aprovado');
-                } catch (e) {
-                    console.warn('Não foi possível marcar como congelado:', e);
-                }
-                UI.showToast('Alteração rejeitada. Plano original mantido e congelado permanentemente.', 'info');
-            } else {
-                // Se for a primeira análise, marcamos tudo como rejeitado conforme regra original
-                await supabase.from('ferias').delete().eq('funcionario_id', targetEmployee.id);
-                const toInsert = currentParcelas.map((p, i) => ({
-                    funcionario_id: targetEmployee.id,
-                    data_inicio: p.start instanceof Date ? p.start.toISOString().split('T')[0] : p.start,
-                    data_fim: p.end instanceof Date ? p.end.toISOString().split('T')[0] : p.end,
-                    parcela_numero: i + 1,
-                    status: 'rejeitado'
-                }));
-                await supabase.from('ferias').insert(toInsert);
-                UI.showToast('Planejamento rejeitado', 'warning');
-            }
-
-            // Central de Eventos: Notificar Funcionário
-            await supabase.from('diario_logs').insert([{
-                funcionario_id: targetEmployee.id,
-                tipo: 'aviso_ferias',
-                mensagem_padrao: hasProposto ? 'Alteração de férias rejeitada. O plano original foi mantido.' : 'Seu planejamento de férias foi analisado. Revise o status.',
-                status_pendencia: 'pendente'
-            }]);
-
-            fecharCardFerias();
-            await init();
-        } catch (err) { console.error(err); } finally { UI.hideLoader(); }
-    };
-
-
-    window.fecharCardFerias = () => document.getElementById('modal-card-ferias').classList.replace('flex', 'hidden');
 
     // --- REGRAS GERAIS ---
-    let activeSectorId = null;
     window.abrirModalRegrasGerais = (sId = null) => {
         activeSectorId = sId;
         const s = sectors.find(sec => sec.id === sId);
         document.getElementById('titulo-regras-gerais').innerText = s ? `Regras: ${s.nome}` : 'Regras Gerais';
         const current = s?.regra_ferias || 1;
-        document.querySelector(`input[name="regra-parcela"][value="${current}"]`).checked = true;
+        document.querySelectorAll('input[name="regra-parcela"]').forEach(i => i.checked = (i.value == current));
         document.getElementById('modal-regras-gerais').classList.replace('hidden', 'flex');
     };
 
@@ -1134,22 +726,13 @@
         UI.showLoader();
         try {
             const query = supabase.from('setores').update({ regra_ferias: parseInt(val) });
-            if (activeSectorId) {
-                await query.eq('id', activeSectorId);
-            } else {
-                // Filtro global seguro para PostgREST
-                await query.neq('id', '00000000-0000-0000-0000-000000000000');
-                localStorage.setItem('ferias_global_rule', val);
-            }
+            if (activeSectorId) await query.eq('id', activeSectorId);
+            else await query.neq('id', '00000000-0000-0000-0000-000000000000');
             UI.showToast('Regras salvas!', 'success');
             fecharModalRegrasGerais();
             await init();
-        } catch (err) {
-            console.error(err);
-            UI.showToast('Erro ao salvar regras.', 'error');
-        } finally {
-            UI.hideLoader();
-        }
+        } catch (err) { console.error(err); }
+        finally { UI.hideLoader(); }
     };
 
     init();

@@ -964,7 +964,7 @@
                         .from('funcionarios')
                         .select(`
                             *,
-                            setores!setor_id (nome),
+                            setores!funcionarios_setor_id_fkey (nome),
                             cargos!cargo_id (nome),
                             perfis_tripulantes (*)
                         `)
@@ -1624,7 +1624,7 @@
                     .from('funcionarios')
                     .select(`
                         *,
-                        setores!setor_id (nome),
+                        setores!funcionarios_setor_id_fkey (nome),
                         cargos!cargo_id (nome)
                     `)
                     .order('nome_completo');

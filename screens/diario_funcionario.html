@@ -1,341 +1,191 @@
 <!DOCTYPE html>
 <html class="dark" lang="pt-BR">
-
 <head>
     <meta charset="utf-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap"
-        rel="stylesheet">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
-        rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#0D59F2',
+                        secondary: '#F59E0B',
+                        accent: '#10B981',
+                        surface: '#0F172A',
+                        glass: 'rgba(15, 23, 42, 0.8)'
+                    }
+                }
+            },
+            darkMode: 'class'
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
     <script src="../js/theme.js?v=1.0"></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <style>
-        .font-variation-settings-fill {
-            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-        }
-        /* Estilos do Novo Card de Histórico */
-        .premium-border-sky { border-left: 4px solid #38BDF8 !important; }
-        .premium-border-blue { border-left: 4px solid #0d59f2 !important; }
-        .premium-border-amber { border-left: 4px solid #f59e0b !important; }
-        .premium-border-green { border-left: 4px solid #10b981 !important; }
-        .premium-border-rose { border-left: 4px solid #f43f5e !important; }
-        .premium-border-purple { border-left: 4px solid #a855f7 !important; }
-        .premium-border-emerald { border-left: 4px solid #059669 !important; }
+        body { font-family: 'Space Grotesk', sans-serif; overflow-x: hidden; }
+        .glass-panel { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(13, 89, 242, 0.2); }
+        .neon-glow { box-shadow: 0 0 15px rgba(13, 89, 242, 0.3); }
+        .premium-border-blue { border-left: 4px solid #0D59F2; }
+        .premium-border-amber { border-left: 4px solid #F59E0B; }
+        .premium-border-purple { border-left: 4px solid #A855F7; }
+        .premium-border-rose { border-left: 4px solid #F43F5E; }
+        .premium-border-sky { border-left: 4px solid #38BDF8; }
         
-        .bg-vacation-soft { background: rgba(56, 189, 248, 0.05); }
-        .border-vacation { border-color: rgba(56, 189, 248, 0.3); }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(13, 89, 242, 0.5); border-radius: 10px; }
 
-        /* Estilos Slim para Histórico */
-        .card-history.slim-mode {
-            padding: 10px 14px !important;
-            margin-bottom: 6px !important;
-            border-radius: 12px !important;
-            background: rgba(255, 255, 255, 0.03) !important;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-        .card-history.slim-mode p { font-size: 11px !important; line-height: 1.4 !important; }
-        .card-history.slim-mode .material-symbols-outlined { font-size: 12px !important; }
-
-        @media print {
-            .no-print { display: none !important; }
-            body { background: white !important; color: black !important; font-size: 10pt !important; }
-            .bg-white\/5, .bg-slate-800\/50, .bg-\[rgba\(15\,23\,42\,0\.9\)\] { background: white !important; border: 1px solid #e2e8f0 !important; }
-            .text-slate-100, .text-slate-200, .text-slate-300, .text-white { color: black !important; }
-            .text-slate-500, .text-slate-400 { color: #64748b !important; }
-            .card-history { border: 1px solid #e2e8f0 !important; background: white !important; color: black !important; border-left-width: 4px !important; }
-        }
-
-        .btn-anexo-glass {
-            background: rgba(245, 158, 11, 0.1);
-            border: 1px solid rgba(245, 158, 11, 0.2);
-            color: #f59e0b;
-            transition: all 0.3s ease;
-        }
-        .btn-anexo-glass:hover {
-            background: rgba(245, 158, 11, 0.2);
-            border-color: rgba(245, 158, 11, 0.4);
-        }
-
-        .card-history {
-            position: relative;
-            padding-left: 20px !important;
-            transition: all 0.3s ease;
-        }
-        /* Lateral estilizada com faixa suavizada (gradiente) — utiliza a variável --accent-rgb definida nas classes accent-*
-           Essa faixa se mistura ao interior do card e cria o efeito arredondado suave solicitado. */
-        .card-history::before {
-            content: '';
-            position: absolute;
-            left: -8px;
-            top: 8px;
-            bottom: 8px;
-            width: 18px;
-            border-radius: 12px;
-            background: linear-gradient(90deg, rgba(var(--accent-rgb),1) 0%, rgba(var(--accent-rgb),0.18) 36%, rgba(var(--accent-rgb),0) 100%);
-            box-shadow: 0 8px 20px rgba(var(--accent-rgb),0.06);
-            pointer-events: none;
-        }
-
-        /* Quando queremos usar o estilo de borda esquerda "feriado/folgas" (border-left sólido)
-           escondemos a faixa gradient e aplicamos a borda sólida definida em premium-border-* */
-        .card-history.no-gradient::before { display: none; }
-
-
-        /* Classes de cor por evento — definem a cor base (RGB) usada pelo gradiente */
-        .accent-amber { --accent-rgb: 245,158,11; color: rgb(var(--accent-rgb)); }
-        .accent-blue  { --accent-rgb: 13,89,242; color: rgb(var(--accent-rgb)); }
-        .accent-rose  { --accent-rgb: 236,72,153; color: rgb(var(--accent-rgb)); }
-        .accent-violet{ --accent-rgb: 139,92,246; color: rgb(var(--accent-rgb)); }
-        .accent-cyan  { --accent-rgb: 6,182,212; color: rgb(var(--accent-rgb)); }
-        .accent-emerald{ --accent-rgb: 16,185,129; color: rgb(var(--accent-rgb)); }
-        .map-container-card {
-            height: 0;
-            overflow: hidden;
-            transition: height 0.3s ease-out;
-            border-radius: 12px;
-            margin-top: 12px;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-        .map-container-card.active {
-            height: 200px;
-            margin-bottom: 8px;
-        }
-        .edit-container-card {
-            height: 0;
-            overflow: hidden;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-            border-radius: 12px;
-            margin-top: 0;
-            background: rgba(13, 89, 242, 0.05);
-            border: 1px solid transparent;
-        }
-        .edit-container-card.active {
-            height: auto;
-            min-height: 160px;
-            margin-top: 12px;
-            margin-bottom: 8px;
-            padding: 16px;
-            border-color: rgba(13, 89, 242, 0.2);
-            background: rgba(13, 89, 242, 0.1);
-        }
-
-        /* Vacation System Styles */
+        .font-variation-settings-fill { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        
+        /* Estilos Sincronizados com o Admin Console */
         .glass-calendar-day {
             transition: all 0.2s ease;
             cursor: pointer;
             position: relative;
             z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 44px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.02);
+            font-size: 10px;
+            font-weight: 700;
+            color: #94a3b8;
         }
         .glass-calendar-day:hover:not(.disabled) {
             background: rgba(13, 89, 242, 0.2);
-            transform: scale(1.1);
+            transform: scale(1.05);
         }
         .glass-calendar-day.selected {
             background: #0d59f2 !important;
             color: white !important;
             box-shadow: 0 0 15px rgba(13, 89, 242, 0.5);
-            border-radius: 8px;
+            border: none !important;
         }
         .glass-calendar-day.holiday-national {
-            background: rgba(245, 158, 11, 0.15);
-            border: 1px dashed rgba(245, 158, 11, 0.5);
-            color: #f59e0b;
+            background: rgba(245, 158, 11, 0.15) !important;
+            border: 1px dashed rgba(245, 158, 11, 0.5) !important;
+            color: #f59e0b !important;
         }
         .glass-calendar-day.holiday-regional {
-            background: rgba(139, 92, 246, 0.15);
-            border: 1px dashed rgba(139, 92, 246, 0.5);
-            color: #a78bfa;
+            background: rgba(139, 92, 246, 0.15) !important;
+            border: 1px dashed rgba(139, 92, 246, 0.5) !important;
+            color: #a78bfa !important;
         }
         .glass-calendar-day.day-off {
-            background: rgba(6, 182, 212, 0.15);
-            border: 1px dashed rgba(6, 182, 212, 0.5);
-            color: #22d3ee;
-        }
-        .glass-calendar-day.holiday {
-            background: rgba(245, 158, 11, 0.1);
-            border: 1px dashed rgba(245, 158, 11, 0.4);
-            color: #f59e0b;
+            background: rgba(6, 182, 212, 0.15) !important;
+            border: 1px dashed rgba(6, 182, 212, 0.5) !important;
+            color: #22d3ee !important;
         }
         .glass-calendar-day.marked {
-            background: rgba(16, 185, 129, 0.1);
-            border: 1px solid rgba(16, 185, 129, 0.3);
-            color: #10b981;
+            background: rgba(16, 185, 129, 0.1) !important;
+            border: 1px solid rgba(16, 185, 129, 0.3) !important;
+            color: #10b981 !important;
+            box-shadow: none !important;
         }
+
+        /* Pulse Animations para Botões de Alerta */
+        @keyframes pulse-amber {
+            0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+        }
+        .btn-pulse-amber { animation: pulse-amber 2s infinite; }
     </style>
     <title>Diário de Bordo | ChronoSync</title>
 </head>
 
 <body class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen flex flex-col pb-24 items-center">
-    <!-- Header / Navigation -->
+    
     <div class="flex items-center w-full max-w-md bg-background-light dark:bg-background-dark p-4 pb-2 justify-between border-b border-slate-200 dark:border-primary/20 sticky top-0 z-40">
-        <div id="btn-voltar"
-            class="text-primary flex size-10 mt-2 shrink-0 items-center justify-center rounded-lg border border-primary/30 bg-primary/10 cursor-pointer hover:bg-primary/20 transition-all">
+        <div id="btn-voltar" class="text-primary flex size-10 mt-2 shrink-0 items-center justify-center rounded-lg border border-primary/30 bg-primary/10 cursor-pointer hover:bg-primary/20 transition-all">
             <span class="material-symbols-outlined">arrow_back</span>
         </div>
-        <div></div> <!-- Espaçador para manter o botão voltar à esquerda -->
+        <div class="flex flex-col items-end">
+            <p id="user-nickname" class="text-xs font-black uppercase text-white tracking-widest leading-none"></p>
+            <p id="user-enrollment" class="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-1"></p>
+        </div>
     </div>
 
     <main class="flex-1 w-full max-w-md p-6 space-y-6">
-
-        <!-- Nova Anotação Form -->
-        <section class="bg-white/5 border border-primary/20 rounded-2xl p-6 relative overflow-hidden mt-10 shadow-inner">
-            <div class="absolute top-0 right-0 p-2 opacity-10">
-                <span class="material-symbols-outlined text-6xl">edit_note</span>
-            </div>
-            <!-- Seletor de Modo e Título Centralizados -->
-            <div class="flex flex-col items-center gap-4 mb-6 pt-2">
-                <!-- Toggle Mode Selector -->
-                <div class="flex h-12 bg-background-dark p-1 rounded-2xl border border-white/10 shadow-2xl w-full max-w-[340px] items-stretch">
-                    <button type="button" id="btnModeAtividade" 
-                        class="flex-1 flex items-center justify-center px-3 text-[10px] font-black uppercase tracking-wider rounded-xl bg-primary text-white transition-all shadow-lg whitespace-nowrap cursor-pointer">
-                        Atividade
-                    </button>
-                    <button type="button" id="btnModeJustificativa" 
-                        class="flex-1 flex items-center justify-center px-3 text-[10px] font-black uppercase tracking-wider rounded-xl text-slate-400 hover:text-white transition-all whitespace-nowrap cursor-pointer">
-                        Justificativa
-                    </button>
-                    <button type="button" id="btnModeFerias" 
-                        class="flex-1 flex items-center justify-center px-3 text-[10px] font-black uppercase tracking-wider rounded-xl text-slate-400 hover:text-white transition-all whitespace-nowrap cursor-pointer">
-                        Minhas Férias
-                    </button>
+        <section class="bg-white/5 border border-primary/20 rounded-2xl p-6 relative overflow-hidden shadow-inner">
+            <div class="flex flex-col items-center gap-4 mb-6">
+                <div class="flex h-12 bg-background-dark p-1 rounded-2xl border border-white/10 w-full items-stretch">
+                    <button id="btnModeAtividade" class="flex-1 flex items-center justify-center text-[10px] font-black uppercase tracking-wider rounded-xl bg-primary text-white transition-all cursor-pointer">Atividade</button>
+                    <button id="btnModeJustificativa" class="flex-1 flex items-center justify-center text-[10px] font-black uppercase tracking-wider rounded-xl text-slate-400 hover:text-white transition-all cursor-pointer">Justificativa</button>
+                    <button id="btnModeFerias" class="flex-1 flex items-center justify-center text-[10px] font-black uppercase tracking-wider rounded-xl text-slate-400 hover:text-white transition-all cursor-pointer">Férias</button>
                 </div>
-
-                <!-- Título Dinâmico -->
-                <h3 class="text-primary text-[10px] font-black tracking-[0.3em] uppercase flex items-center justify-center gap-2">
-                    <span class="material-symbols-outlined text-base">add_box</span>
-                    <span id="titleAnotacao">REGISTRAR ATIVIDADE</span>
-                </h3>
+                <h3 id="titleAnotacao" class="text-primary text-[10px] font-black tracking-[0.3em] uppercase flex items-center gap-2">REGISTRAR ATIVIDADE</h3>
             </div>
-            <div class="space-y-4" id="anotacaoForm">
-                <div class="hidden">
-                    <input id="inputDataAnotacao" type="date" />
-                    <input id="inputTipoModo" type="hidden" value="atividade" />
+
+            <div class="space-y-4">
+                <input id="inputTipoModo" type="hidden" value="atividade" />
+                <div id="camposJustificativa" class="hidden space-y-4">
+                    <select id="selectTipoJustificativa" class="w-full bg-background-dark border border-white/10 rounded-xl py-3 px-4 text-sm text-slate-100 outline-none focus:ring-1 focus:ring-primary/50">
+                        <option value="ESQUECIMENTO">Esquecimento de Registro</option>
+                        <option value="PROBLEMA_TECNICO">Problema Técnico</option>
+                        <option value="SERVICO_EXTERNO">Serviço Externo</option>
+                        <option value="OUTROS">Outros</option>
+                    </select>
+                    <button id="btnAnexarEvidencia" class="w-full flex items-center justify-center gap-2 bg-background-dark border border-dashed border-primary/40 p-3 rounded-xl text-slate-400 hover:border-primary/60 transition-all">
+                        <span class="material-symbols-outlined">add_a_photo</span>
+                        <span id="txtAnexo" class="text-[9px] font-black uppercase">Anexar Comprovante</span>
+                    </button>
                     <input id="inputEvidencia" type="file" class="hidden" accept="image/*,.pdf" />
                 </div>
-
-                <!-- Campos de Justificativa (Ocultos inicialmente) -->
-                <div id="camposJustificativa" class="hidden animate-in fade-in slide-in-from-top-2 duration-300 space-y-4">
-                    <div class="flex flex-col gap-2">
-                        <label class="text-slate-400 text-xs uppercase font-bold tracking-widest">TIPO DE JUSTIFICATIVA</label>
-                        <select id="selectTipoJustificativa"
-                            class="w-full bg-background-dark border border-white/10 rounded-xl py-3 px-4 text-sm text-slate-100 placeholder:text-slate-600 focus:border-primary focus:ring-1 focus:ring-primary outline-none appearance-none transition-all">
-                            <option value="Esquecimento de Registro">Esquecimento de Registro</option>
-                            <option value="Viagem a Trabalho">Viagem a Trabalho</option>
-                            <option value="Atividade Externa">Atividade Externa</option>
-                            <option value="Visita Técnica">Visita Técnica</option>
-                            <option value="Motivo de Saúde">Motivo de Saúde</option>
-                            <option value="Problemas Técnicos">Problemas Técnicos</option>
-                            <option value="Outros">Outros</option>
-                        </select>
-                    </div>
-
-                    <div class="flex flex-col gap-2">
-                        <label class="text-slate-400 text-xs uppercase font-bold tracking-widest">ANEXAR EVIDÊNCIA (FOTO/PDF)</label>
-                        <button id="btnAnexarEvidencia" type="button"
-                            class="w-full flex items-center justify-center gap-3 bg-background-dark border border-dashed border-primary/40 hover:border-primary text-slate-400 hover:text-primary py-3 rounded-xl transition-all group relative overflow-hidden">
-                            <span class="material-symbols-outlined text-lg">add_a_photo</span>
-                            <span id="txtAnexo" class="uppercase tracking-widest text-[9px] font-bold">Anexar Documento</span>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="flex flex-col gap-2 relative z-10">
-                    <label id="labelAtividade" class="text-slate-400 text-[10px] uppercase font-bold tracking-wider">ATIVIDADE DO DIA</label>
-                    <textarea id="inputConteudoAnotacao"
-                        class="w-full bg-background-dark border border-white/10 rounded-xl py-4 px-4 text-sm text-slate-100 placeholder:text-slate-600 focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all"
-                        placeholder="Descreva os detalhes das atividades desenvolvidas durante o dia..." rows="4"></textarea>
-                </div>
-                <button id="btnSalvarAnotacao"
-                    class="w-full bg-primary hover:bg-primary/80 text-white text-[10px] font-black py-4 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-primary/20 transition-all uppercase tracking-widest relative z-10">
-                    <span class="material-symbols-outlined text-sm">send</span> Enviar Anotação
-                </button>
+                <textarea id="inputConteudoAnotacao" class="w-full bg-background-dark border border-white/10 rounded-xl py-4 px-4 text-sm text-slate-100 min-h-[120px] focus:ring-1 focus:ring-primary/50 transition-all" placeholder="O que você realizou hoje?"></textarea>
+                <button id="btnSalvarAnotacao" class="w-full bg-primary py-4 rounded-xl text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:brightness-110 active:scale-[0.98] transition-all">Enviar Registro</button>
             </div>
         </section>
 
-        <!-- Histórico de Anotações -->
-        <section class="space-y-4 mt-8 pb-10">
-            <div class="flex justify-between items-center px-1">
-                <h3 class="text-slate-100 text-[10px] font-black tracking-widest uppercase flex items-center gap-2">
-                    <span class="material-symbols-outlined text-sm">history</span> Histórico de Atividades
+        <section class="space-y-4 pb-12">
+            <div class="flex justify-between items-center">
+                <h3 class="text-[10px] font-black tracking-widest uppercase text-slate-100 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-sm">history</span> Linha do Tempo
                 </h3>
-                <span id="labelTotalAnotacoes" class="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Total: 0 registros</span>
+                <span id="labelTotalAnotacoes" class="text-[9px] text-slate-500 font-bold uppercase">...</span>
             </div>
-
-            <div id="containerBtnExpandir" class="hidden pb-2">
-                <button id="btnExpandHistory" 
-                    class="w-full py-4 rounded-2xl bg-white/5 border border-white/10 text-slate-400 hover:text-primary hover:bg-primary/5 hover:border-primary/30 transition-all flex items-center justify-center gap-2 group">
-                    <span id="iconExpandHistory" class="material-symbols-outlined text-base group-hover:animate-bounce">expand_more</span>
-                    <span id="txtExpandHistory" class="text-[10px] font-black uppercase tracking-[0.2em]">Ver Histórico Completo</span>
-                </button>
+            
+            <div id="containerBtnExpandir" class="hidden">
+                <button id="btnExpandHistory" class="w-full py-4 bg-white/5 border border-white/10 rounded-2xl text-[9px] font-black uppercase tracking-widest text-slate-400">Ver Histórico Completo</button>
             </div>
-
-            <div id="historicoAnotacoesContainer" class="space-y-4 transition-all duration-500 overflow-hidden">
-                <div class="text-center py-10 opacity-30">
-                    <span class="material-symbols-outlined text-4xl mb-2">inbox</span>
-                    <p class="text-[10px] font-bold uppercase tracking-widest">Nenhuma atividade encontrada</p>
-                </div>
-            </div>
+            <div id="historicoAnotacoesContainer" class="space-y-4"></div>
         </section>
     </main>
 
-    <!-- Bottom Navigation -->
     <nav class="fixed bottom-0 left-0 right-0 bg-background-dark/90 border-t border-white/5 py-4 z-50 flex justify-center backdrop-blur-xl">
         <div class="flex items-center justify-around w-full max-w-md px-6">
-            <a href="dashboard.html" class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
-                <span class="material-symbols-outlined text-2xl">home</span>
-                <span class="text-[9px] font-black uppercase tracking-widest text-center">Início</span>
-            </a>
-            <a href="estatistica_funcionario.html" class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
-                <span class="material-symbols-outlined text-2xl">bar_chart</span>
-                <span class="text-[9px] font-black uppercase tracking-widest text-center">Estatística</span>
-            </a>
-            <a href="diario_funcionario.html" class="flex flex-col items-center gap-1.5 text-primary scale-110 relative">
-                <span class="material-symbols-outlined text-2xl font-variation-settings-fill">edit_note</span>
-                <span class="text-[9px] font-black uppercase tracking-widest text-center">Diário</span>
-                <span id="notif-badge-footer" class="absolute top-0 right-0 size-3.5 bg-amber-500 text-white text-[7px] font-black rounded-full flex items-center justify-center border border-background-dark hidden">0</span>
-            </a>
-            <a id="nav-perfil-link" href="perfil_funcionario.html" class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
-                <span class="material-symbols-outlined text-2xl">person</span>
-                <span class="text-[9px] font-black uppercase tracking-widest text-center">Perfil</span>
-            </a>
+            <a href="dashboard.html" class="flex flex-col items-center gap-1.5 text-slate-500"><span class="material-symbols-outlined">home</span><span class="text-[8px] font-black uppercase">Home</span></a>
+            <a href="estatistica_funcionario.html" class="flex flex-col items-center gap-1.5 text-slate-500"><span class="material-symbols-outlined">bar_chart</span><span class="text-[8px] font-black uppercase">Metrics</span></a>
+            <a href="#" class="flex flex-col items-center gap-1.5 text-primary scale-110"><span class="material-symbols-outlined font-variation-settings-fill">edit_note</span><span class="text-[8px] font-black uppercase">Diário</span></a>
+            <a href="perfil_funcionario.html" class="flex flex-col items-center gap-1.5 text-slate-500"><span class="material-symbols-outlined">person</span><span class="text-[8px] font-black uppercase">Perfil</span></a>
         </div>
     </nav>
 
-    <!-- Sidebar Menu -->
-    <aside id="sidebarMenu" class="fixed top-0 left-0 h-full w-80 bg-background-dark border-r border-primary/20 z-[160] -translate-x-full transition-all duration-500 ease-out shadow-[20px_0_50px_rgba(0,0,0,0.5)]">
-        <div class="flex flex-col h-full">
-            <div class="p-8 border-b border-primary/10">
-                <h3 class="text-primary font-black italic text-2xl tracking-tighter">CHRONOSYNC</h3>
-                <p class="text-[10px] text-slate-500 uppercase font-bold tracking-[0.3em]">Console de Navegação</p>
-            </div>
-            <nav id="sidebarNav" class="flex-1 overflow-y-auto p-4 space-y-2"></nav>
-            <div class="p-4 border-t border-primary/10 bg-black/20">
-                <button id="logoutBtn" class="w-full flex items-center gap-3 px-4 py-3 text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all font-bold text-xs uppercase">
-                    <span class="material-symbols-outlined">logout</span> Sair do Sistema
-                </button>
-            </div>
-        </div>
-    </aside>
-    <div id="sidebarOverlay" onclick="UI.toggleSidebar()" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[150] hidden opacity-0 transition-all duration-300"></div>
-
-    <!-- MODAL MINHAS FÉRIAS -->
-    <div id="modal-ferias" class="fixed inset-0 z-[200] hidden flex-col bg-background-dark overflow-y-auto">
-        <header class="sticky top-0 z-50 bg-background-dark/80 backdrop-blur-xl border-b border-white/5 p-6 flex justify-between items-center">
-            <div class="flex items-center gap-4">
-                <button onclick="window.fecharModalFerias()" class="text-slate-400 hover:text-white transition-all size-10 flex items-center justify-center rounded-xl bg-white/5">
-                    <span class="material-symbols-outlined">close</span>
-                </button>
-                <div>
-                    <h2 class="text-xl font-black italic tracking-tighter text-white uppercase">Meus Períodos de Férias</h2>
-                    <p class="text-[10px] text-primary font-black uppercase tracking-[0.2em]">Planejamento Anual 2026</p>
+    <div id="modal-ferias" class="fixed inset-0 z-[2500] bg-black/95 backdrop-blur-xl hidden items-start justify-center overflow-y-auto p-4 md:p-12">
+        <div class="glass-panel w-full max-w-6xl rounded-[2.5rem] p-0 relative overflow-visible shadow-[0_0_100px_rgba(13,89,242,0.1)] border border-white/10 my-auto min-h-min">
+            <div class="absolute top-0 left-0 w-full h-1 bg-primary"></div>
+            
+            <header class="p-8 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
+                <div class="flex items-center gap-6">
+                    <div class="size-20 rounded-full border-2 border-primary/30 p-1 bg-slate-800 overflow-hidden shadow-2xl">
+                        <img id="ferias-foto" src="" class="w-full h-full object-cover rounded-full">
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-black italic tracking-tighter text-white uppercase">Meus Períodos de Férias</h2>
+                        <div class="flex items-center gap-3">
+                            <p id="ferias-nome" class="text-[10px] text-white font-black uppercase tracking-widest opacity-60">---</p>
+                            <span class="size-1 rounded-full bg-primary"></span>
+                            <p id="ferias-cargo" class="text-[10px] text-primary font-black uppercase tracking-widest">TRIPULANTE</p>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <div id="ferias-progress" class="flex items-center gap-6">
-                <!-- Painel de Contabilização Mensal (Novo) -->
+
+                <!-- Painel de Contabilização Mensal (Sincronizado) -->
                 <div id="monthly-stats-panel" class="hidden md:flex items-center gap-4 px-4 py-2 bg-white/5 rounded-2xl border border-white/10">
                     <div class="text-center">
                         <p class="text-[7px] text-slate-500 font-black uppercase">Nacionais</p>
@@ -353,1173 +203,209 @@
                     </div>
                 </div>
 
-                <div class="text-right">
-                    <p class="text-[10px] text-slate-500 uppercase font-black">Total Marcado</p>
-                    <p class="text-xl font-black text-white"><span id="txt-dias-marcados">0</span>/30 <span class="text-xs text-slate-500">DIAS</span></p>
-                </div>
-                <div class="h-10 w-[2px] bg-white/10"></div>
-                <div id="status-badge-ferias" class="px-4 py-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[10px] font-black uppercase tracking-widest">
-                    Pendente de Início
-                </div>
-            </div>
-        </header>
-
-        <main class="flex-1 max-w-5xl mx-auto w-full p-6 grid grid-cols-1 lg:grid-cols-12 gap-8">
-            <!-- Coluna Esquerda: Calendário e Seleção -->
-            <div class="lg:col-span-7 space-y-6">
-                <!-- Painel de Seleção -->
-                <div class="bg-white/5 border border-white/10 rounded-3xl p-6 space-y-6 relative overflow-hidden">
-                    <div class="absolute top-0 right-0 p-4 opacity-5">
-                        <span class="material-symbols-outlined text-8xl">calendar_month</span>
+                <div class="flex items-center gap-6">
+                    <div class="text-right">
+                        <p class="text-[9px] text-slate-500 uppercase font-black tracking-widest mb-1">Total Marcado</p>
+                        <p class="text-2xl font-black text-white"><span id="txt-dias-marcados">0</span>/30 <span class="text-xs text-slate-500">DIAS</span></p>
                     </div>
-
-                    <div class="flex items-center justify-between relative z-10">
-                        <div class="flex items-center gap-3">
-                            <div class="size-10 rounded-xl bg-primary/20 flex items-center justify-center text-primary">
-                                <span class="material-symbols-outlined">event_note</span>
-                            </div>
-                            <div>
-                                <h3 class="text-xs font-black uppercase tracking-widest text-slate-100">Selecione o Período</h3>
-                                <p class="text-[10px] text-slate-500 font-bold uppercase">Mínimo de 10 dias por parcela</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <button id="btn-prev-month" class="p-2 hover:bg-white/5 rounded-lg transition-all text-slate-400">
-                                <span class="material-symbols-outlined">chevron_left</span>
-                            </button>
-                            <span id="txt-month-year" class="text-[11px] font-black uppercase tracking-widest text-white min-w-[120px] text-center">Janeiro 2026</span>
-                            <button id="btn-next-month" class="p-2 hover:bg-white/5 rounded-lg transition-all text-slate-400">
-                                <span class="material-symbols-outlined">chevron_right</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-7 text-center text-[9px] font-bold text-slate-500 uppercase mb-2">
-                        <span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span>
-                    </div>
-                    <div id="grid-calendar-ferias" class="grid grid-cols-7 gap-1"></div>
-
-                    <div id="current-selection-panel" class="hidden p-4 bg-primary/10 border border-primary/20 rounded-2xl flex items-center justify-between animate-in zoom-in-95 duration-300">
-                        <div class="flex items-center gap-4">
-                            <div class="text-center">
-                                <p class="text-[9px] text-slate-500 font-bold uppercase">Início</p>
-                                <p id="selection-start" class="text-xs font-black text-white">--/--/--</p>
-                            </div>
-                            <div class="material-symbols-outlined text-primary">arrow_forward</div>
-                            <div class="text-center">
-                                <p class="text-[9px] text-slate-500 font-bold uppercase">Fim</p>
-                                <p id="selection-end" class="text-xs font-black text-white">--/--/--</p>
-                            </div>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-[9px] text-slate-500 font-bold uppercase">Duração</p>
-                            <p class="text-sm font-black text-primary"><span id="selection-days">0</span> DIAS</p>
-                        </div>
-                    </div>
-
-                    <button id="btn-gravar-parcela" disabled class="w-full py-4 bg-primary/20 text-primary/40 text-[11px] font-black uppercase tracking-widest rounded-2xl transition-all border border-primary/10 disabled:cursor-not-allowed">
-                        Gravar Parcela de Férias
+                    <button onclick="window.fecharModalFerias()" class="size-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-all hover:bg-white/10">
+                        <span class="material-symbols-outlined">close</span>
                     </button>
                 </div>
-            </div>
+            </header>
 
-            <!-- Coluna Direita: Foto Cards -->
-            <div class="lg:col-span-5 space-y-6">
-                <div class="flex items-center justify-between px-2">
-                    <h3 class="text-xs font-black uppercase tracking-widest text-slate-100 flex items-center gap-2">
-                        <span class="material-symbols-outlined text-sm text-primary">analytics</span>
-                        Resumo Visual (Foto Cards)
-                    </h3>
-                    <span id="parcela-count" class="text-[12px] text-amber-400 font-extrabold uppercase">0/3 Parcelas</span>
-                </div>
+            <main class="grid grid-cols-1 lg:grid-cols-12 gap-0">
+                <!-- Coluna Esquerda: Calendário e Seleção -->
+                <div class="lg:col-span-7 p-8 border-r border-white/5 space-y-8 bg-black/20">
+                    <div class="space-y-6">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-4">
+                                <div class="size-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
+                                    <span class="material-symbols-outlined text-2xl font-variation-settings-fill">event_note</span>
+                                </div>
+                                <div>
+                                    <h3 class="text-xs font-black uppercase tracking-[0.2em] text-white">Selecione o Período</h3>
+                                    <p id="ferias-regras-info" class="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-1 italic">Mínimo de 10 dias por parcela</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3 bg-white/5 p-1 rounded-xl border border-white/5">
+                                <button id="btn-prev-month" class="size-9 flex items-center justify-center hover:bg-white/10 rounded-lg transition-all text-slate-400">
+                                    <span class="material-symbols-outlined text-lg">chevron_left</span>
+                                </button>
+                                <span id="txt-month-year" class="text-[11px] font-black uppercase tracking-widest text-white min-w-[120px] text-center">Janeiro 2026</span>
+                                <button id="btn-next-month" class="size-9 flex items-center justify-center hover:bg-white/10 rounded-lg transition-all text-slate-400">
+                                    <span class="material-symbols-outlined text-lg">chevron_right</span>
+                                </button>
+                            </div>
+                        </div>
 
-                <div id="photo-cards-container" class="space-y-6"></div>
+                        <div id="grid-calendar-ferias" class="grid grid-cols-7 gap-1">
+                            <!-- Injetado via JS -->
+                        </div>
 
-                <div id="final-control-panel" class="hidden animate-in slide-in-from-bottom-4 duration-500 space-y-4">
-                    <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-3xl p-6 text-center">
-                        <span class="material-symbols-outlined text-emerald-500 text-4xl mb-2">verified_user</span>
-                        <h4 class="text-sm font-black text-emerald-500 uppercase tracking-widest">30 Dias Completados!</h4>
+                        <div id="current-selection-panel" class="hidden p-6 bg-primary/10 border border-primary/20 rounded-3xl flex items-center justify-between animate-in zoom-in-95">
+                            <div class="flex items-center gap-8">
+                                <div class="text-center">
+                                    <p class="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-1">Início</p>
+                                    <p id="selection-start" class="text-sm font-black text-white italic">--/--/--</p>
+                                </div>
+                                <span class="material-symbols-outlined text-primary opacity-40">arrow_forward</span>
+                                <div class="text-center">
+                                    <p class="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-1">Fim</p>
+                                    <p id="selection-end" class="text-sm font-black text-white italic">--/--/--</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-1">Duração</p>
+                                <p class="text-lg font-black text-primary"><span id="selection-days">0</span> DIAS</p>
+                            </div>
+                        </div>
+
+                        <button id="btn-gravar-parcela" disabled class="w-full h-16 bg-primary/10 border border-primary/20 text-primary/40 text-[11px] font-black uppercase tracking-widest rounded-2xl transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary hover:text-white group">
+                            Gravar Parcela de Férias
+                        </button>
                     </div>
-                    <button onclick="window.confirmarTudoFerias()" class="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-emerald-500/20 transition-all">
-                        Enviar Para Aprovação
-                    </button>
                 </div>
-            </div>
-        </main>
+
+                <!-- Coluna Direita: Fo        <div class="lg:col-span-5 p-8 space-y-8 flex flex-col justify-between h-full bg-white/[0.01]">
+                    <div class="space-y-6">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-xs font-black uppercase tracking-[0.2em] text-white flex items-center gap-2">
+                                <span class="material-symbols-outlined text-sm text-primary">photo_library</span>
+                                Resumo Visual (Foto Cards)
+                            </h3>
+                            <span id="parcela-count" class="text-xs text-slate-500 font-black uppercase tracking-widest">0/3 Parcelas</span>
+                        </div>
+
+                        <div id="photo-cards-container" class="space-y-4 max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
+                            <!-- Injetado via FeriasEngine -->
+                        </div>
+                    </div>
+
+                    <div id="final-control-panel" class="hidden space-y-4 pt-8 border-t border-white/5">
+                        <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4 flex items-center gap-4 mb-4">
+                            <span class="material-symbols-outlined text-emerald-500">check_circle</span>
+                            <p class="text-[10px] text-emerald-500 font-black uppercase tracking-widest">PLANEJAMENTO DE 30 DIAS CONCLUÍDO</p>
+                        </div>
+                        <button id="btn-confirmar-tudo-ferias" class="w-full bg-emerald-500 py-6 rounded-2xl text-white font-black uppercase tracking-[0.3em] shadow-2xl hover:brightness-110 transition-all">
+                            Enviar Cronograma para o Porto
+                        </button>
+                    </div>
+                </div>
+            </main>
+        </div>
     </div>
 
-    <!-- MAIN CONSOLIDATED SCRIPT -->
     <script type="module">
-        import { supabase } from '../js/supabase-config.js';
-        import { Auth } from '../js/auth.js';
+        import { DiarioEngine } from '../js/engines/diario.engine.js';
+        import { AtividadesActions } from '../js/modules/atividades/atividades.actions.js';
+        import { JustificativasWorkflow } from '../js/modules/justificativas/justificativas.workflow.js';
         import { UI } from '../js/ui-utils.js';
-        import { Notifications } from '../js/notifications.js';
-        import { EventManager } from '../js/event-manager.js';
+        import { supabase } from '../js/supabase-config.js';
 
-        // --- GLOBAL STATE ---
-        let targetId = null;
-        let allHistoryData = [];
-        let historyExpanded = false;
-        let editingAnotacaoId = null;
-        let editingAnotacaoType = null; // 'atividade' ou 'justificativa'
-        let currentFile = null;
+        // Inicializar Motor do Diário
+        const urlParams = new URLSearchParams(window.location.search);
+        const targetId = urlParams.get('id') || localStorage.getItem('userId');
+        
+        DiarioEngine.init(targetId);
 
-        // --- VACATION STATE ---
-        let holidays = [];
-        let existingFerias = [];
-        let currentParcelas = [];
-        let currentMonth = new Date().getMonth();
-        let currentYear = new Date().getFullYear();
-        let selection = { start: null, end: null };
-        let sectorRule = 1;
-        const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+        // Bind de Funções Globais (Mantidas para compatibilidade de templates)
+        window.abrirModalFerias = async () => {
+            UI.showLoader();
+            const { FeriasEngine } = await import('../js/modules/ferias/ferias.engine.js');
+            await FeriasEngine.init({ role: 'employee', userId: targetId });
+            document.getElementById('modal-ferias').classList.remove('hidden');
+            UI.hideLoader();
+        };
 
-        const mapInstances = {};
-
-        // --- INITIALIZATION ---
-        async function init() {
-            try {
-                UI.showLoader();
-                const user = Auth.getUser();
-                if (user) UI.initSidebar(user.role);
-                
-                const urlParams = new URLSearchParams(window.location.search);
-                targetId = urlParams.get('id') || localStorage.getItem('userId');
-                
-                if (!targetId) {
-                    UI.showToast('Erro: Identificação não encontrada.', 'error');
-                    return;
-                }
-
-                initAnotacoesLogic();
-                await loadUnifiedHistory();
-            } catch (err) {
-                console.error("Init Error:", err);
-            } finally {
-                UI.hideLoader();
+        window.fecharModalFerias = () => document.getElementById('modal-ferias').classList.add('hidden');
+        
+        // Binds de Controle Global (Necessário para onclick nos cards)
+        window.marcarCiente = (id, type) => DiarioEngine.handleCiente(id, type);
+        window.editarAnotacao = (id, type) => DiarioEngine.startEdit(id);
+        window.cancelInlineEdit = () => DiarioEngine.cancelEdit();
+        window.saveInlineEdit = (id, type) => DiarioEngine.saveEdit(id, type);
+        
+        window.excluirAnotacao = async (id, type) => {
+            if (!confirm('Excluir registro?')) return;
+            let success = false;
+            if (type === 'atividade') success = await AtividadesActions.delete(id);
+            else if (type.includes('justificativa')) {
+                const { error } = await supabase.from('justificativas').delete().eq('id', id);
+                success = !error;
             }
-        }
+            if (success) DiarioEngine.loadAndProcessHistory();
+        };
 
-        function initAnotacoesLogic() {
-            const now = new Date();
-            const todayISO = now.toISOString().split('T')[0];
-            const todayBR = now.toLocaleDateString('pt-BR');
-            
-            const inputData = document.getElementById('inputDataAnotacao');
-            const labelAtiv = document.getElementById('labelAtividade');
-            if (inputData) inputData.value = todayISO;
-            if (labelAtiv) labelAtiv.innerText = `ATIVIDADE DO DIA (${todayBR})`;
-
-            document.getElementById('btn-voltar').onclick = () => UI.voltarInicio();
-
-            document.getElementById('btnModeAtividade').onclick = () => setMode('atividade');
-            document.getElementById('btnModeJustificativa').onclick = () => setMode('justificativa');
-            document.getElementById('btnModeFerias').onclick = () => window.abrirModalFerias();
-
-            document.getElementById('inputTipoModo').onchange = (e) => {
-                const isJust = e.target.value === 'justificativa';
-                document.getElementById('camposJustificativa').classList.toggle('hidden', !isJust);
-                document.getElementById('labelAtividade').innerText = isJust ? 'MOTIVO / DESCRIÇÃO' : 'ATIVIDADE DO DIA';
-                document.getElementById('btnSalvarAnotacao').innerHTML = isJust ? '<span class="material-symbols-outlined text-sm">send</span> Enviar Justificativa' : '<span class="material-symbols-outlined text-sm">send</span> Enviar Anotação';
-            };
-
-            // Lógica de Anexo
-            const btnAnexo = document.getElementById('btnAnexarEvidencia');
-            const fileInput = document.getElementById('inputEvidencia');
-            const txtAnexo = document.getElementById('txtAnexo');
-
-            btnAnexo.onclick = () => fileInput.click();
-            fileInput.onchange = (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    currentFile = file;
-                    txtAnexo.innerText = file.name.substring(0, 20) + (file.name.length > 20 ? '...' : '');
-                    btnAnexo.classList.add('border-emerald-500', 'text-emerald-400');
-                }
-            };
-
-            document.getElementById('btnSalvarAnotacao').onclick = salvarRegistro;
-            document.getElementById('btnExpandHistory').onclick = toggleHistoryExpansion;
-        }
-
-        function setMode(mode) {
-            const btnAtiv = document.getElementById('btnModeAtividade');
-            const btnJust = document.getElementById('btnModeJustificativa');
-            const camposJust = document.getElementById('camposJustificativa');
-            const title = document.getElementById('titleAnotacao');
-            const inputModo = document.getElementById('inputTipoModo');
-            
-            inputModo.value = mode;
-            if (mode === 'atividade') {
-                btnAtiv.classList.add('bg-primary', 'text-white');
-                btnAtiv.classList.remove('text-slate-400');
-                btnJust.classList.remove('bg-primary', 'text-white');
-                btnJust.classList.add('text-slate-400');
-                camposJust.classList.add('hidden');
-                title.innerText = 'REGISTRAR ATIVIDADE';
-            } else {
-                btnJust.classList.add('bg-primary', 'text-white');
-                btnJust.classList.remove('text-slate-400');
-                btnAtiv.classList.remove('bg-primary', 'text-white');
-                btnAtiv.classList.add('text-slate-400');
-                camposJust.classList.remove('hidden');
-                title.innerText = 'ENVIAR JUSTIFICATIVA';
-            }
-        }
-
-        function handleFileSelect(e) {
+        // Listeners de Formulário (Locais à tela)
+        document.getElementById('btn-voltar').onclick = () => window.location.href = 'dashboard.html';
+        document.getElementById('btnModeAtividade').onclick = () => setFormMode('atividade');
+        document.getElementById('btnModeJustificativa').onclick = () => setFormMode('justificativa');
+        document.getElementById('btnModeFerias').onclick = () => window.abrirModalFerias();
+        document.getElementById('btnSalvarAnotacao').onclick = handleSave;
+        document.getElementById('btnExpandHistory').onclick = () => DiarioEngine.toggleExpand();
+        
+        document.getElementById('btnAnexarEvidencia').onclick = () => document.getElementById('inputEvidencia').click();
+        document.getElementById('inputEvidencia').onchange = (e) => {
             const file = e.target.files[0];
+            const btn = document.getElementById('btnAnexarEvidencia');
+            const txt = document.getElementById('txtAnexo');
             if (file) {
-                if (file.size > 10 * 1024 * 1024) {
-                    UI.showToast('Máximo 10MB', 'error');
-                    return;
-                }
-                currentFile = file;
-                document.getElementById('txtAnexo').innerText = file.name;
-                document.getElementById('btnAnexarEvidencia').classList.add('border-emerald-500', 'text-emerald-400');
+                txt.innerText = file.name;
+                btn.classList.add('bg-emerald-500/10', 'text-emerald-500', 'border-emerald-500');
             }
-        }
+        };
 
-        function formatDateTime(isoStr) {
-            if (!isoStr) return '--/--/---- | --:--:--';
-            const d = new Date(isoStr);
-            if (isNaN(d.getTime())) return isoStr; 
-            return d.toLocaleDateString('pt-BR') + ' | ' + d.toLocaleTimeString('pt-BR');
-        }
-
-        async function loadUnifiedHistory() {
-            try {
-                const { data: user } = await supabase.from('funcionarios').select('setor_id').eq('id', targetId).maybeSingle();
-                const sId = user?.setor_id || '00000000-0000-0000-0000-000000000000';
-
-                const [resAnot, resJust, resLogs, resCom, resFerP] = await Promise.all([
-                    supabase.from('anotacoes').select('*').eq('funcionario_id', targetId),
-                    supabase.from('justificativas').select('*').eq('funcionario_id', targetId),
-                    supabase.from('diario_logs').select('*').eq('funcionario_id', targetId),
-                    supabase.from('comunicados').select('*, remetente:funcionarios!remetente_id(nickname, nome_completo)').or(`destinatario_id.eq.${targetId},tipo.eq.geral,setor_id.eq.${sId}`),
-                    supabase.from('ferias').select('*').eq('funcionario_id', targetId)
-                ]);
-
-                const getLocalISO = (dStr) => {
-                    if (!dStr) return '';
-                    const d = new Date(dStr);
-                    return new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
-                };
-
-                const feriasData = resFerP.data || [];
-                let groupedFerias = null;
-                if (feriasData.length > 0) {
-                    const statusCounts = feriasData.reduce((acc, f) => {
-                        acc[f.status] = (acc[f.status] || 0) + 1;
-                        return acc;
-                    }, {});
-                    
-                    let globalStatus = 'pendente';
-                    if (statusCounts['rejeitado']) globalStatus = 'rejeitado';
-                    else if (statusCounts['pendente']) globalStatus = 'pendente';
-                    else if (statusCounts['aprovado']) globalStatus = 'aprovado';
-
-                    // Encontrar a data da última ação (criação ou análise via logs) para posicionar o card
-                    const feriasLogs = (resLogs.data || []).filter(l => l.tipo === 'aviso_ferias' || l.tipo === 'ferias');
-                    let latestActionDate = feriasData[0].created_at || new Date().toISOString();
-                    
-                    if (feriasLogs.length > 0) {
-                        feriasLogs.sort((a,b) => new Date(b.created_at || b.data_hora) - new Date(a.created_at || a.data_hora));
-                        latestActionDate = feriasLogs[0].created_at || feriasLogs[0].data_hora;
-                    } else if (feriasData[0].created_at) {
-                        const sortedFerias = [...feriasData].sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
-                        latestActionDate = sortedFerias[0].created_at;
-                    }
-
-                    groupedFerias = {
-                        id: 'grouped_ferias_' + targetId,
-                        itemType: 'CRONOGRAMA_FERIAS',
-                        created_at: latestActionDate,
-                        data_item: getLocalISO(latestActionDate),
-                        status: globalStatus,
-                        parcelas: feriasData.sort((a,b) => a.parcela_numero - b.parcela_numero),
-                        conteudo: 'CRONOGRAMA DE FÉRIAS'
-                    };
-                }
-
-                // 5. Unificar Feriados/Folgas por TRANSMISSÃO (created_at) para criar um único card por envio
-                const ferRes = await supabase.from('feriados_folgas').select('*').or(`funcionario_id.eq.${targetId},setor_id.eq.${sId},escopo.eq.geral`);
-                // Carregar feriados nacionais usando a mesma lógica do calendário de FERIADOS/FOLGAS
-                try {
-                    const yearLocal = (typeof feriasCalendarYear !== 'undefined' && feriasCalendarYear) ? feriasCalendarYear : (new Date()).getFullYear();
-                    function getBrazilianHolidaysLocal(year) {
-                        const holidays = {};
-                        holidays[`${year}-01-01`] = 'Confraternização Universal';
-                        holidays[`${year}-04-21`] = 'Tiradentes';
-                        holidays[`${year}-05-01`] = 'Dia do Trabalho';
-                        holidays[`${year}-09-07`] = 'Independência do Brasil';
-                        holidays[`${year}-10-12`] = 'Nossa Senhora Aparecida';
-                        holidays[`${year}-11-02`] = 'Finados';
-                        holidays[`${year}-11-15`] = 'Proclamação da República';
-                        holidays[`${year}-12-25`] = 'Natal';
-                        const a = year % 19; const b = Math.floor(year / 100); const c = year % 100; const d = Math.floor(b / 4);
-                        const e = b % 4; const f = Math.floor((b + 8) / 25); const g = Math.floor((b - f + 1) / 3);
-                        const h = (19 * a + b - d - g + 15) % 30; const i = Math.floor(c / 4); const k = c % 4;
-                        const l = (32 + 2 * e + 2 * i - h - k) % 7; const m = Math.floor((a + 11 * h + 22 * l) / 451);
-                        const pMeso = Math.floor((h + l - 7 * m + 114) / 31); const pDia = ((h + l - 7 * m + 114) % 31) + 1;
-                        const pascoa = new Date(year, pMeso - 1, pDia);
-                        const addDays = (date, days) => { const result = new Date(date); result.setDate(result.getDate() + days); return result.toISOString().split('T')[0]; };
-                        holidays[addDays(pascoa, -47)] = 'Carnaval'; holidays[addDays(pascoa, -48)] = 'Carnaval';
-                        holidays[addDays(pascoa, -2)] = 'Sexta-feira Santa'; holidays[addDays(pascoa, 60)] = 'Corpus Christi';
-                        return holidays;
-                    }
-
-                    const nationalMap = getBrazilianHolidaysLocal(yearLocal);
-                    const national = Object.keys(nationalMap).map(d => ({ data: d, tipo: 'feriado_nacional', descricao: nationalMap[d] }));
-                    // Construir o array 'holidays' usado pelo renderCalendar de Minhas Férias
-                    const dbHolidays = (ferRes.data || []).map(f => ({ data: f.data, tipo: f.tipo || 'folga', descricao: f.descricao || '' }));
-                    const existing = new Set(dbHolidays.map(h => h.data));
-                    holidays = [ ...dbHolidays ];
-                    (national || []).forEach(n => { if (!existing.has(n.data)) holidays.push(n); });
-                } catch (e) {
-                    console.warn('[Diário] Não foi possível carregar feriados nacionais estáticos:', e);
-                    holidays = (ferRes.data || []).map(f => ({ data: f.data, tipo: f.tipo || 'folga', descricao: f.descricao || '' }));
-                }
-                // Evitar duplicidade quando já existe um comunicado do tipo 'ferias_folgas' (usar o comunicado como o evento principal)
-                const comCreatedSet = new Set((resCom.data || []).filter(c => c.subtipo === 'ferias_folgas').map(c => c.created_at));
-
-                const groupedBySend = (ferRes.data || []).reduce((acc, f) => {
-                    // Agrupar pelo timestamp de criação (transmissão). Se não existir, cair de volta para a data alvo.
-                    const key = f.created_at || f.data;
-                    // Se já tivermos um comunicado que representa esse envio, pule a criação do grupo (evita duplicidade)
-                    if (comCreatedSet.has(f.created_at)) return acc;
-                    if (!acc[key]) acc[key] = [];
-                    acc[key].push(f);
-                    return acc;
-                }, {});
-
-                // Representar cada transmissão de Feriados/Folgas por UM único item
-                // (data_item = data de envio / created_at). O card aparecerá apenas
-                // na data do envio (hoje), sem replicar para cada data marcada.
-                const feriadoItems = [];
-                Object.entries(groupedBySend).forEach(([key, list]) => {
-                    const groupId = 'group_' + String(key).replace(/[:.\-T]/g, '').replace(/[^0-9a-zA-Z]/g, '');
-                    const createdAt = list[0].created_at || list[0].data;
-
-                    feriadoItems.push({
-                        id: groupId,
-                        created_at: createdAt,
-                        // data_item será a data de envio (ISO local) para que o card
-                        // seja exibido no dia em que o usuário registrou (hoje)
-                        data_item: (new Date(createdAt).getTime() ? (new Date(createdAt).toISOString().split('T')[0]) : list[0].data),
-                        itemType: 'FERIAS_FOLGA_GROUP',
-                        list: list,
-                        conteudo: ''
-                    });
-                });
-
-                const itemsRaw = [
-                    ...(resAnot.data || []).map(a => ({ ...a, itemType: 'ATIVIDADE', data_item: a.data, conteudo: a.conteudo })),
-                    ...(resJust.data || []).map(j => ({ ...j, itemType: 'JUSTIFICATIVA', data_item: j.data_incidente, conteudo: j.descricao })),
-                    // Mapear comunicados: se for um resumo de feriados/folgas, convertê-lo
-                    // em um item do tipo FERIAS_FOLGA_GROUP vinculando a lista de feriados
-                    ...(resCom.data || []).map(c => {
-                        if (c.subtipo === 'ferias_folgas') {
-                            // encontrar itens de feriados_folgas que compartilham o mesmo created_at
-                            const related = (ferRes.data || []).filter(f => f.created_at === c.created_at);
-                            return {
-                                id: 'com_' + c.id,
-                                created_at: c.created_at,
-                                data_item: getLocalISO(c.created_at),
-                                itemType: 'FERIAS_FOLGA_GROUP',
-                                list: related,
-                                conteudo: c.conteudo
-                            };
-                        }
-                        return { ...c, itemType: 'COMUNICADO', data_item: getLocalISO(c.created_at), conteudo: c.conteudo };
-                    }),
-                    ...(resLogs.data || []).map(l => ({ ...l, itemType: 'SISTEMA', data_item: getLocalISO(l.data_hora), conteudo: l.mensagem_padrao })),
-                    ...(groupedFerias ? [groupedFerias] : []),
-                    ...feriadoItems
-                ];
-
-                console.log('[Diário] Itens Brutos Carregados:', itemsRaw.map(i => ({ id: i.id, type: i.itemType, subSet: i.list?.length })));
-
-                // Auto Clear Informativos (Apenas Comunicados Simples)
-                await EventManager.clearAutoInformativos(targetId, itemsRaw);
-
-                // Auto Clear Justificativas Processadas (Visualização do Funcionário)
-                const processedJusts = (resJust.data || []).filter(j => j.status !== 'pendente');
-                processedJusts.forEach(j => {
-                    if (!localStorage.getItem(`visto_justificativa_${j.id}`)) {
-                        localStorage.setItem(`visto_justificativa_${j.id}`, 'true');
-                    }
-                });
-                
-                // Clear logged user notifications if Admin
-                const session = Auth.checkSession();
-                if (session && session.userId !== targetId) {
-                    const { data: myComs } = await supabase.from('comunicados').select('id, subtipo').or(`destinatario_id.eq.${session.userId},tipo.eq.geral`);
-                    if (myComs?.length) await EventManager.clearAutoInformativos(session.userId, myComs.map(c => ({...c, itemType: 'COMUNICADO'})));
-                }
-
-                Notifications.updateBadges();
-
-                // 6. Filtrar apenas eventos do dia e ordenar (do mais recente para o mais antigo)
-                const now = new Date();
-                const todayStr = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
-
-                allHistoryData = itemsRaw
-                    .sort((a,b) => {
-                        const timeA = new Date(a.created_at || a.data_hora || a.time_raw || a.data_item + 'T00:00:00');
-                        const timeB = new Date(b.created_at || b.data_hora || b.time_raw || b.data_item + 'T00:00:00');
-                        return timeB - timeA;
-                    });
-
-                const labelTotal = document.getElementById('labelTotalAnotacoes');
-                if (labelTotal) labelTotal.innerText = `Total: ${allHistoryData.length} ${allHistoryData.length === 1 ? 'registro' : 'registros'} unificados`;
-
-                const btnExpandContainer = document.getElementById('containerBtnExpandir');
-                if (btnExpandContainer) {
-                    btnExpandContainer.classList.toggle('hidden', allHistoryData.length === 0);
-                }
-
-                renderUnifiedHistory();
-            } catch (err) {
-                console.error(err);
-            }
-        }
-
-        function renderUnifiedHistory() {
-            const container = document.getElementById('historicoAnotacoesContainer');
-            if (!container) return;
-
-            if (allHistoryData.length === 0) {
-                container.innerHTML = '<div class="text-center py-10 opacity-30">Vazio</div>';
-                return;
-            }
-
-            const grouped = allHistoryData.reduce((acc, it) => {
-                const d = it.data_item || 'Indefinido';
-                if (!acc[d]) acc[d] = [];
-                acc[d].push(it);
-                return acc;
-            }, {});
-
-            // Garantir que os itens dentro de cada data estejam ordenados do mais recente
-            // para o mais antigo (por created_at / data_hora / data_item)
-            const parseItemTime = (it) => {
-                const ts = it.created_at || it.data_hora || it.time_raw || (it.data_item ? (it.data_item + 'T00:00:00') : null);
-                const d = ts ? new Date(ts) : new Date(0);
-                return d.getTime();
-            };
-
-            Object.keys(grouped).forEach(k => {
-                grouped[k].sort((a,b) => parseItemTime(b) - parseItemTime(a));
-            });
-
-            const sortedDates = Object.keys(grouped).sort((a,b) => {
-                const da = new Date(a + 'T00:00:00');
-                const db = new Date(b + 'T00:00:00');
-                return db - da; // mais recente primeiro
-            });
-            const todayDateStr = new Date(new Date().getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+        function setFormMode(mode) {
+            const btnAtividade = document.getElementById('btnModeAtividade');
+            const btnJustificativa = document.getElementById('btnModeJustificativa');
+            const btnFerias = document.getElementById('btnModeFerias');
             
-            const viewDates = historyExpanded ? sortedDates : sortedDates.filter(d => {
-                if (d === todayDateStr) return true;
-                // Mostrar dias que possuem pendências (mesmo que no passado/futuro)
-                return grouped[d].some(item => {
-                    const config = EventManager.getConfig(item);
-                    if (item.itemType === 'FERIAS_FOLGA_GROUP') {
-                        return !item.list.every(f => f.lido === true || localStorage.getItem('visto_feriado_' + f.id));
-                    }
-                    if (item.itemType === 'COMUNICADO') {
-                        return !(item.lido === true || localStorage.getItem('ciente_' + item.id));
-                    }
-                    if (item.itemType === 'SISTEMA') {
-                        return !localStorage.getItem('visto_' + item.id) && !config.autoClear;
-                    }
-                    if (item.itemType === 'JUSTIFICATIVA') {
-                        return !localStorage.getItem('visto_justificativa_' + item.id) && item.status !== 'pendente';
-                    }
-                    return false;
-                });
+            // Resetar estilos
+            [btnAtividade, btnJustificativa, btnFerias].forEach(btn => {
+                btn.classList.remove('bg-primary', 'text-white');
+                btn.classList.add('text-slate-400', 'hover:text-white');
             });
 
-            if(!historyExpanded && viewDates.length === 0) {
-                container.innerHTML = '<div class="text-center py-10 opacity-30 text-[10px] uppercase font-bold tracking-widest text-slate-500">HOJE: Nenhum registro de eventos ou atividades</div>';
-                return;
-            }
+            // Aplicar estilo ativo
+            const activeBtn = mode === 'atividade' ? btnAtividade : (mode === 'justificativa' ? btnJustificativa : btnFerias);
+            activeBtn.classList.remove('text-slate-400', 'hover:text-white');
+            activeBtn.classList.add('bg-primary', 'text-white');
 
-            container.innerHTML = viewDates.map(date => {
-                const items = grouped[date];
-                return `
-                    <div class="mb-8">
-                        <div class="flex items-center gap-3 mb-4"><span class="h-px flex-1 bg-white/5"></span><h4 class="text-[9px] font-black uppercase tracking-widest text-slate-500">${date}</h4><span class="h-px flex-1 bg-white/5"></span></div>
-                        <div class="space-y-4">
-                            ${items.map(item => {
-                                const config = EventManager.getConfig(item);
-                                const isAtividade = item.itemType === 'ATIVIDADE';
-                                const isJustificativa = item.itemType === 'JUSTIFICATIVA';
-                                const isFerias = item.itemType === 'FERIAS';
-                                
-                                // Determinar Ícone Intuitivo
-                                let icon = config.icon;
-                                if (isAtividade) icon = 'edit_note';
-                                if (isJustificativa) icon = 'history_edu';
-                                
-                                // Determinar Cor da Borda Lateral
-                                // Use a configuração do EventManager por padrão para garantir consistência
-                                let sideBorder = config && config.premiumBorder ? config.premiumBorder : '';
-
-                                // Determinar classe de cor (faixa lateral estilizada) — mantemos classes separadas
-                                let accentClass = '';
-                                if (isAtividade) accentClass = 'accent-blue';
-                                else if (isJustificativa) accentClass = 'accent-amber';
-                                else if (isFerias) accentClass = 'accent-emerald';
-                                else if (item.itemType === 'SISTEMA') accentClass = 'accent-violet';
-                                else accentClass = 'accent-cyan';
-                                
-                                // Badge de Status para Justificativas e Férias
-                                let statusBadge = '';
-                                if (isJustificativa || item.itemType === 'CRONOGRAMA_FERIAS') {
-                                    const st = (item.status || 'pendente').toLowerCase();
-                                    const stClass = (st === 'abonado' || st === 'aprovado') ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40' : 
-                                                   (st === 'rejeitado' || st === 'negado') ? 'bg-rose-500/20 text-rose-400 border-rose-500/20' : 
-                                                   'bg-amber-500/20 text-amber-400 border-amber-500/20'; // Ambar translúcido para pendente
-                                    statusBadge = `<span class="px-2 py-0.5 rounded-lg border text-[8px] font-black uppercase ${stClass}">${st}</span>`;
-                                }
-
-                                const canEdit = EventManager.canEdit(item);
-
-                                // Renderização do Card de Feriados/Folgas Agrupados (um card por transmissão)
-                                if (item.itemType === 'FERIAS_FOLGA_GROUP') {
-                                    return `
-                                        ${ (() => {
-                                            const date = new Date(item.created_at || item.data_item + 'T00:00:00');
-                                            const cienteFlag = item.list.every(f => f.lido === true || localStorage.getItem('visto_feriado_' + f.id));
-
-                                            const dayBadges = item.list.map(f => {
-                                                const dateLabel = f.data.split('-').reverse().slice(0,2).join('/');
-                                                const tipo = (f.tipo || '').toLowerCase();
-                                                let badgeClass = 'bg-amber-500/10 text-amber-500 border border-amber-500/20';
-                                                if (tipo.includes('folga')) badgeClass = 'bg-rose-500/10 text-rose-500 border border-rose-500/20';
-                                                else if (tipo.includes('regional')) badgeClass = 'bg-violet-500/10 text-violet-400 border border-violet-500/20';
-                                                else if (tipo.includes('nacional')) badgeClass = 'bg-amber-500/10 text-amber-500 border border-amber-500/20';
-
-                                                return `<div class="inline-block mr-2 mb-2 px-2 py-1 rounded-md text-[10px] font-black uppercase ${badgeClass}">${dateLabel} • ${f.tipo.replace('_',' ').toUpperCase()}${f.descricao ? ' - ' + f.descricao : ''}</div>`;
-                                            }).join('');
-
-                                            return `
-                                                <div class="bg-white/5 border border-white/5 rounded-2xl p-4 space-y-3 group ${cienteFlag ? 'border-l-4 border-l-rose-500' : 'border-l-4 border-l-amber-500 bg-amber-500/5'} shadow-lg relative">
-                                                    <div class="flex justify-between items-start">
-                                                        <div class="flex items-center gap-2">
-                                                            <span class="material-symbols-outlined text-sm ${cienteFlag ? 'text-rose-500' : 'text-amber-500'}">event_note</span>
-                                                            <span class="text-[9px] font-black uppercase tracking-widest ${cienteFlag ? 'text-rose-500' : 'text-amber-500'}">FERIADOS / FOLGAS</span>
-                                                            <span class="text-[8px] font-bold text-slate-500 ml-2">${date.toLocaleDateString('pt-BR')} | ${date.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})}</span>
-                                                        </div>
-                                                        <div class="flex items-center gap-3">
-                                                            <!-- Informational only: removido botão 'ESTOU CIENTE' para FERIADOS/FOLGAS -->
-                                                            ${cienteFlag ? `
-                                                                <div class="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                                                                    <span class="material-symbols-outlined text-[10px]">verified</span>
-                                                                    <span class="text-[7px] font-black uppercase tracking-tighter">REGISTRADO</span>
-                                                                </div>
-                                                            ` : ''}
-                                                        </div>
-                                                    </div>
-                                                    <div class="pt-2">
-                                                        ${dayBadges}
-                                                    </div>
-                                                </div>
-                                            `;
-                                        })() }
-                                    `;
-                                }
-
-                                if (item.itemType === 'CRONOGRAMA_FERIAS') {
-                                    // ... mantem o original, ja estava bom
-                                    return `
-                                        <div class="bg-white/5 border border-white/5 rounded-2xl p-5 premium-border-sky shadow-lg relative">
-                                            <div class="flex justify-between items-start mb-4">
-                                                <div class="flex items-center gap-3">
-                                                    <div class="size-8 rounded-full bg-amber-500/10 flex items-center justify-center border border-amber-500/20">
-                                                        <span class="material-symbols-outlined text-[18px] text-amber-500 font-variation-settings-fill">beach_access</span>
-                                                    </div>
-                                                    <div>
-                                                        <h6 class="text-[11px] font-black uppercase tracking-widest text-white leading-none">CRONOGRAMA DE FÉRIAS</h6>
-                                                        <p class="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-1">PLANEJAMENTO ${new Date(item.parcelas[0].data_inicio).getFullYear()}</p>
-                                                    </div>
-                                                </div>
-                                                ${statusBadge}
-                                            </div>
-
-                                            <div class="space-y-3 mb-5">
-                                                ${item.parcelas.map(f => `
-                                                    <div class="bg-black/20 border border-white/5 rounded-xl p-4">
-                                                        <p class="text-[8px] font-black text-sky-400 uppercase tracking-widest mb-2">${f.parcela_numero}ª PARCELA DE FÉRIAS</p>
-                                                        <div class="grid grid-cols-3 items-center">
-                                                            <div>
-                                                                <p class="text-[7px] font-bold text-slate-500 uppercase mb-0.5">Início</p>
-                                                                <p class="text-[10px] font-black text-slate-200">${new Date(f.data_inicio + 'T12:00:00').toLocaleDateString()}</p>
-                                                            </div>
-                                                            <div class="text-center border-x border-white/5">
-                                                                <p class="text-[7px] font-bold text-slate-500 uppercase mb-0.5">Fim</p>
-                                                                <p class="text-[10px] font-black text-slate-200">${new Date(f.data_fim + 'T12:00:00').toLocaleDateString()}</p>
-                                                            </div>
-                                                            <div class="text-right">
-                                                                <p class="text-[7px] font-bold text-slate-500 uppercase mb-0.5">Duração</p>
-                                                                <p class="text-[10px] font-black text-amber-500">${Math.ceil(Math.abs(new Date(f.data_fim) - new Date(f.data_inicio)) / (1000*60*60*24)) + 1} DIAS</p>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                `).join('')}
-                                            </div>
-
-                                            <div class="flex gap-2">
-                                                ${canEdit ? `
-                                                    <button onclick="window.abrirModalFerias()" class="flex-1 flex items-center justify-center gap-2 py-4 bg-white/5 hover:bg-white/10 rounded-2xl transition-all border border-white/5 text-[9px] font-black text-amber-500 uppercase tracking-widest group">
-                                                        <span class="material-symbols-outlined text-sm group-hover:scale-110 transition-transform">edit</span> Alterar Planejamento
-                                                    </button>
-                                                ` : `
-                                                    <div class="flex-1 flex items-center justify-center gap-2 py-4 bg-white/5 rounded-2xl border border-white/5 text-[8px] font-bold text-slate-500 uppercase tracking-widest opacity-50 cursor-not-allowed">
-                                                        <span class="material-symbols-outlined text-xs">lock</span> Mudança Bloqueada (+20d)
-                                                    </div>
-                                                `}
-                                                ${item.status === 'pendente' ? `
-                                                    <button onclick="window.excluirPlanejamentoFerias()" class="flex items-center justify-center gap-2 px-6 py-4 bg-rose-500/5 hover:bg-rose-500/10 rounded-2xl transition-all border border-rose-500/10 text-[9px] font-black text-rose-500 uppercase tracking-widest group">
-                                                        <span class="material-symbols-outlined text-sm group-hover:scale-110 transition-transform">delete</span>
-                                                    </button>
-                                                ` : ''}
-                                            </div>
-                                        </div>
-                                    `;
-                                }
-
-                                                                const isHE = item.subtipo === 'hora_extra';
-                                const isCiente = item.lido === true || localStorage.getItem(`ciente_${item.id}`);
-                                const btnStyle = isCiente ? 
-                                    'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 
-                                    'bg-amber-500/10 border-amber-500/20 text-amber-500 shadow-lg shadow-amber-500/10';
-
-                                let bgClass = isFerias ? 'bg-vacation-soft' : '';
-                                if (isHE) {
-                                    // Hora extra deve usar a cor âmbar como faixa lateral
-                                    accentClass = 'accent-amber';
-                                    if (!isCiente) { sideBorder = 'premium-border-amber'; bgClass = 'bg-amber-500/10'; }
-                                    else { sideBorder = 'premium-border-emerald'; }
-                                }
-
-                                return `
-                                    <div class="card-history slim-mode ${bgClass} ${accentClass} ${sideBorder} no-gradient shadow-lg relative">
-                                        <div class="flex justify-between items-start mb-2">
-                                            <div class="flex flex-col gap-0.5">
-                                                <div class="flex items-center gap-1.5">
-                                                    <span class="material-symbols-outlined text-[12px] ${config.colorClass}">${icon}</span>
-                                                    <h6 class="text-[9px] font-black uppercase tracking-widest text-white leading-tight">${item.itemType === 'COMUNICADO' ? (isHE ? 'HORA EXTRA SOLICITADA' : 'COMUNICADO INTERNO') : (isAtividade ? 'ATIVIDADE DO DIA' : config.title)}</h6>
-                                                </div>
-                                                <p class="text-[7.5px] font-medium text-slate-500 uppercase tracking-tight">
-                                                    ${formatDateTime(item.created_at || item.data_hora || item.time_raw || item.data_item)}
-                                                </p>
-                                            </div>
-                                            ${statusBadge}
-                                        </div>
-
-                                        ${isJustificativa ? `<p class="text-[9px] font-bold text-slate-100 mb-1 uppercase tracking-tighter">${item.tipo_divergencia || 'Outros'}</p>` : ''}
-                                        
-                                        <p class="text-[10.5px] text-slate-300 ${isJustificativa ? '' : 'italic'} leading-snug">"${item.conteudo}"</p>
-                                        
-                                        <div class="flex justify-between items-center mt-2">
-                                            <div class="flex-1">
-                                                ${isJustificativa && item.evidencia_url ? `
-                                                    <a href="${item.evidencia_url}" target="_blank" class="flex items-center gap-1.5 px-2 py-1.5 bg-white/5 rounded-lg text-[8px] font-black uppercase tracking-widest hover:bg-white/10 transition-all">
-                                                        <span class="material-symbols-outlined text-xs">attach_file</span> Ver Anexo
-                                                    </a>
-                                                ` : ''}
-                                            </div>
-
-                                            <div class="flex gap-1.5">
-                                                ${canEdit ? `
-                                                    <button onclick="window.editarRegistro('${item.id}', '${item.itemType}')" class="p-2 bg-white/5 text-slate-400 hover:text-white rounded-lg transition-all material-symbols-outlined text-[16px]">edit</button>
-                                                    <button onclick="window.excluirAnotacao('${item.id}', '${item.itemType}')" class="p-2 bg-white/5 text-rose-500/60 hover:text-rose-500 rounded-lg transition-all material-symbols-outlined text-[16px]">delete</button>
-                                                ` : ''}
-                                                ${isHE ? `
-                                                    <button onclick="window.marcarCiente('${item.id}', 'HE')" class="px-3 py-1.5 rounded-lg border transition-all text-[8px] font-black uppercase tracking-widest flex items-center gap-1.5 ${btnStyle}">
-                                                        <span class="material-symbols-outlined text-xs">${isCiente ? 'done_all' : 'check'}</span>
-                                                        <span>ESTOU CIENTE</span>
-                                                    </button>
-                                                ` : ''}
-                                            </div>
-                                        </div>
-                                    </div>
-                                `;
-                            }).join('')}
-                        </div>
-                    </div>
-                `;
-            }).join('');
+            document.getElementById('inputTipoModo').value = mode;
+            document.getElementById('camposJustificativa').classList.toggle('hidden', mode !== 'justificativa');
+            document.getElementById('titleAnotacao').innerText = mode === 'atividade' ? 'REGISTRAR ATIVIDADE' : 'ENVIAR JUSTIFICATIVA';
         }
 
-        async function salvarRegistro() {
+        async function handleSave() {
             const content = document.getElementById('inputConteudoAnotacao').value.trim();
             const mode = document.getElementById('inputTipoModo').value;
+            const file = document.getElementById('inputEvidencia').files[0];
+            
             if (!content) return;
-
             UI.showLoader();
+            
             try {
-                if (editingAnotacaoId) {
-                    // MODO EDIÇÃO (UPDATE)
-                    if (editingAnotacaoType === 'ATIVIDADE') {
-                        await supabase.from('anotacoes').update({ conteudo: content }).eq('id', editingAnotacaoId);
-                    } else {
-                        await supabase.from('justificativas').update({ 
-                            descricao: content, 
-                            tipo_divergencia: document.getElementById('selectTipoJustificativa').value 
-                        }).eq('id', editingAnotacaoId);
-                    }
-                    UI.showToast('Atualizado com sucesso!', 'success');
-                } else {
-                    // MODO CRIAÇÃO (INSERT)
-                    if (mode === 'atividade') {
-                        await supabase.from('anotacoes').insert([{ funcionario_id: targetId, data: document.getElementById('inputDataAnotacao').value, conteudo: content }]);
-                        UI.showToast('Atividade salva!', 'success');
-                    } else {
-                        let evidenciaUrl = null;
-                        if (currentFile) {
-                            const fileExt = currentFile.name.split('.').pop();
-                            const fileName = `${targetId}/J_${Date.now()}.${fileExt}`;
-                            const { error: upErr } = await supabase.storage.from('evidencias').upload(fileName, currentFile);
-                            if (upErr) throw upErr;
-                            const { data: { publicUrl } } = supabase.storage.from('evidencias').getPublicUrl(fileName);
-                            evidenciaUrl = publicUrl;
-                        }
-
-                        const { error } = await supabase.from('justificativas').insert([{
-                            funcionario_id: targetId,
-                            data_incidente: document.getElementById('inputDataAnotacao').value,
-                            tipo_divergencia: document.getElementById('selectTipoJustificativa').value,
-                            descricao: content,
-                            evidencia_url: evidenciaUrl,
-                            status: 'pendente'
-                        }]);
-                        if (error) throw error;
-                        UI.showToast('Justificativa enviada!', 'success');
-                    }
+                const payload = { funcionario_id: targetId, conteudo: content, descricao: content, data_incidente: new Date().toISOString() };
+                let res;
+                if (mode === 'atividade') res = await AtividadesActions.save(payload);
+                else {
+                    if (file) payload.evidencia_url = await JustificativasWorkflow.uploadEvidence(file, targetId);
+                    payload.tipo_incidente = document.getElementById('selectTipoJustificativa').value;
+                    res = await JustificativasWorkflow.submit(payload);
                 }
                 
-                // Limpeza
-                editingAnotacaoId = null;
-                editingAnotacaoType = null;
-                document.getElementById('inputConteudoAnotacao').value = '';
-                document.getElementById('btnSalvarAnotacao').innerHTML = '<span class="material-symbols-outlined text-sm">send</span> Enviar';
-                currentFile = null;
-                document.getElementById('txtAnexo').innerText = 'Anexar Documento';
-                document.getElementById('btnAnexarEvidencia').classList.remove('border-emerald-500', 'text-emerald-400');
-                
-                await loadUnifiedHistory();
-            } catch (err) {
-                console.error(err);
-                UI.showToast('Erro ao salvar no banco.', 'error');
-            } finally {
-                UI.hideLoader();
-            }
-        }
-
-        window.editarRegistro = (id, type) => {
-            const item = allHistoryData.find(i => i.id === id && i.itemType === type);
-            if (!item) return;
-
-            editingAnotacaoId = id;
-            editingAnotacaoType = type;
-            
-            setMode(type.toLowerCase());
-            document.getElementById('inputConteudoAnotacao').value = item.conteudo;
-            if (type === 'JUSTIFICATIVA') {
-                document.getElementById('selectTipoJustificativa').value = item.tipo_divergencia || 'Outros';
-            }
-            
-            document.getElementById('btnSalvarAnotacao').innerHTML = '<span class="material-symbols-outlined text-sm">update</span> Atualizar Registro';
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        };
-
-        window.excluirAnotacao = async (id, type) => {
-            if (!confirm('Deseja realmente excluir este registro?')) return;
-            UI.showLoader();
-            try {
-                const table = type === 'JUSTIFICATIVA' ? 'justificativas' : 'anotacoes';
-                const { error } = await supabase.from(table).delete().eq('id', id);
-                if (error) throw error;
-                UI.showToast('Excluído com sucesso!', 'success');
-                await loadUnifiedHistory();
-            } catch (err) {
-                console.error(err);
-                UI.showToast('Erro ao excluir.', 'error');
-            } finally {
-                UI.hideLoader();
-            }
-        };
-
-        async function toggleHistoryExpansion() {
-            historyExpanded = !historyExpanded;
-            renderUnifiedHistory();
-            document.getElementById('txtExpandHistory').innerText = historyExpanded ? 'Recolher' : 'Ver Completo';
-        }
-
-        // --- EXPOSED GLOBALS ---
-        window.marcarCiente = async (id, type) => {
-            UI.showLoader();
-            try {
-                if (type === 'HE') {
-                    localStorage.setItem(`ciente_${id}`, 'true');
-                    await supabase.from('comunicados').update({ lido: true }).eq('id', id);
-                } else if (type === 'FERIADO') {
-                    localStorage.setItem(`visto_feriado_${id}`, 'true');
-                    // Também marca os itens individuais do grupo para limpar o badge
-                    const group = allHistoryData.find(i => i.id === id);
-                    if (group && group.list) {
-                        group.list.forEach(f => {
-                            localStorage.setItem(`visto_feriado_${f.id}`, 'true');
-                        });
-                    }
+                if (res?.success) {
+                    document.getElementById('inputConteudoAnotacao').value = '';
+                    document.getElementById('txtAnexo').innerText = 'ANEXAR EVIDÊNCIA';
+                    document.getElementById('btnAnexarEvidencia').classList.remove('bg-emerald-500/10', 'text-emerald-500', 'border-emerald-500');
+                    await DiarioEngine.loadAndProcessHistory();
+                    UI.showToast('Enviado com sucesso!', 'success');
                 }
-                
-                UI.showToast('Confirmado!', 'success');
-                Notifications.updateBadges(); // Atualiza contador na hora
-                await loadUnifiedHistory();
-            } catch (err) {
-                console.error(err);
             } finally {
                 UI.hideLoader();
             }
-        };
-
-        // --- AUTO CLEAR ON EXIT ---
-        window.addEventListener('beforeunload', () => {
-             // Limpa o badge de comunicados simples salvando no localStorage antes de sair
-             EventManager.clearAutoInformativos(targetId, allHistoryData);
-        });
-
-        window.excluirAnotacao = async (id) => {
-            if (!confirm('Deseja excluir?')) return;
-            await supabase.from('anotacoes').delete().eq('id', id);
-            await loadUnifiedHistory();
-        };
-
-        window.excluirPlanejamentoFerias = async () => {
-            if (!confirm('Deseja realmente excluir todo o planejamento de férias?')) return;
-            UI.showLoader();
-            try {
-                // Não permitir exclusão se já existir planejamento enviado/avaliado.
-                const { data: existing } = await supabase.from('ferias').select('id,status').eq('funcionario_id', targetId);
-                const blocked = (existing || []).some(f => ['pendente','proposto','aprovado'].includes((f.status || '').toLowerCase()));
-                if (blocked) {
-                    UI.showToast('Não é possível excluir: planejamento já enviado. Edite a solicitação em vez de excluir.', 'warning');
-                    return;
-                }
-
-                const { error } = await supabase.from('ferias').delete().eq('funcionario_id', targetId);
-                if (error) throw error;
-                UI.showToast('Planejamento removido!', 'success');
-                await loadUnifiedHistory();
-            } catch (err) {
-                console.error(err);
-                UI.showToast('Erro ao excluir férias.', 'error');
-            } finally {
-                UI.hideLoader();
-            }
-        };
-
-        // --- VACATION LOGIC ---
-        window.abrirModalFerias = async () => {
-            document.getElementById('modal-ferias').classList.remove('hidden');
-            document.getElementById('modal-ferias').classList.add('flex');
-            await loadFeriasData();
-            renderCalendar();
-            updateProgress();
-            renderPhotoCards();
-        };
-
-        window.fecharModalFerias = () => {
-            document.getElementById('modal-ferias').classList.add('hidden');
-        };
-
-        async function loadFeriasData() {
-            const [resH, resF] = await Promise.all([
-                supabase.from('feriados_folgas').select('*').or(`funcionario_id.eq.${targetId},escopo.eq.geral`),
-                supabase.from('ferias').select('*').eq('funcionario_id', targetId)
-            ]);
-            // Começa com os feriados do banco
-            const dbHolidays = (resH.data || []).map(f => ({ data: f.data, tipo: f.tipo || 'Folga', descricao: f.descricao || '', id: f.id }));
-            // Mesclar com feriados nacionais locais (sem duplicar por data)
-            try {
-                const yearLocal = (typeof feriasCalendarYear !== 'undefined' && feriasCalendarYear) ? feriasCalendarYear : (new Date()).getFullYear();
-                function getBrazilianHolidaysLocal(year) {
-                    const holidays = {};
-                    holidays[`${year}-01-01`] = 'Confraternização Universal';
-                    holidays[`${year}-04-21`] = 'Tiradentes';
-                    holidays[`${year}-05-01`] = 'Dia do Trabalho';
-                    holidays[`${year}-09-07`] = 'Independência do Brasil';
-                    holidays[`${year}-10-12`] = 'Nossa Senhora Aparecida';
-                    holidays[`${year}-11-02`] = 'Finados';
-                    holidays[`${year}-11-15`] = 'Proclamação da República';
-                    holidays[`${year}-12-25`] = 'Natal';
-                    const a = year % 19; const b = Math.floor(year / 100); const c = year % 100; const d = Math.floor(b / 4);
-                    const e = b % 4; const f = Math.floor((b + 8) / 25); const g = Math.floor((b - f + 1) / 3);
-                    const h = (19 * a + b - d - g + 15) % 30; const i = Math.floor(c / 4); const k = c % 4;
-                    const l = (32 + 2 * e + 2 * i - h - k) % 7; const m = Math.floor((a + 11 * h + 22 * l) / 451);
-                    const pMeso = Math.floor((h + l - 7 * m + 114) / 31); const pDia = ((h + l - 7 * m + 114) % 31) + 1;
-                    const pascoa = new Date(year, pMeso - 1, pDia);
-                    const addDays = (date, days) => { const result = new Date(date); result.setDate(result.getDate() + days); return result.toISOString().split('T')[0]; };
-                    holidays[addDays(pascoa, -47)] = 'Carnaval'; holidays[addDays(pascoa, -48)] = 'Carnaval';
-                    holidays[addDays(pascoa, -2)] = 'Sexta-feira Santa'; holidays[addDays(pascoa, 60)] = 'Corpus Christi';
-                    return holidays;
-                }
-
-                const nationalMap = getBrazilianHolidaysLocal(yearLocal);
-                const national = Object.keys(nationalMap).map(d => ({ data: d, tipo: 'Nacional', descricao: nationalMap[d] }));
-                const existingDates = new Set(dbHolidays.map(h => h.data));
-                holidays = [ ...dbHolidays ];
-                national.forEach(n => { if (!existingDates.has(n.data)) holidays.push(n); });
-            } catch (e) {
-                console.warn('[Ferias] Falha ao mesclar feriados nacionais:', e);
-                holidays = dbHolidays;
-            }
-            currentParcelas = (resF.data || []).map(f => ({
-                id: f.id,
-                start: new Date(f.data_inicio + 'T12:00:00'),
-                end: new Date(f.data_fim + 'T12:00:00'),
-                days: Math.ceil(Math.abs(new Date(f.data_fim) - new Date(f.data_inicio)) / (1000*60*60*24)) + 1,
-                status: 'salvo'
-            }));
-            
-            const { data: user } = await supabase.from('funcionarios').select('setor_id').eq('id', targetId).single();
-            if (user?.setor_id) {
-                const { data: sec } = await supabase.from('setores').select('regra_ferias').eq('id', user.setor_id).single();
-                sectorRule = sec?.regra_ferias || 1;
-            }
-            updateProgress();
         }
-
-        function calculateDays(s, e) {
-            return Math.ceil(Math.abs(e - s) / (1000*60*60*24)) + 1;
-        }
-
-        function renderCalendar() {
-            const grid = document.getElementById('grid-calendar-ferias');
-            const txt = document.getElementById('txt-month-year');
-            grid.innerHTML = '';
-            txt.innerText = `${monthNames[currentMonth]} ${currentYear}`;
-            
-            const first = new Date(currentYear, currentMonth, 1).getDay();
-            const days = new Date(currentYear, currentMonth + 1, 0).getDate();
-
-            for (let i = 0; i < first; i++) grid.appendChild(document.createElement('div'));
-            for (let d = 1; d <= days; d++) {
-                const date = new Date(currentYear, currentMonth, d);
-                const iso = date.toISOString().split('T')[0];
-                const el = document.createElement('div');
-                el.className = 'glass-calendar-day p-3 text-center text-[10px] rounded-lg border border-white/5';
-                el.innerText = d;
-                
-                if (holidays.find(h => h.data === iso)) el.classList.add('holiday-national');
-                if (currentParcelas.find(p => date >= p.start && date <= p.end)) el.classList.add('marked');
-                if (selection.start && date.getTime() === selection.start.getTime()) el.classList.add('selected');
-                if (selection.start && selection.end && date >= selection.start && date <= selection.end) el.classList.add('selected');
-
-                el.onclick = () => handleDayClick(date);
-                grid.appendChild(el);
-            }
-            updateMonthlyCounters();
-        }
-
-        function handleDayClick(date) {
-            if (!selection.start || (selection.start && selection.end)) {
-                selection.start = date;
-                selection.end = null;
-            } else {
-                selection.end = date < selection.start ? selection.start : date;
-                selection.start = date < selection.start ? date : selection.start;
-            }
-            updateSelectionPanel();
-            renderCalendar();
-        }
-
-        function updateSelectionPanel() {
-            const p = document.getElementById('current-selection-panel');
-            const b = document.getElementById('btn-gravar-parcela');
-            if (!selection.start || !selection.end) {
-                p.classList.add('hidden');
-                b.disabled = true;
-                return;
-            }
-            p.classList.remove('hidden');
-            const d = calculateDays(selection.start, selection.end);
-            const totalUsed = currentParcelas.reduce((acc, p) => acc + p.days, 0);
-            
-            document.getElementById('selection-start').innerText = selection.start.toLocaleDateString();
-            document.getElementById('selection-end').innerText = selection.end.toLocaleDateString();
-            document.getElementById('selection-days').innerText = d;
-
-            // Validação de Regra
-            let isValid = false;
-            if (sectorRule === 1) isValid = (d === 30);
-            else if (sectorRule === 2) isValid = (d >= 10);
-            else if (sectorRule === 3) isValid = (d === 10);
-
-            // Bloqueio se passar de 30 ou se já atingiu número de parcelas
-            if (totalUsed + d > 30) isValid = false;
-            if (currentParcelas.length >= sectorRule) isValid = false;
-
-            b.disabled = !isValid;
-            
-            // Estilização Dinâmica (Feedback Visual)
-            if (isValid) {
-                b.classList.remove('bg-white/5', 'text-slate-500', 'border-white/5');
-                b.classList.add('bg-emerald-500/20', 'text-emerald-400', 'border-emerald-500/30', 'shadow-[0_0_20px_rgba(16,185,129,0.1)]');
-            } else {
-                b.classList.add('bg-white/5', 'text-slate-500', 'border-white/5');
-                b.classList.remove('bg-emerald-500/20', 'text-emerald-400', 'border-emerald-500/30', 'shadow-[0_0_20px_rgba(16,185,129,0.1)]');
-            }
-        }
-
-        document.getElementById('btn-gravar-parcela').onclick = () => {
-            if (currentParcelas.length >= sectorRule) {
-                UI.showToast(`Limite de ${sectorRule} parcela(s) atingido!`, 'warning');
-                return;
-            }
-            const d = calculateDays(selection.start, selection.end);
-            currentParcelas.push({ start: selection.start, end: selection.end, days: d, status: 'rascunho' });
-            selection = { start: null, end: null };
-            updateSelectionPanel();
-            updateProgress();
-            renderCalendar();
-            renderPhotoCards();
-        };
-
-        function updateProgress() {
-            const total = currentParcelas.reduce((acc, p) => acc + p.days, 0);
-            document.getElementById('txt-dias-marcados').innerText = total;
-            document.getElementById('status-badge-ferias').innerText = total === 30 ? 'Completo' : `Faltam ${30-total} dias`;
-            document.getElementById('final-control-panel').classList.toggle('hidden', total < 30);
-            
-            // Sincronizar Contador de Parcelas (Pedido Turn 29)
-            const countEl = document.getElementById('parcela-count');
-            if (countEl) {
-                countEl.innerText = `${currentParcelas.length}/${sectorRule} Parcelas`;
-            }
-        }
-
-        function renderPhotoCards() {
-            const c = document.getElementById('photo-cards-container');
-            const today = new Date();
-            today.setHours(0,0,0,0);
-            const freezeLimit = new Date(today);
-            freezeLimit.setDate(today.getDate() + 20);
-
-            c.innerHTML = currentParcelas.map((p, i) => {
-                const isFrozen = new Date(p.start) < freezeLimit;
-                return `
-                <div onclick="window.focarParcela(${i})" class="bg-white/5 p-4 rounded-xl border border-white/5 flex justify-between items-center mb-2 cursor-pointer hover:bg-white/10 hover:border-primary/30 transition-all group">
-                    <div>
-                        <div class="flex items-center gap-2 mb-1">
-                            <p class="text-[10px] font-black text-white group-hover:text-primary transition-colors">${i+1}ª PARCELA (${p.days}d)</p>
-                            ${isFrozen ? '<span class="px-1.5 py-0.5 bg-sky-500/10 text-sky-400 border border-sky-500/20 text-[6px] font-black uppercase rounded leading-none flex items-center gap-1"><span class="material-symbols-outlined text-[10px]">ac_unit</span> CONGELADA</span>' : ''}
-                        </div>
-                        <p class="text-[8px] text-slate-500">${new Date(p.start).toLocaleDateString()} - ${new Date(p.end).toLocaleDateString()}</p>
-                    </div>
-                    ${!isFrozen ? `
-                        <button onclick="event.stopPropagation(); window.removerParcela(${i})" class="size-10 flex items-center justify-center rounded-xl bg-rose-500/5 text-rose-500/40 hover:text-rose-500 hover:bg-rose-500/10 transition-all group/del">
-                            <span class="material-symbols-outlined text-[20px] group-hover/del:scale-110 transition-transform">delete</span>
-                        </button>
-                    ` : `
-                        <div class="size-10 flex items-center justify-center text-sky-500/30">
-                            <span class="material-symbols-outlined text-[20px]">lock</span>
-                        </div>
-                    `}
-                </div>
-                `;
-            }).join('');
-        }
-
-        window.focarParcela = (i) => {
-            const p = currentParcelas[i];
-            if (!p) return;
-            currentMonth = p.start.getMonth();
-            currentYear = p.start.getFullYear();
-            renderCalendar();
-            UI.showToast(`Visualizando ${i+1}ª Parcela`, 'info');
-        };
-
-        window.removerParcela = (i) => {
-            const today = new Date();
-            today.setHours(0,0,0,0);
-            const freezeLimit = new Date(today);
-            freezeLimit.setDate(today.getDate() + 20);
-            
-            if (new Date(currentParcelas[i].start) < freezeLimit) {
-                UI.showToast('Esta parcela está congelada e não pode ser removida!', 'warning');
-                return;
-            }
-
-            currentParcelas.splice(i, 1);
-            updateProgress(); renderCalendar(); renderPhotoCards();
-        };
-
-        window.confirmarTudoFerias = async () => {
-            UI.showLoader();
-            try {
-                // Verificar se já existe um plano aprovado
-                const { data: existing } = await supabase.from('ferias').select('status').eq('funcionario_id', targetId);
-                const isSubsequentEdit = existing && existing.some(f => f.status === 'aprovado' || f.status === 'rejeitado');
-                
-                // Novo status: se for rascunho inicial = pendente. Se for alteração em aprovado = proposto.
-                const newStatus = 'pendente'; // CORREÇÃO: Unifica o status de entrada para 'pendente'
-
-                // Limpar solicitações pendentes anteriores antes de inserir a nova atualização
-                await supabase.from('ferias').delete().eq('funcionario_id', targetId).in('status', ['pendente', 'proposto']);
-
-                const inserts = currentParcelas.map((p, idx) => ({
-                    funcionario_id: targetId,
-                    data_inicio: p.start instanceof Date ? p.start.toISOString().split('T')[0] : p.start,
-                    data_fim: p.end instanceof Date ? p.end.toISOString().split('T')[0] : p.end,
-                    parcela_numero: idx + 1,
-                    status: newStatus
-                }));
-                await supabase.from('ferias').insert(inserts);
-
-                // Não registrar imediatamente no Diário — o registro no Diário será criado
-                // quando o Admin/Gestor realizar a análise (aprovou/rejeitou/alterou).
-                // Atualiza badges/contadores para que o dashboard exiba FÉRIAS (PENDENTES).
-                if (typeof Notifications !== 'undefined' && Notifications.updateBadges) await Notifications.updateBadges();
-                UI.showToast(isSubsequentEdit ? 'Alteração enviada para análise!' : 'Planejamento enviado com sucesso!', 'success');
-                window.fecharModalFerias();
-                if (window.init) await window.init();
-            } catch (err) {
-                console.error(err);
-                UI.showToast('Erro ao salvar planejamento.', 'error');
-            } finally {
-                UI.hideLoader();
-            }
-        };
-
-        window.reiniciarFerias = () => {
-            currentParcelas = [];
-            updateProgress(); renderCalendar(); renderPhotoCards();
-        };
-
-        document.getElementById('btn-prev-month').onclick = () => { currentMonth--; if(currentMonth < 0){currentMonth=11;currentYear--;} renderCalendar(); };
-        document.getElementById('btn-next-month').onclick = () => { currentMonth++; if(currentMonth > 11){currentMonth=0;currentYear++;} renderCalendar(); };
-
-        function updateMonthlyCounters() {
-            const panel = document.getElementById('monthly-stats-panel');
-            if(!panel) return;
-            const curHolidays = holidays.filter(h => {
-                const d = new Date(h.data + 'T12:00:00');
-                return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-            });
-            const c = { n: curHolidays.filter(h=>h.tipo==='Nacional').length, r: curHolidays.filter(h=>h.tipo==='Regional').length, f: curHolidays.filter(h=>h.tipo==='Folga').length };
-            document.getElementById('count-nacionais').innerText = c.n;
-            document.getElementById('count-regionais').innerText = c.r;
-            document.getElementById('count-folgas').innerText = c.f;
-            panel.classList.toggle('hidden', (c.n+c.r+c.f) === 0);
-        }
-
-        init();
     </script>
     <script type="module" src="../js/manager-context.js?v=3.0"></script>
 </body>
