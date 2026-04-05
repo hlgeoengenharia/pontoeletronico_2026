@@ -581,6 +581,11 @@
                 await refreshCalendar();
             });
 
+            window.addEventListener('sync-ferias-stats', async () => {
+                console.log('[Dashboard] Atualizando estatísticas de férias pendentes...');
+                await loadGlobalStats();
+            });
+
             document.getElementById('main-body').style.opacity = '1';
         }
 

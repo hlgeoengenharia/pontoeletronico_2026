@@ -16,7 +16,7 @@ export const DiarioAggregator = {
         await AwarenessManager.init(userId);
 
         // Query Multidirecional Otimizada (Réplica do sucesso do Diário)
-        const [resA, resJ, resComI, resComS, resComG, resFerI, resFerS, resFerG, resLogs] = await Promise.all([
+        const [resA, resJ, resComI, resComS, resComG, resFerI, resFerS, resFerG, resLogs, resFerTab] = await Promise.all([
             supabase.from('anotacoes').select('*').eq('funcionario_id', userId),
             supabase.from('justificativas').select('*').eq('funcionario_id', userId),
             supabase.from('comunicados').select('*').eq('destinatario_id', userId),
@@ -25,7 +25,8 @@ export const DiarioAggregator = {
             supabase.from('feriados_folgas').select('*').eq('funcionario_id', userId),
             supabase.from('feriados_folgas').select('*').eq('setor_id', sId).eq('escopo', 'setorial'),
             supabase.from('feriados_folgas').select('*').eq('escopo', 'geral'),
-            supabase.from('diario_logs').select('*').eq('funcionario_id', userId).in('tipo', ['comunicado', 'justificativa_resultado', 'justificativa']).eq('status_pendencia', 'pendente')
+            supabase.from('diario_logs').select('*').eq('funcionario_id', userId).in('tipo', ['comunicado', 'justificativa_resultado', 'justificativa', 'aviso_ferias']),
+            supabase.from('ferias').select('*').eq('funcionario_id', userId)
         ]);
 
         const rawData = {
@@ -33,7 +34,8 @@ export const DiarioAggregator = {
             justificativas: resJ.data || [],
             comunicados: [...(resComI.data || []), ...(resComS.data || []), ...(resComG.data || [])],
             feriados: [...(resFerI.data || []), ...(resFerS.data || []), ...(resFerG.data || [])],
-            logs: resLogs.data || []
+            logs: resLogs.data || [],
+            ferias: resFerTab.data || []
         };
 
         return {
@@ -61,17 +63,12 @@ export const DiarioAggregator = {
                     const t = String(c.subtipo || c.tipo || '').toLowerCase();
                     return (type === 'hora_extra') ? (t === 'hora_extra') : (t !== 'hora_extra');
                 });
-            } else if (type === 'ferias_folgas') {
-                items = data.feriados || [];
-            } else if (type === 'justificativa') {
-                items = data.justificativas || [];
-                // Soma os logs de resultado como pendências de justificativa (filtrando os já vistos)
-                const logResultados = (data.logs || []).filter(l => 
-                    l.tipo === 'justificativa_resultado' && 
-                    l.status_pendencia === 'pendente' &&
-                    !AwarenessManager.isSeen(l.id)
-                );
-                typeSum += logResultados.length;
+            } else if (type === 'ferias') {
+                // Notificações de Diário devem vir dos LOGS, não da tabela de cronograma bruta
+                items = []; 
+            } else if (type === 'cronograma_ferias') {
+                // Notificações de Análise Administrativa (Aviso de Férias)
+                items = (data.logs || []).filter(l => l.tipo === 'aviso_ferias');
             }
 
             typeSum += provider.counter.count(items, userId);

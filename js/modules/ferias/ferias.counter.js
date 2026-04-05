@@ -12,10 +12,9 @@ export const FeriasCounter = {
         if (!data || !Array.isArray(data)) return 0;
         
         const novidades = data.filter(item => {
-            const status = (item.status || 'pendente').toLowerCase();
-            if (status === 'pendente') return false;
+            const status = (item.status_pendencia || item.status || 'pendente').toLowerCase();
             
-            // Verifica via AwarenessManager (Central)
+            // Verifica via AwarenessManager (Central) usando o ID do LOG ou ITEM
             const isVisto = AwarenessManager.isSeen(item.id);
             return !isVisto;
         });

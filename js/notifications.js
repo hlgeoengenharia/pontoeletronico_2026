@@ -34,26 +34,46 @@ const Notifications = {
             if (isManagement) {
                 const [resJust, resFer, resLogs] = await Promise.all([
                     supabase.from('justificativas').select('id').eq('status', 'pendente'),
-                    supabase.from('ferias').select('id').eq('status', 'pendente'),
-                    supabase.from('diario_logs').select('id').eq('status_pendencia', 'pendente').not('tipo', 'in', '("comunicado","justificativa_resultado")')
+                    supabase.from('ferias').select('funcionario_id').eq('status', 'pendente'),
+                    supabase.from('diario_logs').select('id').eq('status_pendencia', 'pendente').not('tipo', 'in', '("comunicado","justificativa_resultado","aviso_ferias")')
                 ]);
-                sinoCount = (resJust.data?.length || 0) + (resFer.data?.length || 0) + (resLogs.data?.length || 0);
+
+                // Deduplicação de Férias: Contar funcionários únicos com solicitações pendentes
+                const uniqueFeriasEmployees = new Set((resFer.data || []).map(f => f.funcionario_id)).size;
+                
+                // Sino Geral passa a contar apenas Justificativas e Logs (Sem Férias p/ evitar redundância)
+                sinoCount = (resJust.data?.length || 0) + (resLogs.data?.length || 0);
+
+                // 2. Contagem do Diário (Alvo) via Aggregator (Awareness Aware)
+                const aggregatorResult = await DiarioAggregator.fetchAndAggregate(supabase, userId, sectorId);
+                const diarioCount = aggregatorResult.total;
+                
+                // 3. Atualizar UI
+                this.setBadge('notif-badge', sinoCount);
+                this.setBadge('badge-sino', sinoCount);
+                this.setBadge('badge-diario', diarioCount);
+                this.setBadge('badge-diario-footer', diarioCount);
+
+                // 4. Sincronização de Férias (Dashboard + Sidebar Gestão)
+                this.setBadge('stat-ferias-mes', uniqueFeriasEmployees);
+                this.setBadge('badge-ferias-sidebar', uniqueFeriasEmployees);
+                
+                console.log(`[Notifications] Badges Atualizados (Alvo ${userId}): Sino=${sinoCount}, Diário=${diarioCount}, Férias=${uniqueFeriasEmployees}`);
             } else {
+                // Lógica p/ Funcionários: Contar apenas respostas de justificativas pendentes de ciência
                 const { data: juData } = await supabase.from('justificativas').select('id').eq('funcionario_id', userId).eq('status', 'pendente');
                 sinoCount = (juData?.length || 0);
-            }
 
-            // 2. Contagem do Diário (Alvo) via Aggregator (Awareness Aware)
-            const aggregatorResult = await DiarioAggregator.fetchAndAggregate(supabase, userId, sectorId);
-            const diarioCount = aggregatorResult.total;
-            
-            // 3. Atualizar UI
-            this.setBadge('notif-badge', sinoCount);
-            this.setBadge('badge-sino', sinoCount);
-            this.setBadge('badge-diario', diarioCount);
-            this.setBadge('badge-diario-footer', diarioCount);
-            
-            console.log(`[Notifications] Badges Atualizados (Alvo ${userId}): Sino=${sinoCount}, Diário=${diarioCount}`);
+                // 2. Contagem do Diário (Alvo) via Aggregator (Awareness Aware)
+                const aggregatorResult = await DiarioAggregator.fetchAndAggregate(supabase, userId, sectorId);
+                const diarioCount = aggregatorResult.total;
+
+                // 3. Atualizar UI
+                this.setBadge('notif-badge', sinoCount);
+                this.setBadge('badge-sino', sinoCount);
+                this.setBadge('badge-diario', diarioCount);
+                this.setBadge('badge-diario-footer', diarioCount);
+            }
         } catch (e) {
             console.error('[Notifications] Falha na atualização:', e);
         }
@@ -86,7 +106,10 @@ const Notifications = {
             .on('postgres_changes', { event: '*', schema: 'public', table: 'comunicados' }, () => this.updateBadges())
             .on('postgres_changes', { event: '*', schema: 'public', table: 'justificativas' }, () => this.updateBadges())
             .on('postgres_changes', { event: '*', schema: 'public', table: 'diario_logs' }, () => this.updateBadges())
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'ferias' }, () => this.updateBadges())
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'ferias' }, () => {
+                this.updateBadges();
+                window.dispatchEvent(new CustomEvent('sync-ferias-stats'));
+            })
             .on('postgres_changes', { event: '*', schema: 'public', table: 'feriados_folgas' }, () => {
                 this.updateBadges();
                 window.dispatchEvent(new CustomEvent('sync-feriados'));

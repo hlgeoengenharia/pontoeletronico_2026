@@ -73,7 +73,7 @@ export const DiarioEngine = {
                 rawData.justificativas, 
                 rawData.comunicados, 
                 rawData.logs, 
-                [], 
+                rawData.ferias, 
                 rawData.feriados
             );
 

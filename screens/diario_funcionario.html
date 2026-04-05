@@ -9,7 +9,7 @@
             theme: {
                 extend: {
                     colors: {
-                        primary: '#0D59F2',
+                        primary: '#3B82F6', // Sincronizado com blue-500
                         secondary: '#F59E0B',
                         accent: '#10B981',
                         surface: '#0F172A',
@@ -25,12 +25,17 @@
     <script src="../js/theme.js?v=1.0"></script>
     <style>
         body { font-family: 'Space Grotesk', sans-serif; overflow-x: hidden; }
-        .glass-panel { background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(13, 89, 242, 0.2); }
-        .neon-glow { box-shadow: 0 0 15px rgba(13, 89, 242, 0.3); }
-        .premium-border-blue { border-left: 4px solid #0D59F2; }
+        .glass-panel { background: rgba(16, 22, 34, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(59, 130, 246, 0.2); }
+        .neon-glow { box-shadow: 0 0 15px rgba(59, 130, 246, 0.3); }
+        .premium-border-blue { border-left: 4px solid #3B82F6; }
         .premium-border-amber { border-left: 4px solid #F59E0B; }
         .premium-border-purple { border-left: 4px solid #A855F7; }
         .premium-border-rose { border-left: 4px solid #F43F5E; }
+        .glass-calendar-day:not(.day-congelado) {
+            border: 1px solid rgba(59, 130, 246, 0.15); /* Borda mais clara para ativos */
+            box-shadow: inset 0 0 10px rgba(59, 130, 246, 0.02);
+        }
+        .btn-gravar-ativo { background: rgba(59, 130, 246, 0.2) !important; border-color: rgba(59, 130, 246, 0.5) !important; color: #3B82F6 !important; opacity: 1 !important; transform: scale(1.02); }
         .premium-border-sky { border-left: 4px solid #38BDF8; }
         
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
@@ -48,44 +53,68 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            min-height: 44px;
+            min-height: 50px;
             border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            background: rgba(255, 255, 255, 0.02);
-            font-size: 10px;
-            font-weight: 700;
-            color: #94a3b8;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.08);
+            font-size: 14px;
+            font-weight: 900;
+            color: #FFFFFF !important;
         }
         .glass-calendar-day:hover:not(.disabled) {
-            background: rgba(13, 89, 242, 0.2);
+            background: rgba(13, 89, 242, 0.4);
             transform: scale(1.05);
+            color: white !important;
         }
         .glass-calendar-day.selected {
             background: #0d59f2 !important;
             color: white !important;
-            box-shadow: 0 0 15px rgba(13, 89, 242, 0.5);
+            box-shadow: 0 0 20px rgba(13, 89, 242, 0.6);
             border: none !important;
+            font-weight: 900;
+        }
+        .glass-calendar-day.selected-valid {
+            background: #10b981 !important;
+            box-shadow: 0 0 25px rgba(16, 185, 129, 0.8) !important;
+            color: white !important;
+            font-weight: 900;
         }
         .glass-calendar-day.holiday-national {
-            background: rgba(245, 158, 11, 0.15) !important;
-            border: 1px dashed rgba(245, 158, 11, 0.5) !important;
-            color: #f59e0b !important;
+            background: rgba(245, 158, 11, 0.3) !important;
+            border: 1px dashed rgba(245, 158, 11, 1) !important;
+            color: #fbbf24 !important;
         }
         .glass-calendar-day.holiday-regional {
-            background: rgba(139, 92, 246, 0.15) !important;
-            border: 1px dashed rgba(139, 92, 246, 0.5) !important;
-            color: #a78bfa !important;
+            background: rgba(139, 92, 246, 0.3) !important;
+            border: 1px dashed rgba(139, 92, 246, 1) !important;
+            color: #c4b5fd !important;
         }
         .glass-calendar-day.day-off {
-            background: rgba(6, 182, 212, 0.15) !important;
-            border: 1px dashed rgba(6, 182, 212, 0.5) !important;
-            color: #22d3ee !important;
+            background: rgba(6, 182, 212, 0.3) !important;
+            border: 1px dashed rgba(6, 182, 212, 1) !important;
+            color: #67e8f9 !important;
         }
         .glass-calendar-day.marked {
-            background: rgba(16, 185, 129, 0.1) !important;
-            border: 1px solid rgba(16, 185, 129, 0.3) !important;
-            color: #10b981 !important;
-            box-shadow: none !important;
+            background: rgba(16, 185, 129, 0.6) !important;
+            border: 1.5px solid rgba(16, 185, 129, 1) !important;
+            color: #FFFFFF !important;
+            font-weight: 900;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+        .glass-calendar-day.day-congelado {
+            opacity: 0.4 !important;
+            cursor: not-allowed;
+            background: repeating-linear-gradient(45deg, rgba(255,255,255,0.02), rgba(255,255,255,0.02) 5px, transparent 5px, transparent 10px) !important;
+            color: rgba(255, 255, 255, 0.3) !important;
+            border-color: rgba(255, 255, 255, 0.05) !important;
+            pointer-events: none;
+        }
+        .focused-day {
+            border: 2.5px solid #FFFFFF !important;
+            box-shadow: 0 0 25px rgba(255, 255, 255, 0.5) !important;
+            transform: scale(1.1) !important;
+            z-index: 50 !important;
+            position: relative;
         }
 
         /* Pulse Animations para Botões de Alerta */
@@ -172,20 +201,19 @@
             
             <header class="p-8 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
                 <div class="flex items-center gap-6">
-                    <div class="size-20 rounded-full border-2 border-primary/30 p-1 bg-slate-800 overflow-hidden shadow-2xl">
-                        <img id="ferias-foto" src="" class="w-full h-full object-cover rounded-full">
+                    <div class="size-20 rounded-full border-2 border-blue-500/30 p-1 bg-slate-800 overflow-hidden shadow-2xl">
+                        <img id="ferias-foto" src="" class="w-full h-full object-cover rounded-full" onerror="this.src='https://ui-avatars.com/api/?name='+document.getElementById('ferias-nome').innerText+'&background=101622&color=60A5FA'">
                     </div>
                     <div>
                         <h2 class="text-2xl font-black italic tracking-tighter text-white uppercase">Meus Períodos de Férias</h2>
                         <div class="flex items-center gap-3">
                             <p id="ferias-nome" class="text-[10px] text-white font-black uppercase tracking-widest opacity-60">---</p>
-                            <span class="size-1 rounded-full bg-primary"></span>
-                            <p id="ferias-cargo" class="text-[10px] text-primary font-black uppercase tracking-widest">TRIPULANTE</p>
+                            <span class="size-1 rounded-full bg-blue-500"></span>
+                            <p id="ferias-cargo" class="text-[10px] text-blue-400 font-black uppercase tracking-widest">---</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Painel de Contabilização Mensal (Sincronizado) -->
                 <div id="monthly-stats-panel" class="hidden md:flex items-center gap-4 px-4 py-2 bg-white/5 rounded-2xl border border-white/10">
                     <div class="text-center">
                         <p class="text-[7px] text-slate-500 font-black uppercase">Nacionais</p>
@@ -215,12 +243,11 @@
             </header>
 
             <main class="grid grid-cols-1 lg:grid-cols-12 gap-0">
-                <!-- Coluna Esquerda: Calendário e Seleção -->
                 <div class="lg:col-span-7 p-8 border-r border-white/5 space-y-8 bg-black/20">
                     <div class="space-y-6">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-4">
-                                <div class="size-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
+                                <div class="size-12 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-500">
                                     <span class="material-symbols-outlined text-2xl font-variation-settings-fill">event_note</span>
                                 </div>
                                 <div>
@@ -239,17 +266,15 @@
                             </div>
                         </div>
 
-                        <div id="grid-calendar-ferias" class="grid grid-cols-7 gap-1">
-                            <!-- Injetado via JS -->
-                        </div>
+                        <div id="grid-calendar-ferias" class="grid grid-cols-7 gap-1"></div>
 
-                        <div id="current-selection-panel" class="hidden p-6 bg-primary/10 border border-primary/20 rounded-3xl flex items-center justify-between animate-in zoom-in-95">
+                        <div id="current-selection-panel" class="hidden p-6 bg-blue-500/10 border border-blue-500/20 rounded-3xl flex items-center justify-between animate-in zoom-in-95">
                             <div class="flex items-center gap-8">
                                 <div class="text-center">
                                     <p class="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-1">Início</p>
                                     <p id="selection-start" class="text-sm font-black text-white italic">--/--/--</p>
                                 </div>
-                                <span class="material-symbols-outlined text-primary opacity-40">arrow_forward</span>
+                                <span class="material-symbols-outlined text-blue-500 opacity-40">arrow_forward</span>
                                 <div class="text-center">
                                     <p class="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-1">Fim</p>
                                     <p id="selection-end" class="text-sm font-black text-white italic">--/--/--</p>
@@ -257,39 +282,61 @@
                             </div>
                             <div class="text-right">
                                 <p class="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-1">Duração</p>
-                                <p class="text-lg font-black text-primary"><span id="selection-days">0</span> DIAS</p>
+                                <p class="text-lg font-black text-blue-400"><span id="selection-days">0</span> DIAS</p>
                             </div>
                         </div>
 
-                        <button id="btn-gravar-parcela" disabled class="w-full h-16 bg-primary/10 border border-primary/20 text-primary/40 text-[11px] font-black uppercase tracking-widest rounded-2xl transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary hover:text-white group">
+                        <button id="btn-gravar-parcela" disabled class="w-full h-16 bg-blue-500/10 border border-blue-500/20 text-blue-500/40 text-[11px] font-black uppercase tracking-widest rounded-2xl transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-500 hover:text-white group">
                             Gravar Parcela de Férias
                         </button>
                     </div>
                 </div>
 
-                <!-- Coluna Direita: Fo        <div class="lg:col-span-5 p-8 space-y-8 flex flex-col justify-between h-full bg-white/[0.01]">
+                <div class="lg:col-span-5 p-8 space-y-8 flex flex-col justify-between h-full bg-white/[0.01]">
                     <div class="space-y-6">
                         <div class="flex items-center justify-between">
-                            <h3 class="text-xs font-black uppercase tracking-[0.2em] text-white flex items-center gap-2">
-                                <span class="material-symbols-outlined text-sm text-primary">photo_library</span>
+                            <h3 class="text-[10px] font-black uppercase tracking-[0.2em] text-white flex items-center gap-2">
+                                <span class="material-symbols-outlined text-sm text-blue-500">photo_library</span>
                                 Resumo Visual (Foto Cards)
                             </h3>
-                            <span id="parcela-count" class="text-xs text-slate-500 font-black uppercase tracking-widest">0/3 Parcelas</span>
+                            <span id="parcela-count" class="text-[10px] text-slate-500 font-black uppercase tracking-widest">0/3 Parcelas</span>
                         </div>
-
-                        <div id="photo-cards-container" class="space-y-4 max-h-[400px] overflow-y-auto custom-scrollbar pr-2">
-                            <!-- Injetado via FeriasEngine -->
-                        </div>
+                        <div id="photo-cards-container" class="space-y-4 max-h-[450px] overflow-y-auto custom-scrollbar pr-2 pb-4"></div>
                     </div>
 
-                    <div id="final-control-panel" class="hidden space-y-4 pt-8 border-t border-white/5">
-                        <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4 flex items-center gap-4 mb-4">
-                            <span class="material-symbols-outlined text-emerald-500">check_circle</span>
-                            <p class="text-[10px] text-emerald-500 font-black uppercase tracking-widest">PLANEJAMENTO DE 30 DIAS CONCLUÍDO</p>
+                    <div id="final-control-panel" class="space-y-4 pt-8 border-t border-white/5">
+                        <div id="final-status-display" class="hidden animate-in slide-in-from-bottom-2">
+                            <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4 flex items-center gap-4 mb-4">
+                                <span class="material-symbols-outlined text-emerald-500">check_circle</span>
+                                <p class="text-[10px] text-emerald-500 font-black uppercase tracking-widest">PLANEJAMENTO DE 30 DIAS CONCLUÍDO</p>
+                            </div>
                         </div>
-                        <button id="btn-confirmar-tudo-ferias" class="w-full bg-emerald-500 py-6 rounded-2xl text-white font-black uppercase tracking-[0.3em] shadow-2xl hover:brightness-110 transition-all">
-                            Enviar Cronograma para o Porto
-                        </button>
+
+                        <div id="manager-actions" class="hidden grid grid-cols-3 gap-2">
+                            <button id="btn-aprovar-ferias" class="bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 h-16 rounded-2xl text-[8px] font-black uppercase tracking-tighter transition-all hover:bg-emerald-500 hover:text-white flex flex-col items-center justify-center gap-1 group translate-y-0.5">
+                                <span class="material-symbols-outlined text-lg group-hover:scale-110 transition-transform font-variation-settings-fill">check_circle</span>
+                                Abonar
+                            </button>
+                            <button id="btn-rejeitar-ferias" class="bg-rose-500/10 border border-rose-500/20 text-rose-500 h-16 rounded-2xl text-[8px] font-black uppercase tracking-tighter transition-all hover:bg-rose-500 hover:text-white flex flex-col items-center justify-center gap-1 group translate-y-0.5">
+                                <span class="material-symbols-outlined text-lg group-hover:scale-110 transition-transform">block</span>
+                                Rejeitar
+                            </button>
+                            <button id="btn-editar-emergencia" class="bg-amber-500/10 border border-amber-500/20 text-amber-500 h-16 rounded-2xl text-[8px] font-black uppercase tracking-tighter transition-all hover:bg-amber-500 hover:text-white flex flex-col items-center justify-center gap-1 group translate-y-0.5">
+                                <span class="material-symbols-outlined text-lg group-hover:scale-110 transition-transform">edit_note</span>
+                                Editar
+                            </button>
+                        </div>
+
+                        <div id="employee-actions" class="grid grid-cols-2 gap-3">
+                            <button id="btn-confirmar-tudo-ferias" class="bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 h-14 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all hover:bg-emerald-500 hover:text-white flex items-center justify-center gap-2 group">
+                                <span class="material-symbols-outlined text-lg group-hover:scale-110 transition-transform font-variation-settings-fill">send</span>
+                                Enviar
+                            </button>
+                            <button onclick="window.fecharModalFerias()" class="bg-white/5 border border-white/10 text-slate-400 h-14 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all hover:bg-white/10 hover:text-white flex items-center justify-center gap-2">
+                                <span class="material-symbols-outlined text-lg">close</span>
+                                Cancelar
+                            </button>
+                        </div>
                     </div>
                 </div>
             </main>
@@ -303,13 +350,11 @@
         import { UI } from '../js/ui-utils.js';
         import { supabase } from '../js/supabase-config.js';
 
-        // Inicializar Motor do Diário
         const urlParams = new URLSearchParams(window.location.search);
         const targetId = urlParams.get('id') || localStorage.getItem('userId');
         
         DiarioEngine.init(targetId);
 
-        // Bind de Funções Globais (Mantidas para compatibilidade de templates)
         window.abrirModalFerias = async () => {
             UI.showLoader();
             const { FeriasEngine } = await import('../js/modules/ferias/ferias.engine.js');
@@ -320,7 +365,6 @@
 
         window.fecharModalFerias = () => document.getElementById('modal-ferias').classList.add('hidden');
         
-        // Binds de Controle Global (Necessário para onclick nos cards)
         window.marcarCiente = (id, type) => DiarioEngine.handleCiente(id, type);
         window.editarAnotacao = (id, type) => DiarioEngine.startEdit(id);
         window.cancelInlineEdit = () => DiarioEngine.cancelEdit();
@@ -337,13 +381,11 @@
             if (success) DiarioEngine.loadAndProcessHistory();
         };
 
-        // Listeners de Formulário (Locais à tela)
         document.getElementById('btn-voltar').onclick = () => window.location.href = 'dashboard.html';
         document.getElementById('btnModeAtividade').onclick = () => setFormMode('atividade');
         document.getElementById('btnModeJustificativa').onclick = () => setFormMode('justificativa');
         document.getElementById('btnModeFerias').onclick = () => window.abrirModalFerias();
         document.getElementById('btnSalvarAnotacao').onclick = handleSave;
-        document.getElementById('btnExpandHistory').onclick = () => DiarioEngine.toggleExpand();
         
         document.getElementById('btnAnexarEvidencia').onclick = () => document.getElementById('inputEvidencia').click();
         document.getElementById('inputEvidencia').onchange = (e) => {
@@ -361,13 +403,11 @@
             const btnJustificativa = document.getElementById('btnModeJustificativa');
             const btnFerias = document.getElementById('btnModeFerias');
             
-            // Resetar estilos
             [btnAtividade, btnJustificativa, btnFerias].forEach(btn => {
                 btn.classList.remove('bg-primary', 'text-white');
                 btn.classList.add('text-slate-400', 'hover:text-white');
             });
 
-            // Aplicar estilo ativo
             const activeBtn = mode === 'atividade' ? btnAtividade : (mode === 'justificativa' ? btnJustificativa : btnFerias);
             activeBtn.classList.remove('text-slate-400', 'hover:text-white');
             activeBtn.classList.add('bg-primary', 'text-white');

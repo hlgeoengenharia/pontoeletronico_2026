@@ -58,26 +58,54 @@ const UI = {
     },
 
     /**
-     * Mostra um loader overlay
+     * Mostra um loader overlay (Reentrante)
      */
+    loaderCount: 0,
     showLoader() {
+        UI.loaderCount++;
         if (document.getElementById('ui-loader')) return;
+        
         const loader = document.createElement('div');
         loader.id = 'ui-loader';
-        loader.className = 'fixed inset-0 bg-background-dark/80 backdrop-blur-md z-[2000] flex flex-col items-center justify-center gap-4';
+        loader.className = 'fixed inset-0 bg-background-dark/80 backdrop-blur-md z-[2000] flex flex-col items-center justify-center gap-4 animate-in fade-in duration-300';
         loader.innerHTML = `
-            <div class="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
-            <p class="text-xs font-bold text-primary animate-pulse tracking-widest uppercase">Processando Dados...</p>
+            <div class="relative">
+                <div class="w-16 h-16 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-primary text-xl animate-pulse">hourglass_empty</span>
+                </div>
+            </div>
+            <p class="text-[10px] font-black text-primary animate-pulse tracking-[0.2em] uppercase">Processando Dados...</p>
         `;
         document.body.appendChild(loader);
+
+        // Safety Timeout: Forçar remoção após 10 segundos para evitar travamento de rede
+        setTimeout(() => {
+            const el = document.getElementById('ui-loader');
+            if (el) {
+                console.warn('[UI] Safety timeout acionado.');
+                UI.loaderCount = 0;
+                UI.hideLoader(); // Usa a própria função p/ garantir remoção limpa
+            }
+        }, 10000);
     },
 
     /**
-     * Esconde o loader overlay
+     * Esconde o loader overlay (Reentrante)
      */
     hideLoader() {
-        const loader = document.getElementById('ui-loader');
-        if (loader) loader.remove();
+        UI.loaderCount--;
+        if (UI.loaderCount <= 0) {
+            UI.loaderCount = 0;
+            const loader = document.getElementById('ui-loader');
+            if (loader) {
+                loader.classList.replace('fade-in', 'fade-out');
+                setTimeout(() => {
+                    const el = document.getElementById('ui-loader');
+                    if (el) el.remove();
+                }, 300);
+            }
+        }
     },
 
     /**

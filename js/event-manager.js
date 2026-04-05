@@ -76,6 +76,13 @@ const EventManager = {
             colorClass: 'text-emerald-500',
             premiumBorder: 'premium-border-emerald',
             autoClear: true
+        },
+        'CRONOGRAMA_FERIAS': {
+            title: 'PROGRAMAÇÃO ANUAL DE FÉRIAS',
+            icon: 'flight_takeoff',
+            colorClass: 'text-blue-500',
+            premiumBorder: 'premium-border-blue',
+            autoClear: true
         }
     },
 
@@ -91,7 +98,7 @@ const EventManager = {
         if (subtipo === 'mensagem' || subtipo === 'comunicado') return this.EVENT_CONFIG['COMUNICADO'];
         
         if (typeKey === 'GPS' || item.tipo === 'gps_pulse' || item.tipo === 'gps_hora') return this.EVENT_CONFIG['GPS'];
-        if (typeKey === 'FERIAS') return this.EVENT_CONFIG['FERIAS'];
+        if (typeKey === 'FERIAS' || item.tipo === 'aviso_ferias') return this.EVENT_CONFIG['CRONOGRAMA_FERIAS'];
         if (typeKey === 'FERIAS_FOLGA' || typeKey === 'FERIAS_FOLGA_GROUP') return this.EVENT_CONFIG['FERIAS_FOLGA'];
         if (typeKey === 'EVENTO') return this.EVENT_CONFIG['EVENTO'];
         if (typeKey === 'FERIAS_FOLGA' || typeKey === 'FERIAS_FOLGA_GROUP') return this.EVENT_CONFIG['FERIAS_FOLGA'];
@@ -149,7 +156,7 @@ const EventManager = {
         // D. Logs de Sistema (Alinhados para limpeza automática via ItemType)
         logs.forEach(l => {
             // OCULTAR redundâncias: Justificativas processadas já tem seu próprio card integrado
-            if (l.tipo === 'justificativa_resultado' || l.tipo === 'justificativa') return;
+            if (l.tipo === 'justificativa_resultado' || l.tipo === 'justificativa' || l.tipo === 'aviso_ferias') return;
 
             unified.push({ 
                 ...l, 
@@ -160,16 +167,24 @@ const EventManager = {
             });
         });
 
-        // E. Férias (Cronogramas)
-        ferias.forEach(f => unified.push({ 
-            ...f, 
-            tipo: 'ferias', 
-            itemType: 'CRONOGRAMA_FERIAS',
-            subtipo: 'ferias',
-            time: f.created_at || f.data_inicio,
-            content: f.status === 'pendente' ? 'Proposta de férias aguardando análise.' : 
-                     (f.status === 'aprovado' ? 'Cronograma de férias consolidado.' : 'Cronograma de férias necessita de ajustes.')
-        }));
+        // E. Férias (Cronogramas Agrupados)
+        if (ferias && ferias.length > 0) {
+            const first = ferias[0];
+            const logAviso = logs.find(l => l.tipo === 'aviso_ferias');
+
+            unified.push({ 
+                ...first, 
+                id: logAviso ? logAviso.id : `ferias_unificado_${first.funcionario_id}`, // ID p/ ciência
+                tipo: 'ferias', 
+                itemType: 'CRONOGRAMA_FERIAS',
+                subtipo: 'ferias',
+                time: first.created_at || first.data_inicio,
+                parcelas: ferias, // Inserção do array para o FeriasHistory.render()
+                log_message: logAviso ? logAviso.mensagem_padrao : null,
+                content: first.status === 'pendente' ? 'Proposta de férias aguardando análise.' : 
+                         (first.status === 'aprovado' ? 'Cronograma de férias consolidado.' : 'Cronograma de férias necessita de ajustes.')
+            });
+        }
 
         // F. Feriados e Folgas (Agrupamento Modularizado na Grande Unificação)
         const groupedFer = (feriados || []).reduce((acc, f) => {
