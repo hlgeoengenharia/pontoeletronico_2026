@@ -14,6 +14,13 @@ export const JustificativasCounter = {
         if (!data || !Array.isArray(data)) return 0;
         
         return data.filter(item => {
+            // Se for LOG (diario_logs), verificamos status_pendencia E Awareness
+            if (item.tipo === 'justificativa_resultado') {
+                const isPendente = (item.status_pendencia || 'pendente').toLowerCase() === 'pendente';
+                return isPendente && !AwarenessManager.isSeen(item.id);
+            }
+
+            // Se for JUSTIFICATIVA (tabela original), verificamos se já foi analisada
             const status = (item.status || 'pendente').toLowerCase();
             
             // Pendente não é novidade de diário para funcionário. 

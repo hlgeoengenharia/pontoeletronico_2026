@@ -107,7 +107,14 @@ export const DiarioEngine = {
         });
 
         if (toClear.length > 0) {
+            // 1. Limpeza Awareness (LocalStorage + config_notificacoes_lidas)
             await AwarenessManager.autoClear(toClear, this.state.userId);
+
+            // 2. Limpeza de Diário (Garante atualização do campo status_pendencia no banco para sumir do Aggregator)
+            // Chamamos via EventManager para aproveitar o processamento em lote especializado
+            if (EventManager.clearAutoInformativos) {
+                await EventManager.clearAutoInformativos(this.state.userId, toClear);
+            }
         }
     },
 

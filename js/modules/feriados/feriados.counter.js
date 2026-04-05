@@ -26,13 +26,23 @@ export const FeriadosCounter = {
             return isFutureOrToday && !isManualSeen;
         });
 
-        // Agrupar por Lote (Created_at) - Cada lote conta como 1 única notificação
+        // Agrupar por Lote (Created_at) - Fundamental para contagem de EVENTO ÚNICO
         const batches = new Set();
         activeItems.forEach(f => {
+            // Se tiver created_at, usa como chave de lote, senão usa o ID próprio
             const batchKey = f.created_at || f.id;
             batches.add(batchKey);
         });
 
-        return batches.size;
+        // Se o lote já foi visto (via o ID de qualquer item do lote), não conta
+        // Como o Agregador envia a lista bruta, filtramos aqui
+        let finalCount = 0;
+        batches.forEach(key => {
+            // Procuramos se algum item desse lote NUNCA foi visto
+            const someUnseenInBatch = activeItems.some(f => (f.created_at === key || f.id === key) && !AwarenessManager.isSeen(f.id));
+            if (someUnseenInBatch) finalCount++;
+        });
+
+        return finalCount;
     }
 };

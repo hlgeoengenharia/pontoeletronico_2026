@@ -69,6 +69,11 @@ export const DiarioAggregator = {
             } else if (type === 'cronograma_ferias') {
                 // Notificações de Análise Administrativa (Aviso de Férias)
                 items = (data.logs || []).filter(l => l.tipo === 'aviso_ferias');
+            } else if (type === 'justificativa') {
+                // Soma JUSTIFICATIVAS da tabela principal + RESULTADOS nos logs (Gatilho de análise)
+                items = [...(data.justificativas || []), ...(data.logs || []).filter(l => l.tipo === 'justificativa_resultado')];
+            } else if (type === 'ferias_folgas') {
+                items = data.feriados || [];
             }
 
             typeSum += provider.counter.count(items, userId);
