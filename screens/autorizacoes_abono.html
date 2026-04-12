@@ -72,6 +72,7 @@
       import { supabase } from '../js/supabase-config.js';
       import { Auth } from '../js/auth.js';
       import { UI } from '../js/ui-utils.js';
+      import { BusinessRulesManager } from '../js/business-rules-manager.js';
 
       const user = Auth.getUser();
 
@@ -153,10 +154,11 @@
                 else if (l.tipo === 'saida_intermediaria') tipoLabel = 'SOLICITAÇÃO DE ABONO (SAÍDA ANTECIPADA)';
                 else if (l.tipo === 'gps_oculto') tipoLabel = 'DIVERGÊNCIA DE GPS (OCULTO)';
                 else if (l.tipo === 'geofence_in') tipoLabel = 'RETORNO AO PERÍMETRO';
+                else if (l.tipo === 'alerta_feriados_folgas') tipoLabel = 'ALERTA DE GESTÃO';
 
                 return { 
                   ...l, 
-                  itemType: 'SISTEMA', 
+                  itemType: l.tipo === 'alerta_feriados_folgas' ? 'ALERTA_MENSAL' : 'SISTEMA', 
                   data_incidente: l.data_hora || l.created_at, 
                   tipo_divergencia: tipoLabel, 
                   descricao: l.mensagem_padrao || l.conteudo || l.justificativa_colaborador,
@@ -180,6 +182,11 @@
           }
 
           container.innerHTML = allPendencies.map(item => {
+            // Renderização Modular para Alertas de Gestão
+            if (item.itemType === 'ALERTA_MENSAL') {
+                return AlertarFeriadosCard.render(item);
+            }
+
             const isGps = item.itemType === 'GPS';
             const badgeClass = isGps ? 'bg-orange-500/10 text-orange-500 border-orange-500/20' : 'bg-amber-500/10 text-amber-500 border-amber-500/20';
             const icon = isGps ? 'location_on' : 'description';
@@ -341,7 +348,7 @@
                await supabase.from('diario_logs').update({ status_pendencia: 'visto' }).eq('funcionario_id', item.funcionario_id).eq('tipo', 'justificativa').eq('status_pendencia', 'pendente');
             }
             error = errJ;
-          } else if (type === 'SISTEMA') {
+          } else if (type === 'SISTEMA' || type === 'ALERTA_MENSAL') {
             const result = await supabase.from('diario_logs').update({ status_pendencia: status }).eq('id', id);
             error = result.error;
           } else {
@@ -349,6 +356,17 @@
             error = result.error;
           }
           if (error) throw error;
+
+          // 4. Se for rejeição, acionar penalidades do BusinessRulesManager
+          if (status === 'rejeitado') {
+              try {
+                  await BusinessRulesManager.processRejection(item, type, obs);
+              } catch (penErr) {
+                  console.error('[Conformidade] Falha ao aplicar penalidade:', penErr);
+                  // Não interrompe o fluxo principal, mas avisa no console
+              }
+          }
+
           UI.showToast(status === 'abonado' ? 'Solicitação Abonada!' : 'Solicitação Rejeitada!', 'success');
           loadJustificativas();
         } catch (err) {
@@ -405,6 +423,9 @@
     <script type="module">
       import { Auth } from '../js/auth.js';
       import { UI } from '../js/ui-utils.js';
+      import { EventRegistry } from '../js/core/event.registry.js';
+      import { AlertarFeriadosCard } from '../js/modules/Alertar_feriados_folgas/alertar.feriados.card.js';
+      import { AlertarFeriadosActions } from '../js/modules/Alertar_feriados_folgas/alertar.feriados.actions.js';
       window.addEventListener('load', () => {
         const user = Auth.getUser();
         if (user) UI.updateFooterNavigation(user.role);

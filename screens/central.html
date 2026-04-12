@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html class="dark" lang="pt-BR">
+
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Central de Monitoramento | ChronoSync</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet">
+    <script src="../js/theme.js?v=1.0"></script>
+    <style>
+        .font-variation-settings-fill {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .hub-card {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hub-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
+        }
+
+        .hub-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.05), transparent);
+            transition: 0.6s;
+        }
+
+        .hub-card:hover::after {
+            left: 100%;
+        }
+
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .icon-glow {
+            filter: drop-shadow(0 0 8px currentColor);
+        }
+    </style>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen flex flex-col items-center">
+
+    <!-- HEADER -->
+    <header
+        class="w-full max-w-md p-4 flex items-center justify-between sticky top-0 bg-background-dark/80 backdrop-blur-md z-[60] border-b border-white/5">
+        <div class="flex items-center gap-2">
+            <button id="openSidebar"
+                class="size-10 flex items-center justify-center bg-white/5 rounded-xl text-slate-400 hover:text-primary transition-all">
+                <span class="material-symbols-outlined">menu</span>
+            </button>
+            <button onclick="window.location.href='dashboard.html'"
+                class="size-10 flex items-center justify-center bg-white/5 rounded-xl text-slate-400 hover:text-primary transition-all">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+        </div>
+
+        <h1 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] text-center flex-1">Painel de Controle</h1>
+
+        <div class="size-10"></div> <!-- Spacer -->
+    </header>
+
+    <main class="flex-1 w-full max-w-md p-6 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        
+        <div class="text-center space-y-2">
+            <h2 class="text-2xl font-black text-white uppercase tracking-tighter">Central Alpha</h2>
+            <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Ferramentas de Governança e Auditoria</p>
+        </div>
+
+        <div class="grid gap-4">
+            <!-- BOTÃO: CONTROLE -->
+            <a href="controle.html" class="hub-card glass-effect rounded-3xl p-6 flex items-center gap-6 group">
+                <div class="size-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                    <span class="material-symbols-outlined text-3xl icon-glow">settings_input_component</span>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-sm font-black text-white uppercase tracking-tight">Gestão de Sistemas</h3>
+                    <p class="text-[9px] text-slate-500 uppercase font-bold tracking-widest mt-0.5">Parâmetros e Configurações Globais</p>
+                </div>
+                <span class="material-symbols-outlined text-slate-600 group-hover:text-primary transition-colors">chevron_right</span>
+            </a>
+
+            <!-- BOTÃO: DIAGNÓSTICO -->
+            <a href="diagnostico.html" class="hub-card glass-effect rounded-3xl p-6 flex items-center gap-6 group">
+                <div class="size-14 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-500 group-hover:scale-110 transition-transform">
+                    <span class="material-symbols-outlined text-3xl icon-glow">troubleshoot</span>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-sm font-black text-white uppercase tracking-tight">Diagnóstico de Ponto</h3>
+                    <p class="text-[9px] text-slate-500 uppercase font-bold tracking-widest mt-0.5">Scanner de Regras e Auditoria</p>
+                </div>
+                <span class="material-symbols-outlined text-slate-600 group-hover:text-amber-500 transition-colors">chevron_right</span>
+            </a>
+
+            <!-- BOTÃO: LIMPEZA -->
+            <a href="limpar_dados_emergencia.html" class="hub-card glass-effect rounded-3xl p-6 flex items-center gap-6 group">
+                <div class="size-14 rounded-2xl bg-rose-500/10 flex items-center justify-center text-rose-500 group-hover:scale-110 transition-transform">
+                    <span class="material-symbols-outlined text-3xl icon-glow">delete_sweep</span>
+                </div>
+                <div class="flex-1">
+                    <h3 class="text-sm font-black text-white uppercase tracking-tight">Limpeza de Dados</h3>
+                    <p class="text-[9px] text-slate-500 uppercase font-bold tracking-widest mt-0.5">Manutenção Emergencial de Logs</p>
+                </div>
+                <span class="material-symbols-outlined text-slate-600 group-hover:text-rose-500 transition-colors">chevron_right</span>
+            </a>
+        </div>
+
+        <!-- FOOTER INFO -->
+        <div class="pt-8 text-center text-[8px] font-black text-slate-600 uppercase tracking-[0.3em]">
+            ChronoSync v4.0.0-Audit
+        </div>
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-background-dark/90 border-t border-white/5 py-4 z-50 flex justify-center backdrop-blur-xl">
+        <div class="flex items-center justify-around w-full max-w-md px-6">
+            <a href="dashboard.html" class="flex flex-col items-center gap-1.5 text-slate-500">
+                <span class="material-symbols-outlined text-2xl">home</span>
+                <span class="text-[9px] font-black uppercase tracking-widest text-center">Início</span>
+            </a>
+            <div class="flex flex-col items-center gap-1.5 text-primary">
+                <span class="material-symbols-outlined text-2xl font-variation-settings-fill">dashboard_customize</span>
+                <span class="text-[9px] font-black uppercase tracking-widest text-center">Central</span>
+            </div>
+        </div>
+    </nav>
+
+    <script type="module">
+        import { Auth } from '../js/auth.js';
+        import { UI } from '../js/ui-utils.js';
+        const session = Auth.checkSession();
+        if (!session) window.location.href = 'pagina_login_01.html';
+        
+        const role = localStorage.getItem('userRole');
+        if (role !== 'Admin' && role !== 'Gestor' && role !== 'Comandante') {
+            window.location.href = 'dashboard.html';
+        }
+
+        // Inicializar Sidebar
+        UI.initSidebar(role);
+        document.getElementById('openSidebar').onclick = () => UI.toggleSidebar(true);
+    </script>
+
+    <!-- Sidebar Menu Overlay -->
+    <aside id="sidebarMenu"
+        class="fixed top-0 left-0 h-full w-80 bg-background-dark border-r border-primary/20 z-[160] -translate-x-full transition-all duration-500 ease-out shadow-[20px_0_50px_rgba(0,0,0,0.5)]">
+        <div class="flex flex-col h-full">
+            <div class="p-8 border-b border-primary/10">
+                <h3 class="text-primary font-black italic text-2xl tracking-tighter">CHRONOSYNC</h3>
+                <p class="text-[10px] text-slate-500 uppercase font-bold tracking-[0.3em]">Console de Navegação</p>
+            </div>
+            <nav id="sidebarNav" class="flex-1 overflow-y-auto p-4 space-y-2">
+                <!-- Injetado via UI.initSidebar() -->
+            </nav>
+            <div class="p-4 border-t border-primary/10 bg-black/20">
+                <button id="logoutBtn"
+                    class="w-full flex items-center gap-3 px-4 py-3 text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all font-bold text-xs uppercase">
+                    <span class="material-symbols-outlined">logout</span> Sair do Sistema
+                </button>
+            </div>
+        </div>
+    </aside>
+    <div id="sidebarOverlay"
+        class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[150] hidden opacity-0 transition-all duration-300"></div>
+</body>
+
+</html>

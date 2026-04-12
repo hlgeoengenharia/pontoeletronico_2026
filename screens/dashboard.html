@@ -82,6 +82,25 @@
             }
         }
 
+        // 2. Pré-carregar os Modelos de IA (Reconhecimento Facial) de forma assíncrona
+        // Para não atrasar o carregamento da tela principal, fazemos após 2 segundos
+        setTimeout(async () => {
+            if (currentUser && currentUser.biometria_cadastrada) {
+                try {
+                    const { FaceApiService } = await import('../js/face-api-service.js');
+                    await FaceApiService.init();
+                } catch (e) {
+                    console.warn('[Dashboard] Não foi possível pré-carregar os modelos de IA:', e);
+                }
+            }
+        }, 2000);
+    } catch (err) {
+        console.error("Erro no init:", err);
+        UI.showToast("Erro ao carregar dados do usuário", "error");
+        setTimeout(Auth.logout, 2000);
+    }
+}
+
         @keyframes slide-from-right {
             0% {
                 transform: translateX(20px);
@@ -375,15 +394,12 @@
             </h3>
             <div class="bg-white/5 border border-white/10 rounded-3xl p-6 shadow-inner">
                 <div class="flex justify-between items-center mb-6 px-2">
-                    <p id="calendar-month" class="text-xs font-black text-slate-100 uppercase tracking-widest">Mês
-                        Exemplo</p>
+                    <p id="calendar-month" class="text-xs font-black text-slate-100 uppercase tracking-widest">Mês Exemplo</p>
                     <div class="flex gap-2">
-                        <button id="btn-prev-month"
-                            class="w-10 h-10 flex items-center justify-center bg-white/5 rounded-xl text-slate-400 hover:text-primary active:scale-90 transition-all">
+                        <button id="btn-prev-month" class="w-10 h-10 flex items-center justify-center bg-white/5 rounded-xl text-slate-400 hover:text-primary active:scale-90 transition-all">
                             <span class="material-symbols-outlined">chevron_left</span>
                         </button>
-                        <button id="btn-next-month"
-                            class="w-10 h-10 flex items-center justify-center bg-white/5 rounded-xl text-slate-400 hover:text-primary active:scale-90 transition-all">
+                        <button id="btn-next-month" class="w-10 h-10 flex items-center justify-center bg-white/5 rounded-xl text-slate-400 hover:text-primary active:scale-90 transition-all">
                             <span class="material-symbols-outlined">chevron_right</span>
                         </button>
                     </div>
@@ -393,6 +409,53 @@
                     <span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span>
                 </div>
                 <div id="app-calendar" class="grid grid-cols-7 gap-1"></div>
+            </div>
+        </section>
+
+        <!-- NOVO: CONFIGURAÇÕES TÉCNICAS DE JANELA (Portado do Diagnóstico) -->
+        <section id="window-tech-section" class="hidden space-y-4 px-1">
+            <div class="bg-white/5 border border-white/10 rounded-3xl p-6 space-y-4 shadow-xl">
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-amber-500 text-sm">settings_input_component</span>
+                    <h4 class="text-[10px] font-black text-amber-500 uppercase tracking-widest">Minha Configuração de Janela</h4>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <!-- Horários Base -->
+                    <div class="space-y-1 p-3 bg-white/5 rounded-xl border border-white/5">
+                        <p class="text-slate-500 font-bold uppercase text-[8px] tracking-tighter">Entrada Prevista</p>
+                        <p id="dash-entrada-base" class="text-white font-black tracking-widest text-base">--:--</p>
+                    </div>
+                    <div class="space-y-1 p-3 bg-white/5 rounded-xl border border-white/5">
+                        <p class="text-slate-500 font-bold uppercase text-[8px] tracking-tighter">Saída Prevista</p>
+                        <p id="dash-saida-base" class="text-white font-black tracking-widest text-base">--:--</p>
+                    </div>
+
+                    <!-- Ativação -->
+                    <div class="space-y-1 p-3 bg-amber-500/5 rounded-xl border border-amber-500/10">
+                        <p id="dash-antes-l1" class="text-amber-500 font-black uppercase text-[10px] tracking-tight">JANELA ANTES: --</p>
+                        <p id="dash-antes-l2" class="text-white font-black uppercase text-[10px] tracking-widest">ATIVAÇÃO ÀS --:--</p>
+                    </div>
+
+                    <!-- Desativação Base -->
+                    <div class="space-y-1 p-3 bg-amber-500/5 rounded-xl border border-amber-500/10">
+                        <p id="dash-depois-l1" class="text-amber-500 font-black uppercase text-[10px] tracking-tight">JANELA DEPOIS: --</p>
+                        <p id="dash-depois-l2" class="text-white font-black uppercase text-[10px] tracking-widest">DESATIVAÇÃO ÀS --:--</p>
+                    </div>
+
+                    <!-- Tolerância -->
+                    <div class="space-y-1 p-3 bg-primary/5 rounded-xl border border-primary/10">
+                        <p id="dash-tol-l1" class="text-primary font-black uppercase text-[10px] tracking-tight">TOLERÂNCIA: --</p>
+                        <p id="dash-tol-l2" class="text-white font-black uppercase text-[10px] tracking-widest">LIMITE ÀS --:--</p>
+                    </div>
+
+                    <!-- HE/Prorrogação -->
+                    <div class="space-y-1 p-3 bg-rose-500/5 rounded-xl border border-rose-500/10">
+                        <p id="dash-he-l1" class="text-rose-500 font-black uppercase text-[10px] tracking-tight">PRORROGAÇÃO: --</p>
+                        <p id="dash-he-l2" class="text-white font-black uppercase text-[10px] tracking-widest">FECHAMENTO ÀS --:--</p>
+                    </div>
+                </div>
+                <p class="text-[9px] text-slate-600 font-bold uppercase tracking-tight text-center italic">Horários oficiais sincronizados com sua escala</p>
             </div>
         </section>
 
@@ -469,7 +532,7 @@
 
             <canvas id="canvas-snapshot" class="hidden"></canvas>
 
-            <button id="btn-capturar-face" onclick="PunchEngine.captureAndProcess(currentUser)"
+            <button id="btn-capturar-face" 
                 class="w-full py-4 rounded-2xl bg-primary text-white text-[11px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all">
                 Capturar e Registar Ponto
             </button>
@@ -516,6 +579,7 @@
         import { GPSTracker } from '../js/gps-tracker.js';
         import { PunchEngine } from '../js/punch-engine.js';
         import { Notifications } from '../js/notifications.js';
+        import { AlertarFeriadosScheduler } from '../js/modules/Alertar_feriados_folgas/alertar.feriados.scheduler.js';
 
         let currentUser = null;
         let timerInterval = null;
@@ -563,6 +627,8 @@
             // Lógicas Condicionais por Perfil
             if (funcionario.nivel_acesso === 'Admin' || funcionario.nivel_acesso === 'Gestor') {
                 await loadGlobalStats();
+                // Acionar Scheduler de Feriados (Geração Automática do Alerta)
+                AlertarFeriadosScheduler.checkAndTrigger(funcionario);
             }
             Notifications.updateBadges();
 
@@ -574,6 +640,18 @@
 
             // Ativar Monitoramento de GPS UI
             setupGPSSignals();
+
+            // Sincronizar Card de Janela Técnica (Sincronizado c/ Escala)
+            updateTechnicalWindowCard(funcionario);
+
+            // Expor GPSTracker globalmente para o motor de ponto (Corrige 'GPSTracker não inicializado')
+            window.GPSTracker = GPSTracker;
+
+            // Configurar Listeners que dependem do módulo (Corrige 'currentUser is not defined')
+            const btnCapturarFace = document.getElementById('btn-capturar-face');
+            if (btnCapturarFace) {
+                btnCapturarFace.onclick = () => PunchEngine.captureAndProcess(currentUser);
+            }
 
             // Sincronização em Tempo Real via Evento Global
             window.addEventListener('sync-feriados', async () => {
@@ -729,6 +807,52 @@
         }
 
         // --- ESTATÍSTICAS GLOBAIS ---
+        async function updateTechnicalWindowCard(user) {
+            const scale = user.escalas;
+            if (!scale || !scale.horario_entrada) {
+                document.getElementById('window-tech-section').classList.add('hidden');
+                return;
+            }
+
+            const formatTime = (timeStr) => {
+                if (!timeStr) return '--:--';
+                const [h, m] = timeStr.split(':');
+                return `${h}:${m}`;
+            };
+
+            const offsetTime = (timeStr, minutes) => {
+                if (!timeStr) return '--:--';
+                const [h, m, s] = timeStr.split(':').map(Number);
+                const d = new Date();
+                d.setHours(h, m, s || 0, 0);
+                d.setMinutes(d.getMinutes() + minutes);
+                return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            };
+
+            const antesMin = parseInt(scale.janela_ativa_antes_minutos) || 30;
+            const depoisMin = parseInt(scale.janela_ativa_depois_minutos) || 30;
+            const tolMin = parseInt(scale.tolerancia_entrada_minutos) || 0;
+            const heMin = 0; // DASH SHOWS BASE, Prorrogação depends on daily exceptions, showing 0 or standard
+
+            // Horários Base
+            document.getElementById('dash-entrada-base').innerText = formatTime(scale.horario_entrada);
+            document.getElementById('dash-saida-base').innerText = formatTime(scale.horario_saida);
+
+            document.getElementById('dash-antes-l1').innerText = `JANELA ANTES: ${antesMin} MIN.`;
+            document.getElementById('dash-antes-l2').innerText = `ATIVAÇÃO ÀS ${offsetTime(scale.horario_entrada, -antesMin)}`;
+            
+            document.getElementById('dash-depois-l1').innerText = `JANELA DEPOIS: ${depoisMin} MIN.`;
+            document.getElementById('dash-depois-l2').innerText = `DESATIVAÇÃO ÀS ${offsetTime(scale.horario_saida, depoisMin)}`;
+
+            document.getElementById('dash-tol-l1').innerText = `TOLERÂNCIA: ${tolMin} MIN.`;
+            document.getElementById('dash-tol-l2').innerText = `LIMITE ÀS ${offsetTime(scale.horario_entrada, tolMin)}`;
+
+            document.getElementById('dash-he-l1').innerText = `PRORROGAÇÃO: ${heMin} MIN.`;
+            document.getElementById('dash-he-l2').innerText = `FECHAMENTO ÀS ${offsetTime(scale.horario_saida, depoisMin + heMin)}`;
+
+            document.getElementById('window-tech-section').classList.remove('hidden');
+        }
+
         async function loadGlobalStats() {
             try {
                 const today = new Date().toISOString().split('T')[0];
@@ -841,7 +965,7 @@
                     btn.classList.add('bg-rose-500'); // Check-out é sempre Rose para destaque
                     const label = btn.querySelector('span.text-xs');
                     if (label) label.innerHTML = 'FINALIZAR<br>TURNO';
-                    btn.onclick = () => handlePunchAction('check-out');
+                    btn.onclick = () => PunchEngine.startFlow('check-out', currentUser);
                 } else {
                     // Aplicar Cor por Perfil
                     if (role === 'Admin') btn.classList.add('punch-admin');
@@ -850,7 +974,7 @@
 
                     const label = btn.querySelector('span.text-xs');
                     if (label) label.innerHTML = 'REGISTRAR<br>PONTO';
-                    btn.onclick = () => handlePunchAction('check-in');
+                    btn.onclick = () => PunchEngine.startFlow('check-in', currentUser);
 
                     // Lógica de Janela de Ativação e Congelamento
                     await checkButtonWindow(btn);
@@ -938,7 +1062,16 @@
                 }
             }
 
+            let lastExtraMinutesFetch = 0;
+            let cachedExtraLimit = 0;
+
             async function getExtraMinutes() {
+                const now = Date.now();
+                // Cache de 2 minutos para evitar excesso de requisições e erros de rede transient
+                if (now - lastExtraMinutesFetch < 120000) { 
+                    return cachedExtraLimit;
+                }
+
                 let extraLimit = 0;
                 try {
                     // Regra: Comunicados de HE valem por 24 horas após a criação
@@ -960,8 +1093,13 @@
                         console.log(`[Dashboard] Prorrogação ativa: +${extraLimit} min (ID: ${validCom.id})`);
                     }
                 } catch (e) {
+                    // Erros de conexão (como ERR_CONNECTION_CLOSED) são ignorados se tivermos cache
                     console.warn('[Dashboard] Erro ao buscar minutos extras:', e);
+                    if (lastExtraMinutesFetch > 0) return cachedExtraLimit;
                 }
+
+                lastExtraMinutesFetch = now;
+                cachedExtraLimit = extraLimit;
 
                 // Sincronizar com o motor de registro
                 if (typeof PunchEngine !== 'undefined') {

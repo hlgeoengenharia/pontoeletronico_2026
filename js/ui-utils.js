@@ -177,8 +177,8 @@ const UI = {
             // Painel de Controle: EXCLUSIVO Admin
             if (isAdmin) {
                 items.push({ 
-                    href: 'controle.html' + (contextQuery ? '?' + contextQuery.substring(1) : ''), 
-                    icon: 'dashboard', 
+                    href: 'central.html' + (contextQuery ? '?' + contextQuery.substring(1) : ''), 
+                    icon: 'admin_panel_settings', 
                     label: 'Painel de Controle' 
                 });
             }

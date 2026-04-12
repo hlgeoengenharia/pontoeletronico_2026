@@ -91,7 +91,16 @@ const Notifications = {
     },
 
     init(targetId = null) {
+        // Se já inicializado e o ID alvo for o mesmo, não faz nada
         if (this.initialized && this.currentTargetId === targetId) return;
+
+        // Se já inicializado mas o ID mudou, apenas atualiza o ID e as badges, sem refazer o Realtime
+        if (this.initialized) {
+            this.currentTargetId = targetId;
+            this.updateBadges(targetId);
+            return;
+        }
+
         this.initialized = true;
         this.currentTargetId = targetId;
 
@@ -101,8 +110,8 @@ const Notifications = {
         setInterval(() => this.updateBadges(this.currentTargetId), 60000);
         window.addEventListener('awareness-changed', () => this.updateBadges(this.currentTargetId));
 
-        // Inscrição Supabase Realtime
-        supabase.channel('realtime-notifications')
+        // Inscrição Supabase Realtime (Apenas UMA vez na vida do objeto)
+        const channel = supabase.channel('realtime-notifications')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'comunicados' }, () => this.updateBadges())
             .on('postgres_changes', { event: '*', schema: 'public', table: 'justificativas' }, () => this.updateBadges())
             .on('postgres_changes', { event: '*', schema: 'public', table: 'diario_logs' }, () => this.updateBadges())
@@ -113,8 +122,9 @@ const Notifications = {
             .on('postgres_changes', { event: '*', schema: 'public', table: 'feriados_folgas' }, () => {
                 this.updateBadges();
                 window.dispatchEvent(new CustomEvent('sync-feriados'));
-            })
-            .subscribe();
+            });
+            
+        channel.subscribe();
     }
 };
 

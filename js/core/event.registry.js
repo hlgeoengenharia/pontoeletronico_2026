@@ -8,6 +8,8 @@ import { ComunicadoCounter } from '../modules/comunicado/comunicado.counter.js';
 import { HoraExtraHistory } from '../modules/hora_extra/horaextra.history.js';
 import { FeriadosHistory } from '../modules/feriados/feriados.history.js';
 import { FeriadosCounter } from '../modules/feriados/feriados.counter.js';
+import { AlertarFeriadosBadge } from '../modules/Alertar_feriados_folgas/alertar.feriados.badge.js';
+import { AlertarFeriadosCard } from '../modules/Alertar_feriados_folgas/alertar.feriados.card.js';
 
 /**
  * EventRegistry - ChronoSync Core
@@ -45,6 +47,7 @@ export const EventRegistry = {
         if (typeKey === 'atividade') return this.modules['atividade'];
         if (typeKey === 'justificativa') return this.modules['justificativa'];
         if (typeKey.includes('ferias')) return this.modules['ferias'];
+        if (typeKey === 'alerta_feriados_folgas') return this.modules['alerta_feriados_folgas'];
         
         return this.modules[typeKey] || this.modules[type];
     },
@@ -65,3 +68,4 @@ EventRegistry.register('cronograma_ferias', { history: FeriasHistory, counter: F
 EventRegistry.register('mensagem', { history: ComunicadoHistory, counter: ComunicadoCounter });
 EventRegistry.register('hora_extra', { history: HoraExtraHistory, counter: ComunicadoCounter });
 EventRegistry.register('ferias_folgas', { history: FeriadosHistory, counter: FeriadosCounter });
+EventRegistry.register('alerta_feriados_folgas', { history: { render: (item) => AlertarFeriadosCard.render(item) }, counter: AlertarFeriadosBadge });

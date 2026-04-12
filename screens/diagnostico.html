@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html class="dark" lang="pt-BR">
+
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Scanner de Diagnóstico | ChronoSync</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet">
+    <script src="../js/theme.js?v=1.0"></script>
+    <style>
+        .font-variation-settings-fill {
+            font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .rule-card {
+            transition: all 0.3s ease;
+        }
+
+        .rule-card.loading {
+            opacity: 0.5;
+            filter: blur(1px);
+        }
+
+        @keyframes scan-animation {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(400%); }
+        }
+
+        .scanner-line {
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #0D59F2, transparent);
+            position: absolute;
+            top: 0;
+            z-index: 20;
+            animation: scan-animation 2s infinite linear;
+            display: none;
+        }
+
+        .scanner-active .scanner-line {
+            display: block;
+        }
+
+        .status-badge {
+            font-size: 10px;
+            font-weight: 900;
+            padding: 2px 8px;
+            border-radius: 99px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .status-ok { background: rgba(16, 185, 129, 0.1); color: #10B981; border: 1px border rgba(16, 185, 129, 0.2); }
+        .status-blocked { background: rgba(244, 63, 94, 0.1); color: #F43F5E; border: 1px border rgba(244, 63, 94, 0.2); }
+        .status-pending { background: rgba(245, 158, 11, 0.1); color: #F59E0B; border: 1px border rgba(245, 158, 11, 0.2); }
+    </style>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen flex flex-col items-center">
+
+    <!-- HEADER -->
+    <header
+        class="w-full max-w-md p-4 flex items-center justify-between sticky top-0 bg-background-dark/80 backdrop-blur-md z-[60] border-b border-white/5">
+        <div class="flex items-center gap-2">
+            <button id="openSidebar"
+                class="size-10 flex items-center justify-center bg-white/5 rounded-xl text-slate-400 hover:text-primary transition-all">
+                <span class="material-symbols-outlined">menu</span>
+            </button>
+            <button onclick="window.location.href='central.html'"
+                class="size-10 flex items-center justify-center bg-white/5 rounded-xl text-slate-400 hover:text-primary transition-all">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+        </div>
+
+        <h1 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] text-center flex-1">Diagnóstico de Ponto</h1>
+
+        <button id="btn-refresh"
+            class="size-10 flex items-center justify-center bg-white/5 rounded-xl text-slate-400 hover:text-amber-500 transition-all">
+            <span class="material-symbols-outlined">refresh</span>
+        </button>
+    </header>
+
+    <main class="flex-1 w-full max-w-md p-6 space-y-6">
+        
+        <!-- BUSCA DE FUNCIONÁRIO -->
+        <section class="space-y-3">
+            <label class="block">
+                <span class="text-[10px] font-black text-primary uppercase tracking-widest ml-1 mb-2 block">Selecionar Funcionário para Auditoria</span>
+                <div class="relative">
+                    <input type="text" id="employee-search" 
+                        class="w-full bg-white/5 border border-white/10 rounded-2xl p-4 pl-12 text-sm text-slate-100 placeholder:text-slate-600 focus:border-primary outline-none transition-all"
+                        placeholder="Nome ou Matrícula...">
+                    <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-slate-500">search</span>
+                </div>
+            </label>
+            
+            <!-- Resultados da Busca (Dropdown flutuante) -->
+            <div id="search-results" class="hidden bg-slate-900 border border-white/10 rounded-2xl overflow-hidden shadow-2xl z-50 max-h-48 overflow-y-auto">
+                <!-- Injetado via JS -->
+            </div>
+        </section>
+
+        <!-- RESULTADO DO SCANNER -->
+        <section id="diagnostic-results" class="hidden space-y-6 relative overflow-hidden rounded-3xl p-1">
+            <div class="scanner-line"></div>
+            
+            <!-- Card Resumo -->
+            <div class="bg-white/5 border border-white/10 rounded-3xl p-6 space-y-4 shadow-xl relative z-10">
+                <div class="flex items-center gap-4">
+                    <div class="w-16 h-16 rounded-2xl bg-slate-800 border-2 border-white/10 overflow-hidden">
+                        <img id="res-photo" src="" class="w-full h-full object-cover">
+                    </div>
+                    <div class="flex-1">
+                        <h2 id="res-name" class="text-lg font-black text-white uppercase tracking-tight">---</h2>
+                        <div class="flex items-center gap-2">
+                             <div id="res-result-badge" class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-slate-800 text-slate-400">AGUARDANDO</div>
+                             <span id="res-time" class="text-[10px] font-bold text-slate-500 uppercase">--:--:--</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4 pt-4 border-t border-white/5">
+                    <div>
+                        <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Escala Atual</p>
+                        <p id="res-escala" class="text-xs font-bold text-slate-100 italic">Nenhuma</p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Ação Sugerida</p>
+                        <p id="res-next-action" class="text-xs font-black text-amber-500 tracking-tighter italic uppercase">---</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lista de Regras -->
+            <div id="rules-list" class="space-y-3 relative z-10">
+                <!-- Injetado via JS -->
+            </div>
+
+            <!-- Detalhes de Janela -->
+            <div id="window-details" class="hidden bg-white/5 border border-white/10 rounded-3xl p-6 space-y-4">
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-amber-500 text-sm">settings_input_component</span>
+                    <h4 class="text-[10px] font-black text-amber-500 uppercase tracking-widest">Configurações Técnicas de Janela</h4>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4 text-[10px]">
+                    <!-- Horários Base -->
+                    <div class="space-y-1 p-3 bg-white/5 rounded-xl border border-white/5">
+                        <p class="text-slate-500 font-bold uppercase text-[8px] tracking-tighter">Entrada Prevista</p>
+                        <p id="det-entrada" class="text-white font-black tracking-widest text-base">--:--</p>
+                    </div>
+                    <div class="space-y-1 p-3 bg-white/5 rounded-xl border border-white/5">
+                        <p class="text-slate-500 font-bold uppercase text-[8px] tracking-tighter">Saída Prevista</p>
+                        <p id="det-saida" class="text-white font-black tracking-widest text-base">--:--</p>
+                    </div>
+
+                    <!-- Ativação -->
+                    <div class="space-y-1 p-3 bg-amber-500/5 rounded-xl border border-amber-500/10">
+                        <p id="det-antes-l1" class="text-amber-500 font-black uppercase text-[10px] tracking-tight">JANELA ANTES (MIN): --</p>
+                        <p id="det-antes-l2" class="text-white font-black uppercase text-[10px] tracking-widest">ATIVAÇÃO ÀS --:--</p>
+                    </div>
+
+                    <!-- Desativação Base -->
+                    <div class="space-y-1 p-3 bg-amber-500/5 rounded-xl border border-amber-500/10">
+                        <p id="det-depois-l1" class="text-amber-500 font-black uppercase text-[10px] tracking-tight">JANELA DEPOIS (MIN): --</p>
+                        <p id="det-depois-l2" class="text-white font-black uppercase text-[10px] tracking-widest">DESATIVAÇÃO ÀS --:--</p>
+                    </div>
+
+                    <!-- Tolerância -->
+                    <div class="space-y-1 p-3 bg-primary/5 rounded-xl border border-primary/10">
+                        <p id="det-tol-l1" class="text-primary font-black uppercase text-[10px] tracking-tight">TOLERÂNCIA (MIN): --</p>
+                        <p id="det-tol-l2" class="text-white font-black uppercase text-[10px] tracking-widest">LIMITE ÀS --:--</p>
+                    </div>
+
+                    <!-- HE/Prorrogação -->
+                    <div class="space-y-1 p-3 bg-rose-500/5 rounded-xl border border-rose-500/10">
+                        <p id="det-he-l1" class="text-rose-500 font-black uppercase text-[10px] tracking-tight">PRORROGAÇÃO HE (MIN): --</p>
+                        <p id="det-he-l2" class="text-white font-black uppercase text-[10px] tracking-widest">FECHAMENTO ÀS --:--</p>
+                    </div>
+                </div>
+            </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ESTADO VAZIO -->
+        <section id="empty-state" class="flex flex-col items-center justify-center py-20 text-center space-y-4">
+            <div class="size-20 rounded-full bg-white/5 flex items-center justify-center text-slate-700">
+                <span class="material-symbols-outlined text-5xl">qr_code_scanner</span>
+            </div>
+            <p class="text-xs font-bold text-slate-500 uppercase tracking-widest px-10">Selecione um funcionário para iniciar o diagnóstico de regras</p>
+        </section>
+
+    </main>
+
+    <script type="module">
+        import { supabase } from '../js/supabase-config.js';
+        import { PontoDiagnostic } from '../js/ponto.diagnostic.js';
+        import { UI } from '../js/ui-utils.js';
+
+        const searchInput = document.getElementById('employee-search');
+        const resultsEl = document.getElementById('search-results');
+        const diagnosticContainer = document.getElementById('diagnostic-results');
+        const emptyState = document.getElementById('empty-state');
+        const rulesList = document.getElementById('rules-list');
+        const refreshBtn = document.getElementById('btn-refresh');
+
+        let selectedEmployeeId = null;
+        let searchTimeout = null;
+
+        // 1. Lógica de Busca de Funcionários
+        searchInput.addEventListener('input', (e) => {
+            const term = e.target.value.trim();
+            if (term.length < 2) {
+                resultsEl.classList.add('hidden');
+                return;
+            }
+
+            if (searchTimeout) clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(async () => {
+                const { data, error } = await supabase
+                    .from('funcionarios')
+                    .select('id, nome_completo, matricula')
+                    .or(`nome_completo.ilike.%${term}%,matricula.ilike.%${term}%`)
+                    .limit(5);
+
+                if (data && data.length > 0) {
+                    renderSearchResults(data);
+                } else {
+                    resultsEl.innerHTML = '<p class="p-4 text-[10px] text-slate-600 font-bold uppercase text-center">Nenhum resultado</p>';
+                    resultsEl.classList.remove('hidden');
+                }
+            }, 300);
+        });
+
+        function renderSearchResults(list) {
+            resultsEl.innerHTML = list.map(f => `
+                <div class="p-4 hover:bg-white/5 border-b border-white/5 cursor-pointer flex justify-between items-center group transition-all" onclick="window.selectEmployee('${f.id}', '${f.nome_completo.replace(/'/g, "\\'")}')">
+                    <div>
+                        <p class="text-xs font-black text-white uppercase tracking-tight">${f.nome_completo}</p>
+                        <p class="text-[10px] text-slate-500 font-bold tracking-widest mt-1">MATRÍCULA: ${f.matricula || '---'}</p>
+                    </div>
+                    <span class="material-symbols-outlined text-slate-700 group-hover:text-primary">check_circle</span>
+                </div>
+            `).join('');
+            resultsEl.classList.remove('hidden');
+        }
+
+        window.selectEmployee = (id, name) => {
+            selectedEmployeeId = id;
+            searchInput.value = name;
+            resultsEl.classList.add('hidden');
+            runDiagnostic(id);
+        };
+
+        // 2. Lógica de Diagnóstico
+        async function runDiagnostic(id) {
+            if (!id) return;
+            
+            // UI Feedback
+            emptyState.classList.add('hidden');
+            diagnosticContainer.classList.remove('hidden');
+            diagnosticContainer.classList.add('scanner-active');
+            rulesList.innerHTML = '<p class="text-center py-10 animate-pulse text-[10px] font-black text-primary uppercase tracking-widest">Sincronizando regras...</p>';
+            
+            const report = await PontoDiagnostic.evaluate(id);
+            
+            setTimeout(() => {
+                diagnosticContainer.classList.remove('scanner-active');
+                if (report.error) {
+                    UI.showToast(report.error, 'error');
+                    return;
+                }
+                renderReport(report);
+            }, 1500); // Delay artificial p/ efeito visual de "scanner"
+        }
+
+        function renderReport(report) {
+            const { summary, rules, rawUser } = report;
+            
+            // Update Summary Card
+            document.getElementById('res-photo').src = rawUser.perfis_tripulantes?.foto_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(summary.nickname)}&background=0D59F2&color=fff`;
+            document.getElementById('res-name').innerText = summary.employee;
+            document.getElementById('res-time').innerText = `AUDITADO ÀS ${summary.time}`;
+            
+            const resultBadge = document.getElementById('res-result-badge');
+            resultBadge.innerText = summary.result;
+            resultBadge.className = `px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-slate-100 ${summary.resultClass}`;
+            
+            document.getElementById('res-escala').innerText = rawUser.escalas?.nome || 'Não atribuída';
+            document.getElementById('res-next-action').innerText = summary.nextAction || 'Desconhecida';
+            
+            // Update Rules List
+            rulesList.innerHTML = Object.entries(rules).map(([key, rule]) => {
+                const statusClass = rule.status === 'OK' || rule.status === 'SIM' || rule.status === 'ISENTO' ? 'status-ok' : 
+                                  (rule.status === 'BLOQUEADO' || rule.status === 'NÃO' || rule.status === 'ERRO' ? 'status-blocked' : 'status-pending');
+                
+                const icon = rule.passed ? 'check_circle' : (rule.status === 'PENDENTE' ? 'pending' : 'cancel');
+                const iconColor = rule.passed ? 'text-emerald-500' : (rule.status === 'PENDENTE' ? 'text-amber-500' : 'text-rose-500');
+
+                return `
+                    <div class="bg-white/5 border border-white/5 rounded-2xl p-4 flex items-center gap-4 animate-in fade-in slide-in-from-right-4 duration-500">
+                        <span class="material-symbols-outlined ${iconColor}">${icon}</span>
+                        <div class="flex-1 min-w-0">
+                            <h4 class="text-[10px] font-black text-slate-100 uppercase tracking-tight truncate">${rule.label}</h4>
+                            <p class="text-[10px] text-slate-500 font-bold italic leading-tight">${rule.detail}</p>
+                            ${rule.description ? `<p class="text-[10px] text-primary/70 font-black uppercase mt-1 tracking-tighter">${rule.description}</p>` : ''}
+                        </div>
+                        <span class="status-badge ${statusClass} shrink-0">${rule.status}</span>
+                    </div>
+                `;
+            }).join('');
+
+            // Update Window Details
+            if (rules.janela_horario && rules.janela_horario.config) {
+                const win = rules.janela_horario.config;
+                const offsetTime = (timeStr, minutes) => {
+                    if (!timeStr) return '--:--';
+                    const [h, m, s] = timeStr.split(':').map(Number);
+                    const d = new Date();
+                    d.setHours(h, m, s || 0, 0);
+                    d.setMinutes(d.getMinutes() + minutes);
+                    return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                };
+
+                document.getElementById('det-entrada').innerText = win.entrada_escala;
+                document.getElementById('det-saida').innerText = win.saida_escala;
+                
+                // Janelas e Horários Calculados
+                const antesMin = parseInt(win.janela_antes) || 0;
+                const depoisMin = parseInt(win.janela_depois) || 0;
+                const tolMin = parseInt(win.tolerancia) || 0;
+                const heMin = parseInt(win.prorrogacao_he) || 0;
+
+                document.getElementById('det-antes-l1').innerText = `JANELA ANTES (MIN): ${antesMin}`;
+                document.getElementById('det-antes-l2').innerText = `ATIVAÇÃO ÀS ${offsetTime(win.entrada_escala, -antesMin)}`;
+                
+                document.getElementById('det-depois-l1').innerText = `JANELA DEPOIS (MIN): ${depoisMin}`;
+                document.getElementById('det-depois-l2').innerText = `DESATIVAÇÃO ÀS ${offsetTime(win.saida_escala, depoisMin)}`;
+
+                document.getElementById('det-tol-l1').innerText = `TOLERÂNCIA (MIN): ${tolMin}`;
+                document.getElementById('det-tol-l2').innerText = `LIMITE ÀS ${offsetTime(win.entrada_escala, tolMin)}`;
+
+                document.getElementById('det-he-l1').innerText = `PRORROGAÇÃO HE (MIN): ${heMin}`;
+                document.getElementById('det-he-l2').innerText = `FECHAMENTO ÀS ${offsetTime(win.saida_escala, depoisMin + heMin)}`;
+
+                document.getElementById('window-details').classList.remove('hidden');
+            } else {
+                document.getElementById('window-details').classList.add('hidden');
+            }
+        }
+
+        refreshBtn.onclick = () => {
+            if (selectedEmployeeId) runDiagnostic(selectedEmployeeId);
+            else UI.showToast("Selecione um funcionário primeiro.", "warning");
+        };
+
+        // Reset ao clicar fora da busca
+        document.addEventListener('click', (e) => {
+            if (!resultsEl.contains(e.target) && e.target !== searchInput) {
+                resultsEl.classList.add('hidden');
+            }
+        });
+
+        // Inicializar Sidebar
+        const role = localStorage.getItem('userRole');
+        UI.initSidebar(role);
+        document.getElementById('openSidebar').onclick = () => UI.toggleSidebar(true);
+
+    </script>
+
+    <!-- Sidebar Menu Overlay -->
+    <aside id="sidebarMenu"
+        class="fixed top-0 left-0 h-full w-80 bg-background-dark border-r border-primary/20 z-[160] -translate-x-full transition-all duration-500 ease-out shadow-[20px_0_50px_rgba(0,0,0,0.5)]">
+        <div class="flex flex-col h-full">
+            <div class="p-8 border-b border-primary/10">
+                <h3 class="text-primary font-black italic text-2xl tracking-tighter">CHRONOSYNC</h3>
+                <p class="text-[10px] text-slate-500 uppercase font-bold tracking-[0.3em]">Console de Navegação</p>
+            </div>
+            <nav id="sidebarNav" class="flex-1 overflow-y-auto p-4 space-y-2">
+                <!-- Injetado via UI.initSidebar() -->
+            </nav>
+            <div class="p-4 border-t border-primary/10 bg-black/20">
+                <button id="logoutBtn"
+                    class="w-full flex items-center gap-3 px-4 py-3 text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all font-bold text-xs uppercase">
+                    <span class="material-symbols-outlined">logout</span> Sair do Sistema
+                </button>
+            </div>
+        </div>
+    </aside>
+    <div id="sidebarOverlay"
+        class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[150] hidden opacity-0 transition-all duration-300"></div>
+</body>
+
+</html>

@@ -627,6 +627,7 @@
     // Modo Férias
     const urlParams = new URLSearchParams(window.location.search);
     const isFeriasMode = urlParams.get('mode') === 'ferias';
+    const trigger = urlParams.get('trigger');
 
     // Timer de atualização
     let refreshInterval = null;
@@ -668,6 +669,13 @@
             document.getElementById('icon-main-action').innerText = 'settings';
             document.getElementById('btn-main-action').onclick = () => abrirModalRegrasGerais();
             document.title = 'Gestão de Férias - Admin Console';
+        }
+
+        // Gatilho de Automação (Alerta de Gestão)
+        if (trigger === 'ferias') {
+            setTimeout(() => {
+                window.abrirModalComunicado('geral', null, 'TODOS OS FUNCIONÁRIOS', 'ferias_folgas');
+            }, 500);
         }
 
         await fetchData();

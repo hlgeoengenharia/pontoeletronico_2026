@@ -446,10 +446,16 @@
                             <p id="detalhe-tipo" class="text-[10px] text-slate-500 uppercase font-black tracking-widest">Aguarde</p>
                         </div>
                     </div>
-                     <button type="button" id="btn-personalizar" class="text-[9px] font-black uppercase tracking-widest text-primary border border-primary/30 rounded-lg px-3 py-1.5 hover:bg-primary hover:text-white transition-all flex items-center gap-2">
-                        <span class="material-symbols-outlined text-xs">edit_note</span>
-                        PERSONALIZAR
-                     </button>
+                     <div class="flex gap-2">
+                        <button type="button" id="btn-personalizar" class="text-[9px] font-black uppercase tracking-widest text-primary border border-primary/30 rounded-lg px-3 py-1.5 hover:bg-primary hover:text-white transition-all flex items-center gap-2">
+                            <span class="material-symbols-outlined text-xs">edit_note</span>
+                            PERSONALIZAR
+                        </button>
+                        <button type="button" id="btn-restaurar-padrao" class="hidden text-[9px] font-black uppercase tracking-widest text-rose-500 border border-rose-500/30 rounded-lg px-3 py-1.5 hover:bg-rose-500 hover:text-white transition-all flex items-center gap-2">
+                            <span class="material-symbols-outlined text-xs">history</span>
+                            RESTAURAR PADRÃO
+                        </button>
+                     </div>
                     <input type="hidden" id="escala-select" value="">
                 </div>
 
@@ -898,7 +904,7 @@
                     if (esp) selecionarEspecialidade(esp);
                 };
 
-                // --- LÓGICA DE BIOMETRIA ---
+                // --- LÓGICA DE BIOMETRIA (RECONHECIMENTO FACIAL IA) ---
                 window.handleBiometriaClick = async () => {
                     const isLocked = document.getElementById('nome_completo').disabled;
                     if (isLocked) {
@@ -906,68 +912,57 @@
                         return;
                     }
 
-                    if (!window.PublicKeyCredential) {
-                        UI.showToast("Seu navegador não suporta biometria nativa.", "error");
+                    const preview = document.getElementById('user-photo-profile');
+                    if (!preview || preview.src.includes('ui-avatars.com')) {
+                        UI.showToast("Tire uma foto sua primeiro clicando no ícone da câmera de perfil.", "warning");
                         return;
                     }
 
                     UI.showLoader();
                     try {
-                        const challenge = new Uint8Array(32);
-                        window.crypto.getRandomValues(challenge);
+                        UI.showToast("Analisando face via Inteligência Artificial...", "info");
+                        
+                        // Importação Dinâmica do serviço da Face-API
+                        const { FaceApiService } = await import('../js/face-api-service.js');
+                        await FaceApiService.init();
 
-                        const userId = globalFunc.id || 'new-user';
-                        const userName = document.getElementById('nickname').value || 'Usuário';
+                        // Passa a tag <img> para extrair a matriz do rosto
+                        const descriptor = await FaceApiService.getFaceDescriptor(preview);
 
-                        const publicKeyCredentialCreationOptions = {
-                            challenge: challenge,
-                            rp: { name: "ChronoSync System", id: window.location.hostname },
-                            user: {
-                                id: Uint8Array.from(userId, c => c.charCodeAt(0)),
-                                name: userName,
-                                displayName: userName,
-                            },
-                            pubKeyCredParams: [{ alg: -7, type: "public-key" }, { alg: -257, type: "public-key" }],
-                            authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required" },
-                            timeout: 60000,
-                            attestation: "direct"
-                        };
-
-                        const credential = await navigator.credentials.create({
-                            publicKey: publicKeyCredentialCreationOptions
-                        });
-
-                        if (credential) {
-                            document.getElementById('biometria_token').value = btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
-                            document.getElementById('biometria_cadastrada').value = "true";
-                            
-                            const badge = document.getElementById('status-biometria-badge');
-                            if (badge) {
-                                badge.classList.remove('bg-rose-500/20', 'border-rose-500/30', 'animate-pulse');
-                                badge.classList.add('bg-emerald-500/20', 'border-emerald-500/30');
-                                badge.querySelector('span').innerText = 'verified_user';
-                                badge.querySelector('span').classList.remove('text-rose-500');
-                                badge.querySelector('span').classList.add('text-emerald-500');
-                                badge.classList.remove('hidden');
-                            }
-                            
-                            const capsula = document.getElementById('capsula-biometria');
-                            if (capsula) {
-                                capsula.classList.remove('border-rose-500/30');
-                                capsula.classList.add('border-emerald-500/30');
-                                const cText = document.getElementById('capsula-text');
-                                if (cText) {
-                                    cText.innerText = 'Biometria Cadastrada';
-                                    cText.classList.remove('text-rose-500');
-                                    cText.classList.add('text-emerald-500');
-                                }
-                            }
-                            
-                            UI.showToast("Biometria registrada com sucesso!", "success");
+                        if (!descriptor) {
+                            throw new Error("Nenhum rosto claro detectado na foto. Tire outra foto de frente, sem óculos escuros e com boa iluminação.");
                         }
+
+                        // Salva o vetor Array numérico como JSON String no INPUT token
+                        document.getElementById('biometria_token').value = JSON.stringify(descriptor);
+                        document.getElementById('biometria_cadastrada').value = "true";
+                        
+                        const badge = document.getElementById('status-biometria-badge');
+                        if (badge) {
+                            badge.classList.remove('bg-rose-500/20', 'border-rose-500/30', 'animate-pulse');
+                            badge.classList.add('bg-emerald-500/20', 'border-emerald-500/30');
+                            badge.querySelector('span').innerText = 'verified_user';
+                            badge.querySelector('span').classList.remove('text-rose-500');
+                            badge.querySelector('span').classList.add('text-emerald-500');
+                            badge.classList.remove('hidden');
+                        }
+                        
+                        const capsula = document.getElementById('capsula-biometria');
+                        if (capsula) {
+                            capsula.classList.remove('border-rose-500/30', 'border-rose-500/20');
+                            capsula.classList.add('border-emerald-500/30', 'border-emerald-500/20');
+                            const cText = document.getElementById('capsula-text');
+                            if (cText) {
+                                cText.innerText = 'Template Bio-Facial Localizado';
+                                cText.classList.remove('text-rose-500');
+                                cText.classList.add('text-emerald-500');
+                            }
+                        }
+                        
+                        UI.showToast("Biometria Facial mapeada com sucesso! Clique em 'SALVAR ALTERAÇÕES' para persistir no banco.", "success");
                     } catch (err) {
-                        console.error("Erro no WebAuthn:", err);
-                        UI.showToast("Falha no registro biométrico.", "error");
+                        console.error("Erro no reconhecimento facial:", err);
+                        UI.showToast(err.message || "Falha no mapeamento facial.", "error");
                     } finally {
                         UI.hideLoader();
                     }
@@ -1127,8 +1122,47 @@
                                 novaSenhaInput.classList.add('animate-pulse', 'border-neon-cyan');
                             }
                         }
+
+                        // Configurar listener do botão restaurar
+                        const btnRestaurar = document.getElementById('btn-restaurar-padrao');
+                        if (btnRestaurar) {
+                            btnRestaurar.onclick = () => restaurarEscalaPadrao();
+                        }
                     } catch (error) {
                         console.error('Erro ao carregar perfil:', error);
+                    }
+                }
+
+                async function restaurarEscalaPadrao() {
+                    if (!confirm("Deseja realmente apagar sua escala personalizada e voltar a seguir o modelo padrão? Isso não pode ser desfeito.")) return;
+
+                    UI.showLoader();
+                    try {
+                        const { error } = await supabase
+                            .from('funcionarios')
+                            .update({ personalizacao_escala: null })
+                            .eq('id', globalFunc.id);
+
+                        if (error) throw error;
+
+                        UI.showToast("Escala restaurada para o padrão!", "success");
+                        
+                        // Recarregar os dados do perfil
+                        const { data: updated } = await supabase.from('funcionarios').select('*').eq('id', globalFunc.id).single();
+                        globalFunc.personalizacao_escala = null;
+                        
+                        modoPersonalizado = false;
+                        document.getElementById('view-escala-padrao')?.classList.remove('hidden');
+                        document.getElementById('edit-escala-personalizada')?.classList.add('hidden');
+                        document.getElementById('aviso-personalizacao')?.classList.add('hidden');
+                        document.getElementById('btn-restaurar-padrao')?.classList.add('hidden');
+                        
+                        await refreshCalendar();
+                    } catch (err) {
+                        console.error("Erro ao restaurar:", err);
+                        UI.showToast("Erro ao processar restauração", "error");
+                    } finally {
+                        UI.hideLoader();
                     }
                 }
 
@@ -1149,6 +1183,20 @@
                 function preencherDados(func) {
                     const el = (id) => document.getElementById(id);
                     const loggedUser = Auth.getUser();
+
+                    // Helper para conversão robusta de selects (Case-Insensitive)
+                    const safeSetSelect = (id, val) => {
+                        const select = el(id);
+                        if (!select || !val) return;
+                        const target = String(val).trim().toLowerCase();
+                        for (let i = 0; i < select.options.length; i++) {
+                            if (select.options[i].value.toLowerCase() === target) {
+                                select.selectedIndex = i;
+                                return;
+                            }
+                        }
+                        console.warn(`[Perfil] Valor '${val}' não encontrado para o select ${id}`);
+                    };
                     
                     if (el('nome_completo')) el('nome_completo').value = func.nome_completo || '';
                     if (el('nickname')) el('nickname').value = func.nickname || '';
@@ -1158,14 +1206,20 @@
                     if (el('email')) el('email').value = func.email || '';
                     if (el('whatsapp')) el('whatsapp').value = func.telefone || '';
                     if (el('campo-matricula')) el('campo-matricula').value = func.matricula || '';
-                    if (el('nivel_acesso_select')) el('nivel_acesso_select').value = func.nivel_acesso || 'Funcionário';
+                    
+                    safeSetSelect('nivel_acesso_select', func.nivel_acesso || 'Funcionário');
+                    
                     if (el('funcao-select')) el('funcao-select').value = func.cargo_id || '';
                     if (el('setor-select')) el('setor-select').value = func.setor_id || '';
                     if (el('escala-select')) el('escala-select').value = func.escala_id || '';
-                    if (el('regime_trabalho')) el('regime_trabalho').value = func.regime_trabalho || 'Presencial';
+                    
+                    safeSetSelect('regime_trabalho', func.regime_trabalho || 'Presencial');
+                    
                     if (el('rastreio_ativo')) el('rastreio_ativo').checked = func.rastreio_ativo || false;
                     if (el('data_inicio_prevista')) el('data_inicio_prevista').value = func.data_inicio_prevista || '';
-                    if (el('nivel_escolaridade')) el('nivel_escolaridade').value = func.nivel_escolaridade || 'Médio';
+                    
+                    safeSetSelect('nivel_escolaridade', func.nivel_escolaridade || 'Médio');
+                    
                     if (el('graduacao_principal_select')) {
                         el('graduacao_principal_select').value = func.graduacao_principal || '';
                     }
@@ -1247,6 +1301,9 @@
                         if (el('pers-saida')) el('pers-saida').value = func.personalizacao_escala.horario_saida || '';
                         if (el('frequencia_confirmacao_meses')) el('frequencia_confirmacao_meses').value = func.personalizacao_escala.frequencia_confirmacao_meses || '';
                         diasSelecionadosPers = func.personalizacao_escala.dias_selecionados || [];
+                        
+                        // Mostrar botão restaurar se houver personalização
+                        if (el('btn-restaurar-padrao')) el('btn-restaurar-padrao').classList.remove('hidden');
                     }
 
                     // Security & Mode Control
@@ -1805,9 +1862,20 @@
                 document.getElementById('profile-form').onsubmit = handleUpdateProfile;
 
 
-                document.addEventListener('DOMContentLoaded', () => {
-                    initProfile();
+                document.addEventListener('DOMContentLoaded', async () => {
+                    await initProfile();
                     initEscalaListeners();
+
+                    // Auto-trigger para cadastro de biometria (vindo do PunchEngine)
+                    const urlParams = new URLSearchParams(window.location.search);
+                    if (urlParams.get('action') === 'enroll') {
+                        UI.showToast('Primeiro Acesso: Por favor, cadastre sua biometria facial.', 'info');
+                        // Desbloquear formulário para permitir captura
+                        setFormLocked(false);
+                        setTimeout(() => {
+                            if (window.abrirModalCamera) window.abrirModalCamera();
+                        }, 500);
+                    }
                 });
             </script>
 

@@ -83,6 +83,13 @@ const EventManager = {
             colorClass: 'text-blue-500',
             premiumBorder: 'premium-border-blue',
             autoClear: true
+        },
+        'ALERTA_FERIADOS_FOLGAS': {
+            title: 'ALERTA DE GESTÃO',
+            icon: 'calendar_month',
+            colorClass: 'text-primary',
+            premiumBorder: 'premium-border-blue',
+            autoClear: false // Resolvido manualmente via card
         }
     },
 
@@ -97,6 +104,7 @@ const EventManager = {
         if (subtipo === 'folga' || subtipo === 'feriado' || subtipo === 'ferias_manual') return this.EVENT_CONFIG['FERIAS_FOLGA'];
         if (subtipo === 'mensagem' || subtipo === 'comunicado') return this.EVENT_CONFIG['COMUNICADO'];
         
+        if (typeKey === 'ALERTA_FERIADOS_FOLGAS' || item.tipo === 'alerta_feriados_folgas') return this.EVENT_CONFIG['ALERTA_FERIADOS_FOLGAS'];
         if (typeKey === 'GPS' || item.tipo === 'gps_pulse' || item.tipo === 'gps_hora') return this.EVENT_CONFIG['GPS'];
         if (typeKey === 'FERIAS' || item.tipo === 'aviso_ferias') return this.EVENT_CONFIG['CRONOGRAMA_FERIAS'];
         if (typeKey === 'FERIAS_FOLGA' || typeKey === 'FERIAS_FOLGA_GROUP') return this.EVENT_CONFIG['FERIAS_FOLGA'];
@@ -265,8 +273,8 @@ const EventManager = {
             const accuracy = ponto.accuracy || 0;
             const raio = escala.raio_geofence || ScalesEngine.GEOFENCE_DEFAULT_RADIUS;
 
-            // Se estiver fora do raio E a precisão não justificar o erro (accuracy > raio)
-            if (dist > raio && (accuracy <= raio)) {
+            // REGRA CUMPRIDA: Se estiver fora do raio ou com um GPS muito impreciso (Ex: Desktop/Wi-Fi > 100m)
+            if (dist > raio || accuracy > 100) {
                 results.push('FORA DO RAIO');
             }
 
