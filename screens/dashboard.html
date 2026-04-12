@@ -512,13 +512,13 @@
         class="fixed inset-0 bg-black/95 z-[3000] hidden items-center justify-center p-4 backdrop-blur-xl">
         <div
             class="bg-background-dark border border-primary/30 rounded-3xl p-6 w-full max-w-sm flex flex-col items-center gap-6 shadow-2xl relative">
-            <button onclick="PunchEngine.closeBiometriaModal()"
+            <button onclick="PunchEngine.closeBiometriaModal(true)"
                 class="absolute top-4 right-4 text-slate-500 hover:text-white">
                 <span class="material-symbols-outlined">close</span>
             </button>
             <div class="text-center">
                 <h3 class="text-sm font-black text-primary uppercase tracking-[0.2em] mb-1">Reconhecimento Facial</h3>
-                <p class="text-[9px] text-slate-500 uppercase font-bold tracking-widest">Posicione seu rosto no centro
+                <p id="camera-status-text" class="text-[9px] text-slate-500 uppercase font-bold tracking-widest">Posicione seu rosto no centro
                 </p>
             </div>
 
@@ -535,6 +535,10 @@
             <button id="btn-capturar-face" 
                 class="w-full py-4 rounded-2xl bg-primary text-white text-[11px] font-black uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all">
                 Capturar e Registar Ponto
+            </button>
+            <button id="btn-tentar-camera"
+                class="hidden w-full py-4 rounded-2xl border border-white/10 text-slate-200 text-[11px] font-black uppercase tracking-widest hover:bg-white/5 transition-all">
+                Tentar Novamente
             </button>
         </div>
     </div>
@@ -578,6 +582,7 @@
         import { EventManager } from '../js/event-manager.js';
         import { GPSTracker } from '../js/gps-tracker.js';
         import { PunchEngine } from '../js/punch-engine.js';
+        import { BiometricHelper } from '../js/biometric-helper.js';
         import { Notifications } from '../js/notifications.js';
         import { AlertarFeriadosScheduler } from '../js/modules/Alertar_feriados_folgas/alertar.feriados.scheduler.js';
 
@@ -651,6 +656,10 @@
             const btnCapturarFace = document.getElementById('btn-capturar-face');
             if (btnCapturarFace) {
                 btnCapturarFace.onclick = () => PunchEngine.captureAndProcess(currentUser);
+            }
+            const btnTentarCamera = document.getElementById('btn-tentar-camera');
+            if (btnTentarCamera) {
+                btnTentarCamera.onclick = () => PunchEngine.retryCamera();
             }
 
             // Sincronização em Tempo Real via Evento Global
@@ -952,13 +961,13 @@
                     const label = btn.querySelector('span.text-xs');
                     if (label) label.innerHTML = 'EM GOZO<br>DE FÉRIAS';
                     btn.onclick = null;
-                } else if (!currentUser.biometria_cadastrada) {
+                } else if (!currentUser.biometria_cadastrada || !BiometricHelper.isTemplateValid(currentUser.biometria_token || '')) {
                     // --- TRAVA DE BIOMETRIA OBRIGATÓRIA ---
                     btn.classList.add('bg-amber-600', 'animate-pulse');
                     const label = btn.querySelector('span.text-xs');
-                    if (label) label.innerHTML = 'BIOMETRIA<br>PENDENTE';
+                    if (label) label.innerHTML = 'BIOMETRIA<br>REQUER RECADASTRO';
                     btn.onclick = () => {
-                        UI.showToast("Cadastre sua biometria facial para liberar o ponto.", "warning");
+                        UI.showToast("Cadastre novamente sua biometria facial para liberar o ponto.", "warning");
                         setTimeout(() => window.location.href = `perfil_funcionario.html?id=${userId}&role=${role}`, 1500);
                     };
                 } else if (isOnline) {

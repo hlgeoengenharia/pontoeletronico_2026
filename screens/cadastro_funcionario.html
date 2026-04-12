@@ -547,6 +547,7 @@
         import { UI } from '../js/ui-utils.js';
         import { ScalesEngine } from '../js/scales-engine.js';
         import { Auth } from '../js/auth.js';
+        import { BiometricHelper } from '../js/biometric-helper.js';
 
         var escalasData = {};
         var especialidadesCatalogo = [];
@@ -800,64 +801,51 @@
             const isLocked = document.getElementById('nome_completo').disabled;
             if (isLocked) return;
 
-            if (!window.PublicKeyCredential) {
-                UI.showToast("Seu navegador não suporta biometria nativa.", "error");
+            const loggedUser = Auth.getUser();
+            const editId = new URLSearchParams(window.location.search).get('id');
+            if (!editId || editId !== loggedUser?.id) {
+                UI.showToast("A biometria deve ser cadastrada pelo próprio colaborador no perfil dele.", "warning");
+                return;
+            }
+
+            const preview = document.getElementById('avatar-preview');
+            if (!preview || preview.classList.contains('hidden') || !preview.src) {
+                UI.showToast("Capture uma foto do rosto antes de registrar a biometria.", "warning");
                 return;
             }
 
             UI.showLoader();
             try {
-                const challenge = new Uint8Array(32);
-                window.crypto.getRandomValues(challenge);
+                const { FaceApiService } = await import('../js/face-api-service.js');
+                await FaceApiService.init();
 
-                const userId = currentFuncId || 'new-user';
-                const userName = document.getElementById('nickname').value || 'Usuário';
+                const faceData = await FaceApiService.getSingleFaceData(preview, { minScore: 0.4, requireSingleFace: true });
 
-                const publicKeyCredentialCreationOptions = {
-                    challenge: challenge,
-                    rp: { name: "ChronoSync System", id: window.location.hostname },
-                    user: {
-                        id: Uint8Array.from(userId, c => c.charCodeAt(0)),
-                        name: userName,
-                        displayName: userName,
-                    },
-                    pubKeyCredParams: [{ alg: -7, type: "public-key" }, { alg: -257, type: "public-key" }],
-                    authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required" },
-                    timeout: 60000,
-                    attestation: "direct"
-                };
+                document.getElementById('biometria_token').value = BiometricHelper.serializeTemplate(faceData.descriptor);
+                document.getElementById('biometria_cadastrada').value = "true";
 
-                const credential = await navigator.credentials.create({
-                    publicKey: publicKeyCredentialCreationOptions
-                });
-
-                if (credential) {
-                    document.getElementById('biometria_token').value = btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
-                    document.getElementById('biometria_cadastrada').value = "true";
-                    
-                    const badge = document.getElementById('status-biometria-badge');
-                    if (badge) {
-                        badge.classList.remove('bg-rose-500/20', 'border-rose-500/30', 'animate-pulse');
-                        badge.classList.add('bg-emerald-500/20', 'border-emerald-500/30');
-                        badge.querySelector('span').innerText = 'verified_user';
-                        badge.querySelector('span').classList.remove('text-rose-500');
-                        badge.querySelector('span').classList.add('text-emerald-500');
-                        badge.classList.remove('hidden');
-                    }
-                    
-                    const capsula = document.getElementById('capsula-biometria');
-                    if (capsula) {
-                        const capsulaText = document.getElementById('capsula-text');
-                        if (capsulaText) capsulaText.innerText = 'Biometria Cadastrada';
-                        capsula.classList.remove('border-rose-500/30');
-                        capsula.classList.add('border-emerald-500/30');
-                    }
-                    
-                    UI.showToast("Biometria registrada com sucesso!", "success");
+                const badge = document.getElementById('status-biometria-badge');
+                if (badge) {
+                    badge.classList.remove('bg-rose-500/20', 'border-rose-500/30', 'animate-pulse');
+                    badge.classList.add('bg-emerald-500/20', 'border-emerald-500/30');
+                    badge.querySelector('span').innerText = 'verified_user';
+                    badge.querySelector('span').classList.remove('text-rose-500');
+                    badge.querySelector('span').classList.add('text-emerald-500');
+                    badge.classList.remove('hidden');
                 }
+
+                const capsula = document.getElementById('capsula-biometria');
+                if (capsula) {
+                    const capsulaText = document.getElementById('capsula-text');
+                    if (capsulaText) capsulaText.innerText = 'Biometria Facial Validada';
+                    capsula.classList.remove('border-rose-500/30');
+                    capsula.classList.add('border-emerald-500/30');
+                }
+
+                UI.showToast("Biometria facial validada com sucesso!", "success");
             } catch (err) {
-                console.error("Erro no WebAuthn:", err);
-                UI.showToast("Falha no registro biométrico. Tente novamente.", "error");
+                console.error("Erro na biometria facial:", err);
+                UI.showToast(err.message || "Falha no registro biométrico. Tente novamente.", "error");
             } finally {
                 UI.hideLoader();
             }
@@ -998,7 +986,7 @@
                          document.getElementById('biometria_cadastrada').value = emp.biometria_cadastrada || "false";
                          document.getElementById('biometria_token').value = emp.biometria_token || '';
 
-                         if (emp.biometria_cadastrada) {
+                         if (emp.biometria_cadastrada && BiometricHelper.isTemplateValid(emp.biometria_token || '')) {
                             const badge = document.getElementById('status-biometria-badge');
                             const capsula = document.getElementById('capsula-biometria');
                             const capsulaText = document.getElementById('capsula-text');
@@ -1013,7 +1001,7 @@
                             if (capsula) {
                                 capsula.classList.remove('border-rose-500/30');
                                 capsula.classList.add('border-emerald-500/30');
-                                capsulaText.innerText = 'Biometria Cadastrada';
+                                capsulaText.innerText = 'Biometria Facial Validada';
                                 capsulaText.classList.remove('text-rose-500');
                                 capsulaText.classList.add('text-emerald-500');
                                 capsulaIcon.innerText = 'face';
@@ -1037,7 +1025,7 @@
                             if (capsula) {
                                 capsula.classList.remove('border-emerald-500/30');
                                 capsula.classList.add('border-rose-500/30');
-                                capsulaText.innerText = 'Biometria Pendente';
+                                capsulaText.innerText = 'Biometria Requer Recadastro';
                                 capsulaText.classList.remove('text-emerald-500');
                                 capsulaText.classList.add('text-rose-500');
                                 capsulaIcon.innerText = 'block';

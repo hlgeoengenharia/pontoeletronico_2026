@@ -568,6 +568,7 @@
                 import { ScalesEngine } from '../js/scales-engine.js';
                 import { Auth } from '../js/auth.js';
                 import { UI } from '../js/ui-utils.js';
+                import { BiometricHelper } from '../js/biometric-helper.js';
 
                 function setFormLocked(locked) {
                     const form = document.getElementById('profile-form');
@@ -777,6 +778,20 @@
                 document.getElementById('btn-capturar-frame').onclick = () => {
                     const video = document.getElementById('video-feed');
                     const canvas = document.getElementById('canvas-snapshot');
+                    const loggedUser = Auth.getUser();
+                    const employeeIdParam = new URLSearchParams(window.location.search).get('id');
+                    if (employeeIdParam && employeeIdParam !== loggedUser?.id) {
+                        UI.showToast("A biometria deve ser cadastrada pelo prÃ³prio colaborador no perfil dele.", "warning");
+                        return;
+                    }
+
+                    const loggedUserCheck = loggedUser;
+                    const employeeIdParamCheck = employeeIdParam;
+                    if (false && employeeIdParamCheck && employeeIdParamCheck !== loggedUserCheck?.id) {
+                        UI.showToast("A biometria deve ser cadastrada pelo prÃ³prio colaborador no perfil dele.", "warning");
+                        return;
+                    }
+
                     const preview = document.getElementById('user-photo-profile');
                     const btnRemover = document.getElementById('btn-remover-foto');
 
@@ -927,14 +942,14 @@
                         await FaceApiService.init();
 
                         // Passa a tag <img> para extrair a matriz do rosto
-                        const descriptor = await FaceApiService.getFaceDescriptor(preview);
+                        const faceData = await FaceApiService.getSingleFaceData(preview, { minScore: 0.4, requireSingleFace: true });
 
-                        if (!descriptor) {
+                        if (!faceData?.descriptor) {
                             throw new Error("Nenhum rosto claro detectado na foto. Tire outra foto de frente, sem óculos escuros e com boa iluminação.");
                         }
 
                         // Salva o vetor Array numérico como JSON String no INPUT token
-                        document.getElementById('biometria_token').value = JSON.stringify(descriptor);
+                        document.getElementById('biometria_token').value = BiometricHelper.serializeTemplate(faceData.descriptor);
                         document.getElementById('biometria_cadastrada').value = "true";
                         
                         const badge = document.getElementById('status-biometria-badge');
@@ -953,13 +968,13 @@
                             capsula.classList.add('border-emerald-500/30', 'border-emerald-500/20');
                             const cText = document.getElementById('capsula-text');
                             if (cText) {
-                                cText.innerText = 'Template Bio-Facial Localizado';
+                                cText.innerText = 'Template Bio-Facial Validado';
                                 cText.classList.remove('text-rose-500');
                                 cText.classList.add('text-emerald-500');
                             }
                         }
                         
-                        UI.showToast("Biometria Facial mapeada com sucesso! Clique em 'SALVAR ALTERAÇÕES' para persistir no banco.", "success");
+                        UI.showToast("Biometria facial validada com sucesso! Clique em 'SALVAR ALTERAÇÕES' para persistir no banco.", "success");
                     } catch (err) {
                         console.error("Erro no reconhecimento facial:", err);
                         UI.showToast(err.message || "Falha no mapeamento facial.", "error");
@@ -1245,7 +1260,7 @@
                     
                     const badge = el('status-biometria-badge');
                     if (badge) {
-                        if (func.biometria_cadastrada) {
+                        if (func.biometria_cadastrada && BiometricHelper.isTemplateValid(func.biometria_token || '')) {
                             badge.classList.remove('bg-rose-500/20', 'border-rose-500/30', 'animate-pulse');
                             badge.classList.add('bg-emerald-500/20', 'border-emerald-500/30');
                             badge.querySelector('span').innerText = 'verified_user';
@@ -1262,7 +1277,7 @@
                     const capsulaText = el('capsula-text');
                     const capsulaIcon = el('capsula-icon');
                     if (capsula && capsulaText && capsulaIcon) {
-                        if (func.biometria_cadastrada) {
+                        if (func.biometria_cadastrada && BiometricHelper.isTemplateValid(func.biometria_token || '')) {
                             capsula.classList.remove('border-rose-500/20');
                             capsula.classList.add('border-emerald-500/20');
                             capsulaText.innerText = 'Biometria Ativa';
@@ -1274,7 +1289,7 @@
                         } else {
                             capsula.classList.remove('border-emerald-500/20');
                             capsula.classList.add('border-rose-500/20');
-                            capsulaText.innerText = 'Biometria Pendente';
+                            capsulaText.innerText = 'Biometria Requer Recadastro';
                             capsulaText.classList.remove('text-emerald-500');
                             capsulaText.classList.add('text-rose-500');
                             capsulaIcon.innerText = 'block';
@@ -1696,6 +1711,9 @@
                         }
 
                         const selectFuncao = document.getElementById('funcao-select');
+                        const loggedUser = Auth.getUser();
+                        const employeeIdParam = new URLSearchParams(window.location.search).get('id');
+                        const canEditOwnBiometry = !employeeIdParam || employeeIdParam === loggedUser?.id;
                         const updatesFunc = {
                             nome_completo: document.getElementById('nome_completo').value,
                             cpf: document.getElementById('cpf').value || null,
@@ -1711,8 +1729,8 @@
                             graduacao_principal: document.getElementById('graduacao_principal_select').value || null,
                             regime_trabalho: document.getElementById('regime_trabalho').value,
                             rastreio_ativo: document.getElementById('rastreio_ativo').checked,
-                            biometria_cadastrada: document.getElementById('biometria_cadastrada').value === "true",
-                            biometria_token: document.getElementById('biometria_token').value || null
+                            biometria_cadastrada: canEditOwnBiometry ? document.getElementById('biometria_cadastrada').value === "true" : !!globalFunc.biometria_cadastrada,
+                            biometria_token: canEditOwnBiometry ? (document.getElementById('biometria_token').value || null) : (globalFunc.biometria_token || null)
                         };
 
                         // Personalização de Escala

@@ -1,50 +1,46 @@
 import { supabase } from './supabase-config.js';
 import { EventManager } from './event-manager.js';
-import { ScalesEngine } from './scales-engine.js';
 import { BusinessRulesManager } from './business-rules-manager.js';
+import { BiometricHelper } from './biometric-helper.js';
 
 /**
- * PunchEngine V3.0 - ChronoSync
- * Novo motor isolado para registro de ponto, biometria e geofence.
- * Reconstruído do zero para garantir estabilidade e eliminar loops.
+ * PunchEngine V3.1 - fluxo de ponto com biometria fail-closed.
  */
 export const PunchEngine = {
     isProcessing: false,
+    cameraStream: null,
+    activeExtraMinutes: 0,
     tempData: {
         type: null,
         lat: null,
         lng: null,
         accuracy: 0,
         gpsOculto: false,
-        justificativa: null
+        justificativa: null,
+        biometriaAudit: null
     },
 
-    /**
-     * Inicia o fluxo de batida de ponto
-     */
     async startFlow(type, currentUser) {
         if (this.isProcessing || document.hidden) return;
+
         this.isProcessing = true;
         this.tempData.type = type;
-        
+        this.tempData.biometriaAudit = null;
+
         UI.showLoader();
         console.log(`[PunchEngine] Iniciando fluxo para: ${type}`);
 
         try {
-            // 0. Pre-flight de Biometria (Mandatório)
             const canProceed = await BusinessRulesManager.checkBiometryPreflight(currentUser);
             if (!canProceed) {
-                UI.showToast('Biometria Facial Obrigatória! Redirecionando para cadastro.', 'warning');
+                UI.showToast('Biometria facial obrigatoria. Redirecionando para recadastro.', 'warning');
                 setTimeout(() => {
                     window.location.href = `perfil_funcionario.html?action=enroll&id=${currentUser.id || localStorage.getItem('userId')}`;
-                }, 2000);
+                }, 1800);
                 return;
             }
 
-            // 1. Obter Localização (Mandatório para validação, Opcional para registro)
             await this.captureGPS(currentUser.escalas);
-
-            // 2. Fluxo de Biometria (Sempre ativo no novo fluxo de conformidade)
             await this.openBiometriaModal();
         } catch (err) {
             console.error('[PunchEngine] Falha no fluxo inicial:', err);
@@ -55,22 +51,17 @@ export const PunchEngine = {
         }
     },
 
-    /**
-     * Captura coordenadas GPS e trata permissões/erros
-     */
-    async captureGPS(escala) {
+    async captureGPS() {
         try {
-            if (typeof GPSTracker === 'undefined') throw new Error('GPSTracker não inicializado');
-            
+            if (typeof GPSTracker === 'undefined') throw new Error('GPSTracker nao inicializado');
+
             const pos = await GPSTracker.getCurrentPosition();
             this.tempData.lat = pos.coords.latitude;
             this.tempData.lng = pos.coords.longitude;
             this.tempData.accuracy = pos.coords.accuracy;
             this.tempData.gpsOculto = false;
-            
-            console.log(`[PunchEngine] GPS Capturado: ${this.tempData.lat}, ${this.tempData.lng} (±${Math.round(this.tempData.accuracy)}m)`);
-        } catch (e) {
-            console.warn('[PunchEngine] Falha no GPS (Modo Oculto):', e);
+        } catch (error) {
+            console.warn('[PunchEngine] Falha no GPS (modo oculto):', error);
             this.tempData.gpsOculto = true;
             this.tempData.lat = null;
             this.tempData.lng = null;
@@ -78,108 +69,144 @@ export const PunchEngine = {
         }
     },
 
-    /**
-     * Abre o modal de Biometria Facial
-     */
+    updateCameraStatus(message, tone = 'muted') {
+        const statusEl = document.getElementById('camera-status-text');
+        if (!statusEl) return;
+
+        statusEl.textContent = message;
+        statusEl.classList.remove('text-slate-500', 'text-amber-400', 'text-rose-400', 'text-emerald-400');
+
+        if (tone === 'error') statusEl.classList.add('text-rose-400');
+        else if (tone === 'warning') statusEl.classList.add('text-amber-400');
+        else if (tone === 'success') statusEl.classList.add('text-emerald-400');
+        else statusEl.classList.add('text-slate-500');
+    },
+
     async openBiometriaModal() {
         const modal = document.getElementById('modalCamera');
         const video = document.getElementById('video-feed');
-        if (!modal || !video) return;
+        const captureButton = document.getElementById('btn-capturar-face');
+        const retryButton = document.getElementById('btn-tentar-camera');
+        if (!modal || !video) throw new Error('Modal de biometria nao encontrado');
 
         modal.classList.remove('hidden');
         modal.classList.add('flex');
+        this.updateCameraStatus('Posicione seu rosto sozinho no centro do visor para validar o ponto.');
+
+        if (captureButton) captureButton.classList.remove('hidden');
+        if (retryButton) retryButton.classList.add('hidden');
+
+        this.closeCameraStream();
 
         try {
             const stream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: "user", width: 720, height: 720 },
+                video: {
+                    facingMode: 'user',
+                    width: { ideal: 720 },
+                    height: { ideal: 720 }
+                },
                 audio: false
             });
+
             video.srcObject = stream;
             this.cameraStream = stream;
-        } catch (err) {
-            console.error("[PunchEngine] Erro ao acessar câmera:", err);
-            UI.showToast("Falha ao acessar câmera frontal.", "error");
-            this.closeBiometriaModal();
-            this.reset();
+            this.updateCameraStatus('Capture 3 amostras estaveis com boa iluminacao.', 'success');
+        } catch (error) {
+            console.error('[PunchEngine] Erro ao acessar camera:', error);
+
+            this.tempData.biometriaAudit = BiometricHelper.buildAudit({
+                deviceError: error?.name || 'camera_open_failed'
+            });
+
+            this.updateCameraStatus(BiometricHelper.getCameraErrorMessage(error), 'error');
+            UI.showToast('Camera indisponivel. Nenhum ponto foi registrado.', 'error');
+
+            if (captureButton) captureButton.classList.add('hidden');
+            if (retryButton) retryButton.classList.remove('hidden');
         }
     },
 
-    closeBiometriaModal() {
-        const modal = document.getElementById('modalCamera');
+    closeCameraStream() {
         if (this.cameraStream) {
             this.cameraStream.getTracks().forEach(track => track.stop());
             this.cameraStream = null;
         }
+    },
+
+    closeBiometriaModal(resetFlow = false) {
+        const modal = document.getElementById('modalCamera');
+        this.closeCameraStream();
+
         if (modal) {
             modal.classList.add('hidden');
             modal.classList.remove('flex');
         }
+
+        if (resetFlow) {
+            this.reset();
+        }
     },
 
-    /**
-     * Captura a foto, valida o rosto (Face Match) e prossegue para Geofence
-     */
     async captureAndProcess(currentUser) {
         const video = document.getElementById('video-feed');
         const canvas = document.getElementById('canvas-snapshot');
         if (!video || !canvas) return;
 
         UI.showLoader();
+        this.updateCameraStatus('Validando identidade facial. Aguarde...', 'warning');
+
         try {
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
+            const remoteTemplate = await BiometricHelper.fetchTemplateForUser(currentUser.id || localStorage.getItem('userId'));
+            if (!remoteTemplate.user?.biometria_cadastrada) {
+                throw new Error('Biometria nao cadastrada. Atualize seu perfil primeiro.');
+            }
+
+            if (!remoteTemplate.parsedTemplate.valid) {
+                throw new Error('Seu template biometrico esta invalido ou legado. Refaça o cadastro facial no perfil.');
+            }
+
+            canvas.width = video.videoWidth || 720;
+            canvas.height = video.videoHeight || 720;
             canvas.getContext('2d').drawImage(video, 0, 0);
 
-            // Validação de Biometria Real via face-api.js
-            if (currentUser.biometria_cadastrada && currentUser.biometria_token) {
-                const { FaceApiService } = await import('./face-api-service.js');
-                
-                // Mostrar status inteligente na UI (Opcional se existir um feedback-text)
-                const label = document.querySelector('#punchButton span');
-                if(label) label.innerHTML = 'ANALISANDO<br>SUA FACE...';
+            const { FaceApiService } = await import('./face-api-service.js');
+            await FaceApiService.init();
 
-                await FaceApiService.init();
-                const currentDescriptor = await FaceApiService.getFaceDescriptor(video);
-                
-                if (!currentDescriptor) {
-                    throw new Error('Nenhuma face clara detectada. Posicione o rosto mais perto e assegure boa iluminação.');
-                }
-                
-                let savedDescriptor;
-                try {
-                    savedDescriptor = JSON.parse(currentUser.biometria_token);
-                } catch (e) {
-                    throw new Error('Seu molde biométrico antigo é inválido. Por favor, acesse o perfil e recadastre a face.');
-                }
+            const verification = await FaceApiService.verifyLiveMatch(video, remoteTemplate.parsedTemplate.descriptor, {
+                samples: 3,
+                threshold: 0.55,
+                minScore: 0.4,
+                maxRetries: 5
+            });
 
-                const isMatch = FaceApiService.compareFaces(savedDescriptor, currentDescriptor);
-                if (!isMatch) {
-                    throw new Error('Rosto não reconhecido! Apenas a face cadastrada neste perfil pode bater o ponto.');
-                }
-            } else {
-                throw new Error('Biometria não cadastrada. Atualize seu perfil primeiro.');
+            if (!verification.isMatch) {
+                throw new Error('Rosto nao reconhecido. Apenas a face cadastrada neste perfil pode bater o ponto.');
             }
-            
-            // Nota: Não salvamos a imagem no banco por privacidade/performance
-            this.closeBiometriaModal();
+
+            this.tempData.biometriaAudit = BiometricHelper.buildAudit({
+                score: verification.averageConfidence,
+                method: 'face-api',
+                threshold: verification.threshold,
+                sampleCount: verification.sampleCount,
+                tokenFormat: remoteTemplate.parsedTemplate.format
+            });
+
+            this.updateCameraStatus('Identidade confirmada. Finalizando registro...', 'success');
+            this.closeBiometriaModal(false);
             await this.checkGeofenceAndCommit(currentUser);
-        } catch (err) {
-            console.error('[PunchEngine] Erro na captura de face:', err);
-            UI.showToast(err.message || 'Erro ao processar imagem.', 'error');
-            this.reset();
-            this.closeBiometriaModal(); // Fechar o modal para forçar reiniciar o check-in se falhou
+        } catch (error) {
+            console.error('[PunchEngine] Erro na captura de face:', error);
+            UI.showToast(error.message || 'Erro ao processar imagem.', 'error');
+            this.updateCameraStatus(error.message || 'Falha na verificacao facial.', 'error');
+            this.closeBiometriaModal(true);
         } finally {
             UI.hideLoader();
         }
     },
 
-    /**
-     * Valida geofence e decide se abre modal de justificativa ou grava direto
-     */
     async checkGeofenceAndCommit(currentUser) {
         const escala = currentUser.escalas;
-        
-        // Se houver escala, validamos o Geofence
+
         if (escala) {
             const validation = EventManager.validatePointEvent({
                 tipo: this.tempData.type,
@@ -188,56 +215,40 @@ export const PunchEngine = {
                 accuracy: this.tempData.accuracy
             }, escala);
 
-            // Se estiver fora do raio, abre modal de justificativa
             if (validation.status === 'divergente' && validation.alerts.includes('FORA DO RAIO')) {
                 this.openGeofenceModal(currentUser, validation.distancia_metros, validation.raio_permitido);
                 return;
             }
         }
 
-        // Se estiver dentro do raio ou sem escala, grava direto
         await this.commitToDatabase(currentUser);
     },
 
-    /**
-     * Abre o modal de justificativa de Geofence
-     */
     openGeofenceModal(currentUser, distancia, raio) {
         const modal = document.getElementById('modalJustificativa');
         const title = document.getElementById('geofenceTitle');
         const instruction = document.getElementById('geofenceInstruction');
         const btnConfirmar = document.getElementById('btnConfirmarPontoForaRaio');
-        const containerDistancia = document.getElementById('geofenceDistanceInfo'); 
-        
+        const containerDistancia = document.getElementById('geofenceDistanceInfo');
+
         if (!modal) return;
 
         const isCheckin = this.tempData.type === 'check-in';
-        if (title) title.innerText = isCheckin ? `CHECKIN REALIZADO FORA DO RAIO DE TRABALHO` : `CHECKOUT REALIZADO FORA DO RAIO DE TRABALHO`;
-        
-        if (instruction) {
-            instruction.innerHTML = `Detectamos que você está fora do raio de trabalho permitido.<br><br><b>Justificativa (Opcional):</b>`;
-        }
+        if (title) title.innerText = isCheckin ? 'CHECKIN REALIZADO FORA DO RAIO DE TRABALHO' : 'CHECKOUT REALIZADO FORA DO RAIO DE TRABALHO';
+        if (instruction) instruction.innerHTML = 'Detectamos que voce esta fora do raio de trabalho permitido.<br><br><b>Justificativa (Opcional):</b>';
 
-        // Exibir distância no contêiner info se disponível
         if (containerDistancia) {
-            containerDistancia.innerHTML = `Localização atual: <b>${distancia >= 1000 ? (distancia/1000).toFixed(1)+'km' : distancia+'m'} de distância</b>`;
+            containerDistancia.innerHTML = `Localizacao atual: <b>${distancia >= 1000 ? `${(distancia / 1000).toFixed(1)}km` : `${distancia}m`} de distancia</b> | Raio permitido: <b>${raio}m</b>`;
             containerDistancia.classList.remove('hidden');
         }
 
         if (btnConfirmar) {
             btnConfirmar.disabled = false;
-            btnConfirmar.className = `w-full py-4 bg-primary text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all hover:bg-primary/80 active:scale-95 shadow-lg shadow-primary/20`;
-        }
-
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-
-        // Configurar botões do modal
-        if (btnConfirmar) {
+            btnConfirmar.className = 'w-full py-4 bg-primary text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all hover:bg-primary/80 active:scale-95 shadow-lg shadow-primary/20';
             btnConfirmar.onclick = async () => {
-                if (isHardLocked) return;
+                if (typeof isHardLocked !== 'undefined' && isHardLocked) return;
                 const rawText = document.getElementById('justificativaTexto').value || '';
-                this.tempData.justificativa = rawText.trim() || `Divergência de geofence via ${this.tempData.type} aceita sem comentário detalhado. [Distância: ${distancia}m]`;
+                this.tempData.justificativa = rawText.trim() || `Divergencia de geofence via ${this.tempData.type} aceita sem comentario detalhado. [Distancia: ${distancia}m]`;
                 modal.classList.add('hidden');
                 await this.commitToDatabase(currentUser);
             };
@@ -250,20 +261,25 @@ export const PunchEngine = {
                 this.reset();
             };
         }
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
     },
 
-    /**
-     * Persistência final no banco de dados
-     */
     async commitToDatabase(currentUser) {
         if (!this.tempData.type) return;
+        if (!this.tempData.biometriaAudit?.biometria_verificada) {
+            UI.showToast('A validacao facial e obrigatoria para concluir o ponto.', 'error');
+            this.reset();
+            return;
+        }
+
         UI.showLoader();
 
         try {
             const userId = currentUser.id || localStorage.getItem('userId');
             const escala = currentUser.escalas;
 
-            // 1. Validação Final de Alertas para o Banco
             const validation = escala ? EventManager.validatePointEvent({
                 tipo: this.tempData.type,
                 latitude: this.tempData.lat,
@@ -271,20 +287,16 @@ export const PunchEngine = {
                 accuracy: this.tempData.accuracy
             }, escala) : { status: 'normal', alerts: [] };
 
-            if (this.tempData.gpsOculto) validation.alerts.push("GPS Oculto/Desligado");
-            
-            const isDivergent = this.tempData.gpsOculto || validation.status === 'divergente' || (validation.alerts && validation.alerts.length > 0);
+            if (this.tempData.gpsOculto) validation.alerts.push('GPS Oculto/Desligado');
 
-            // 2. Inserção na Tabela 'pontos'
+            const isDivergent = this.tempData.gpsOculto || validation.status === 'divergente' || (validation.alerts && validation.alerts.length > 0);
             const now = new Date();
-            
-            // Lógica de Identificação de Hora Extra Ativa (ChronoSync Core)
             let extraNote = '';
             if (this.activeExtraMinutes > 0) {
                 extraNote = ` [EXPEDIENTE PRORROGADO: +${this.activeExtraMinutes} MIN AUTORIZADOS]`;
             }
 
-            const { error } = await supabase.from('pontos').insert([{
+            const payload = {
                 funcionario_id: userId,
                 data_hora: now.toISOString(),
                 tipo: this.tempData.type,
@@ -292,23 +304,25 @@ export const PunchEngine = {
                 dentro_do_raio: !validation.alerts.includes('FORA DO RAIO'),
                 justificativa_usuario: (this.tempData.justificativa || (validation.alerts.length > 0 ? validation.alerts.join(' | ') : '')) + extraNote,
                 latitude: this.tempData.lat,
-                longitude: this.tempData.lng
-            }]);
+                longitude: this.tempData.lng,
+                biometria_verificada: true,
+                biometria_score: this.tempData.biometriaAudit.biometria_score,
+                biometria_metodo: this.tempData.biometriaAudit.biometria_metodo,
+                biometria_timestamp: this.tempData.biometriaAudit.biometria_timestamp,
+                biometria_device_error: this.tempData.biometriaAudit.biometria_device_error || null
+            };
 
+            const { error } = await supabase.from('pontos').insert([payload]);
             if (error) throw error;
 
-            // 3. Logs Específicos (Saída Antecipada / GPS Oculto)
             await this.processSideEffects(currentUser, isDivergent, validation.alerts);
 
             UI.showToast('Ponto registrado com sucesso!', 'success');
-            
-            // 4. Notificar Dashboard (se globalmente disponível)
             if (window.dispatchEvent) {
                 window.dispatchEvent(new CustomEvent('punch-success', { detail: { type: this.tempData.type } }));
             }
-
-        } catch (err) {
-            console.error('[PunchEngine] Erro ao gravar ponto:', err);
+        } catch (error) {
+            console.error('[PunchEngine] Erro ao gravar ponto:', error);
             UI.showToast('Erro ao salvar registro de ponto.', 'error');
         } finally {
             UI.hideLoader();
@@ -316,18 +330,9 @@ export const PunchEngine = {
         }
     },
 
-    /**
-     * Processa efeitos colaterais como logs de saída antecipada
-     */
-    async processSideEffects(currentUser, isDivergent, alerts) {
-        const escala = currentUser.escalas;
+    async processSideEffects(currentUser, isDivergent) {
         const now = new Date();
 
-        // A. Log de Saída Antecipada - REMOVIDO / SUPRIMIDO 
-        // Conforme pedido: "deixe livre para que ele faça checkin/checkout... não gere nada, apenas faça a contabilização"
-        // Só geramos eventos se for fora do raio (já tratado no status do ponto).
-
-        // B. Log de GPS Oculto
         if (this.tempData.gpsOculto && !isDivergent) {
             await supabase.from('diario_logs').insert([{
                 funcionario_id: currentUser.id,
@@ -339,16 +344,27 @@ export const PunchEngine = {
         }
     },
 
+    retryCamera() {
+        this.openBiometriaModal();
+    },
+
     reset() {
         this.isProcessing = false;
+        this.closeCameraStream();
         this.tempData = {
-            type: null, lat: null, lng: null, accuracy: 0, gpsOculto: false, justificativa: null
+            type: null,
+            lat: null,
+            lng: null,
+            accuracy: 0,
+            gpsOculto: false,
+            justificativa: null,
+            biometriaAudit: null
         };
-        // Limpar campo de texto do modal se existir
+
         const input = document.getElementById('justificativaTexto');
         if (input) input.value = '';
+        this.updateCameraStatus('Posicione seu rosto sozinho no centro do visor para validar o ponto.');
     }
 };
 
-// Tornar global para acesso via onclick se necessário
 window.PunchEngine = PunchEngine;
