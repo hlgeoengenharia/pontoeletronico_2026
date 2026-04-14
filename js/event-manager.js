@@ -144,9 +144,14 @@ const EventManager = {
 
         // B. Justificativas e seus Resultados
         const justificativaResultados = {};
+        const justificativaResultadosByContext = [];
         logs.forEach(l => {
-            if (l.tipo === 'justificativa_resultado' && l.referencia_id) {
-                justificativaResultados[l.referencia_id] = l;
+            if (l.tipo === 'justificativa_resultado') {
+                if (l.referencia_id) {
+                    justificativaResultados[l.referencia_id] = l;
+                }
+                // Manter lista completa para match por proximidade temporal (fallback)
+                justificativaResultadosByContext.push(l);
             }
         });
 
@@ -236,10 +241,23 @@ const EventManager = {
         // G. Logs de Sistema (Processados por último para evitar ocultação indevida)
         logs.forEach(l => {
             // OCULTAR redundâncias e itens já processados na fusão
-            const isJustificativaRedundante = l.tipo === 'justificativa' || l.tipo === 'justificativa_resultado';
+            // NOTA: justificativa_resultado NÃO é redundante — é o card de feedback do admin para o funcionário
+            const isJustificativaRedundante = l.tipo === 'justificativa';
             const isFeriasRedundante = l.tipo === 'aviso_ferias' && avisoFeriasProcessado;
             
             if (isJustificativaRedundante || isFeriasRedundante) return;
+
+            // CARD DE RESULTADO DE ANÁLISE: Renderizar com provider dedicado (ResultadoFeedbackHistory)
+            if (l.tipo === 'justificativa_resultado') {
+                unified.push({
+                    ...l,
+                    tipo: 'justificativa_resultado',
+                    itemType: 'justificativa_resultado',
+                    time: l.created_at || l.data_hora,
+                    content: l.mensagem_padrao || ''
+                });
+                return;
+            }
 
             const content = l.mensagem_padrao || l.tipo_log || '';
             const isGeofenceLog = content.toUpperCase().includes('FORA DO RAIO');
@@ -254,13 +272,32 @@ const EventManager = {
                     return idMatch || timeMatch;
                 });
 
+                // Buscar resultado de análise: primeiro por referencia_id direto, depois por contexto temporal
+                const findResult = (targetId, targetTime) => {
+                    if (justificativaResultados[targetId]) return justificativaResultados[targetId];
+                    // Fallback: buscar por proximidade temporal + funcionario_id
+                    const tRef = new Date(targetTime).getTime();
+                    return justificativaResultadosByContext.find(r => 
+                        r.funcionario_id === l.funcionario_id &&
+                        Math.abs(new Date(r.created_at).getTime() - tRef) / (1000 * 60 * 60) < 24
+                    ) || null;
+                };
+
                 if (justificativa) {
                     justificativasConsumidas.add(justificativa.id);
-                    const result = justificativaResultados[justificativa.id];
+                    const result = findResult(justificativa.id, justificativa.created_at || l.created_at);
                     
                     // Priorizar o status da justificativa (que é atualizado no banco após análise)
                     let finalStatus = justificativa.status || 'pendente';
                     if (result && finalStatus === 'pendente') finalStatus = 'abonado'; // Fallback se o resultado existe
+
+                    // Extrair feedback do admin: priorizar observacao_admin direto, depois parsear do log de resultado
+                    let adminFeedback = justificativa.observacao_admin || null;
+                    if (!adminFeedback && result) {
+                        const rawMsg = result.mensagem_padrao || '';
+                        const analiseIdx = rawMsg.lastIndexOf('[ANÁLISE:');
+                        adminFeedback = analiseIdx > -1 ? rawMsg.substring(rawMsg.indexOf(']', analiseIdx) + 1).trim() : rawMsg;
+                    }
 
                     unified.push({
                         ...l,
@@ -270,17 +307,44 @@ const EventManager = {
                         content: content,
                         justificativa_usuario: justificativa.justificativa || justificativa.justificativa_usuario || justificativa.descricao || justificativa.conteudo || '',
                         status: finalStatus,
-                        admin_feedback: result ? (result.mensagem_padrao || result.feedback_admin || result.observacao_admin) : (justificativa.observacao_admin || null),
+                        admin_feedback: adminFeedback,
                         evidencia_url: justificativa.evidencia_url || justificativa.url_anexo || null
                     });
                 } else {
+                    // Sem registro na tabela 'justificativas': buscar dados diretamente do ponto correspondente
+                    const pontosArr = options.pontos || [];
+                    const lTime = new Date(l.created_at || l.data_hora).getTime();
+                    const matchedPonto = pontosArr.find(p => 
+                        p.funcionario_id === l.funcionario_id &&
+                        Math.abs(new Date(p.data_hora).getTime() - lTime) / (1000 * 60) < 5
+                    );
+
+                    let pontoStatus = matchedPonto?.status_validacao || 'pendente';
+                    let pontoJustificativa = matchedPonto?.justificativa_usuario || '';
+                    let pontoAdminFeedback = matchedPonto?.observacao_admin || null;
+
+                    // Buscar resultado de análise pelo ID do ponto ou por proximidade temporal
+                    const resultLog = matchedPonto ? findResult(matchedPonto.id, l.created_at) : findResult(l.id, l.created_at);
+                    if (resultLog && pontoStatus === 'pendente') pontoStatus = 'abonado';
+                    if (!pontoAdminFeedback && resultLog) {
+                        const rawMsg = resultLog.mensagem_padrao || '';
+                        const analiseIdx = rawMsg.lastIndexOf('[ANÁLISE:');
+                        pontoAdminFeedback = analiseIdx > -1 ? rawMsg.substring(rawMsg.indexOf(']', analiseIdx) + 1).trim() : rawMsg;
+                    }
+
+                    // Limpar tags técnicas da justificativa do colaborador (ex: [EXPEDIENTE PRORROGADO:...])
+                    const cleanJust = pontoJustificativa.replace(/\[EXPEDIENTE PRORROGADO:.*?\]/g, '').replace(/\[Distancia:.*?\]/g, '').trim();
+
                     unified.push({
                         ...l,
                         tipo: 'ponto',
                         itemType: 'PONTO',
                         time: l.created_at,
                         content: content,
-                        status: 'pendente'
+                        justificativa_usuario: cleanJust || '',
+                        status: pontoStatus,
+                        admin_feedback: pontoAdminFeedback,
+                        distancia_metros: matchedPonto?.distancia_metros || null
                     });
                 }
                 return;
@@ -299,7 +363,7 @@ const EventManager = {
         if (options.pontos && options.pontos.length > 0) {
             options.pontos.forEach(p => {
                 // REGRA: Só mostrar na timeline se for FORA DO RAIO
-                if (p.dentro_raio !== false) return;
+                if (p.dentro_raio !== false && p.dentro_do_raio !== false) return;
 
                 // Evitar duplicação se já tiver sido adicionado via LOG
                 const pTime = new Date(p.data_hora).getTime();
@@ -315,9 +379,34 @@ const EventManager = {
                     return Math.abs(pTime - jTime) / (1000 * 60) < 5 && !justificativasConsumidas.has(j.id);
                 });
 
+                // Buscar resultado de análise por referencia_id ou proximidade temporal
+                const findResultForPonto = () => {
+                    if (justificativaResultados[p.id]) return justificativaResultados[p.id];
+                    return justificativaResultadosByContext.find(r => 
+                        r.funcionario_id === p.funcionario_id &&
+                        (r.referencia_id === p.id || Math.abs(new Date(r.created_at).getTime() - pTime) / (1000 * 60 * 60) < 24)
+                    ) || null;
+                };
+
                 if (justificativa) {
                     justificativasConsumidas.add(justificativa.id);
-                    const result = justificativaResultados[justificativa.id];
+                    const result = justificativaResultados[justificativa.id] || findResultForPonto();
+                    
+                    // Status: priorizar justificativa.status, depois status_validacao do ponto
+                    let finalStatus = justificativa.status || 'pendente';
+                    if (finalStatus === 'pendente' && p.status_validacao && p.status_validacao !== 'pendente') {
+                        finalStatus = p.status_validacao; // Sync: o ponto já foi analisado
+                    }
+                    if (result && finalStatus === 'pendente') finalStatus = 'abonado';
+
+                    // Extrair feedback do admin
+                    let adminFeedback = justificativa.observacao_admin || p.observacao_admin || null;
+                    if (!adminFeedback && result) {
+                        const rawMsg = result.mensagem_padrao || '';
+                        const analiseIdx = rawMsg.lastIndexOf('[ANÁLISE:');
+                        adminFeedback = analiseIdx > -1 ? rawMsg.substring(rawMsg.indexOf(']', analiseIdx) + 1).trim() : rawMsg;
+                    }
+
                     unified.push({
                         ...p,
                         id: p.id,
@@ -325,19 +414,33 @@ const EventManager = {
                         itemType: 'PONTO',
                         time: p.data_hora,
                         content: p.tipo === 'ENTRADA' ? `Check-in realizado fora do raio` : `Check-out realizado fora do raio`,
-                        justificativa_usuario: justificativa.descricao || justificativa.justificativa_usuario || '',
-                        status: justificativa.status || 'pendente',
-                        admin_feedback: result ? result.mensagem_padrao : (justificativa.observacao_admin || null),
+                        justificativa_usuario: justificativa.descricao || justificativa.justificativa_usuario || p.justificativa_usuario || '',
+                        status: finalStatus,
+                        admin_feedback: adminFeedback,
                         evidencia_url: justificativa.evidencia_url || justificativa.url_anexo || null
                     });
                 } else {
+                    // Sem justificativa vinculada: usar dados diretos do ponto
+                    const result = findResultForPonto();
+                    let pontoStatus = p.status_validacao || 'pendente';
+                    if (result && pontoStatus === 'pendente') pontoStatus = 'abonado';
+
+                    let adminFeedback = p.observacao_admin || null;
+                    if (!adminFeedback && result) {
+                        const rawMsg = result.mensagem_padrao || '';
+                        const analiseIdx = rawMsg.lastIndexOf('[ANÁLISE:');
+                        adminFeedback = analiseIdx > -1 ? rawMsg.substring(rawMsg.indexOf(']', analiseIdx) + 1).trim() : rawMsg;
+                    }
+
                     unified.push({
                         ...p,
                         tipo: 'ponto',
                         itemType: 'PONTO',
                         time: p.data_hora,
-                        content: p.tipo === 'ENTRADA' ? `Check-in fora do raio (Sem justificativa)` : `Check-out fora do raio (Sem justificativa)`,
-                        status: 'pendente'
+                        content: p.tipo === 'ENTRADA' ? `Check-in fora do raio` : `Check-out fora do raio`,
+                        justificativa_usuario: p.justificativa_usuario || '',
+                        status: pontoStatus,
+                        admin_feedback: adminFeedback
                     });
                 }
             });
@@ -504,11 +607,13 @@ const EventManager = {
                 }
                 
                 // Limpeza Global de Logs Informativos (Fundamental para o Dashboard zerar)
-                // Isso marca como 'visto' todos os comunicados e alertas de justificativas deste usuário
+                // PROTEGE justificativa_resultado: esses logs precisam manter status_pendencia='pendente'
+                // até que o funcionário os visualize no Diário (o JustificativasCounter depende disso)
                 promises.push(sb.from('diario_logs')
                     .update({ status_pendencia: 'visto' })
                     .eq('funcionario_id', userId)
-                    .eq('status_pendencia', 'pendente'));
+                    .eq('status_pendencia', 'pendente')
+                    .neq('tipo', 'justificativa_resultado'));
 
                 await Promise.all(promises);
                 console.log('[EventManager] Limpeza de informativos sincronizada com o banco.');

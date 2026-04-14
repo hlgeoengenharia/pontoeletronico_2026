@@ -123,7 +123,26 @@ export const DiarioEngine = {
         const container = document.getElementById('historicoAnotacoesContainer');
         if (!container) return;
 
-        const itemsToShow = this.state.expanded ? this.state.historyData : this.state.historyData.slice(0, 5);
+        // Filtrar eventos do dia atual (padrão) vs histórico completo (expandido)
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        let itemsToShow;
+        let hasOlderItems = false;
+
+        if (this.state.expanded) {
+            // Expandido: mostrar TODOS os eventos (ordem: mais recente no topo)
+            itemsToShow = this.state.historyData;
+        } else {
+            // Padrão: mostrar apenas eventos do dia atual
+            const todayItems = this.state.historyData.filter(item => {
+                const itemDate = new Date(item.time || item.created_at || item.data_hora);
+                return itemDate >= today;
+            });
+            // Se não houver nenhum evento hoje, mostrar os 5 mais recentes para não ficar vazio
+            itemsToShow = todayItems.length > 0 ? todayItems : this.state.historyData.slice(0, 5);
+            hasOlderItems = this.state.historyData.length > todayItems.length;
+        }
         
         container.innerHTML = HistoryRenderer.renderList(itemsToShow, { 
             isAdmin: localStorage.getItem('userRole') === 'Admin', 
@@ -134,8 +153,11 @@ export const DiarioEngine = {
         const elTotal = document.getElementById('labelTotalAnotacoes');
         if (elTotal) elTotal.innerText = `${this.state.historyData.length} registros`;
 
+        // Botão de expandir: visível se há eventos de dias anteriores não exibidos
         const elExpandBtn = document.getElementById('containerBtnExpandir');
-        if (elExpandBtn) elExpandBtn.classList.toggle('hidden', this.state.historyData.length <= 5);
+        if (elExpandBtn) {
+            elExpandBtn.classList.toggle('hidden', !hasOlderItems || this.state.expanded);
+        }
     },
 
     toggleExpand() {

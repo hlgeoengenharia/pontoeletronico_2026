@@ -396,6 +396,7 @@
         document.getElementById('btnModeJustificativa').onclick = () => setFormMode('justificativa');
         document.getElementById('btnModeFerias').onclick = () => window.abrirModalFerias();
         document.getElementById('btnSalvarAnotacao').onclick = handleSave;
+        document.getElementById('btnExpandHistory').onclick = () => DiarioEngine.toggleExpand();
         
         document.getElementById('btnAnexarEvidencia').onclick = () => document.getElementById('inputEvidencia').click();
         document.getElementById('inputEvidencia').onchange = (e) => {
