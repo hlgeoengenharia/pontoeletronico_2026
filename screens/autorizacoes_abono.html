@@ -98,7 +98,7 @@
             .from('diario_logs')
             .select('*, funcionarios!inner(nome_completo, matricula, setor_id, funcao)')
             .eq('status_pendencia', 'pendente')
-            .not('tipo', 'in', '("comunicado","justificativa_resultado")')
+            .not('tipo', 'in', '("comunicado","justificativa_resultado","gps_pulse")')
             .neq('tipo', 'aviso_ferias');
 
           const role = (user.role || '').toLowerCase();
@@ -141,7 +141,7 @@
                 return {
                     ...g, 
                     id: g.id, 
-                    itemType: 'SISTEMA', 
+                    itemType: 'GPS', 
                     data_incidente: g.data_hora, 
                     tipo_divergencia: `SOLICITAÇÃO DE ${g.tipo.toUpperCase()} FORA DO RAIO`, 
                     descricao: cleanDesc, 
@@ -155,6 +155,7 @@
                 else if (l.tipo === 'gps_oculto') tipoLabel = 'DIVERGÊNCIA DE GPS (OCULTO)';
                 else if (l.tipo === 'geofence_in') tipoLabel = 'RETORNO AO PERÍMETRO';
                 else if (l.tipo === 'alerta_feriados_folgas') tipoLabel = 'ALERTA DE GESTÃO';
+                else if (l.tipo === 'pendencia_geofence') tipoLabel = 'REGISTRO FORA DO PERÍMETRO';
 
                 return { 
                   ...l, 
@@ -349,7 +350,9 @@
             }
             error = errJ;
           } else if (type === 'SISTEMA' || type === 'ALERTA_MENSAL') {
+            console.log('[Autorizacoes] Atualizando diario_logs:', { id, status });
             const result = await supabase.from('diario_logs').update({ status_pendencia: status }).eq('id', id);
+            console.log('[Autorizacoes] Resultado:', result);
             error = result.error;
           } else {
             const result = await supabase.from('pontos').update({ status_validacao: status }).eq('id', id);
@@ -368,7 +371,9 @@
           }
 
           UI.showToast(status === 'abonado' ? 'Solicitação Abonada!' : 'Solicitação Rejeitada!', 'success');
-          loadJustificativas();
+          
+          // Recarregar com delay maior
+          setTimeout(() => loadJustificativas(), 800);
         } catch (err) {
           console.error('Erro ao processar:', err);
           UI.showToast('Erro ao processar ação', 'error');

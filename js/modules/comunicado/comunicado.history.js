@@ -25,7 +25,9 @@ export const ComunicadoHistory = {
         // Botão de Ciência (EXCLUSIVO PARA HORA EXTRA no portal do colaborador)
         let actionButtons = '';
         if (options.isAdmin) {
-            if (!options.isContextDiario) {
+            const canEdit = window.EventManager ? window.EventManager.canEdit(item) : true;
+
+            if (!options.isContextDiario && canEdit) {
                 actionButtons = `
                     <div class="flex gap-2 justify-end pt-1.5 transition-all">
                         <button onclick="prepararEdicaoInline('${item.id}')" 

@@ -642,7 +642,7 @@
                         </div>
                         <div class="space-y-1">
                             <label class="text-[11px] font-bold uppercase opacity-50 text-slate-400">Carga Semanal (h)</label>
-                            <input id="inline-carga-${e.id}" type="number" class="w-full bg-background-dark/50 border-primary/30 rounded-lg px-3 py-3 text-xs text-slate-100" value="${e.carga_horaria_semanal || 44}">
+                            <input id="inline-carga-${e.id}" type="number" oninput="renderInlinePreview('${e.id}')" class="w-full bg-background-dark/50 border-primary/30 rounded-lg px-3 py-3 text-xs text-slate-100" value="${e.carga_horaria_semanal || 44}">
                         </div>
                       </div>
 
@@ -745,18 +745,24 @@
                           Janelas de Ativação e Tolerâncias
                         </h3>
                         <div class="grid grid-cols-3 gap-3 p-4 bg-slate-800/20 border border-white/5 rounded-xl">
-                          <div class="space-y-1">
-                              <label class="text-[9px] font-bold text-slate-400 uppercase mb-1">Antes (min)</label>
-                              <input id="inline-janela-antes-${e.id}" type="number" class="w-full bg-background-dark/30 border-white/10 rounded p-2 text-sm text-primary font-bold" value="${e.janela_ativa_antes_minutos || 30}">
-                          </div>
-                          <div class="space-y-1">
-                              <label class="text-[9px] font-bold text-slate-400 uppercase mb-1">Depois (min)</label>
-                              <input id="inline-janela-depois-${e.id}" type="number" class="w-full bg-background-dark/30 border-white/10 rounded p-2 text-sm text-primary font-bold" value="${e.janela_ativa_depois_minutos || 30}">
-                          </div>
-                          <div class="space-y-1">
-                              <label class="text-[9px] font-bold text-slate-400 uppercase mb-1">Tol. Ent. (min)</label>
-                              <input id="inline-tol-in-${e.id}" type="number" class="w-full bg-background-dark/30 border-white/10 rounded p-2 text-sm text-primary font-bold" value="${e.tolerancia_entrada_minutos || 15}">
-                          </div>
+                          <div>
+            <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Janela Antes (min)</label>
+            <input id="inline-janela-antes-${e.id}" type="number" 
+              class="w-full bg-background-dark/30 border-white/10 rounded p-2 text-sm text-primary font-bold" 
+              value="${e.janela_ativa_antes_minutos !== null && e.janela_ativa_antes_minutos !== undefined ? e.janela_ativa_antes_minutos : 30}">
+          </div>
+          <div>
+            <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Depois (min)</label>
+            <input id="inline-janela-depois-${e.id}" type="number" 
+              class="w-full bg-background-dark/30 border-white/10 rounded p-2 text-sm text-primary font-bold" 
+              value="${e.janela_ativa_depois_minutos !== null && e.janela_ativa_depois_minutos !== undefined ? e.janela_ativa_depois_minutos : 30}">
+          </div>
+          <div>
+            <label class="block text-[9px] font-bold text-slate-400 uppercase mb-1">Tol. Ent. (min)</label>
+            <input id="inline-tol-in-${e.id}" type="number" 
+              class="w-full bg-background-dark/30 border-white/10 rounded p-2 text-sm text-primary font-bold" 
+              value="${e.tolerancia_entrada_minutos !== null && e.tolerancia_entrada_minutos !== undefined ? e.tolerancia_entrada_minutos : 15}">
+          </div>
                           <div class="col-span-3 pt-2 border-t border-white/5 mt-1">
                               <p class="text-[9px] text-slate-400 leading-relaxed">
                                 <strong class="text-primary/70">JANELA ANTES/DEPOIS:</strong> Período de ativação do botão no Dashboard.<br>
@@ -905,21 +911,31 @@
 
             editDiv.classList.remove('hidden');
             renderInlinePreview(id);
-            document.getElementById(`inline-nome-${id}`).focus();
+            const inputNome = document.getElementById(`inline-nome-${id}`);
+            if (inputNome) inputNome.focus();
+            
             // Scroll suave para o card
-            document.getElementById(`card-escala-${id}`).scrollIntoView({ behavior: 'smooth', block: 'start' });
+            const card = document.getElementById(`card-escala-${id}`);
+            if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
         } else {
             editDiv.classList.add('hidden');
         }
     };
 
     window.cancelarEdicaoInline = (id) => {
-        document.getElementById(`edit-escala-${id}`).classList.add('hidden');
+        const editDiv = document.getElementById(`edit-escala-${id}`);
+        if (editDiv) editDiv.classList.add('hidden');
     };
 
     // Auxiliares para Edição Inline
     window.toggleInlineDay = (id, day, type) => {
-        if (!inlineDiasSelecionados[id]) inlineDiasSelecionados[id] = { semanal: [], hibrido: [] };
+        if (!inlineDiasSelecionados[id]) {
+            const esc = allEscalasData.find(x => x.id === id);
+            inlineDiasSelecionados[id] = {
+                semanal: [...(esc?.dias_padrao || [])],
+                hibrido: [...(esc?.dias_presenciais_json || [])]
+            };
+        }
         
         const list = inlineDiasSelecionados[id][type];
         const idx = list.indexOf(day);
@@ -934,30 +950,49 @@
         const btnId = type === 'semanal' ? `btn-inline-day-${id}-${day}` : `btn-inline-hday-${id}-${day}`;
         const btn = document.getElementById(btnId);
         
-        if (list.includes(day)) {
-            btn.classList.add('bg-primary', 'text-white', 'border-primary');
-        } else {
-            btn.classList.remove('bg-primary', 'text-white', 'border-primary');
+        if (btn) {
+            if (list.includes(day)) {
+                btn.classList.add('bg-primary', 'text-white', 'border-primary', 'neon-border-sm');
+                btn.classList.remove('text-slate-500');
+            } else {
+                btn.classList.remove('bg-primary', 'text-white', 'border-primary', 'neon-border-sm');
+                btn.classList.add('text-slate-500');
+            }
         }
 
         renderInlinePreview(id);
     };
 
     window.updateInlineVisibility = (id) => {
-        const tipo = document.getElementById(`inline-tipo-${id}`).value;
-        const regime = document.getElementById(`inline-regime-${id}`).value;
+        const tipoSelect = document.getElementById(`inline-tipo-${id}`);
+        const regimeSelect = document.getElementById(`inline-regime-${id}`);
+        
+        if (!tipoSelect || !regimeSelect) return;
+        
+        const tipo = tipoSelect.value;
+        const regime = regimeSelect.value;
 
-        document.getElementById(`inline-ciclo-inputs-${id}`).classList.toggle('hidden', tipo !== 'ciclo');
-        document.getElementById(`inline-semanal-inputs-${id}`).classList.toggle('hidden', tipo !== 'semanal');
-        document.getElementById(`inline-hibrido-inputs-${id}`).classList.toggle('hidden', regime !== 'Híbrido');
+        const cicloDiv = document.getElementById(`inline-ciclo-inputs-${id}`);
+        const semanalDiv = document.getElementById(`inline-semanal-inputs-${id}`);
+        const hibridoDiv = document.getElementById(`inline-hibrido-inputs-${id}`);
+
+        if (cicloDiv) cicloDiv.classList.toggle('hidden', tipo !== 'ciclo');
+        if (semanalDiv) semanalDiv.classList.toggle('hidden', tipo !== 'semanal');
+        if (hibridoDiv) hibridoDiv.classList.toggle('hidden', regime !== 'Híbrido');
         
         renderInlinePreview(id);
     };
 
     window.renderInlinePreview = (id) => {
-        const tipo = document.getElementById(`inline-tipo-${id}`).value;
-        const carga = parseFloat(document.getElementById(`inline-carga-${id}`).value) || 0;
-        const entrada = document.getElementById(`inline-in-${id}`).value;
+        const tipoEl = document.getElementById(`inline-tipo-${id}`);
+        const cargaEl = document.getElementById(`inline-carga-${id}`);
+        const entradaEl = document.getElementById(`inline-in-${id}`);
+        
+        if (!tipoEl || !cargaEl || !entradaEl) return;
+
+        const tipo = tipoEl.value;
+        const carga = parseFloat(cargaEl.value) || 0;
+        const entrada = entradaEl.value;
         const grid = document.getElementById(`inline-preview-grid-${id}`);
         const label = document.getElementById(`inline-preview-month-label-${id}`);
 
@@ -1007,72 +1042,100 @@
             }
 
             const format = (n) => String(n).padStart(2, '0');
-            document.getElementById(`inline-out-${id}`).value = `${format(saiH % 24)}:${format(saiM)}`;
+            const outputEl = document.getElementById(`inline-out-${id}`);
+            if (outputEl) outputEl.value = `${format(saiH % 24)}:${format(saiM)}`;
         }
-    };
-
-    window.updateInlineVisibility = (id) => {
-        const tipo = document.getElementById(`inline-tipo-${id}`).value;
-        const regime = document.getElementById(`inline-regime-${id}`).value;
-
-        document.getElementById(`inline-ciclo-inputs-${id}`).classList.toggle('hidden', tipo !== 'ciclo');
-        document.getElementById(`inline-semanal-inputs-${id}`).classList.toggle('hidden', tipo !== 'semanal');
-        document.getElementById(`inline-hibrido-inputs-${id}`).classList.toggle('hidden', regime !== 'Híbrido');
     };
 
     window.salvarEdicaoInline = async (id) => {
         UI.showLoader();
         try {
-            // Coletar Dias Semana
-            const diasSemana = Array.from(document.querySelectorAll(`.inline-day-toggle-${id}`))
-                .filter(b => b.classList.contains('bg-primary'))
-                .map(b => parseInt(b.id.split('-').pop()));
+            // Coletar Estado via Cache de Edição (Mais confiável que seletores CSS com UUIDs)
+            if (!inlineDiasSelecionados[id]) {
+                 const esc = allEscalasData.find(x => x.id === id);
+                 inlineDiasSelecionados[id] = {
+                    semanal: [...(esc?.dias_padrao || [])],
+                    hibrido: [...(esc?.dias_presenciais_json || [])]
+                 };
+            }
+            const diasSemana = inlineDiasSelecionados[id].semanal || [];
+            const diasHibridos = inlineDiasSelecionados[id].hibrido || [];
 
-            // Coletar Dias Híbridos
-            const diasHibridos = Array.from(document.querySelectorAll(`.inline-hday-toggle-${id}`))
-                .filter(b => b.classList.contains('bg-primary'))
-                .map(b => parseInt(b.id.split('-').pop()));
+            const getVal = (elId) => {
+                const el = document.getElementById(elId);
+                return el ? el.value : null;
+            };
+            
+            const getNum = (elId, def) => {
+                const val = getVal(elId);
+                return (val !== null && val !== "") ? parseInt(val) : def;
+            };
+
+            const getCheck = (elId) => {
+                const el = document.getElementById(elId);
+                return el ? el.checked : false;
+            };
+
+            const tipo = getVal(`inline-tipo-${id}`);
 
             const dados = {
-                nome: document.getElementById(`inline-nome-${id}`).value.trim(),
-                carga_horaria_semanal: parseInt(document.getElementById(`inline-carga-${id}`).value) || 44,
-                tipo_escala: document.getElementById(`inline-tipo-${id}`).value,
-                regime: document.getElementById(`inline-regime-${id}`).value,
-                tipo_repeticao: document.getElementById(`inline-repeticao-${id}`).value,
-                horario_entrada: document.getElementById(`inline-in-${id}`).value,
-                horario_saida: document.getElementById(`inline-out-${id}`).value,
-                janela_ativa_antes_minutos: parseInt(document.getElementById(`inline-janela-antes-${id}`).value) || 30,
-                janela_ativa_depois_minutos: parseInt(document.getElementById(`inline-janela-depois-${id}`).value) || 30,
-                tolerancia_entrada_minutos: parseInt(document.getElementById(`inline-tol-in-${id}`).value) || 15,
-                // tolerancia_saida_minutos desativada conforme regra de negócio
+                nome: getVal(`inline-nome-${id}`)?.trim(),
+                carga_horaria_semanal: getNum(`inline-carga-${id}`, 44),
+                tipo_escala: tipo,
+                regime: getVal(`inline-regime-${id}`),
+                tipo_repeticao: getVal(`inline-repeticao-${id}`),
+                horario_entrada: getVal(`inline-in-${id}`),
+                horario_saida: getVal(`inline-out-${id}`),
+                janela_ativa_antes_minutos: getNum(`inline-janela-antes-${id}`, 30),
+                janela_ativa_depois_minutos: getNum(`inline-janela-depois-${id}`, 30),
+                tolerancia_entrada_minutos: getNum(`inline-tol-in-${id}`, 15),
                 
                 // Regras
-                restrito_gps: document.getElementById(`inline-rule-gps-${id}`).checked,
-                aprovacao_excecao: document.getElementById(`inline-rule-appr-${id}`).checked,
-                punicao_esquecimento: document.getElementById(`inline-rule-forget-${id}`).checked,
+                restrito_gps: getCheck(`inline-rule-gps-${id}`),
+                aprovacao_excecao: getCheck(`inline-rule-appr-${id}`),
+                punicao_esquecimento: getCheck(`inline-rule-forget-${id}`),
                 gestao_horas_extras: false,
-                limite_horas_extras:  0,
-                rastreio_horario: document.getElementById(`inline-rule-track-${id}`).checked,
-                possui_almoco: document.getElementById(`inline-rule-lunch-${id}`).checked,
+                limite_horas_extras: 0,
+                rastreio_horario: getCheck(`inline-rule-track-${id}`),
+                possui_almoco: getCheck(`inline-rule-lunch-${id}`),
                 
                 // Configs Complexas
                 dias_padrao: diasSemana,
-                dias_trabalho_semana: document.getElementById(`inline-tipo-${id}`).value === 'semanal' ? diasSemana.length : 0,
+                dias_trabalho_semana: tipo === 'semanal' ? diasSemana.length : 0,
                 dias_presenciais_json: diasHibridos,
-                ciclo_config: {
-                    trab_total: parseInt(document.getElementById(`inline-trab-${id}`).value) || 12,
-                    folga_total: parseInt(document.getElementById(`inline-folga-${id}`).value) || 36
-                }
+                ciclo_config: tipo === 'ciclo' ? {
+                    trab_total: getNum(`inline-trab-${id}`, 12),
+                    folga_total: getNum(`inline-folga-${id}`, 36)
+                } : null
             };
 
             if (!dados.nome) throw new Error('O nome da escala é obrigatório!');
             if (dados.tipo_escala === 'semanal' && dados.dias_padrao.length === 0) throw new Error('Selecione ao menos um dia de trabalho!');
 
-            const { error } = await supabase.from('escalas').update(dados).eq('id', id);
-            if (error) throw error;
+            // Garantir que a tolerância de saída acompanhe a de entrada se não houver campo específico
+            dados.tolerancia_saida_minutos = dados.tolerancia_entrada_minutos;
 
-            UI.showToast('Escala atualizada com sucesso!', 'success');
-            loadEscalas();
+            console.log('[Escalas] Enviando para Supabase ID:', id, dados);
+
+            const { data: updateData, error, status } = await supabase
+                .from('escalas')
+                .update(dados)
+                .eq('id', id)
+                .select(); // Forçar retorno para confirmar atualização
+
+            if (error) throw error;
+            
+            console.log(`[Escalas] Resposta HTTP: ${status}`, updateData);
+
+            if (!updateData || updateData.length === 0) {
+                console.warn('[Escalas] Nenhuma linha foi atualizada. Verifique o ID.');
+            } else {
+                UI.showToast('Escala atualizada com sucesso!', 'success');
+            }
+
+            // Aguardar um pequeno delay para propagação em caso de réplicas lentas (raro mas possível)
+            await new Promise(r => setTimeout(r, 100));
+            await loadEscalas();
         } catch (err) {
             console.error('Erro ao salvar escala:', err);
             UI.showToast(err.message || 'Erro ao salvar alterações', 'error');
@@ -1121,7 +1184,7 @@
       UI.showLoader();
 
       const dados = {
-        nome: document.getElementById('nome_escala').value,
+        nome: document.getElementById('nome_escala').value.trim(),
         tipo_escala: tipo,
         regime: regimeTrabalhoSel.value,
         carga_horaria_semanal: parseInt(document.getElementById('carga_horaria').value) || 0,
@@ -1130,12 +1193,12 @@
         janela_ativa_antes_minutos: parseInt(document.getElementById('janela_ativa_antes').value) || 30,
         janela_ativa_depois_minutos: parseInt(document.getElementById('janela_ativa_depois').value) || 30,
         tolerancia_entrada_minutos: parseInt(document.getElementById('tol_entrada').value) || 0,
-        // tolerancia_saida_minutos desativada
         dias_trabalho_semana: tipo === 'semanal' ? diasSemanaSelecionados.length : 0,
-        dias_padrao: tipo === 'semanal' ? diasSemanaSelecionados : null,
+        dias_padrao: diasSemanaSelecionados || [],
+        dias_presenciais_json: regimeTrabalhoSel.value === 'Híbrido' ? diasHibridosSelecionados : [],
         ciclo_config: tipo === 'ciclo' ? {
-          trab_total: parseInt(document.getElementById('trab_total').value),
-          folga_total: parseInt(document.getElementById('folga_total').value)
+          trab_total: parseInt(document.getElementById('trab_total').value) || 12,
+          folga_total: parseInt(document.getElementById('folga_total').value) || 36
         } : null,
         restrito_gps: document.getElementById('rule_gps').checked,
         aprovacao_excecao: document.getElementById('rule_approval').checked,

@@ -268,6 +268,80 @@ const ScalesEngine = {
         const h = Math.floor(Math.abs(totalMinutes) / 60);
         const m = Math.round(Math.abs(totalMinutes) % 60);
         return `${totalMinutes < 0 ? '-' : ''}${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+    },
+
+    /**
+     * Calcula os detalhes técnicos da janela de ponto para exibição na UI.
+     * Única fonte de verdade para Dashboard e Diagnóstico.
+     */
+    calculateWindowDetails(escala, extraMinutes = 0) {
+        if (!escala || !escala.horario_entrada) return null;
+
+        const offsetTime = (timeStr, minutes) => {
+            if (!timeStr) return '--:--';
+            const [h, m, s] = timeStr.split(':').map(Number);
+            const d = new Date();
+            d.setHours(h, m, s || 0, 0);
+            d.setMinutes(d.getMinutes() + minutes);
+            return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        };
+
+        const antesMin = (escala.janela_ativa_antes_minutos !== null && escala.janela_ativa_antes_minutos !== undefined) ? Number(escala.janela_ativa_antes_minutos) : 30;
+        const depoisMin = (escala.janela_ativa_depois_minutos !== null && escala.janela_ativa_depois_minutos !== undefined) ? Number(escala.janela_ativa_depois_minutos) : 30;
+        const tolMin = (escala.tolerancia_entrada_minutos !== null && escala.tolerancia_entrada_minutos !== undefined) ? Number(escala.tolerancia_entrada_minutos) : 15;
+
+        return {
+            entrada: escala.horario_entrada.substring(0, 5),
+            saida: escala.horario_saida.substring(0, 5),
+            antes: {
+                minutos: antesMin,
+                horario: offsetTime(escala.horario_entrada, -antesMin)
+            },
+            depois: {
+                minutos: depoisMin,
+                horario: offsetTime(escala.horario_saida, depoisMin)
+            },
+            tolerancia: {
+                minutos: tolMin,
+                horario: offsetTime(escala.horario_entrada, tolMin)
+            },
+            prorrogacao: {
+                minutos: extraMinutes,
+                horario: offsetTime(escala.horario_saida, depoisMin + extraMinutes)
+            }
+        };
+    },
+
+    /**
+     * Verifica se um determinado horário (ou o atual) está dentro da janela permitida.
+     * Considera janelas de ativação antes/depois e atravessa meia-noite.
+     */
+    isInActivationWindow(escala, extraMinutes = 0, targetDate = new Date()) {
+        if (!escala || !escala.horario_entrada) return true;
+
+        const [hE, mE] = escala.horario_entrada.split(':').map(Number);
+        const [hS, mS] = escala.horario_saida.split(':').map(Number);
+
+        const janelaAntes = parseInt(escala.janela_ativa_antes_minutos) || 30;
+        const janelaDepois = parseInt(escala.janela_ativa_depois_minutos) || 30;
+
+        for (let offset = -1; offset <= 1; offset++) {
+            const startShift = new Date(targetDate);
+            startShift.setDate(startShift.getDate() + offset);
+            startShift.setHours(hE, mE, 0, 0);
+
+            const endShift = new Date(targetDate);
+            endShift.setDate(endShift.getDate() + offset);
+            endShift.setHours(hS, mS + Number(extraMinutes), 0, 0);
+            
+            if (endShift < startShift) endShift.setDate(endShift.getDate() + 1);
+
+            const startWindow = new Date(startShift.getTime() - janelaAntes * 60000);
+            const endWindow = new Date(endShift.getTime() + janelaDepois * 60000);
+
+            if (targetDate >= startWindow && targetDate <= endWindow) return true;
+        }
+        return false;
     }
 };
 

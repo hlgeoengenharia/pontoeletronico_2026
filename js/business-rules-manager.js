@@ -33,7 +33,12 @@ export const BusinessRulesManager = {
      * Aplica penalidades apos rejeicao do Admin/Gestor.
      */
     async processRejection(item, type, adminObs) {
-        console.log(`[BusinessRules] Processando rejeicao (${type}):`, item.id);
+        console.log(`[BusinessRules] Processando rejeicao (${type}):`, item?.id);
+
+        if (!item || !item.id) {
+            console.warn('[BusinessRules] Item inválido, ignorando penalidade');
+            return { success: false, skipped: true };
+        }
 
         try {
             const punchType = item.tipo || 'check-in';

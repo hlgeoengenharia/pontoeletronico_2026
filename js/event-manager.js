@@ -242,36 +242,55 @@ const EventManager = {
             return true;
         }
 
-        // Regra 2: Atividades e Justificativas - 24 Horas
+        // Regra 2: Atividades, Justificativas e Comunicações - 24 Horas
         const createdAt = new Date(item.created_at || item.data_hora || item.time || item.time_raw || item.data_item + 'T00:00:00');
         const diffHours = (now - createdAt) / (1000 * 60 * 60);
 
-        const editableTypes = ['ATIVIDADE', 'JUSTIFICATIVA'];
+        const editableTypes = ['ATIVIDADE', 'JUSTIFICATIVA', 'COMUNICADO', 'HORA_EXTRA'];
         const isEditableType = editableTypes.includes(typeKey);
         const isPending = (item.status === 'pendente' || item.status_pendencia === 'pendente');
 
         if (isEditableType) {
-            if (typeKey === 'ATIVIDADE') return diffHours < 24;
+            if (typeKey === 'ATIVIDADE' || typeKey === 'COMUNICADO' || typeKey === 'HORA_EXTRA') return diffHours < 24;
             if (typeKey === 'JUSTIFICATIVA') return diffHours < 24 && isPending;
+        }
+
+        // Regra 3: Feriados e Folgas - Até 1 dia antes do evento
+        if (typeKey === 'FERIAS_FOLGA') {
+            if (!item.list || !Array.isArray(item.list) || item.list.length === 0) return false;
+            
+            // Buscar a data mais próxima no lote
+            const dates = item.list.map(f => new Date(f.data + 'T00:00:00'));
+            const minDate = new Date(Math.min(...dates));
+            
+            // Regra: Deve ser pelo menos 1 dia antes (Ex: evento dia 20, só exclui até o fim do dia 18, sumindo no início do dia 19)
+            // Calculamos a diferença em dias. Se a diferença for <= 1, o botão some.
+            const diffDays = (minDate - now) / (1000 * 60 * 60 * 24);
+            return diffDays >= 1; 
         }
 
         return false;
     },
 
     // 4. Inteligência de Escala (Integração com ScalesEngine)
-    validatePointEvent(ponto, escala) {
+    validatePointEvent(ponto, escala, setor = null) {
         if (!escala) return { status: 'normal', msg: '' };
 
         const results = [];
         
-        // A. Geofence
+        // A. Geofence - Prioridade: escala > setor > default
         const lat = ponto.latitude || (ponto.geolocalizacao_json ? ponto.geolocalizacao_json.lat : null);
         const lng = ponto.longitude || (ponto.geolocalizacao_json ? ponto.geolocalizacao_json.lng : null);
 
-        if (escala.lat && escala.lng && lat && lng) {
-            const dist = ScalesEngine.calculateDistance(lat, lng, escala.lat, escala.lng);
+// Busca coordenadas: primeiro escala, depois setor (setor usa latitude/longitude)
+        const escalaLat = escala.lat || escala.latitude || setor?.latitude;
+        const escalaLng = escala.lng || escala.longitude || setor?.longitude;
+        const escalaRaio = escala.raio_geofence || escala.raio_geofence_metros || setor?.raio || ScalesEngine.GEOFENCE_DEFAULT_RADIUS;
+
+        if (escalaLat && escalaLng && lat && lng) {
+            const dist = ScalesEngine.calculateDistance(lat, lng, escalaLat, escalaLng);
             const accuracy = ponto.accuracy || 0;
-            const raio = escala.raio_geofence || ScalesEngine.GEOFENCE_DEFAULT_RADIUS;
+            const raio = escalaRaio;
 
             // REGRA CUMPRIDA: Se estiver fora do raio ou com um GPS muito impreciso (Ex: Desktop/Wi-Fi > 100m)
             if (dist > raio || accuracy > 100) {

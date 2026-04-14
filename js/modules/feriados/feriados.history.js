@@ -43,15 +43,19 @@ export const FeriadosHistory = {
 
         let actionButtons = '';
         if (options.isAdmin && !options.isContextDiario) {
-            actionButtons = `
-                <div class="flex justify-end pt-2">
-                    <button onclick="window.excluirItemHistorico && window.excluirItemHistorico('${item.id}', 'ferias_folgas')" 
-                        class="p-2.5 bg-white/5 border border-white/10 rounded-2xl text-slate-400 hover:text-rose-500 hover:border-rose-500/30 transition-all flex items-center justify-center gap-2 group/del">
-                        <span class="material-symbols-outlined text-[18px]">delete</span>
-                        <span class="text-[9px] font-black uppercase tracking-widest">Excluir Lote</span>
-                    </button>
-                </div>
-            `;
+            const canDelete = window.EventManager ? window.EventManager.canEdit(item) : true;
+
+            if (canDelete) {
+                actionButtons = `
+                    <div class="flex justify-end pt-2">
+                        <button onclick="window.excluirItemHistorico && window.excluirItemHistorico('${item.id}', 'ferias_folgas')" 
+                            class="p-2.5 bg-white/5 border border-white/10 rounded-2xl text-slate-400 hover:text-rose-500 hover:border-rose-500/30 transition-all flex items-center justify-center gap-2 group/del">
+                            <span class="material-symbols-outlined text-[18px]">delete</span>
+                            <span class="text-[9px] font-black uppercase tracking-widest">Excluir Lote</span>
+                        </button>
+                    </div>
+                `;
+            }
         }
 
         return `

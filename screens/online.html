@@ -1790,14 +1790,6 @@
 
                 // 1. Limpeza Atômica de Feriados Nacionais (Se aplicável)
                 // Se for um Feriado Nacional (Escopo Geral), removemos os que já existem no mesmo ano para evitar duplicatas ao "Mudar Data"
-                if (activeComunicado.tipo === 'geral') {
-                    const currentYear = new Date().getFullYear();
-                    await supabase.from('feriados_folgas')
-                        .delete()
-                        .eq('escopo', 'geral')
-                        .filter('data', 'gte', `${currentYear}-01-01`)
-                        .filter('data', 'lte', `${currentYear}-12-31`);
-                }
 
                 // 2. Criar um único comunicado-resumo que representa o conjunto de dias
                 const summaryContent = selectedSpecialDays

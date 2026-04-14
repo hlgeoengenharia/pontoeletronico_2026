@@ -71,87 +71,29 @@
 
         /* Animações de Transição de Calendário */
         @keyframes slide-to-left {
-            0% {
-                transform: translateX(0);
-                opacity: 1;
-            }
-
-            100% {
-                transform: translateX(-20px);
-                opacity: 0;
-            }
+            0% { transform: translateX(0); opacity: 1; }
+            100% { transform: translateX(-20px); opacity: 0; }
         }
 
-        // 2. Pré-carregar os Modelos de IA (Reconhecimento Facial) de forma assíncrona
-        // Para não atrasar o carregamento da tela principal, fazemos após 2 segundos
-        setTimeout(async () => {
-            if (currentUser && currentUser.biometria_cadastrada) {
-                try {
-                    const { FaceApiService } = await import('../js/face-api-service.js');
-                    await FaceApiService.init();
-                } catch (e) {
-                    console.warn('[Dashboard] Não foi possível pré-carregar os modelos de IA:', e);
-                }
-            }
-        }, 2000);
-    } catch (err) {
-        console.error("Erro no init:", err);
-        UI.showToast("Erro ao carregar dados do usuário", "error");
-        setTimeout(Auth.logout, 2000);
-    }
-}
-
         @keyframes slide-from-right {
-            0% {
-                transform: translateX(20px);
-                opacity: 0;
-            }
-
-            100% {
-                transform: translateX(0);
-                opacity: 1;
-            }
+            0% { transform: translateX(20px); opacity: 0; }
+            100% { transform: translateX(0); opacity: 1; }
         }
 
         @keyframes slide-to-right {
-            0% {
-                transform: translateX(0);
-                opacity: 1;
-            }
-
-            100% {
-                transform: translateX(20px);
-                opacity: 0;
-            }
+            0% { transform: translateX(0); opacity: 1; }
+            100% { transform: translateX(20px); opacity: 0; }
         }
 
         @keyframes slide-from-left {
-            0% {
-                transform: translateX(-20px);
-                opacity: 0;
-            }
-
-            100% {
-                transform: translateX(0);
-                opacity: 1;
-            }
+            0% { transform: translateX(-20px); opacity: 0; }
+            100% { transform: translateX(0); opacity: 1; }
         }
 
-        .anim-slide-out-left {
-            animation: slide-to-left 0.2s forwards ease-in;
-        }
-
-        .anim-slide-in-right {
-            animation: slide-from-right 0.3s forwards ease-out;
-        }
-
-        .anim-slide-out-right {
-            animation: slide-to-right 0.2s forwards ease-in;
-        }
-
-        .anim-slide-in-left {
-            animation: slide-from-left 0.3s forwards ease-out;
-        }
+        .anim-slide-out-left { animation: slide-to-left 0.2s forwards ease-in; }
+        .anim-slide-in-right { animation: slide-from-right 0.3s forwards ease-out; }
+        .anim-slide-out-right { animation: slide-to-right 0.2s forwards ease-in; }
+        .anim-slide-in-left { animation: slide-from-left 0.3s forwards ease-out; }
 
         /* Cards Métricos Premium 3D */
         .metric-card-3d {
@@ -161,9 +103,7 @@
             transform: translateY(0);
         }
 
-        .metric-card-3d:active {
-            transform: translateY(2px) scale(0.98);
-        }
+        .metric-card-3d:active { transform: translateY(2px) scale(0.98); }
 
         .metric-card-3d::after {
             content: '';
@@ -176,9 +116,7 @@
             transition: 0.5s;
         }
 
-        .metric-card-3d:hover::after {
-            left: 100%;
-        }
+        .metric-card-3d:hover::after { left: 100%; }
 
         .card-3d-blue {
             background: rgba(59, 130, 246, 0.12) !important;
@@ -198,25 +136,12 @@
             box-shadow: 0 10px 20px -5px rgba(245, 158, 11, 0.3), inset 0 0 15px rgba(245, 158, 11, 0.05);
         }
 
-        .icon-3d-glow {
-            filter: drop-shadow(0 0 5px currentColor);
-        }
+        .icon-3d-glow { filter: drop-shadow(0 0 5px currentColor); }
 
         /* Status GPS LED */
-        .gps-led-green {
-            background-color: #10B981 !important;
-            box-shadow: 0 0 10px rgba(16, 185, 129, 0.6);
-        }
-
-        .gps-led-amber {
-            background-color: #F59E0B !important;
-            box-shadow: 0 0 10px rgba(245, 158, 11, 0.6);
-        }
-
-        .gps-led-rose {
-            background-color: #F43F5E !important;
-            box-shadow: 0 0 10px rgba(244, 63, 94, 0.6);
-        }
+        .gps-led-green { background-color: #10B981 !important; box-shadow: 0 0 10px rgba(16, 185, 129, 0.6); }
+        .gps-led-amber { background-color: #F59E0B !important; box-shadow: 0 0 10px rgba(245, 158, 11, 0.6); }
+        .gps-led-rose { background-color: #F43F5E !important; box-shadow: 0 0 10px rgba(244, 63, 94, 0.6); }
     </style>
 </head>
 
@@ -543,8 +468,6 @@
         </div>
     </div>
 
-    <!-- Sidebar Menu Overlay (Injetado via UI.initSidebar no final do arquivo) -->
-
     <!-- Bottom Navigation (Links dinâmicos) -->
     <nav
         class="fixed bottom-0 left-0 right-0 bg-background-dark/90 border-t border-white/5 py-4 z-50 flex justify-center backdrop-blur-xl">
@@ -589,91 +512,109 @@
         let currentUser = null;
         let timerInterval = null;
         let calendarDate = new Date();
-        let cameraStream = null;
         let isInspectionMode = false;
-
+        let lastExtraMinutesFetch = 0;
+        let cachedExtraLimit = 0;
 
         async function init() {
-            const session = Auth.checkSession();
-            if (!session) return;
+            try {
+                const session = Auth.checkSession();
+                if (!session) return;
 
-            const urlParams = new URLSearchParams(window.location.search);
-            const employeeIdParam = urlParams.get('id');
-            const loggedUser = Auth.getUser();
-            const role = String(loggedUser?.role || '').toLowerCase();
-            const isAdminOrGestor = role === 'admin' || role === 'gestor';
+                const urlParams = new URLSearchParams(window.location.search);
+                const employeeIdParam = urlParams.get('id');
+                const loggedUser = Auth.getUser();
+                const role = String(loggedUser?.role || '').toLowerCase();
+                const isAdminOrGestor = role === 'admin' || role === 'gestor';
 
-            // Definir ID alvo: Prioridade para o parâmetro da URL se for Admin/Gestor inspecionando
-            const targetId = (employeeIdParam && isAdminOrGestor) ? employeeIdParam : session.userId;
-            isInspectionMode = (targetId !== session.userId);
+                // Definir ID alvo: Prioridade para o parâmetro da URL se for Admin/Gestor inspecionando
+                const targetId = (employeeIdParam && isAdminOrGestor) ? employeeIdParam : session.userId;
+                isInspectionMode = (targetId !== session.userId);
 
-            console.log(`[Dashboard] Inicializando. Modo Inspeção: ${isInspectionMode}. Alvo: ${targetId}`);
+                console.log(`[Dashboard] Inicializando. Modo Inspeção: ${isInspectionMode}. Alvo: ${targetId}`);
 
-            const { data: funcionario } = await supabase
-                .from('funcionarios')
-                .select('*, setores!funcionarios_setor_id_fkey(*), escalas!escala_id(*), perfis_tripulantes(foto_url, nickname)')
-                .eq('id', targetId)
-                .single();
-            if (!funcionario) {
-                console.error('[Dashboard] Funcionário não encontrado:', targetId);
-                if (isInspectionMode) window.location.href = 'dashboard.html';
-                return;
-            }
+                const { data: funcionario } = await supabase
+                    .from('funcionarios')
+                    .select('*, setores!funcionarios_setor_id_fkey(*), escalas!escala_id(*), perfis_tripulantes(foto_url, nickname)')
+                    .eq('id', targetId)
+                    .single();
+                if (!funcionario) {
+                    console.error('[Dashboard] Funcionário não encontrado:', targetId);
+                    if (isInspectionMode) window.location.href = 'dashboard.html';
+                    return;
+                }
 
-            currentUser = funcionario;
-            setupDashboard(funcionario);
+                currentUser = funcionario;
+                setupDashboard(funcionario);
 
-            // Iniciar Rastreamento GPS Automático
-            GPSTracker.startTracking(funcionario);
+                // Iniciar Rastreamento GPS Automático
+                GPSTracker.startTracking(funcionario);
 
-            // Inicializar Sidebar Unificado
-            UI.initSidebar(funcionario.nivel_acesso || 'Funcionário');
+                // Inicializar Sidebar Unificado
+                UI.initSidebar(funcionario.nivel_acesso || 'Funcionário');
 
-            // Lógicas Condicionais por Perfil
-            if (funcionario.nivel_acesso === 'Admin' || funcionario.nivel_acesso === 'Gestor') {
-                await loadGlobalStats();
-                // Acionar Scheduler de Feriados (Geração Automática do Alerta)
-                AlertarFeriadosScheduler.checkAndTrigger(funcionario);
-            }
-            Notifications.updateBadges();
+                // Lógicas Condicionais por Perfil
+                if (funcionario.nivel_acesso === 'Admin' || funcionario.nivel_acesso === 'Gestor') {
+                    await loadGlobalStats();
+                    // Acionar Scheduler de Feriados (Geração Automática do Alerta)
+                    AlertarFeriadosScheduler.checkAndTrigger(funcionario);
+                }
+                Notifications.updateBadges();
 
-            await setupPunchLogic(funcionario.id);
+                await setupPunchLogic(funcionario.id);
 
-            // Inicializar Calendário e Navegação
-            await refreshCalendar();
-            setupCalendarNavigation();
-
-            // Ativar Monitoramento de GPS UI
-            setupGPSSignals();
-
-            // Sincronizar Card de Janela Técnica (Sincronizado c/ Escala)
-            updateTechnicalWindowCard(funcionario);
-
-            // Expor GPSTracker globalmente para o motor de ponto (Corrige 'GPSTracker não inicializado')
-            window.GPSTracker = GPSTracker;
-
-            // Configurar Listeners que dependem do módulo (Corrige 'currentUser is not defined')
-            const btnCapturarFace = document.getElementById('btn-capturar-face');
-            if (btnCapturarFace) {
-                btnCapturarFace.onclick = () => PunchEngine.captureAndProcess(currentUser);
-            }
-            const btnTentarCamera = document.getElementById('btn-tentar-camera');
-            if (btnTentarCamera) {
-                btnTentarCamera.onclick = () => PunchEngine.retryCamera();
-            }
-
-            // Sincronização em Tempo Real via Evento Global
-            window.addEventListener('sync-feriados', async () => {
-                console.log('[Dashboard] Sincronizando calendário por mudança remota...');
+                // Inicializar Calendário e Navegação
                 await refreshCalendar();
-            });
+                setupCalendarNavigation();
 
-            window.addEventListener('sync-ferias-stats', async () => {
-                console.log('[Dashboard] Atualizando estatísticas de férias pendentes...');
-                await loadGlobalStats();
-            });
+                // Ativar Monitoramento de GPS UI
+                setupGPSSignals();
 
-            document.getElementById('main-body').style.opacity = '1';
+                // Sincronizar Card de Janela Técnica (Sincronizado c/ Escala)
+                await updateTechnicalWindowCard(funcionario);
+
+                // Expor GPSTracker globalmente para o motor de ponto (Corrige 'GPSTracker não inicializado')
+                window.GPSTracker = GPSTracker;
+
+                // Configurar Listeners que dependem do módulo (Corrige 'currentUser is not defined')
+                const btnCapturarFace = document.getElementById('btn-capturar-face');
+                if (btnCapturarFace) {
+                    btnCapturarFace.onclick = () => PunchEngine.captureAndProcess(currentUser);
+                }
+                const btnTentarCamera = document.getElementById('btn-tentar-camera');
+                if (btnTentarCamera) {
+                    btnTentarCamera.onclick = () => PunchEngine.retryCamera();
+                }
+
+                // Sincronização em Tempo Real via Evento Global
+                window.addEventListener('sync-feriados', async () => {
+                    console.log('[Dashboard] Sincronizando calendário por mudança remota...');
+                    await refreshCalendar();
+                });
+
+                window.addEventListener('sync-ferias-stats', async () => {
+                    console.log('[Dashboard] Atualizando estatísticas de férias pendentes...');
+                    await loadGlobalStats();
+                });
+
+                // Pré-carregar Modelos de IA
+                setTimeout(async () => {
+                    if (currentUser && currentUser.biometria_cadastrada) {
+                        try {
+                            const { FaceApiService } = await import('../js/face-api-service.js');
+                            await FaceApiService.init();
+                        } catch (e) {
+                            console.warn('[Dashboard] Não foi possível pré-carregar os modelos de IA:', e);
+                        }
+                    }
+                }, 2000);
+
+                document.getElementById('main-body').style.opacity = '1';
+
+            } catch (err) {
+                console.error("[Dashboard] Erro crítico no init:", err);
+                UI.showToast("Erro ao carregar painel", "error");
+            }
         }
 
         async function refreshCalendar() {
@@ -815,49 +756,72 @@
             }
         }
 
-        // --- ESTATÍSTICAS GLOBAIS ---
+        // --- UTILITÁRIOS DE TEMPO E JANELA ---
+        const getExtraMinutes = async () => {
+            try {
+                const fullDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+                const sectorId = currentUser.setor_id || '00000000-0000-0000-0000-000000000000';
+                
+                const { data } = await supabase
+                    .from('comunicados')
+                    .select('conteudo')
+                    .or(`destinatario_id.eq.${currentUser.id},tipo.eq.geral,setor_id.eq.${sectorId}`)
+                    .eq('subtipo', 'hora_extra')
+                    .gte('created_at', fullDayAgo)
+                    .order('created_at', { ascending: false })
+                    .limit(1);
+
+                if (data && data.length > 0) {
+                    const match = (data[0].conteudo || '').match(/\[LIMITE:(\d+)\]/);
+                    const extra = match ? parseInt(match[1], 10) : 0;
+                    console.log(`[Dashboard] Hora Extra detectada: ${extra} min.`);
+                    if (typeof PunchEngine !== 'undefined') PunchEngine.activeExtraMinutes = extra;
+                    return extra;
+                }
+                if (typeof PunchEngine !== 'undefined') PunchEngine.activeExtraMinutes = 0;
+                return 0;
+            } catch (e) { return 0; }
+        };
+
+        const checkButtonWindow = async (btn) => {
+            const extraMin = await getExtraMinutes();
+            const isActive = ScalesEngine.isInActivationWindow(currentUser.escalas, extraMin);
+
+            if (isActive) {
+                btn.classList.add('animate-celestial');
+                btn.classList.remove('punch-frozen', 'opacity-30', 'grayscale');
+                btn.disabled = false;
+            } else {
+                btn.classList.add('punch-frozen', 'opacity-30', 'grayscale');
+                btn.classList.remove('animate-celestial');
+                btn.disabled = true;
+            }
+        };
+
+        // --- DASHBOARD: COMPONENTES DINÂMICOS ---
         async function updateTechnicalWindowCard(user) {
-            const scale = user.escalas;
-            if (!scale || !scale.horario_entrada) {
+            const heMin = await getExtraMinutes();
+            const win = ScalesEngine.calculateWindowDetails(user.escalas, heMin);
+            
+            if (!win) {
                 document.getElementById('window-tech-section').classList.add('hidden');
                 return;
             }
 
-            const formatTime = (timeStr) => {
-                if (!timeStr) return '--:--';
-                const [h, m] = timeStr.split(':');
-                return `${h}:${m}`;
-            };
+            document.getElementById('dash-entrada-base').innerText = win.entrada;
+            document.getElementById('dash-saida-base').innerText = win.saida;
 
-            const offsetTime = (timeStr, minutes) => {
-                if (!timeStr) return '--:--';
-                const [h, m, s] = timeStr.split(':').map(Number);
-                const d = new Date();
-                d.setHours(h, m, s || 0, 0);
-                d.setMinutes(d.getMinutes() + minutes);
-                return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-            };
-
-            const antesMin = parseInt(scale.janela_ativa_antes_minutos) || 30;
-            const depoisMin = parseInt(scale.janela_ativa_depois_minutos) || 30;
-            const tolMin = parseInt(scale.tolerancia_entrada_minutos) || 0;
-            const heMin = 0; // DASH SHOWS BASE, Prorrogação depends on daily exceptions, showing 0 or standard
-
-            // Horários Base
-            document.getElementById('dash-entrada-base').innerText = formatTime(scale.horario_entrada);
-            document.getElementById('dash-saida-base').innerText = formatTime(scale.horario_saida);
-
-            document.getElementById('dash-antes-l1').innerText = `JANELA ANTES: ${antesMin} MIN.`;
-            document.getElementById('dash-antes-l2').innerText = `ATIVAÇÃO ÀS ${offsetTime(scale.horario_entrada, -antesMin)}`;
+            document.getElementById('dash-antes-l1').innerText = `JANELA ANTES: ${win.antes.minutos} MIN.`;
+            document.getElementById('dash-antes-l2').innerText = `ATIVAÇÃO ÀS ${win.antes.horario}`;
             
-            document.getElementById('dash-depois-l1').innerText = `JANELA DEPOIS: ${depoisMin} MIN.`;
-            document.getElementById('dash-depois-l2').innerText = `DESATIVAÇÃO ÀS ${offsetTime(scale.horario_saida, depoisMin)}`;
+            document.getElementById('dash-depois-l1').innerText = `JANELA DEPOIS: ${win.depois.minutos} MIN.`;
+            document.getElementById('dash-depois-l2').innerText = `DESATIVAÇÃO ÀS ${win.depois.horario}`;
 
-            document.getElementById('dash-tol-l1').innerText = `TOLERÂNCIA: ${tolMin} MIN.`;
-            document.getElementById('dash-tol-l2').innerText = `LIMITE ÀS ${offsetTime(scale.horario_entrada, tolMin)}`;
+            document.getElementById('dash-tol-l1').innerText = `TOLERÂNCIA: ${win.tolerancia.minutos} MIN.`;
+            document.getElementById('dash-tol-l2').innerText = `LIMITE ÀS ${win.tolerancia.horario}`;
 
-            document.getElementById('dash-he-l1').innerText = `PRORROGAÇÃO: ${heMin} MIN.`;
-            document.getElementById('dash-he-l2').innerText = `FECHAMENTO ÀS ${offsetTime(scale.horario_saida, depoisMin + heMin)}`;
+            document.getElementById('dash-he-l1').innerText = `PRORROGAÇÃO: ${win.prorrogacao.minutos} MIN.`;
+            document.getElementById('dash-he-l2').innerText = `FECHAMENTO ÀS ${win.prorrogacao.horario}`;
 
             document.getElementById('window-tech-section').classList.remove('hidden');
         }
@@ -869,7 +833,6 @@
                 const isGestor = role === 'Gestor';
                 const sId = currentUser?.setor_id;
 
-                // 1. Buscas de Contagem e Férias (Filtradas se Gestor)
                 let queryS = supabase.from('setores').select('*', { count: 'exact', head: true });
                 let queryV = supabase.from('ferias').select('funcionario_id, funcionarios!inner(setor_id)').eq('status', 'pendente');
 
@@ -895,7 +858,6 @@
                     document.getElementById('stat-ferias-mes').innerText = pendingEmployees || '0';
                 }
 
-                // 2. Cálculo de Online (Ponto + Pulsos GPS)
                 let queryP = supabase.from('pontos').select('funcionario_id, funcionarios!inner(setor_id)').gte('data_hora', `${today}T00:00:00`);
                 let queryPulse = supabase.from('diario_logs').select('funcionario_id, funcionarios!inner(setor_id)').eq('tipo', 'gps_pulse').gte('created_at', new Date(Date.now() - 20 * 60 * 1000).toISOString());
 
@@ -971,36 +933,29 @@
                         setTimeout(() => window.location.href = `perfil_funcionario.html?id=${userId}&role=${role}`, 1500);
                     };
                 } else if (isOnline) {
-                    btn.classList.add('bg-rose-500'); // Check-out é sempre Rose para destaque
+                    btn.classList.add('bg-rose-500'); 
                     const label = btn.querySelector('span.text-xs');
                     if (label) label.innerHTML = 'FINALIZAR<br>TURNO';
                     btn.onclick = () => PunchEngine.startFlow('check-out', currentUser);
                 } else {
-                    // Aplicar Cor por Perfil
-                    if (role === 'Admin') btn.classList.add('punch-admin');
-                    else if (role === 'Gestor') btn.classList.add('punch-gestor');
+                    const roleLower = String(currentUser.nivel_acesso || '').toLowerCase();
+                    if (roleLower === 'admin' || roleLower === 'gestor') btn.classList.add('punch-' + roleLower);
                     else btn.classList.add('punch-funcionario');
 
                     const label = btn.querySelector('span.text-xs');
                     if (label) label.innerHTML = 'REGISTRAR<br>PONTO';
                     btn.onclick = () => PunchEngine.startFlow('check-in', currentUser);
 
-                    // Lógica de Janela de Ativação e Congelamento
                     await checkButtonWindow(btn);
                 }
 
-                // Atualizar Stats de Sessão
                 if (data && data.length > 0) {
-                    // Início é sempre a primeira batida
                     document.getElementById('stats-inicio').innerText = new Date(data[0].data_hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-
-                    // Fim é a última batida (mesmo que seja o check-out atual ou um anterior)
                     const lastOut = [...data].reverse().find(p => p.tipo === 'check-out');
                     document.getElementById('stats-fim').innerText = lastOut
                         ? new Date(lastOut.data_hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
                         : '--:--';
 
-                    // 1. Calcular Tempo Efetivo de Trabalho (Blocos ON)
                     let totalMs = 0;
                     for (let i = 0; i < data.length; i += 2) {
                         const inT = new Date(data[i].data_hora).getTime();
@@ -1008,46 +963,7 @@
                         totalMs += (outT - inT);
                     }
 
-                    // 2. Buscar Ausências Abonadas (Saídas Intermediárias com status 'aprovado')
-                    try {
-                        const { data: logs } = await supabase
-                            .from('diario_logs')
-                            .select('id, data_hora, status_pendencia')
-                            .eq('funcionario_id', userId)
-                            .eq('tipo', 'saida_intermediaria')
-                            .eq('status_pendencia', 'aprovado')
-                            .gte('data_hora', `${today}T00:00:00`);
-
-                        if (logs && logs.length > 0) {
-                            // Para cada saída abonada, somamos o tempo até o próximo check-in
-                            // (Lógica simplificada: O abono "devolve" o tempo que ele ficou offline)
-                            // Nota: Como o cálculo acima já soma apenas os blocos IN, 
-                            // o abono deve somar os blocos OUT que foram autorizados.
-                            for (let i = 1; i < data.length; i += 2) {
-                                const outTime = new Date(data[i].data_hora);
-                                const nextInTime = (i + 1 < data.length) ? new Date(data[i + 1].data_hora) : new Date();
-
-                                // Verifica se existe um log de abono para este horário específico
-                                const foiAbonado = logs.some(l => {
-                                    const logTime = new Date(l.data_hora);
-                                    return Math.abs(logTime - outTime) < 60000; // Margem de 1min
-                                });
-
-                                if (foiAbonado) {
-                                    totalMs += (nextInTime.getTime() - outTime.getTime());
-                                }
-                            }
-                        }
-                    } catch (e) { console.warn('Erro ao processar abonos:', e); }
-
-                    // 3. Subtração Cega de Almoço (1 Hora) se jornada contínua > 6H (Regra de Negócio)
-                    if (totalMs > 6 * 3600000) {
-                        totalMs -= 3600000;
-                        document.getElementById('stats-total').classList.add('text-primary');
-                    } else {
-                        document.getElementById('stats-total').classList.remove('text-primary');
-                    }
-
+                    if (totalMs > 6 * 3600000) totalMs -= 3600000;
                     const h = Math.floor(totalMs / 3600000);
                     const m = Math.floor((totalMs % 3600000) / 60000);
                     document.getElementById('stats-total').innerText = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
@@ -1061,111 +977,23 @@
                     stopTimer();
                 }
 
-                // Desativar botão de ponto se for modo inspeção
                 if (isInspectionMode) {
                     btn.disabled = true;
                     btn.classList.add('opacity-30', 'grayscale', 'cursor-not-allowed');
                     btn.onclick = null;
                     const label = btn.querySelector('span.text-xs');
-                    if (label) label.innerText = 'MODO INSPEÇÃO';
+                    if (label) label.innerHTML = 'MODO INSPEÇÃO';
                 }
             }
 
-            let lastExtraMinutesFetch = 0;
-            let cachedExtraLimit = 0;
-
-            async function getExtraMinutes() {
-                const now = Date.now();
-                // Cache de 2 minutos para evitar excesso de requisições e erros de rede transient
-                if (now - lastExtraMinutesFetch < 120000) { 
-                    return cachedExtraLimit;
-                }
-
-                let extraLimit = 0;
-                try {
-                    // Regra: Comunicados de HE valem por 24 horas após a criação
-                    const fullDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-                    const sId = currentUser.setor_id || '00000000-0000-0000-0000-000000000000';
-
-                    const { data: coms } = await supabase.from('comunicados')
-                        .select('id, conteudo, lido, created_at')
-                        .or(`destinatario_id.eq.${userId},tipo.eq.geral,setor_id.eq.${sId}`)
-                        .eq('subtipo', 'hora_extra')
-                        .gte('created_at', fullDayAgo)
-                        .order('created_at', { ascending: false });
-
-                    if (coms && coms.length > 0) {
-                        // Pegar a HE mais recente (Não exige mais 'lido' para liberar o ponto)
-                        const validCom = coms[0];
-                        const match = validCom.conteudo.match(/\[LIMITE:(\d+)\]/);
-                        extraLimit = match ? parseInt(match[1], 10) : 120;
-                        console.log(`[Dashboard] Prorrogação ativa: +${extraLimit} min (ID: ${validCom.id})`);
-                    }
-                } catch (e) {
-                    // Erros de conexão (como ERR_CONNECTION_CLOSED) são ignorados se tivermos cache
-                    console.warn('[Dashboard] Erro ao buscar minutos extras:', e);
-                    if (lastExtraMinutesFetch > 0) return cachedExtraLimit;
-                }
-
-                lastExtraMinutesFetch = now;
-                cachedExtraLimit = extraLimit;
-
-                // Sincronizar com o motor de registro
-                if (typeof PunchEngine !== 'undefined') {
-                    PunchEngine.activeExtraMinutes = extraLimit;
-                }
-
-                return extraLimit;
-            }
-
-            async function checkButtonWindow(btn) {
-                const escala = currentUser.escalas;
-                if (!escala || !escala.horario_entrada) {
-                    btn.classList.add('animate-celestial'); // Fallback
-                    return;
-                }
-
-                const now = new Date();
-                const [hE, mE] = escala.horario_entrada.split(':').map(Number);
-                const startShift = new Date();
-                startShift.setHours(hE, mE, 0, 0);
-
-                const extraMin = await getExtraMinutes();
-                const endShift = ScalesEngine.getShiftEndWithHE(escala, extraMin);
-
-                const janelaAntes = escala.janela_ativa_antes_minutos || 30;
-                const janelaDepois = escala.janela_ativa_depois_minutos || 30;
-
-                const startWindow = new Date(startShift.getTime() - janelaAntes * 60000);
-                const endWindow = new Date(endShift.getTime() + janelaDepois * 60000);
-
-                // O botão fica ativo desde 'antes da entrada' até 'depois da saída + HE'
-                if (now >= startWindow && now <= endWindow) {
-                    btn.classList.add('animate-celestial');
-                    btn.classList.remove('punch-frozen', 'opacity-30', 'grayscale');
-                    btn.disabled = false;
-                } else {
-                    btn.classList.add('punch-frozen', 'opacity-30', 'grayscale');
-                    btn.classList.remove('animate-celestial');
-                    btn.disabled = true;
-                }
-            }
-
-            // Configuração do Botão de Ponto conforme o próximo tipo calculado
-            btn.onclick = () => PunchEngine.startFlow(nextType, currentUser);
-
-            // Listener para sucesso no registro do ponto
             window.addEventListener('punch-success', () => {
                 refreshStatus();
-                if (currentUser.nivel_acesso !== 'Funcionário') Notifications.init();
+                if (currentUser.nivel_acesso !== 'Funcionário') Notifications.updateBadges();
             });
 
-            // Timer de Check Visual (desbloqueio/congelamento automático em tempo real)
             setInterval(() => checkButtonWindow(btn), 30000);
-
             await refreshStatus();
         }
-
         function startTimer(startTime) {
             if (timerInterval) clearInterval(timerInterval);
             const start = new Date(startTime).getTime();

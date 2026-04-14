@@ -1,5 +1,6 @@
 import { supabase } from './supabase-config.js';
 import { ScalesEngine } from './scales-engine.js';
+import { EventManager } from './event-manager.js';
 
 /**
  * PontoDiagnostic - ChronoSync
@@ -7,7 +8,7 @@ import { ScalesEngine } from './scales-engine.js';
  * Desenvolvido para uso na tela de diagnóstico e suporte técnico.
  */
 export const PontoDiagnostic = {
-    
+
     /**
      * Executa a auditoria completa para um funcionário específico
      * @param {string} employeeId ID do funcionário a ser auditado
@@ -55,12 +56,12 @@ export const PontoDiagnostic = {
                 .eq('funcionario_id', employeeId)
                 .gte('data_hora', `${todayStr}T00:00:00`)
                 .order('data_hora', { ascending: true });
-            
+
             const isOnline = batidasHoje && batidasHoje.length % 2 !== 0;
 
             // 5. Definir Escala Ativa (Priorizar Personalização)
-            const activeScale = user.personalizacao_escala 
-                ? { ...user.escalas, ...user.personalizacao_escala } 
+            const activeScale = user.personalizacao_escala
+                ? { ...user.escalas, ...user.personalizacao_escala }
                 : user.escalas;
 
             // 6. Buscar Pulsos de Rastreio (Se regime for Externo)
@@ -127,7 +128,7 @@ export const PontoDiagnostic = {
                     label: "Feriado/Folga Hoje",
                     status: feriadoHoje ? 'SIM' : 'NÃO',
                     detail: feriadoHoje ? `Motivo: ${feriadoHoje.tipo} (${feriadoHoje.descricao})` : "Dia de trabalho comum",
-                    passed: !feriadoHoje 
+                    passed: !feriadoHoje
                 },
                 janela_horario: {
                     label: "Dentro da Janela Ativa",
@@ -153,30 +154,20 @@ export const PontoDiagnostic = {
 
                 // 9. Lógica de Janela de Horário
                 if (activeScale.horario_entrada) {
-                    const [hE, mE] = activeScale.horario_entrada.split(':').map(Number);
-                    const startShift = new Date();
-                    startShift.setHours(hE, mE, 0, 0);
+                    const winDetails = ScalesEngine.calculateWindowDetails(activeScale, extraMin);
+                    const isInWindow = ScalesEngine.isInActivationWindow(activeScale, extraMin, now);
 
-                    const endShift = ScalesEngine.getShiftEndWithHE(activeScale, extraMin);
-                    
-                    const janelaAntes = activeScale.janela_ativa_antes_minutos || 30;
-                    const janelaDepois = activeScale.janela_ativa_depois_minutos || 30;
-
-                    const startWindow = new Date(startShift.getTime() - janelaAntes * 60000);
-                    const endWindow = new Date(endShift.getTime() + janelaDepois * 60000);
-
-                    const isInWindow = now >= startWindow && now <= endWindow;
                     rules.janela_horario.status = isInWindow ? 'SIM' : 'NÃO';
-                    rules.janela_horario.detail = `Janela: ${startWindow.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})} até ${endWindow.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})}`;
+                    rules.janela_horario.detail = winDetails ? `Janela: ${winDetails.antes.horario} até ${winDetails.prorrogacao.horario}` : "Horário não definido";
                     rules.janela_horario.passed = isInWindow;
-                    
+
                     // Detalhes extras requisitados no formato da resposta
                     rules.janela_horario.config = {
-                        entrada_escala: activeScale.horario_entrada,
-                        saida_escala: activeScale.horario_saida,
-                        janela_antes: activeScale.janela_ativa_antes_minutos || 30,
-                        janela_depois: activeScale.janela_ativa_depois_minutos || 30,
-                        tolerancia: activeScale.tolerancia_entrada_minutos || 0,
+                        entrada_escala: winDetails.entrada,
+                        saida_escala: winDetails.saida,
+                        janela_antes: winDetails.antes.minutos,
+                        janela_depois: winDetails.depois.minutos,
+                        tolerancia: winDetails.tolerancia.minutos,
                         prorrogacao_he: extraMin
                     };
                 }
@@ -189,7 +180,7 @@ export const PontoDiagnostic = {
                         const pos = await this.getCurrentLocation();
                         const dist = ScalesEngine.calculateDistance(pos.lat, pos.lng, activeScale.lat, activeScale.lng);
                         const raio = activeScale.raio_geofence || ScalesEngine.GEOFENCE_DEFAULT_RADIUS;
-                        
+
                         const isInside = dist <= raio;
                         rules.gps_raio.status = isInside ? 'SIM' : 'NÃO';
                         rules.gps_raio.detail = `Distância: ${Math.round(dist)}m (Limite: ${raio}m)`;
@@ -240,18 +231,29 @@ export const PontoDiagnostic = {
     async getExtraMinutes(userId, sectorId) {
         try {
             const fullDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-            const { data: coms } = await supabase.from('comunicados')
+
+            // Montagem segura do OR para evitar erro se sectorId for nulo/inválido
+            const orConditions = [`destinatario_id.eq.${userId}`, `tipo.eq.geral`];
+            if (sectorId && sectorId !== '00000000-0000-0000-0000-000000000000') {
+                orConditions.push(`setor_id.eq.${sectorId}`);
+            }
+            const orQuery = orConditions.join(',');
+
+            const { data: coms, error } = await supabase.from('comunicados')
                 .select('conteudo')
-                .or(`destinatario_id.eq.${userId},tipo.eq.geral,setor_id.eq.${sectorId}`)
+                .or(orQuery)
                 .eq('subtipo', 'hora_extra')
                 .gte('created_at', fullDayAgo)
-                .order('created_at', { ascending: false });
+                .order('created_at', { ascending: false })
+                .limit(1); // Otimização: Apenas o comunicado mais recente é necessário
+
+            if (error) throw error;
 
             if (coms && coms.length > 0) {
                 const match = coms[0].conteudo.match(/\[LIMITE:(\d+)\]/);
                 return match ? parseInt(match[1], 10) : 120;
             }
-        } catch (e) { console.warn('Erro ao buscar HE:', e); }
+        } catch (e) { console.warn('[PontoDiagnostic] Erro ao buscar HE:', e); }
         return 0;
     },
 

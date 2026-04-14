@@ -17,7 +17,9 @@ export const PunchEngine = {
         accuracy: 0,
         gpsOculto: false,
         justificativa: null,
-        biometriaAudit: null
+        biometriaAudit: null,
+        foraDoRaioDistancia: null,
+        foraDoRaioRaio: null
     },
 
     async startFlow(type, currentUser) {
@@ -206,16 +208,33 @@ export const PunchEngine = {
 
     async checkGeofenceAndCommit(currentUser) {
         const escala = currentUser.escalas;
+        
+        console.log('[PunchEngine] checkGeofenceAndCommit:', { 
+            hasEscala: !!escala, 
+            escalaKeys: escala ? Object.keys(escala) : [],
+            escalaLat: escala?.lat, 
+            escalaLng: escala?.lng,
+            scaleRaio: escala?.raio_geofence,
+            escalaId: escala?.id,
+            lat: this.tempData.lat,
+            lng: this.tempData.lng,
+            accuracy: this.tempData.accuracy
+        });
 
         if (escala) {
+            const setor = currentUser.setores;
             const validation = EventManager.validatePointEvent({
                 tipo: this.tempData.type,
                 latitude: this.tempData.lat,
                 longitude: this.tempData.lng,
                 accuracy: this.tempData.accuracy
-            }, escala);
+            }, escala, setor);
+
+            console.log('[PunchEngine] validation:', validation);
 
             if (validation.status === 'divergente' && validation.alerts.includes('FORA DO RAIO')) {
+                this.tempData.foraDoRaioDistancia = validation.distancia_metros;
+                this.tempData.foraDoRaioRaio = validation.raio_permitido;
                 this.openGeofenceModal(currentUser, validation.distancia_metros, validation.raio_permitido);
                 return;
             }
@@ -280,28 +299,34 @@ export const PunchEngine = {
             const userId = currentUser.id || localStorage.getItem('userId');
             const escala = currentUser.escalas;
 
+            const setor = currentUser.setores;
             const validation = escala ? EventManager.validatePointEvent({
                 tipo: this.tempData.type,
                 latitude: this.tempData.lat,
                 longitude: this.tempData.lng,
                 accuracy: this.tempData.accuracy
-            }, escala) : { status: 'normal', alerts: [] };
+            }, escala, setor) : { status: 'normal', alerts: [] };
 
             if (this.tempData.gpsOculto) validation.alerts.push('GPS Oculto/Desligado');
 
-            const isDivergent = this.tempData.gpsOculto || validation.status === 'divergente' || (validation.alerts && validation.alerts.length > 0);
+            const isDivergent = this.tempData.gpsOculto || this.tempData.foraDoRaioDistancia != null || validation.status === 'divergente' || (validation.alerts && validation.alerts.length > 0);
             const now = new Date();
             let extraNote = '';
             if (this.activeExtraMinutes > 0) {
                 extraNote = ` [EXPEDIENTE PRORROGADO: +${this.activeExtraMinutes} MIN AUTORIZADOS]`;
             }
 
+            const isForaDoRaio = this.tempData.foraDoRaioDistancia != null || validation.alerts.includes('FORA DO RAIO');
+            const distancia_m = this.tempData.foraDoRaioDistancia ?? validation.distancia_metros;
+
+            console.log('[PunchEngine] Commit:', { isDivergent, isForaDoRaio, distancia_m, foraDoRaioDistancia: this.tempData.foraDoRaioDistancia, validationAlerts: validation.alerts });
+
             const payload = {
                 funcionario_id: userId,
                 data_hora: now.toISOString(),
                 tipo: this.tempData.type,
-                status_validacao: validation.alerts.includes('FORA DO RAIO') ? 'pendente' : 'aprovado',
-                dentro_do_raio: !validation.alerts.includes('FORA DO RAIO'),
+                status_validacao: isForaDoRaio ? 'pendente' : 'aprovado',
+                dentro_do_raio: !isForaDoRaio,
                 justificativa_usuario: (this.tempData.justificativa || (validation.alerts.length > 0 ? validation.alerts.join(' | ') : '')) + extraNote,
                 latitude: this.tempData.lat,
                 longitude: this.tempData.lng,
@@ -315,7 +340,7 @@ export const PunchEngine = {
             const { error } = await supabase.from('pontos').insert([payload]);
             if (error) throw error;
 
-            await this.processSideEffects(currentUser, isDivergent, validation.alerts);
+            await this.processSideEffects(currentUser, isDivergent, isForaDoRaio, distancia_m);
 
             UI.showToast('Ponto registrado com sucesso!', 'success');
             if (window.dispatchEvent) {
@@ -330,17 +355,24 @@ export const PunchEngine = {
         }
     },
 
-    async processSideEffects(currentUser, isDivergent) {
+    async processSideEffects(currentUser, isDivergent, isForaDoRaio = false, distancia = null) {
         const now = new Date();
 
-        if (this.tempData.gpsOculto && !isDivergent) {
-            await supabase.from('diario_logs').insert([{
+        console.log('[PunchEngine] processSideEffects:', { isDivergent, isForaDoRaio, distancia, type: this.tempData.type });
+
+        if (isDivergent && isForaDoRaio) {
+            const { data, error } = await supabase.from('diario_logs').insert([{
                 funcionario_id: currentUser.id,
                 data_hora: now.toISOString(),
-                tipo: 'gps_oculto',
-                mensagem_padrao: `Registro de ${this.tempData.type.toUpperCase()} efetuado sem coordenadas GPS.`,
+                tipo: 'pendencia_geofence',
+                mensagem_padrao: `Registro de ${this.tempData.type.toUpperCase()} efetuado fora do raio permitido (${distancia || '?'}m).`,
                 status_pendencia: 'pendente'
             }]);
+            if (error) {
+                console.error('[PunchEngine] Erro ao criar pendência:', error);
+            } else {
+                console.log('[PunchEngine] Pendência criada:', data);
+            }
         }
     },
 
@@ -358,7 +390,9 @@ export const PunchEngine = {
             accuracy: 0,
             gpsOculto: false,
             justificativa: null,
-            biometriaAudit: null
+            biometriaAudit: null,
+            foraDoRaioDistancia: null,
+            foraDoRaioRaio: null
         };
 
         const input = document.getElementById('justificativaTexto');
