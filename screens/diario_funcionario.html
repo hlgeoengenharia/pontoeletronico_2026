@@ -188,10 +188,10 @@
 
     <nav class="fixed bottom-0 left-0 right-0 bg-background-dark/90 border-t border-white/5 py-4 z-50 flex justify-center backdrop-blur-xl">
         <div class="flex items-center justify-around w-full max-w-md px-6">
-            <a href="dashboard.html" class="flex flex-col items-center gap-1.5 text-slate-500"><span class="material-symbols-outlined">home</span><span class="text-[8px] font-black uppercase">Home</span></a>
-            <a href="estatistica_funcionario.html" class="flex flex-col items-center gap-1.5 text-slate-500"><span class="material-symbols-outlined">bar_chart</span><span class="text-[8px] font-black uppercase">Metrics</span></a>
-            <a href="#" class="flex flex-col items-center gap-1.5 text-primary scale-110"><span class="material-symbols-outlined font-variation-settings-fill">edit_note</span><span class="text-[8px] font-black uppercase">Diário</span></a>
-            <a href="perfil_funcionario.html" class="flex flex-col items-center gap-1.5 text-slate-500"><span class="material-symbols-outlined">person</span><span class="text-[8px] font-black uppercase">Perfil</span></a>
+            <a href="dashboard.html" class="flex flex-col items-center gap-1.5 text-slate-500"><span class="material-symbols-outlined text-2xl">home</span><span class="text-[9px] font-black uppercase tracking-widest">Início</span></a>
+            <a href="estatistica_funcionario.html" class="flex flex-col items-center gap-1.5 text-slate-500"><span class="material-symbols-outlined text-2xl">bar_chart</span><span class="text-[9px] font-black uppercase tracking-widest">Estatística</span></a>
+            <a href="#" class="flex flex-col items-center gap-1.5 text-primary scale-110"><span class="material-symbols-outlined text-2xl font-variation-settings-fill">edit_note</span><span class="text-[9px] font-black uppercase tracking-widest">Diário</span></a>
+            <a href="perfil_funcionario.html" class="flex flex-col items-center gap-1.5 text-slate-500"><span class="material-symbols-outlined text-2xl">person</span><span class="text-[9px] font-black uppercase tracking-widest">Perfil</span></a>
         </div>
     </nav>
 
@@ -354,6 +354,7 @@
         const targetId = urlParams.get('id') || localStorage.getItem('userId');
         
         DiarioEngine.init(targetId);
+        window.init = () => DiarioEngine.init(targetId);
 
         window.abrirModalFerias = async () => {
             UI.showLoader();
@@ -366,19 +367,28 @@
         window.fecharModalFerias = () => document.getElementById('modal-ferias').classList.add('hidden');
         
         window.marcarCiente = (id, type) => DiarioEngine.handleCiente(id, type);
-        window.editarAnotacao = (id, type) => DiarioEngine.startEdit(id);
-        window.cancelInlineEdit = () => DiarioEngine.cancelEdit();
-        window.saveInlineEdit = (id, type) => DiarioEngine.saveEdit(id, type);
+        window.prepararEdicaoInline = (id) => DiarioEngine.startEdit(id);
+        window.cancelarEdicaoInline = () => DiarioEngine.cancelEdit();
+        window.salvarEdicaoInline = (id, type) => DiarioEngine.saveEdit(id, type);
         
-        window.excluirAnotacao = async (id, type) => {
-            if (!confirm('Excluir registro?')) return;
-            let success = false;
-            if (type === 'atividade') success = await AtividadesActions.delete(id);
-            else if (type.includes('justificativa')) {
-                const { error } = await supabase.from('justificativas').delete().eq('id', id);
-                success = !error;
+        window.excluirItemHistorico = async (id) => {
+            if (!confirm('Excluir registro permanentemente?')) return;
+            UI.showLoader();
+            try {
+                // Identificar tipo via EventManager para exclusão correta
+                const { supabase: sb } = await import('../js/supabase-config.js');
+                const { error } = await sb.from('justificativas').delete().eq('id', id);
+                if (error) {
+                    // Tentar na tabela de atividades se falhar na de justificativas
+                    await sb.from('anotacoes_diaria').delete().eq('id', id);
+                }
+                await DiarioEngine.loadAndProcessHistory();
+                UI.showToast('Registro excluído', 'success');
+            } catch (e) {
+                UI.showToast('Erro ao excluir', 'error');
+            } finally {
+                UI.hideLoader();
             }
-            if (success) DiarioEngine.loadAndProcessHistory();
         };
 
         document.getElementById('btn-voltar').onclick = () => window.location.href = 'dashboard.html';

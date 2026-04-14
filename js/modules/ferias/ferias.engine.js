@@ -18,6 +18,7 @@ export const FeriasEngine = {
         focusedParcelIndex: null, // Índice da parcela sendo visualizada/focada
         selectionIsValid: false,
         isEmergencyMode: false, // Flag para edição de planos aprovados
+        isSubmitting: false, // Proteção contra cliques duplos durante processamento
         sectorRule: 1,
         monthNames: ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"]
     },
@@ -441,7 +442,16 @@ export const FeriasEngine = {
     },
 
     async submitAction(status) {
+        if (this.state.isSubmitting) return;
+        this.state.isSubmitting = true;
+
         console.time('[FeriasEngine] submitAction');
+        const btnSave = document.getElementById('btn-confirmar-tudo-ferias') || document.getElementById('btn-aprovar-ferias');
+        if (btnSave) {
+            btnSave.disabled = true;
+            btnSave.classList.add('opacity-50', 'grayscale');
+        }
+
         if (status === 'rejeitado') {
             if (!confirm('Deseja realmente rejeitar este planejamento?')) return;
         }
@@ -489,6 +499,7 @@ export const FeriasEngine = {
             console.error('[FeriasEngine] Erro crítico no submit:', err);
             UI.showToast('Erro ao processar ação.', 'error');
         } finally { 
+            this.state.isSubmitting = false;
             UI.hideLoader(); 
             console.timeEnd('[FeriasEngine] submitAction');
         }

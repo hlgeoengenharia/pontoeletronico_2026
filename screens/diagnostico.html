@@ -199,6 +199,28 @@
 
     </main>
 
+    <!-- Bottom Navigation -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-background-dark/90 border-t border-white/5 py-4 z-50 flex justify-center backdrop-blur-xl">
+        <div class="flex items-center justify-around w-full max-w-md px-6">
+            <a href="dashboard.html" class="flex flex-col items-center gap-1.5 text-slate-500">
+                <span class="material-symbols-outlined text-2xl">home</span>
+                <span class="text-[9px] font-black uppercase tracking-widest text-center">Início</span>
+            </a>
+            <a href="estatistica_funcionario.html" class="flex flex-col items-center gap-1.5 text-slate-500">
+                <span class="material-symbols-outlined text-2xl">bar_chart</span>
+                <span class="text-[9px] font-black uppercase tracking-widest text-center">Estatística</span>
+            </a>
+            <a href="diario_funcionario.html" class="flex flex-col items-center gap-1.5 text-slate-500">
+                <span class="material-symbols-outlined text-2xl">edit_note</span>
+                <span class="text-[9px] font-black uppercase tracking-widest text-center">Diário</span>
+            </a>
+            <a href="perfil_funcionario.html" class="flex flex-col items-center gap-1.5 text-slate-500">
+                <span class="material-symbols-outlined text-2xl">person</span>
+                <span class="text-[9px] font-black uppercase tracking-widest text-center">Perfil</span>
+            </a>
+        </div>
+    </nav>
+
     <script type="module">
         import { supabase } from '../js/supabase-config.js';
         import { PontoDiagnostic } from '../js/ponto.diagnostic.js';

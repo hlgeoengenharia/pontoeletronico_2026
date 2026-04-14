@@ -161,7 +161,7 @@
         const currentPage = window.location.pathname.split('/').pop() || 'index.html';
         const tabs = [
             { id: 'dashboard.html', label: 'Painel', icon: 'dashboard' },
-            { id: 'estatistica_funcionario.html', label: 'Stats', icon: 'bar_chart' },
+            { id: 'estatistica_funcionario.html', label: 'Estatística', icon: 'bar_chart' },
             { id: 'diario_funcionario.html', label: 'Diário', icon: 'edit_note' },
             { id: 'perfil_funcionario.html', label: 'Perfil', icon: 'person' }
         ];

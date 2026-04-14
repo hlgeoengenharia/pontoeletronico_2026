@@ -17,7 +17,7 @@ export const HistoryRenderer = {
         }
 
         return items.map(item => {
-            const provider = EventRegistry.getProvider(item.tipo);
+            const provider = EventRegistry.getProvider(item.itemType || item.tipo);
             
             if (provider && provider.history) {
                 return provider.history.render(item, options);

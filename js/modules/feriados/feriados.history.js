@@ -1,3 +1,5 @@
+import { EventManager } from '../../event-manager.js';
+
 /**
  * Feriados.History - ChronoSync Module
  * Template visual para os cards de feriados e folgas (Rosa Premium).
@@ -24,8 +26,8 @@ export const FeriadosHistory = {
             `;
         }).join('');
 
-        // Estado de "Visto" (Lógica de Lote)
-        const isVisto = (item.list || []).every(f => localStorage.getItem(`visto_feriado_${f.id}`) === 'true');
+        // Estado de "Visto" (Lógica de Lote - Admin sempre vê como consolidado)
+        const isVisto = options.isContextOnline ? true : (item.list || []).every(f => localStorage.getItem(`visto_feriado_${f.id}`) === 'true');
         
         const statusBadge = isVisto 
             ? `
@@ -42,20 +44,40 @@ export const FeriadosHistory = {
             `;
 
         let actionButtons = '';
-        if (options.isAdmin && !options.isContextDiario) {
-            const canDelete = window.EventManager ? window.EventManager.canEdit(item) : true;
+        const canEdit = EventManager.canEdit(item, options);
 
-            if (canDelete) {
-                actionButtons = `
-                    <div class="flex justify-end pt-2">
-                        <button onclick="window.excluirItemHistorico && window.excluirItemHistorico('${item.id}', 'ferias_folgas')" 
-                            class="p-2.5 bg-white/5 border border-white/10 rounded-2xl text-slate-400 hover:text-rose-500 hover:border-rose-500/30 transition-all flex items-center justify-center gap-2 group/del">
-                            <span class="material-symbols-outlined text-[18px]">delete</span>
-                            <span class="text-[9px] font-black uppercase tracking-widest">Excluir Lote</span>
-                        </button>
+        if (canEdit) {
+            actionButtons = `
+                <div class="flex justify-end pt-2">
+                    <button onclick="excluirItemHistorico('${item.id}')" 
+                        class="h-8 px-4 bg-rose-500/10 border border-rose-500/20 rounded-xl text-rose-500 hover:bg-rose-500 hover:text-white transition-all flex items-center gap-2 text-[9px] font-black uppercase tracking-widest shadow-lg shadow-rose-500/10 group/del">
+                        <span class="material-symbols-outlined text-[18px] group-hover/del:rotate-12 transition-transform">delete</span>
+                        <span>Excluir Lote</span>
+                    </button>
+                </div>
+            `;
+        }
+
+        // --- MODO SLIM (Para Espelho de Ponto / Histórico) ---
+        if (options.isSlim) {
+            const firstChild = (item.list && item.list[0]) || item;
+            const labelStr = (firstChild.tipo || item.label || 'FERIADO').replace('_',' ').toUpperCase();
+            const descStr = firstChild.descricao || item.content || '';
+            const isFérias = labelStr.includes('FÉRIAS');
+            
+            return `
+                <div id="card-slim-${item.id}" class="bg-white/[0.03] border border-white/5 rounded-xl p-2.5 flex items-start gap-3 border-l-4 ${isFérias ? 'border-l-sky-500' : 'border-l-rose-500'} group/slim hover:bg-white/5 transition-all">
+                    <div class="size-6 rounded-lg ${isFérias ? 'bg-sky-500/10 text-sky-400 border-sky-500/20' : 'bg-rose-500/10 text-rose-500 border-rose-500/20'} flex items-center justify-center border shadow-sm shrink-0">
+                        <span class="material-symbols-outlined text-[14px]">${isFérias ? 'beach_access' : 'calendar_month'}</span>
                     </div>
-                `;
-            }
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between mb-0.5">
+                            <h5 class="text-[8px] font-black uppercase tracking-widest ${isFérias ? 'text-sky-500' : 'text-rose-500'} italic">${labelStr}</h5>
+                        </div>
+                        <p class="text-[10px] text-slate-300 leading-tight italic font-medium">"${descStr || 'Data comemorativa / Folga agendada'}"</p>
+                    </div>
+                </div>
+            `;
         }
 
         return `

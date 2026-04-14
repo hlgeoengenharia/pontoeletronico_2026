@@ -1114,11 +1114,12 @@
                             ${HistoryRenderer.renderList(e.heHistory.map(h => ({
                                 id: h.id,
                                 db: 'comunicados',
+                                itemType: (h.subtipo === 'hora_extra') ? 'HORA_EXTRA' : 'COMUNICADO',
                                 tipo: h.subtipo === 'hora_extra' ? 'hora_extra' : 'mensagem',
                                 content: h.conteudo,
                                 data_ref: h.created_at,
                                 target: e.nickname || e.nome_completo
-                            })), { isAdmin: true })}
+                            })), { isAdmin: true, isContextOnline: true })}
                         </div>
                     </div>
                 `;
@@ -1347,10 +1348,12 @@
                 const relatedFer = groupedFer[c.created_at];
                 if (relatedFer) feriadosUsados.add(c.created_at);
                 
+                const isFer = c.subtipo === 'ferias_folgas';
                 return {
                     id: c.id,
                     db: 'comunicados',
-                    tipo: c.subtipo || 'mensagem',
+                    tipo: isFer ? 'ferias_folgas' : (c.subtipo || 'mensagem'),
+                    itemType: isFer ? 'FERIAS_FOLGA' : (c.subtipo === 'hora_extra' ? 'HORA_EXTRA' : 'COMUNICADO'),
                     content: c.conteudo,
                     data_ref: c.created_at,
                     target: c.funcionarios?.nome_completo || (c.tipo === 'setorial' ? 'SETOR' : 'GERAL'),
@@ -1367,6 +1370,7 @@
                         id: list[0].id,
                         db: 'feriados_folgas',
                         tipo: 'ferias_folgas',
+                        itemType: 'FERIAS_FOLGA',
                         content: list.map(f => `${f.data.split('-').reverse().slice(0,2).join('/')}: ${f.tipo.replace('_', ' ').toUpperCase()}`).join(' | '),
                         data_ref: createdAt,
                         target: list[0].escopo === 'individual' ? 'INDIVIDUAL' : (list[0].escopo === 'setorial' ? 'SETORIAL' : 'GERAL'),
@@ -1426,7 +1430,7 @@
                     `;
                 }
 
-                return HistoryRenderer.renderList([item], { isAdmin: true });
+                return HistoryRenderer.renderList([item], { isAdmin: true, isContextOnline: true });
             }).join('');
 
         } catch (err) {

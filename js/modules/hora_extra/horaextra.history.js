@@ -1,3 +1,5 @@
+import { EventManager } from '../../event-manager.js';
+
 /**
  * HoraExtra.History - ChronoSync Module
  * Template visual para os cards de hora extra no histórico.
@@ -16,15 +18,19 @@ export const HoraExtraHistory = {
         const match = (item.content || '').match(/\[LIMITE:(\d+)\]/);
         const extraMinutes = match ? match[1] : '120';
         
-        // Estado de "Ciente" (apenas para colaborador)
-        const isCiente = localStorage.getItem(`ciente_${item.id}`) === 'true';
+        // Estado de "Ciente" (apenas para colaborador e se não for contexto Online)
+        const isCiente = options.isContextOnline ? false : (localStorage.getItem(`ciente_${item.id}`) === 'true');
         
         const bgBadge = isCiente ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500';
         const colorClass = isCiente ? 'border-l-emerald-500' : 'border-l-amber-500';
 
         // Botões de Ciência (Se Colaborador) e Botões de Admin (Se Admin fora do contexto Diário)
+        const canEdit = EventManager.canEdit(item, options);
+
         let actionButtons = '';
-        if (options.isAdmin && !options.isContextDiario) {
+        if (options.hideActions) {
+            actionButtons = '';
+        } else if (canEdit) {
             actionButtons = `
                 <div class="flex gap-2 justify-end pt-1.5 transition-all">
                     <button onclick="prepararEdicaoInline('${item.id}')" 
@@ -43,10 +49,32 @@ export const HoraExtraHistory = {
             actionButtons = `
                 <div class="flex justify-end pt-1.5">
                     <button onclick="window.marcarCiente && window.marcarCiente('${item.id}', 'HE')" ${isCiente ? 'disabled' : ''} 
-                        class="px-4 py-2 rounded-xl border transition-all text-[9px] font-black uppercase tracking-widest flex items-center gap-2 ${isCiente ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500 opacity-60' : 'bg-amber-500/10 border-amber-500/20 text-amber-500 shadow-lg shadow-amber-500/10'}">
+                        class="px-4 py-2 rounded-xl border transition-all text-[9px] font-black uppercase tracking-widest flex items-center gap-2 ${isCiente ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500 opacity-60' : 'bg-primary/10 border-primary/20 text-primary shadow-lg shadow-amber-500/10'}">
                         <span class="material-symbols-outlined text-sm font-black">${isCiente ? 'verified' : 'check'}</span>
                         <span>${isCiente ? 'CONFIRMADO' : 'ESTOU CIENTE'}</span>
                     </button>
+                </div>
+            `;
+        }
+
+        // --- MODO SLIM (Para Espelho de Ponto / Histórico) ---
+        if (options.isSlim) {
+            const cleanContent = (item.content || "").replace(/\[LIMITE:\d+\]\s*/, '');
+            return `
+                <div id="card-slim-${item.id}" class="bg-white/[0.03] border border-white/5 rounded-xl p-2.5 flex items-start gap-3 border-l-4 ${colorClass} group/slim hover:bg-white/5 transition-all">
+                    <div class="size-6 rounded-lg ${bgBadge} flex items-center justify-center border shadow-sm shrink-0">
+                        <span class="material-symbols-outlined text-[14px]">${icon}</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between mb-0.5">
+                            <div class="flex items-center gap-2">
+                                <h5 class="text-[8px] font-black uppercase tracking-widest text-slate-500 italic">HORA EXTRA</h5>
+                                <span class="bg-amber-500/20 px-1 py-0.5 rounded text-[6px] font-black text-amber-500">+${extraMinutes}M</span>
+                            </div>
+                            <span class="text-[7px] font-bold text-slate-600">${date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                        <p class="text-[10px] text-slate-400 leading-tight italic line-clamp-2">"${cleanContent || '...'}"</p>
+                    </div>
                 </div>
             `;
         }

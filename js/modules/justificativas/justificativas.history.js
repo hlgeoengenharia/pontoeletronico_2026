@@ -121,6 +121,39 @@ export const JustificativasHistory = {
             }
         }
 
+        // --- MODO SLIM (Para Espelho de Ponto / Histórico) ---
+        if (options.isSlim) {
+            return `
+                <div id="card-slim-${item.id}" class="bg-white/[0.03] border border-white/5 rounded-xl p-2.5 flex items-start gap-3 border-l-4 ${accentBorder} group/slim hover:bg-white/5 transition-all">
+                    <div class="size-6 rounded-lg ${statusClass} flex items-center justify-center border shadow-sm shrink-0">
+                        <span class="material-symbols-outlined text-[14px]">${icon}</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between mb-0.5">
+                            <div class="flex items-center gap-2">
+                                <h5 class="text-[8px] font-black uppercase tracking-widest text-slate-500 italic">JUSTIFICATIVA</h5>
+                                <span class="px-1.5 py-0.5 rounded border ${statusClass} text-[6px] font-black">${statusLabel}</span>
+                            </div>
+                            <span class="text-[7px] font-bold text-slate-600">${date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                        <p class="text-[10px] text-slate-300 leading-tight italic line-clamp-2">"${item.descricao || item.content || '...'}"</p>
+                    </div>
+                    <div class="flex items-center gap-1 opacity-0 group-hover/slim:opacity-100 transition-all">
+                        ${hasAttachment ? `
+                             <a href="${item.evidencia_url || item.url_anexo}" target="_blank" class="p-1 text-amber-500 hover:text-amber-400">
+                                 <span class="material-symbols-outlined text-xs">attach_file</span>
+                             </a>
+                        ` : ''}
+                        ${status === 'pendente' && !options.hideActions ? `
+                            <button onclick="window.editarAnotacao('${item.id}', 'justificativa')" class="p-1 text-slate-600 hover:text-primary transition-colors">
+                                 <span class="material-symbols-outlined text-xs">edit</span>
+                            </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
         return `
             <div id="card-${item.id}" class="bg-white/5 border border-white/5 rounded-3xl p-5 space-y-4 group border-l-4 ${accentBorder} transition-all hover:bg-white/10 relative ${isEditing ? 'ring-1 ring-primary/30 bg-primary/5 shadow-2xl' : ''}">
                 <div class="flex justify-between items-start">

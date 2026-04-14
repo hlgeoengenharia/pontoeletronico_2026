@@ -16,7 +16,7 @@ export const DiarioAggregator = {
         await AwarenessManager.init(userId);
 
         // Query Multidirecional Otimizada (Réplica do sucesso do Diário)
-        const [resA, resJ, resComI, resComS, resComG, resFerI, resFerS, resFerG, resLogs, resFerTab] = await Promise.all([
+        const [resA, resJ, resComI, resComS, resComG, resFerI, resFerS, resFerG, resLogs, resFerTab, resP] = await Promise.all([
             supabase.from('anotacoes').select('*').eq('funcionario_id', userId),
             supabase.from('justificativas').select('*').eq('funcionario_id', userId),
             supabase.from('comunicados').select('*').eq('destinatario_id', userId),
@@ -25,8 +25,9 @@ export const DiarioAggregator = {
             supabase.from('feriados_folgas').select('*').eq('funcionario_id', userId),
             supabase.from('feriados_folgas').select('*').eq('setor_id', sId).eq('escopo', 'setorial'),
             supabase.from('feriados_folgas').select('*').eq('escopo', 'geral'),
-            supabase.from('diario_logs').select('*').eq('funcionario_id', userId).in('tipo', ['comunicado', 'justificativa_resultado', 'justificativa', 'aviso_ferias']),
-            supabase.from('ferias').select('*').eq('funcionario_id', userId)
+            supabase.from('diario_logs').select('*').eq('funcionario_id', userId),
+            supabase.from('ferias').select('*').eq('funcionario_id', userId),
+            supabase.from('pontos').select('*').eq('funcionario_id', userId).order('data_hora', { ascending: false }).limit(20)
         ]);
 
         const rawData = {
@@ -35,7 +36,8 @@ export const DiarioAggregator = {
             comunicados: [...(resComI.data || []), ...(resComS.data || []), ...(resComG.data || [])],
             feriados: [...(resFerI.data || []), ...(resFerS.data || []), ...(resFerG.data || [])],
             logs: resLogs.data || [],
-            ferias: resFerTab.data || []
+            ferias: resFerTab.data || [],
+            pontos: resP.data || []
         };
 
         return {

@@ -1,3 +1,5 @@
+import { EventManager } from '../../event-manager.js';
+
 /**
  * Comunicado.History - ChronoSync Module
  * Template visual para os cards de comunicado no histórico.
@@ -16,18 +18,17 @@ export const ComunicadoHistory = {
         const match = (item.content || '').match(/\[LIMITE:(\d+)\]/);
         const extraMinutes = match ? match[1] : null;
         
-        // Estado de "Ciente" (apenas para colaborador)
-        const isCiente = localStorage.getItem(`ciente_${item.id}`) === 'true';
+        // Estado de "Ciente" (apenas para colaborador e se não for contexto Online)
+        const isCiente = options.isContextOnline ? false : (localStorage.getItem(`ciente_${item.id}`) === 'true');
         
         const bgBadge = isCiente ? 'bg-emerald-500/10 text-emerald-500' : 'bg-primary/10 text-primary';
         const colorClass = isCiente ? 'border-l-emerald-500/80' : 'border-l-primary/80';
 
         // Botão de Ciência (EXCLUSIVO PARA HORA EXTRA no portal do colaborador)
         let actionButtons = '';
-        if (options.isAdmin) {
-            const canEdit = window.EventManager ? window.EventManager.canEdit(item) : true;
+        const canEdit = EventManager.canEdit(item, options);
 
-            if (!options.isContextDiario && canEdit) {
+        if (canEdit) {
                 actionButtons = `
                     <div class="flex gap-2 justify-end pt-1.5 transition-all">
                         <button onclick="prepararEdicaoInline('${item.id}')" 
@@ -42,8 +43,7 @@ export const ComunicadoHistory = {
                         </button>
                     </div>
                 `;
-            }
-        } else if (extraMinutes) { // Somente para Horas Extras no portal do funcionário
+        } else if (extraMinutes && !options.hideActions) { // Somente para Horas Extras no portal do funcionário
             actionButtons = `
                 <div class="flex justify-end pt-1.5">
                     <button onclick="window.marcarCiente && window.marcarCiente('${item.id}', 'HE')" ${isCiente ? 'disabled' : ''} 
@@ -51,6 +51,30 @@ export const ComunicadoHistory = {
                         <span class="material-symbols-outlined text-sm font-black">${isCiente ? 'verified' : 'check'}</span>
                         <span>${isCiente ? 'CONFIRMADO' : 'ESTOU CIENTE'}</span>
                     </button>
+                </div>
+            `;
+        }
+
+        // --- MODO SLIM (Para Espelho de Ponto / Histórico) ---
+        if (options.isSlim) {
+            const cleanContent = (item.content || "").replace(/\[LIMITE:\d+\]\s*/, '');
+            return `
+                <div id="card-slim-${item.id}" class="bg-white/[0.03] border border-white/5 rounded-xl p-2.5 flex items-start gap-3 border-l-4 ${colorClass} group/slim hover:bg-white/5 transition-all">
+                    <div class="size-6 rounded-lg ${bgBadge} flex items-center justify-center border shadow-sm shrink-0">
+                        <span class="material-symbols-outlined text-[14px]">${icon}</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between mb-0.5">
+                            <h5 class="text-[8px] font-black uppercase tracking-widest text-slate-500 italic">${extraMinutes ? 'HORA EXTRA' : 'COMUNICADO'}</h5>
+                            <span class="text-[7px] font-bold text-slate-600">${date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                        <p class="text-[10px] text-slate-400 leading-tight italic line-clamp-2">"${cleanContent || '...'}"</p>
+                    </div>
+                    ${extraMinutes && !isCiente && !options.hideActions ? `
+                        <button onclick="window.marcarCiente && window.marcarCiente('${item.id}', 'HE')" class="px-2 py-1 bg-primary/10 border border-primary/20 rounded-md text-primary text-[7px] font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all">
+                             CONFIRMAR
+                        </button>
+                    ` : ''}
                 </div>
             `;
         }

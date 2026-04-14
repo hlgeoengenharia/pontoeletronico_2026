@@ -74,7 +74,8 @@ export const DiarioEngine = {
                 rawData.comunicados, 
                 rawData.logs, 
                 rawData.ferias, 
-                rawData.feriados
+                rawData.feriados,
+                { isContextDiario: true, pontos: rawData.pontos }
             );
 
             // AUTO-CLEAR: Processar a lista unificada e TODAS as as fontes brutas para garantir 100% de cobertura

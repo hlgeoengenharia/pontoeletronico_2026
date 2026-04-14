@@ -4,21 +4,17 @@
  */
 export const AtividadesHistory = {
     render(item, options = {}) {
-        // PRIORIDADE: created_at (Timestamp completo) > data (Pode ser string sem hora)
         const date = new Date(item.created_at || item.data || item.data_hora || new Date());
-        const now = new Date();
-        const diffHours = (now - date) / (1000 * 60 * 60);
         
-        // Regra: Editável por 24 horas
-        const canModify = diffHours < 24 && !options.isInspectionMode;
-        
+        // Governança de Ações via EventManager
+        let actionButtons = '';
+        const canEdit = window.EventManager ? window.EventManager.canEdit(item, options) : false;
+
         const icon = 'edit_note';
         const accentClass = 'bg-primary/10 text-primary border-primary/20';
         const accentBorder = 'border-l-primary';
 
         const isEditing = options.editingId === item.id;
-        
-        let actionButtons = '';
         let contentHtml = '';
 
         if (isEditing) {
@@ -31,11 +27,11 @@ export const AtividadesHistory = {
             `;
             actionButtons = `
                 <div class="flex gap-2 justify-end pt-2 border-t border-white/5 mt-3">
-                    <button onclick="window.cancelInlineEdit()" 
+                    <button onclick="window.cancelarEdicaoInline()" 
                         class="h-8 px-4 bg-white/5 border border-white/10 rounded-lg text-slate-500 hover:bg-white/10 transition-all text-[8px] font-black uppercase tracking-widest">
                         Cancelar
                     </button>
-                    <button onclick="window.saveInlineEdit('${item.id}', 'atividade')" 
+                    <button onclick="window.salvarEdicaoInline('${item.id}', 'atividade')" 
                         class="h-8 px-5 bg-primary/20 border border-primary/40 rounded-lg text-primary hover:bg-primary hover:text-white transition-all text-[8px] font-black uppercase tracking-widest shadow-lg shadow-primary/10">
                         Salvar Alterações
                     </button>
@@ -47,15 +43,15 @@ export const AtividadesHistory = {
                     <p class="text-[11px] text-slate-300 leading-relaxed font-medium opacity-90">${item.conteudo || item.content || 'Nenhuma descrição informada.'}</p>
                 </div>
             `;
-            if (canModify) {
+            if (canEdit && !options.hideActions) {
                 actionButtons = `
                     <div class="flex gap-2 justify-end pt-1.5 border-t border-white/5 mt-3">
-                        <button onclick="window.editarAnotacao('${item.id}', 'atividade')" 
+                        <button onclick="window.prepararEdicaoInline('${item.id}')" 
                             class="h-8 px-3 bg-white/5 border border-white/10 rounded-lg text-slate-400 hover:bg-primary/20 hover:text-primary transition-all flex items-center gap-2 text-[8px] font-black uppercase tracking-widest shadow-sm">
                             <span class="material-symbols-outlined text-xs">edit</span>
                             <span>Editar</span>
                         </button>
-                        <button onclick="window.excluirAnotacao('${item.id}', 'atividade')" 
+                        <button onclick="window.excluirItemHistorico('${item.id}')" 
                             class="h-8 px-3 bg-rose-500/10 border border-rose-500/20 rounded-lg text-rose-500 hover:bg-rose-500 hover:text-white transition-all flex items-center gap-2 text-[8px] font-black uppercase tracking-widest shadow-sm">
                             <span class="material-symbols-outlined text-xs">delete</span>
                             <span>Excluir</span>
@@ -63,6 +59,24 @@ export const AtividadesHistory = {
                     </div>
                 `;
             }
+        }
+
+        // --- MODO SLIM (Para Espelho de Ponto / Histórico) ---
+        if (options.isSlim) {
+            return `
+                <div id="card-slim-${item.id}" class="bg-white/[0.03] border border-white/5 rounded-xl p-2.5 flex items-start gap-3 border-l-4 ${accentBorder} group/slim hover:bg-white/5 transition-all">
+                    <div class="size-6 rounded-lg ${accentClass} flex items-center justify-center border shadow-sm shrink-0">
+                        <span class="material-symbols-outlined text-[14px]">${icon}</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between mb-0.5">
+                            <h5 class="text-[8px] font-black uppercase tracking-widest text-slate-500 italic">ATIVIDADE</h5>
+                            <span class="text-[7px] font-bold text-slate-600">${date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                        <p class="text-[10px] text-slate-300 leading-tight italic line-clamp-2">"${item.conteudo || item.content || '...'}"</p>
+                    </div>
+                </div>
+            `;
         }
 
         return `
@@ -79,7 +93,7 @@ export const AtividadesHistory = {
                             </p>
                         </div>
                     </div>
-                    ${!canModify && !isEditing ? `
+                    ${!canEdit && !isEditing ? `
                         <span class="material-symbols-outlined text-[12px] text-slate-600" title="Histórico Permanente">lock</span>
                     ` : ''}
                 </div>

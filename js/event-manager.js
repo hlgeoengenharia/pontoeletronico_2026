@@ -90,6 +90,13 @@ const EventManager = {
             colorClass: 'text-primary',
             premiumBorder: 'premium-border-blue',
             autoClear: false // Resolvido manualmente via card
+        },
+        'PONTO': {
+            title: 'REGISTRO DE PONTO',
+            icon: 'history',
+            colorClass: 'text-slate-100',
+            premiumBorder: 'premium-border-blue',
+            autoClear: true
         }
     },
 
@@ -121,8 +128,10 @@ const EventManager = {
     },
 
     // 3. Unificação de Histórico (ChronoSync Core)
-    unifyHistory(anotacoes = [], justificativas = [], comunicados = [], logs = [], ferias = [], feriados = []) {
+    unifyHistory(anotacoes = [], justificativas = [], comunicados = [], logs = [], ferias = [], feriados = [], options = {}) {
         const unified = [];
+        const now = new Date();
+        const justificativasConsumidas = new Set();
 
         // A. Atividades (Anotações)
         anotacoes.forEach(a => unified.push({ 
@@ -133,24 +142,39 @@ const EventManager = {
             content: a.justificativa_usuario || a.anotacao || ''
         }));
 
-        // B. Justificativas
-        justificativas.forEach(j => unified.push({ 
-            ...j, 
-            tipo: 'justificativa', 
-            itemType: 'JUSTIFICATIVA',
-            time: j.created_at || j.data_hora,
-            content: j.justificativa_usuario || j.descricao || ''
-        }));
+        // B. Justificativas e seus Resultados
+        const justificativaResultados = {};
+        logs.forEach(l => {
+            if (l.tipo === 'justificativa_resultado' && l.referencia_id) {
+                justificativaResultados[l.referencia_id] = l;
+            }
+        });
 
-        // C. Comunicados e Horas Extras (Filtrando resumos redundantes de feriados)
+        justificativas.forEach(j => {
+            const result = justificativaResultados[j.id];
+            unified.push({ 
+                ...j, 
+                tipo: 'justificativa', 
+                itemType: 'JUSTIFICATIVA',
+                time: j.created_at || j.data_hora,
+                content: j.justificativa_usuario || j.descricao || '',
+                admin_feedback: result ? result.mensagem_padrao : null,
+                data_analise: result ? result.created_at : null
+            });
+        });
+
+        // C. Comunicados e Horas Extras
         comunicados.forEach(c => {
             const subtipo = (c.subtipo || '').toLowerCase();
-            
-            // Ocultar comunicados que são apenas resumos de feriados/folgas (já temos o card dedicado)
             if (subtipo === 'ferias_folgas' || subtipo === 'feriado_folga') return;
 
+            // REGRA: Sumir em 24h (exceto se for contexto Online de Admin)
+            const createdAt = new Date(c.created_at);
+            const diffHours = (now - createdAt) / (1000 * 60 * 60);
+            if (!options.isContextOnline && diffHours > 24) return;
+
             const realType = (subtipo === 'hora_extra') ? 'hora_extra' : 'mensagem';
-            const itemType = (subtipo === 'hora_extra') ? 'HORA_EXTRA' : 'COMUNICADO';
+            const itemType = (subtipo === 'hora_extra') ? 'HORA_EXTRA' : (subtipo === 'ferias_folgas' ? 'FERIAS_FOLGA' : 'COMUNICADO');
             
             unified.push({ 
                 ...c, 
@@ -161,41 +185,28 @@ const EventManager = {
             });
         });
 
-        // D. Logs de Sistema (Alinhados para limpeza automática via ItemType)
-        logs.forEach(l => {
-            // OCULTAR redundâncias: Justificativas brutas e avisos agrupados (já tem seu próprio card integrado)
-            if (l.tipo === 'justificativa' || l.tipo === 'aviso_ferias') return;
-
-            const isResult = l.tipo === 'justificativa_resultado';
-            unified.push({ 
-                ...l, 
-                tipo: isResult ? 'justificativa_resultado' : 'sistema', 
-                itemType: isResult ? 'JUSTIFICATIVA_RESULTADO' : 'DIARIO_LOG',
-                time: l.created_at || l.data_hora,
-                content: l.mensagem_padrao || l.tipo_log || ''
-            });
-        });
-
-        // E. Férias (Cronogramas Agrupados)
+        // E. Férias
+        let avisoFeriasProcessado = false;
         if (ferias && ferias.length > 0) {
             const first = ferias[0];
             const logAviso = logs.find(l => l.tipo === 'aviso_ferias');
+            if (logAviso) avisoFeriasProcessado = true;
 
             unified.push({ 
                 ...first, 
-                id: logAviso ? logAviso.id : `ferias_unificado_${first.funcionario_id}`, // ID p/ ciência
+                id: logAviso ? logAviso.id : `ferias_unificado_${first.funcionario_id}`,
                 tipo: 'ferias', 
                 itemType: 'CRONOGRAMA_FERIAS',
                 subtipo: 'ferias',
                 time: first.created_at || first.data_inicio,
-                parcelas: ferias, // Inserção do array para o FeriasHistory.render()
+                parcelas: ferias,
                 log_message: logAviso ? logAviso.mensagem_padrao : null,
                 content: first.status === 'pendente' ? 'Proposta de férias aguardando análise.' : 
                          (first.status === 'aprovado' ? 'Cronograma de férias consolidado.' : 'Cronograma de férias necessita de ajustes.')
             });
         }
 
-        // F. Feriados e Folgas (Agrupamento Modularizado na Grande Unificação)
+        // F. Feriados e Folgas
         const groupedFer = (feriados || []).reduce((acc, f) => {
             const key = f.created_at || f.id;
             if (!acc[key]) acc[key] = [];
@@ -204,6 +215,13 @@ const EventManager = {
         }, {});
 
         Object.entries(groupedFer).forEach(([createdAt, list]) => {
+            // REGRA: Ativos até um dia antes do primeiro dia do evento
+            const dates = list.map(f => new Date(f.data + 'T00:00:00'));
+            const minDate = new Date(Math.min(...dates));
+            const diffDays = (minDate - now) / (1000 * 60 * 60 * 24);
+            
+            if (!options.isContextOnline && diffDays < 1) return;
+
             unified.push({
                 id: list[0].id,
                 db: 'feriados_folgas',
@@ -211,63 +229,164 @@ const EventManager = {
                 itemType: 'FERIAS_FOLGA',
                 data_ref: createdAt,
                 time: createdAt,
-                list: list // Essencial para o FeriadosHistory.render()
+                list: list
             });
         });
 
-        // Ordenar: Do mais recente para o mais antigo
-        return unified.sort((a, b) => new Date(b.time) - new Date(a.time));
-    },
-    // 3. Regras de Edição (Integridade Corporativa)
-    canEdit(item) {
-        const now = new Date();
-        const typeKey = item.itemType || item.type;
+        // G. Logs de Sistema (Processados por último para evitar ocultação indevida)
+        logs.forEach(l => {
+            // OCULTAR redundâncias e itens já processados na fusão
+            const isJustificativaRedundante = l.tipo === 'justificativa' || l.tipo === 'justificativa_resultado';
+            const isFeriasRedundante = l.tipo === 'aviso_ferias' && avisoFeriasProcessado;
+            
+            if (isJustificativaRedundante || isFeriasRedundante) return;
 
-        // Regra 1: Férias (Parcelas)
-        // - Se o cronograma estiver 'aprovado' apenas permitir edição quando
-        //   a parcela mais próxima estiver a >= 20 dias (congelamento a 20 dias).
-        // - Para status pendente/proposto/rejeitado permitir edição (usuário deve poder atualizar).
+            const content = l.mensagem_padrao || l.tipo_log || '';
+            const isGeofenceLog = content.toUpperCase().includes('FORA DO RAIO');
+
+            if (isGeofenceLog) {
+                // Tenta encontrar a justificativa vinculada ao log (pelo referencia_id, proximidade temporal ou campos de referência)
+                const justificativa = justificativas.find(j => {
+                    const idMatch = (l.referencia_id && (String(j.id) === String(l.referencia_id) || String(j.ponto_id) === String(l.referencia_id)));
+                    const jDate = new Date(j.created_at || j.data_incidente).getTime();
+                    const lDate = new Date(l.created_at).getTime();
+                    const timeMatch = Math.abs(lDate - jDate) / (1000 * 60) < 15;
+                    return idMatch || timeMatch;
+                });
+
+                if (justificativa) {
+                    justificativasConsumidas.add(justificativa.id);
+                    const result = justificativaResultados[justificativa.id];
+                    
+                    // Priorizar o status da justificativa (que é atualizado no banco após análise)
+                    let finalStatus = justificativa.status || 'pendente';
+                    if (result && finalStatus === 'pendente') finalStatus = 'abonado'; // Fallback se o resultado existe
+
+                    unified.push({
+                        ...l,
+                        tipo: 'ponto',
+                        itemType: 'PONTO',
+                        time: l.created_at,
+                        content: content,
+                        justificativa_usuario: justificativa.justificativa || justificativa.justificativa_usuario || justificativa.descricao || justificativa.conteudo || '',
+                        status: finalStatus,
+                        admin_feedback: result ? (result.mensagem_padrao || result.feedback_admin || result.observacao_admin) : (justificativa.observacao_admin || null),
+                        evidencia_url: justificativa.evidencia_url || justificativa.url_anexo || null
+                    });
+                } else {
+                    unified.push({
+                        ...l,
+                        tipo: 'ponto',
+                        itemType: 'PONTO',
+                        time: l.created_at,
+                        content: content,
+                        status: 'pendente'
+                    });
+                }
+                return;
+            }
+
+            unified.push({ 
+                ...l, 
+                tipo: 'sistema', 
+                itemType: 'DIARIO_LOG',
+                time: l.created_at || l.data_hora,
+                content: content
+            });
+        });
+
+        // H. Registros de Pontos (Batidas) com Justificativas (Divergências de Geofence)
+        if (options.pontos && options.pontos.length > 0) {
+            options.pontos.forEach(p => {
+                // REGRA: Só mostrar na timeline se for FORA DO RAIO
+                if (p.dentro_raio !== false) return;
+
+                // Evitar duplicação se já tiver sido adicionado via LOG
+                const pTime = new Date(p.data_hora).getTime();
+                const alreadyAdded = unified.some(u => 
+                    u.itemType === 'PONTO' && 
+                    Math.abs(new Date(u.time).getTime() - pTime) / (1000 * 60) < 1
+                );
+                if (alreadyAdded) return;
+
+                // Tentar encontrar a justificativa correspondente
+                const justificativa = justificativas.find(j => {
+                    const jTime = new Date(j.created_at || j.data_incidente || j.data_hora).getTime();
+                    return Math.abs(pTime - jTime) / (1000 * 60) < 5 && !justificativasConsumidas.has(j.id);
+                });
+
+                if (justificativa) {
+                    justificativasConsumidas.add(justificativa.id);
+                    const result = justificativaResultados[justificativa.id];
+                    unified.push({
+                        ...p,
+                        id: p.id,
+                        tipo: 'ponto',
+                        itemType: 'PONTO',
+                        time: p.data_hora,
+                        content: p.tipo === 'ENTRADA' ? `Check-in realizado fora do raio` : `Check-out realizado fora do raio`,
+                        justificativa_usuario: justificativa.descricao || justificativa.justificativa_usuario || '',
+                        status: justificativa.status || 'pendente',
+                        admin_feedback: result ? result.mensagem_padrao : (justificativa.observacao_admin || null),
+                        evidencia_url: justificativa.evidencia_url || justificativa.url_anexo || null
+                    });
+                } else {
+                    unified.push({
+                        ...p,
+                        tipo: 'ponto',
+                        itemType: 'PONTO',
+                        time: p.data_hora,
+                        content: p.tipo === 'ENTRADA' ? `Check-in fora do raio (Sem justificativa)` : `Check-out fora do raio (Sem justificativa)`,
+                        status: 'pendente'
+                    });
+                }
+            });
+        }
+
+        // Limpeza final: Remover justificativas que foram "absorvidas" pelos cards de ponto
+        const finalUnified = unified.filter(item => {
+            if (item.itemType === 'JUSTIFICATIVA' && justificativasConsumidas.has(item.id)) return false;
+            return true;
+        });
+
+        return finalUnified.sort((a, b) => new Date(b.time) - new Date(a.time));
+    },
+
+    // 3. Regras de Edição (Integridade Corporativa)
+    canEdit(item, options = {}) {
+        const now = new Date();
+        const typeKey = (item.itemType || item.type || item.tipo || '').toUpperCase();
+
+        // Regra Admin: Hora Extra, Comunicados e Feriados SÓ em Online.html
+        if (typeKey === 'HORA_EXTRA' || typeKey === 'COMUNICADO' || typeKey === 'MENSAGEM' || typeKey === 'FERIAS_FOLGA') {
+            return options.isContextOnline === true;
+        }
+
+        // Regra Funcionário: Justificativas (Pendente e < 24h)
+        if (typeKey === 'JUSTIFICATIVA') {
+            const createdAt = new Date(item.created_at || item.time);
+            const diffHours = (now - createdAt) / (1000 * 60 * 60);
+            const isPending = (item.status === 'pendente' || item.status_pendencia === 'pendente');
+            return isPending && diffHours < 24;
+        }
+
+        // Regra Funcionário: Atividades (< 24h)
+        if (typeKey === 'ATIVIDADE') {
+            const createdAt = new Date(item.created_at || item.time);
+            const diffHours = (now - createdAt) / (1000 * 60 * 60);
+            return diffHours < 24;
+        }
+
+        // Regra Férias: Até 20 dias antes (se aprovado) ou qualquer momento se pendente
         if (typeKey === 'CRONOGRAMA_FERIAS') {
-            if (!item.parcelas || !Array.isArray(item.parcelas)) return false;
-            const status = (item.status || '').toLowerCase();
-            // Se estiver congelado permanentemente, não permite edição
-            if (status.indexOf('congel') !== -1) return false;
-            if (status === 'aprovado') {
+            if (!item.parcelas) return true; // Pendente de registro inicial
+            if (item.status === 'aprovado') {
                 return item.parcelas.every(p => {
                     const start = new Date(p.data_inicio + 'T00:00:00');
-                    const diffDays = (start - now) / (1000 * 60 * 60 * 24);
-                    return diffDays >= 20;
+                    return (start - now) / (1000 * 60 * 60 * 24) >= 20;
                 });
             }
-            // pendente/proposto/rejeitado/undefined => permitir edição (não exclusão)
             return true;
-        }
-
-        // Regra 2: Atividades, Justificativas e Comunicações - 24 Horas
-        const createdAt = new Date(item.created_at || item.data_hora || item.time || item.time_raw || item.data_item + 'T00:00:00');
-        const diffHours = (now - createdAt) / (1000 * 60 * 60);
-
-        const editableTypes = ['ATIVIDADE', 'JUSTIFICATIVA', 'COMUNICADO', 'HORA_EXTRA'];
-        const isEditableType = editableTypes.includes(typeKey);
-        const isPending = (item.status === 'pendente' || item.status_pendencia === 'pendente');
-
-        if (isEditableType) {
-            if (typeKey === 'ATIVIDADE' || typeKey === 'COMUNICADO' || typeKey === 'HORA_EXTRA') return diffHours < 24;
-            if (typeKey === 'JUSTIFICATIVA') return diffHours < 24 && isPending;
-        }
-
-        // Regra 3: Feriados e Folgas - Até 1 dia antes do evento
-        if (typeKey === 'FERIAS_FOLGA') {
-            if (!item.list || !Array.isArray(item.list) || item.list.length === 0) return false;
-            
-            // Buscar a data mais próxima no lote
-            const dates = item.list.map(f => new Date(f.data + 'T00:00:00'));
-            const minDate = new Date(Math.min(...dates));
-            
-            // Regra: Deve ser pelo menos 1 dia antes (Ex: evento dia 20, só exclui até o fim do dia 18, sumindo no início do dia 19)
-            // Calculamos a diferença em dias. Se a diferença for <= 1, o botão some.
-            const diffDays = (minDate - now) / (1000 * 60 * 60 * 24);
-            return diffDays >= 1; 
         }
 
         return false;
