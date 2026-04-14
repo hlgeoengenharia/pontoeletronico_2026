@@ -316,28 +316,41 @@ const ScalesEngine = {
      * Verifica se um determinado horário (ou o atual) está dentro da janela permitida.
      * Considera janelas de ativação antes/depois e atravessa meia-noite.
      */
-    isInActivationWindow(escala, extraMinutes = 0, targetDate = new Date()) {
+    isInActivationWindow(escala, type = 'check-in', extraMinutes = 0, targetDate = new Date()) {
         if (!escala || !escala.horario_entrada) return true;
 
         const [hE, mE] = escala.horario_entrada.split(':').map(Number);
         const [hS, mS] = escala.horario_saida.split(':').map(Number);
 
-        const janelaAntes = parseInt(escala.janela_ativa_antes_minutos) || 30;
-        const janelaDepois = parseInt(escala.janela_ativa_depois_minutos) || 30;
+        const janelaAntes = (escala.janela_ativa_antes_minutos !== null && escala.janela_ativa_antes_minutos !== undefined) ? Number(escala.janela_ativa_antes_minutos) : 30;
+        const janelaDepois = (escala.janela_ativa_depois_minutos !== null && escala.janela_ativa_depois_minutos !== undefined) ? Number(escala.janela_ativa_depois_minutos) : 30;
+        const tolEntrada = (escala.tolerancia_entrada_minutos !== null && escala.tolerancia_entrada_minutos !== undefined) ? Number(escala.tolerancia_entrada_minutos) : 15;
 
         for (let offset = -1; offset <= 1; offset++) {
-            const startShift = new Date(targetDate);
-            startShift.setDate(startShift.getDate() + offset);
+            const baseDate = new Date(targetDate);
+            baseDate.setDate(baseDate.getDate() + offset);
+
+            const startShift = new Date(baseDate);
             startShift.setHours(hE, mE, 0, 0);
 
-            const endShift = new Date(targetDate);
-            endShift.setDate(endShift.getDate() + offset);
-            endShift.setHours(hS, mS + Number(extraMinutes), 0, 0);
+            const endShift = new Date(baseDate);
+            endShift.setHours(hS, mS, 0, 0);
             
+            // Tratamento de jornada que atravessa a meia-noite
             if (endShift < startShift) endShift.setDate(endShift.getDate() + 1);
 
-            const startWindow = new Date(startShift.getTime() - janelaAntes * 60000);
-            const endWindow = new Date(endShift.getTime() + janelaDepois * 60000);
+            let startWindow, endWindow;
+
+            if (type === 'check-in') {
+                // Janela de Entrada: Do limite 'antes' até o 'horário + tolerância'
+                startWindow = new Date(startShift.getTime() - janelaAntes * 60000);
+                endWindow = new Date(startShift.getTime() + tolEntrada * 60000);
+            } else {
+                // Janela de Saída: Do 'horário - janela_depois' (ativação antecipada) até 'horário + janela_depois + HE'
+                // Aqui usamos janela_depois como margem para sair um pouco antes ou depois
+                startWindow = new Date(endShift.getTime() - janelaDepois * 60000);
+                endWindow = new Date(endShift.getTime() + (janelaDepois + Number(extraMinutes)) * 60000);
+            }
 
             if (targetDate >= startWindow && targetDate <= endWindow) return true;
         }

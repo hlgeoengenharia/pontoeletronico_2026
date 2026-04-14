@@ -131,12 +131,28 @@
           const allPendencies = [
             ...(dataJust || []).map(j => ({ ...j, itemType: 'ABONO', file_url: j.evidencia_url })),
             ...((dataGps || []).map(g => {
-                let cleanDesc = g.justificativa_usuario || 'Divergência de localização registrada pelo sistema.';
+                // 1. Obter mensagem técnica do sistema e justificativa do usuário
+                const associatedLog = (dataLogs || []).find(l => 
+                    l.tipo === 'pendencia_geofence' && 
+                    l.funcionario_id === g.funcionario_id &&
+                    Math.abs(new Date(l.data_hora || l.created_at) - new Date(g.data_hora)) < 60000
+                );
+
+                let sysMsg = associatedLog ? (associatedLog.mensagem_padrao || associatedLog.conteudo || '') : '';
+                let userMsg = g.justificativa_usuario || '';
                 
-                // Limpeza de resíduos de fotos em descrições antigas
-                if (cleanDesc.includes('[FOTO:')) {
-                    cleanDesc = cleanDesc.replace(/\[FOTO:.*?\]/, '').trim();
+                // 2. Limpeza: Remover avisos irrelevantes de ambos
+                const clean = (txt) => txt.replace(/\[EXPEDIENTE PRORROGADO:.*?\]/g, '').replace(/\[FOTO:.*?\]/g, '').trim();
+                sysMsg = clean(sysMsg);
+                userMsg = clean(userMsg);
+
+                // 3. Combinar as mensagens de forma elegante
+                let finalDesc = sysMsg;
+                if (userMsg && userMsg !== sysMsg) {
+                    finalDesc += (finalDesc ? '<br><span class="text-primary/70 font-bold uppercase text-[9px]">Justificativa:</span> ' : '') + userMsg;
                 }
+
+                const cleanDesc = finalDesc || 'Divergência de localização registrada pelo sistema.';
 
                 return {
                     ...g, 
@@ -145,7 +161,7 @@
                     data_incidente: g.data_hora, 
                     tipo_divergencia: `SOLICITAÇÃO DE ${g.tipo.toUpperCase()} FORA DO RAIO`, 
                     descricao: cleanDesc, 
-                    file_url: null // Fotos não são mais salvas conforme nova regra
+                    file_url: null 
                 };
             })),
             ...(dataLogs || []).map(l => {
@@ -166,7 +182,31 @@
                   file_url: l.evidencia_url || l.arquivo_url || l.foto_url
                 };
             })
-          ].filter(item => {
+          ].reduce((acc, current) => {
+              // Priorizar o card de GPS (mais detalhado) e descartar o de SISTEMA (genérico) se forem do mesmo evento
+              if (current.itemType === 'SISTEMA' && current.tipo === 'pendencia_geofence') {
+                  const hasAssociatedPoint = acc.find(item => 
+                      item.itemType === 'GPS' && 
+                      item.funcionario_id === current.funcionario_id &&
+                      Math.abs(new Date(item.data_incidente || item.data_hora) - new Date(current.data_incidente)) < 60000
+                  );
+                  if (hasAssociatedPoint) return acc;
+              }
+              
+              // Caso o GPS venha DEPOIS do Log no array (raro devido ao sort, mas por segurança):
+              if (current.itemType === 'GPS') {
+                  const existingLogIdx = acc.findIndex(item => 
+                      item.itemType === 'SISTEMA' && 
+                      item.tipo === 'pendencia_geofence' &&
+                      item.funcionario_id === current.funcionario_id &&
+                      Math.abs(new Date(item.data_incidente) - new Date(current.data_hora)) < 60000
+                  );
+                  if (existingLogIdx > -1) acc.splice(existingLogIdx, 1);
+              }
+
+              acc.push(current);
+              return acc;
+          }, []).filter(item => {
               // Filtrar logs de pulso/hora ou resultados de análise que não requerem abono visual aqui
               if (item.itemType === 'SISTEMA' && (item.tipo === 'gps_pulse' || item.tipo === 'gps_hora' || item.tipo === 'justificativa_resultado')) return false;
               return true;
@@ -355,28 +395,50 @@
             console.log('[Autorizacoes] Resultado:', result);
             error = result.error;
           } else {
-            const result = await supabase.from('pontos').update({ status_validacao: status }).eq('id', id);
-            error = result.error;
+            // Para a tabela 'pontos', o enum esperado é 'aprovado' em vez de 'abonado'
+            const pointStatus = status === 'abonado' ? 'aprovado' : 'rejeitado';
+            console.log(`[Autorizacoes] Analisando GPS/Ponto: ID ${id} -> ${pointStatus}`);
+            const result = await supabase.from('pontos').update({ status_validacao: pointStatus }).eq('id', id);
+            
+            if (result.error) {
+                console.error('[Autorizacoes] Erro crítico no Update do Ponto:', result.error);
+                throw result.error;
+            }
+            console.log('[Autorizacoes] Ponto atualizado com sucesso.');
+
+            // Tentativa de sincronização: buscar e baixar log de sistema pendente para este ponto
+            if (item) {
+                const { error: syncErr } = await supabase.from('diario_logs')
+                    .update({ status_pendencia: status })
+                    .eq('funcionario_id', item.funcionario_id)
+                    .eq('tipo', 'pendencia_geofence')
+                    .eq('status_pendencia', 'pendente')
+                    .filter('data_hora', 'gte', new Date(new Date(item.data_hora).getTime() - 60000).toISOString())
+                    .filter('data_hora', 'lte', new Date(new Date(item.data_hora).getTime() + 60000).toISOString());
+                
+                if (syncErr) console.warn('[Autorizacoes] Falha na sincronização do log (não fatal):', syncErr);
+            }
           }
-          if (error) throw error;
 
           // 4. Se for rejeição, acionar penalidades do BusinessRulesManager
           if (status === 'rejeitado') {
+              console.log('[Autorizacoes] Acionando BusinessRulesManager para penalidades...');
               try {
                   await BusinessRulesManager.processRejection(item, type, obs);
+                  console.log('[Autorizacoes] Penalidades aplicadas com sucesso.');
               } catch (penErr) {
-                  console.error('[Conformidade] Falha ao aplicar penalidade:', penErr);
-                  // Não interrompe o fluxo principal, mas avisa no console
+                  console.error('[Autorizacoes] Falha ao aplicar penalidade:', penErr);
+                  // Não interrompe o fluxo principal de sumir o card, pois o status já foi alterado
               }
           }
 
           UI.showToast(status === 'abonado' ? 'Solicitação Abonada!' : 'Solicitação Rejeitada!', 'success');
           
-          // Recarregar com delay maior
-          setTimeout(() => loadJustificativas(), 800);
+          // Recarregar com delay sincronizado
+          setTimeout(() => loadJustificativas(), 1200);
         } catch (err) {
-          console.error('Erro ao processar:', err);
-          UI.showToast('Erro ao processar ação', 'error');
+          console.error('[Autorizacoes] Erro fatal no processamento:', err);
+          UI.showToast(`Erro: ${err.message || 'Verifique o console'}`, 'error');
         } finally {
           UI.hideLoader();
         }
