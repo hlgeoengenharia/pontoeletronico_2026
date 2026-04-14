@@ -163,13 +163,14 @@ const EventManager = {
 
         // D. Logs de Sistema (Alinhados para limpeza automática via ItemType)
         logs.forEach(l => {
-            // OCULTAR redundâncias: Justificativas processadas já tem seu próprio card integrado
-            if (l.tipo === 'justificativa_resultado' || l.tipo === 'justificativa' || l.tipo === 'aviso_ferias') return;
+            // OCULTAR redundâncias: Justificativas brutas e avisos agrupados (já tem seu próprio card integrado)
+            if (l.tipo === 'justificativa' || l.tipo === 'aviso_ferias') return;
 
+            const isResult = l.tipo === 'justificativa_resultado';
             unified.push({ 
                 ...l, 
-                tipo: 'sistema', 
-                itemType: 'DIARIO_LOG',
+                tipo: isResult ? 'justificativa_resultado' : 'sistema', 
+                itemType: isResult ? 'JUSTIFICATIVA_RESULTADO' : 'DIARIO_LOG',
                 time: l.created_at || l.data_hora,
                 content: l.mensagem_padrao || l.tipo_log || ''
             });

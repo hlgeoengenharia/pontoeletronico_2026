@@ -1,4 +1,5 @@
 import { JustificativasHistory } from '../modules/justificativas/justificativas.history.js';
+import { ResultadoFeedbackHistory } from '../modules/justificativas/resultadofeedback.history.js';
 import { JustificativasCounter } from '../modules/justificativas/justificativas.counter.js';
 import { AtividadesHistory } from '../modules/atividades/atividades.history.js';
 import { FeriasHistory } from '../modules/ferias/ferias.history.js';
@@ -69,3 +70,4 @@ EventRegistry.register('mensagem', { history: ComunicadoHistory, counter: Comuni
 EventRegistry.register('hora_extra', { history: HoraExtraHistory, counter: ComunicadoCounter });
 EventRegistry.register('ferias_folgas', { history: FeriadosHistory, counter: FeriadosCounter });
 EventRegistry.register('alerta_feriados_folgas', { history: { render: (item) => AlertarFeriadosCard.render(item) }, counter: AlertarFeriadosBadge });
+EventRegistry.register('justificativa_resultado', { history: ResultadoFeedbackHistory });

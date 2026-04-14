@@ -233,7 +233,7 @@
             const icon = isGps ? 'location_on' : 'description';
             
             return `
-                    <div class="flex flex-col rounded-xl bg-[#0f172a] border border-slate-800/60 p-5 shadow-xl relative w-full animate-in fade-in slide-in-from-bottom-4">
+                    <div id="card-${item.id}" class="flex flex-col rounded-xl bg-[#0f172a] border border-slate-800/60 p-5 shadow-xl relative w-full animate-in fade-in slide-in-from-bottom-4">
                         <div class="flex justify-between items-start mb-5">
                             <div class="flex gap-4">
                                 <div class="relative flex-shrink-0">
@@ -335,11 +335,7 @@
               
               btnConfirm.onclick = () => {
                   const val = textarea.value.trim();
-                  if (!val) {
-                      UI.showToast('Por favor, insira uma justificativa.', 'error');
-                      return;
-                  }
-                  finish(val);
+                  finish(val); // Aceita vazio agora (opcional)
               };
               btnCancel.onclick = () => finish(null);
           });
@@ -369,30 +365,13 @@
           UI.showLoader();
           let error;
           if (type === 'ABONO') {
-            // 1. Atualizar a Justificativa Original com a análise do gestor (Persistência Nativa)
             const { error: errJ } = await supabase.from('justificativas').update({ 
                 status: status,
-                observacao_admin: obs // Agora o campo existe no Supabase!
+                observacao_admin: obs || 'Processado pelo gestor.'
             }).eq('id', id);
-            
-            if (item?.funcionario_id) {
-               // 2. Criar Log de Alerta para o Diário (Gatilho de Badge)
-               await supabase.from('diario_logs').insert([{
-                   funcionario_id: item.funcionario_id,
-                   data_hora: new Date().toISOString(),
-                   tipo: 'justificativa_resultado',
-                   status_pendencia: 'pendente',
-                   mensagem_padrao: `[ANÁLISE] ${obs}`
-               }]);
-               
-               // 3. Limpar notificações antigas de solicitação
-               await supabase.from('diario_logs').update({ status_pendencia: 'visto' }).eq('funcionario_id', item.funcionario_id).eq('tipo', 'justificativa').eq('status_pendencia', 'pendente');
-            }
             error = errJ;
           } else if (type === 'SISTEMA' || type === 'ALERTA_MENSAL') {
-            console.log('[Autorizacoes] Atualizando diario_logs:', { id, status });
-            const result = await supabase.from('diario_logs').update({ status_pendencia: status }).eq('id', id);
-            console.log('[Autorizacoes] Resultado:', result);
+            const result = await supabase.from('diario_logs').update({ status_pendencia: status, mensagem_padrao: `[ANÁLISE] ${obs}` }).eq('id', id);
             error = result.error;
           } else {
             // Para a tabela 'pontos', o enum esperado é 'aprovado' em vez de 'abonado'
@@ -418,6 +397,26 @@
                 
                 if (syncErr) console.warn('[Autorizacoes] Falha na sincronização do log (não fatal):', syncErr);
             }
+          }
+
+          // 4. Notificar Funcionário (Feedback Universal para o Diário)
+          if (item?.funcionario_id) {
+              const cardEl = document.getElementById(`card-${id}`);
+              
+              // Buscar o título dentro do card específico
+              // Prioriza o texto forte que contém o tipo da divergência
+              const cardTitle = cardEl?.querySelector('p.text-slate-200')?.innerText?.trim() || 'SOLICITAÇÃO DE PONTO';
+              
+              // Buscar a mensagem do funcionário (parágrafo itálico de cor slate-400)
+              const employeeMsg = cardEl?.querySelector('p.text-slate-400')?.innerText?.trim() || '';
+              
+              await supabase.from('diario_logs').insert([{
+                  funcionario_id: item.funcionario_id,
+                  data_hora: new Date().toISOString(),
+                  tipo: 'justificativa_resultado',
+                  status_pendencia: 'pendente',
+                  mensagem_padrao: `[CONTEXTO: ${cardTitle}] [USER: ${employeeMsg}] [ANÁLISE: ${status.toUpperCase()}] ${obs || 'Seu pedido foi processado pelo gestor.'}`
+              }]);
           }
 
           // 4. Se for rejeição, acionar penalidades do BusinessRulesManager
