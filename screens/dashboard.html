@@ -785,7 +785,7 @@
 
         const checkButtonWindow = async (btn) => {
             const extraMin = await getExtraMinutes();
-            const { data: lastPunch } = await supabase.from('pontos').select('tipo').eq('funcionario_id', currentUser.id).order('data_hora', { ascending: false }).limit(1).single();
+            const { data: lastPunch } = await supabase.from('pontos').select('tipo').eq('funcionario_id', currentUser.id).order('data_hora', { ascending: false }).limit(1).maybeSingle();
             const type = (!lastPunch || lastPunch.tipo === 'check-out') ? 'check-in' : 'check-out';
             
             const isActive = ScalesEngine.isInActivationWindow(currentUser.escalas, type, extraMin);

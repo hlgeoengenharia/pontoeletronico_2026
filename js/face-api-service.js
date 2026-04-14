@@ -114,9 +114,9 @@ export const FaceApiService = {
 
     async verifyLiveMatch(videoElement, savedDescriptor, {
         samples = 3,
-        threshold = this.defaultThreshold,
+        threshold = 0.60, // Aumentado levemente para evitar rejeições por sombra/luz
         minScore = 0.4,
-        maxRetries = 5
+        maxRetries = 10  // Aumentado o número de tentativas
     } = {}) {
         if (!Array.isArray(savedDescriptor) || !savedDescriptor.length) {
             throw new Error('Template biométrico ausente para comparação.');
@@ -127,16 +127,21 @@ export const FaceApiService = {
 
         while (matches.length < samples && attempts < maxRetries) {
             attempts += 1;
-            const faceData = await this.getSingleFaceData(videoElement, { minScore, requireSingleFace: true });
-            const comparison = this.compareFaces(savedDescriptor, faceData.descriptor, threshold);
+            try {
+                const faceData = await this.getSingleFaceData(videoElement, { minScore, requireSingleFace: true });
+                const comparison = this.compareFaces(savedDescriptor, faceData.descriptor, threshold);
 
-            matches.push({
-                ...comparison,
-                detectionScore: faceData.detectionScore
-            });
+                matches.push({
+                    ...comparison,
+                    detectionScore: faceData.detectionScore
+                });
 
-            if (matches.length < samples) {
-                await new Promise(resolve => setTimeout(resolve, 180));
+                console.log(`[FaceApi] Amostra ${matches.length}/${samples} capturada com sucesso.`);
+            } catch (e) {
+                console.warn(`[FaceApi] Tentativa ${attempts}/${maxRetries} falhou: ${e.message}`);
+                if (attempts >= maxRetries) throw e;
+                // Espera um pouco mais antes da próxima tentativa para a câmera focar
+                await new Promise(resolve => setTimeout(resolve, 300));
             }
         }
 

@@ -441,51 +441,57 @@ export const FeriasEngine = {
     },
 
     async submitAction(status) {
+        console.time('[FeriasEngine] submitAction');
+        if (status === 'rejeitado') {
+            if (!confirm('Deseja realmente rejeitar este planejamento?')) return;
+        }
+
         UI.showLoader();
         try {
             const empId = this.state.targetEmployee.id;
-            if (status === 'rejeitado') {
-                if (!confirm('Rejeitar este planejamento?')) { UI.hideLoader(); return; }
-                await supabase.from('ferias').delete().eq('funcionario_id', empId);
-                const toInsert = this.state.currentParcelas.map((p, i) => ({
-                    funcionario_id: empId,
-                    data_inicio: p.start.toISOString().split('T')[0],
-                    data_fim: p.end.toISOString().split('T')[0],
-                    parcela_numero: i + 1,
-                    status: 'rejeitado'
-                }));
-                await supabase.from('ferias').insert(toInsert);
-                UI.showToast('Planejamento rejeitado.', 'warning');
-            } else {
-                await supabase.from('ferias').delete().eq('funcionario_id', empId);
-                const toInsert = this.state.currentParcelas.map((p, i) => ({
-                    funcionario_id: empId,
-                    data_inicio: p.start.toISOString().split('T')[0],
-                    data_fim: p.end.toISOString().split('T')[0],
-                    parcela_numero: i + 1,
-                    status: status
-                }));
-                await supabase.from('ferias').insert(toInsert);
-                UI.showToast(status === 'aprovado' ? 'Férias abonadas!' : 'Cronograma enviado!', 'success');
-            }
+            console.log('[FeriasEngine] Iniciando processamento:', { status, empId });
+            
+            // 1. Limpar e Atualizar Férias
+            console.log('[FeriasEngine] Atualizando registros de férias...');
+            await supabase.from('ferias').delete().eq('funcionario_id', empId);
+            const toInsert = this.state.currentParcelas.map((p, i) => ({
+                funcionario_id: empId,
+                data_inicio: p.start.toISOString().split('T')[0],
+                data_fim: p.end.toISOString().split('T')[0],
+                parcela_numero: i + 1,
+                status: (status === 'rejeitado' ? 'rejeitado' : status)
+            }));
+            await supabase.from('ferias').insert(toInsert);
 
+            // 2. Notificar no Diário
+            console.log('[FeriasEngine] Inserindo log no Diário de Bordo...');
             await supabase.from('diario_logs').insert([{
                 funcionario_id: empId,
+                data_hora: new Date().toISOString(),
                 tipo: 'aviso_ferias',
-                mensagem_padrao: status === 'aprovado' ? 'Suas férias foram abonadas pelo gestor!' : (status === 'rejeitado' ? 'Seu planejamento de férias foi analisado.' : 'Seu cronograma foi enviado para análise.'),
-                status_pendencia: 'pendente'
+                status_pendencia: 'pendente',
+                mensagem_padrao: status === 'aprovado' ? 'Suas férias foram abonadas!' : (status === 'rejeitado' ? 'Seu planejamento foi analisado.' : 'Seu cronograma foi enviado para análise.')
             }]);
 
-            if (typeof window.fecharModalFerias === 'function') window.fecharModalFerias();
+            UI.showToast(status === 'aprovado' ? 'Férias abonadas!' : (status === 'rejeitado' ? 'Rejeitado.' : 'Cronograma enviado!'), 'success');
+
+            // 3. Fechar e Atualizar
+            console.log('[FeriasEngine] Fechando card e agendando reinicialização...');
             if (typeof window.fecharCardFerias === 'function') window.fecharCardFerias();
             
-            if (typeof window.init === 'function') await window.init();
-            else if (this.state.userRole === 'employee') location.reload();
-
+            // Recarregar apenas os dados necessários
+            setTimeout(() => {
+                console.log('[FeriasEngine] Disparando window.init() para atualizar tela...');
+                if (typeof window.init === 'function') window.init();
+            }, 300);
+            
         } catch (err) {
-            console.error('[FeriasEngine] Erro no submit:', err);
+            console.error('[FeriasEngine] Erro crítico no submit:', err);
             UI.showToast('Erro ao processar ação.', 'error');
-        } finally { UI.hideLoader(); }
+        } finally { 
+            UI.hideLoader(); 
+            console.timeEnd('[FeriasEngine] submitAction');
+        }
     },
 
     calculateDays(start, end) {

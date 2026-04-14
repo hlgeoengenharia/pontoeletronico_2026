@@ -11,7 +11,7 @@
       theme: {
         extend: {
           colors: {
-            primary: '#3B82F6', // Sincronizado com blue-500
+            primary: '#3B82F6',
             secondary: '#F59E0B',
             accent: '#10B981',
             surface: '#0F172A',
@@ -22,288 +22,63 @@
       darkMode: 'class'
     }
   </script>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap"
-    rel="stylesheet" />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
-    rel="stylesheet" />
-  <!-- Leaflet Map CSS -->
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="../js/theme.js?v=1.0"></script>
   <style>
-    body {
-      font-family: 'Space Grotesk', sans-serif;
-      overflow: hidden;
-    }
-
-    #map {
-      height: 100vh;
-      width: 100vw;
-      z-index: 1;
-    }
-
-    .leaflet-container {
-      background: #101622 !important;
-    }
-
-    .glass-panel {
-      background: rgba(16, 22, 34, 0.85);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(59, 130, 246, 0.2);
-    }
-
-    .neon-border {
-      box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
-    }
-
-    .custom-scrollbar::-webkit-scrollbar {
-      width: 4px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-track {
-      background: rgba(255, 255, 255, 0.05);
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-      background: rgba(59, 130, 246, 0.5);
-      border-radius: 10px;
-    }
-
-    .floating-ui {
-      position: fixed;
-      z-index: 1000;
-    }
-
-    .menu-lateral {
-      top: 0;
-      left: 0;
-      bottom: 0;
-      width: 340px;
-      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-      z-index: 1050;
-    }
-
-    .menu-lateral.collapsed {
-      transform: translateX(-100%);
-    }
-
-    .btn-toggle {
-      position: fixed;
-      top: 24px;
-      left: 24px;
-      z-index: 1100;
-      transition: all 0.4s ease;
-    }
-
-    .btn-toggle.active {
-      left: 360px;
-    }
-
-    /* Status Markers */
-    .status-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      display: inline-block;
-    }
-    .status-repouso { background-color: #60A5FA; box-shadow: 0 0 8px #60A5FA; } /* Azul Sereno */
-    .status-aprovado { background-color: #10B981; box-shadow: 0 0 8px #10B981; } /* Verde Esmeralda */
-    .status-pendente { background-color: #F59E0B; box-shadow: 0 0 8px #F59E0B; } /* Amarelo */
-
-    .pin-container {
-      width: 50px;
-      height: 60px;
-      position: relative;
-      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4));
-    }
+    body { font-family: 'Space Grotesk', sans-serif; overflow: hidden; }
+    #map { height: 100vh; width: 100vw; z-index: 1; }
+    .leaflet-container { background: #101622 !important; }
+    .glass-panel { background: rgba(16, 22, 34, 0.85); backdrop-filter: blur(12px); border: 1px solid rgba(59, 130, 246, 0.2); }
+    .neon-border { box-shadow: 0 0 15px rgba(59, 130, 246, 0.3); }
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.5); border-radius: 10px; }
+    .floating-ui { position: fixed; z-index: 1000; }
+    .menu-lateral { top: 0; left: 0; bottom: 0; width: 340px; transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); z-index: 1050; }
+    .menu-lateral.collapsed { transform: translateX(-100%); }
+    .btn-toggle { position: fixed; top: 24px; left: 24px; z-index: 1100; transition: all 0.4s ease; }
+    .btn-toggle.active { left: 360px; }
+    .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    .status-repouso { background-color: #60A5FA; box-shadow: 0 0 8px #60A5FA; }
+    .status-aprovado { background-color: #10B981; box-shadow: 0 0 8px #10B981; }
+    .status-pendente { background-color: #F59E0B; box-shadow: 0 0 8px #F59E0B; }
+    .pin-container { width: 50px; height: 60px; position: relative; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4)); }
+    .pin-drop { width: 50px; height: 50px; background: #101622; border: 2px solid #0d59f2; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); display: flex; align-items: center; justify-content: center; position: relative; }
+    .pin-content { transform: rotate(45deg); display: flex; align-items: center; justify-content: center; }
+    .pin-badge { position: absolute; top: -5px; right: -5px; background: #0d59f2; color: white; font-size: 9px; font-weight: 900; padding: 2px 6px; border-radius: 20px; border: 2px solid #101622; z-index: 10; }
+    .glass-calendar-day { transition: all 0.2s ease; cursor: pointer; display: flex; align-items: center; justify-content: center; min-height: 50px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.15); background: rgba(255, 255, 255, 0.08); font-size: 14px; font-weight: 900; color: #fff; }
+    /* CLASSES DE SELEÇÃO E MARCAÇÃO DO CALENDÁRIO (AZULADO PARA CONTRASTE) */
+    .glass-calendar-day.selected { background: rgba(59, 130, 246, 0.25) !important; color: #60A5FA !important; border-radius: 0 !important; border-color: rgba(59, 130, 246, 0.2) !important; font-weight: 900 !important; }
+    .glass-calendar-day.selected-valid { background: rgba(59, 130, 246, 0.5) !important; color: #fff !important; box-shadow: inset 0 0 20px rgba(59, 130, 246, 0.4); border-color: #3b82f6 !important; }
+    .glass-calendar-day.marked { background: rgba(16, 185, 129, 0.1) !important; border: 1px solid rgba(16, 185, 129, 0.2) !important; color: #10B981; }
+    .glass-calendar-day.focused-day { border: 2.5px solid #fff !important; transform: scale(1.1); z-index: 50; }
     
-    .pin-drop {
-      width: 50px;
-      height: 50px;
-      background: #101622;
-      border: 2px solid #0d59f2;
-      border-radius: 50% 50% 50% 0;
-      transform: rotate(-45deg);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      position: relative;
-    }
-
-    .pin-content {
-      transform: rotate(45deg);
-      width: 100%;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
+    /* VARIANTES DE DIAS ESPECIAIS */
+    .holiday-national { background: rgba(245, 158, 11, 0.15) !important; border: 1px dashed #f59e0b !important; color: #fbbf24 !important; }
+    .holiday-regional { background: rgba(139, 92, 246, 0.15) !important; border: 1px dashed #8b5cf6 !important; color: #c4b5fd !important; }
+    .day-off { background: rgba(6, 182, 212, 0.15) !important; border: 1px dashed #06b6d4 !important; color: #67e8f9 !important; }
+    .day-congelado { opacity: 0.3; pointer-events: none; filter: grayscale(1); }
     
-    .pin-badge {
-      position: absolute;
-      top: -5px;
-      right: -5px;
-      background: #0d59f2;
-      color: white;
-      font-size: 9px;
-      font-weight: 900;
-      padding: 2px 6px;
-      border-radius: 20px;
-      border: 2px solid #101622;
-      z-index: 10;
-    }
+    /* BOTÃO GRAVAR ATIVO (CONTRASTE AZULADO) */
+    .btn-gravar-ativo { background: #3b82f6 !important; color: white !important; border-color: #60a5fa !important; box-shadow: 0 0 20px rgba(59, 130, 246, 0.4); opacity: 1 !important; transform: scale(1.02); }
+    .btn-gravar-ativo:hover { background: #2563eb !important; box-shadow: 0 0 30px rgba(59, 130, 246, 0.6); }
 
-    /* Estilos de Popups e Marcadores Sincronizados */
-    .leaflet-popup-content-wrapper {
-        background: rgba(16, 22, 34, 0.95) !important;
-        color: white !important;
-        border: 1px solid rgba(13, 89, 242, 0.3);
-        border-radius: 12px !important;
-        backdrop-filter: blur(8px);
-        min-width: 320px !important;
-        max-width: 380px !important;
-        padding: 4px !important;
-    }
-
-    /* Estilos Sincronizados com o Diário do Funcionário (Calendário de Férias) */
-    .glass-calendar-day {
-        transition: all 0.2s ease;
-        cursor: pointer;
-        position: relative;
-        z-index: 10;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 50px;
-        border-radius: 12px;
-        border: 1px solid rgba(255, 255, 255, 0.15);
-        background: rgba(255, 255, 255, 0.08);
-        font-size: 14px;
-        font-weight: 900;
-        color: #FFFFFF !important;
-    }
-    .glass-calendar-day:hover:not(.disabled) {
-        background: rgba(13, 89, 242, 0.4);
-        transform: scale(1.05);
-        color: white !important;
-    }
-    .glass-calendar-day.selected {
-        background: #0d59f2 !important;
-        color: white !important;
-        box-shadow: 0 0 20px rgba(13, 89, 242, 0.6);
-        border: none !important;
-        font-weight: 900;
-    }
-    .glass-calendar-day.selected-valid {
-        background: #10b981 !important;
-        box-shadow: 0 0 25px rgba(16, 185, 129, 0.8) !important;
-        color: white !important;
-        font-weight: 900;
-    }
-    .glass-calendar-day.holiday-national {
-        background: rgba(245, 158, 11, 0.3) !important;
-        border: 1px dashed rgba(245, 158, 11, 1) !important;
-        color: #fbbf24 !important;
-    }
-    .glass-calendar-day.holiday-regional {
-        background: rgba(139, 92, 246, 0.3) !important;
-        border: 1px dashed rgba(139, 92, 246, 1) !important;
-        color: #c4b5fd !important;
-    }
-    .glass-calendar-day.day-off {
-        background: rgba(6, 182, 212, 0.3) !important;
-        border: 1px dashed rgba(6, 182, 212, 1) !important;
-        color: #67e8f9 !important;
-    }
-    .glass-calendar-day.marked {
-        background: rgba(16, 185, 129, 0.6) !important;
-        border: 1.5px solid rgba(16, 185, 129, 1) !important;
-        color: #FFFFFF !important;
-        font-weight: 900;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-    }
-    .glass-calendar-day:not(.day-congelado) {
-        border: 1px solid rgba(59, 130, 246, 0.15) !important;
-        box-shadow: inset 0 0 10px rgba(59, 130, 246, 0.02) !important;
-    }
-    .day-congelado { 
-        opacity: 0.4 !important; 
-        pointer-events: none !important; 
-        background: repeating-linear-gradient(45deg, rgba(255,255,255,0.02), rgba(255,255,255,0.02) 5px, transparent 5px, transparent 10px) !important;
-        color: rgba(255, 255, 255, 0.3) !important;
-        border: 1px solid rgba(255, 255, 255, 0.05) !important;
-        cursor: not-allowed; 
-    }
-    .focused-day {
-        border: 2.5px solid #FFFFFF !important;
-        box-shadow: 0 0 25px rgba(255, 255, 255, 0.5) !important;
-        transform: scale(1.1) !important;
-        z-index: 50 !important;
-        position: relative;
-    }
-    .btn-gravar-ativo { background: rgba(59, 130, 246, 0.2) !important; border-color: rgba(59, 130, 246, 0.5) !important; color: #3B82F6 !important; opacity: 1 !important; transform: scale(1.02); }
-    .leaflet-popup-tip {
-        background: rgba(16, 22, 34, 0.95) !important;
-        border: 1px solid rgba(13, 89, 242, 0.3);
-    }
-    .leaflet-popup-content {
-        margin: 12px 16px !important;
-        line-height: 1.4 !important;
-    }
-    @media (max-width: 640px) {
-        .leaflet-popup-content-wrapper {
-            min-width: 280px !important;
-            max-width: 320px !important;
-        }
-    }
-
-    /* Accordion Styles */
-    .setor-group { transition: all 0.3s ease; }
-    .setor-content {
-      max-height: 0;
-      overflow: hidden;
-      transition: max-height 0.4s ease-out, opacity 0.3s;
-      opacity: 0;
-    }
-    .setor-group.active .setor-content {
-      max-height: 1000px;
-      opacity: 1;
-      margin-top: 8px;
-    }
-    .chevron-icon { transition: transform 0.3s; }
+    .status-filter.active { background: #3b82f6; color: white; border-color: #3b82f6; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); }
     .setor-group.active .chevron-icon { transform: rotate(180deg); }
-
-    /* Pulse Animations */
-    @keyframes pulse-rose {
-      0% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.4); }
-      70% { box-shadow: 0 0 0 10px rgba(244, 63, 94, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); }
-    }
-    @keyframes pulse-amber {
-      0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
-      70% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); }
-      100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
-    }
-    .btn-pulse-rose { 
-      animation: pulse-rose 2s infinite; 
-      background: rgba(244, 63, 94, 0.1) !important; 
-      color: #f43f5e !important; 
-      border-color: rgba(244, 63, 94, 0.4) !important; 
-    }
-    .btn-pulse-amber { 
-      animation: pulse-amber 2s infinite; 
-      background: rgba(245, 158, 11, 0.1) !important; 
-      color: #f59e0b !important; 
-      border-color: rgba(245, 158, 11, 0.4) !important; 
-    }
-    .status-filter { transition: all 0.3s ease; }
-    .status-filter.active { background: #3b82f6; color: white; border-color: #3b82f6; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-    }
+    .setor-content { max-height: 0; overflow: hidden; transition: all 0.3s ease; opacity: 0; }
+    .setor-group.active .setor-content { max-height: 1000px; opacity: 1; margin-top: 8px; }
   </style>
 </head>
 
 <body class="bg-background-dark text-slate-100 min-h-screen">
-
   <div id="map"></div>
+  
+  <div class="fixed top-6 right-6 z-[1100] flex gap-3">
+    <button onclick="window.location.href='dashboard.html'" class="size-12 glass-panel rounded-xl flex items-center justify-center text-rose-500 hover:bg-rose-500/10 transition-all border border-rose-500/30 shadow-2xl group">
+      <span class="material-symbols-outlined group-hover:scale-110 transition-transform">close</span>
+    </button>
+  </div>
 
   <button id="btn-toggle-menu" class="btn-toggle size-12 glass-panel rounded-xl flex items-center justify-center text-blue-500 hover:bg-blue-500/10 transition-all border border-blue-500/30 shadow-2xl group">
     <span class="material-symbols-outlined group-hover:scale-110 transition-transform">menu</span>
@@ -314,68 +89,43 @@
         <div class="flex items-center gap-3 mb-4">
             <span class="material-symbols-outlined text-blue-500 text-3xl">beach_access</span>
             <div>
-                <h2 id="sidebar-title" class="text-sm font-black tracking-widest uppercase">GESTÃO DE FÉRIAS</h2>
+                <h2 class="text-sm font-black tracking-widest uppercase">GESTÃO DE FÉRIAS</h2>
                 <p id="regra-salva-display" class="text-[9px] text-blue-400 font-bold uppercase tracking-tight">Regra: Carregando...</p>
             </div>
         </div>
         <div class="relative">
-            <input id="search-ferias" type="text" placeholder="Filtrar por nome ou setor..." 
-                class="w-full bg-background-dark/50 border border-blue-500/20 rounded-lg py-2 px-9 text-[10px] font-bold uppercase tracking-widest focus:ring-1 focus:ring-blue-500 outline-none transition-all placeholder:text-slate-600">
+            <input id="search-ferias" type="text" placeholder="Filtrar por nome ou setor..." class="w-full bg-background-dark/50 border border-blue-500/20 rounded-lg py-2 px-9 text-[10px] font-bold uppercase focus:ring-1 focus:ring-blue-500 outline-none">
             <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-blue-500 opacity-40 text-sm">search</span>
         </div>
     </div>
-
-    <div id="ferias-filters" class="px-4 py-3 flex gap-2 custom-scrollbar bg-black/20">
-        <button id="filter-all" onclick="filterFeriasStatus('all')" class="status-filter active flex flex-col items-center justify-center min-w-[70px] px-2 py-3 rounded-2xl bg-white/5 text-slate-400 text-[9px] font-black uppercase border border-white/5 transition-all">
-            <span class="mb-1">Todos</span>
-            <span class="count opacity-50 px-2 py-0.5 rounded-full bg-black/20 text-[8px]">(0)</span>
+    <div id="ferias-filters" class="px-2 py-3 grid grid-cols-4 gap-1 bg-black/20">
+        <button onclick="filterFeriasStatus('all')" class="status-filter active flex flex-col items-center justify-center py-2.5 rounded-md bg-white/5 text-[9px] font-black uppercase tracking-tighter border border-white/5 transition-all">
+            <span>Todos</span><span class="count opacity-50 text-[8px]">(0)</span>
         </button>
-        <button id="filter-repouso" onclick="filterFeriasStatus('repouso')" class="status-filter flex flex-col items-center justify-center min-w-[70px] px-2 py-3 rounded-2xl bg-white/5 text-slate-400 text-[9px] font-black uppercase border border-white/5 transition-all">
-            <span class="mb-1">Em Férias</span>
-            <span class="count opacity-50 px-2 py-0.5 rounded-full bg-black/20 text-[8px]">(0)</span>
+        <button onclick="filterFeriasStatus('repouso')" class="status-filter flex flex-col items-center justify-center py-2.5 rounded-md bg-white/5 text-[9px] font-black uppercase tracking-tighter border border-white/5 transition-all">
+            <span>Em Férias</span><span class="count opacity-50 text-[8px]">(0)</span>
         </button>
-        <button id="filter-aprovado" onclick="filterFeriasStatus('aprovado')" class="status-filter flex flex-col items-center justify-center min-w-[70px] px-2 py-3 rounded-2xl bg-white/5 text-slate-400 text-[9px] font-black uppercase border border-white/5 transition-all">
-            <span class="mb-1">Aprovadas</span>
-            <span class="count opacity-50 px-2 py-0.5 rounded-full bg-black/20 text-[8px]">(0)</span>
+        <button onclick="filterFeriasStatus('aprovado')" class="status-filter flex flex-col items-center justify-center py-2.5 rounded-md bg-white/5 text-[9px] font-black uppercase tracking-tighter border border-white/5 transition-all">
+            <span>Aprovadas</span><span class="count opacity-50 text-[8px]">(0)</span>
         </button>
-        <button id="filter-pendente" onclick="filterFeriasStatus('pendente')" class="status-filter flex flex-col items-center justify-center min-w-[70px] px-2 py-3 rounded-2xl bg-white/5 text-slate-400 text-[9px] font-black uppercase border border-white/5 transition-all">
-            <span class="mb-1">Pendentes</span>
-            <span id="badge-ferias-sidebar" class="count opacity-50 px-2 py-0.5 rounded-full bg-black/20 text-[8px]">(0)</span>
+        <button onclick="filterFeriasStatus('pendente')" class="status-filter flex flex-col items-center justify-center py-2.5 rounded-md bg-white/5 text-[9px] font-black uppercase tracking-tighter border border-white/5 transition-all">
+            <span>Pendentes</span><span class="count opacity-50 text-[8px]">(0)</span>
         </button>
     </div>
-
-    <div id="lista-setores-ferias" class="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-4">
-        <div class="flex flex-col items-center justify-center py-10 opacity-30">
-            <span class="material-symbols-outlined animate-spin mb-2">sync</span>
-            <p class="text-[9px] font-bold uppercase tracking-widest">Sincronizando Cronograma...</p>
-        </div>
-    </div>
-
-    <div class="p-4 bg-background-dark/50 border-t border-white/5">
-        <button onclick="abrirModalRegrasGerais()" class="w-full py-3 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 border border-blue-500/30 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2">
-            <span class="material-symbols-outlined text-sm">settings</span> 
-            <span>REGRAS GERAIS</span>
-        </button>
-    </div>
+    <div id="lista-setores-ferias" class="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-4"></div>
   </aside>
-  <div class="floating-ui top-6 right-6 flex gap-3">
-    <button onclick="window.location.href='dashboard.html'" class="size-12 glass-panel rounded-xl flex items-center justify-center text-slate-400 hover:text-white transition-all border border-white/10 shadow-lg">
-      <span class="material-symbols-outlined">close</span>
-    </button>
-  </div>
 
-  <!-- MODAL: CARD DE FÉRIAS UNIFICADO (PIXEL-PERFECT) -->
+  <!-- MODAL: CARD DE FÉRIAS (FULL-FIDELITY) -->
   <div id="modal-card-ferias" class="fixed inset-0 z-[2500] bg-black/95 backdrop-blur-xl hidden items-start justify-center overflow-y-auto p-4 md:p-12">
-    <div class="glass-panel w-full max-w-6xl rounded-[2.5rem] p-0 relative overflow-visible shadow-[0_0_100px_rgba(13,89,242,0.1)] border border-white/10 my-auto min-h-min">
+    <div class="glass-panel w-full max-w-6xl rounded-[2.5rem] p-0 relative shadow-2xl border border-white/10 my-auto">
         <div class="absolute top-0 left-0 w-full h-1 bg-primary"></div>
-        
         <header class="p-8 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
             <div class="flex items-center gap-6">
                 <div class="size-20 rounded-full border-2 border-blue-500/30 p-1 bg-slate-800 overflow-hidden shadow-2xl">
-                    <img id="ferias-foto" src="" class="w-full h-full object-cover rounded-full" onerror="this.src='https://ui-avatars.com/api/?name='+document.getElementById('ferias-nome').innerText+'&background=101622&color=60A5FA'">
+                    <img id="ferias-foto" src="" class="w-full h-full object-cover rounded-full">
                 </div>
                 <div>
-                    <h2 class="text-2xl font-black italic tracking-tighter text-white uppercase">Meus Períodos de Férias</h2>
+                    <h2 class="text-2xl font-black italic tracking-tighter text-white uppercase">Planejamento de Férias</h2>
                     <div class="flex items-center gap-3">
                         <p id="ferias-nome" class="text-[10px] text-white font-black uppercase tracking-widest opacity-60">---</p>
                         <span class="size-1 rounded-full bg-blue-500"></span>
@@ -383,188 +133,69 @@
                     </div>
                 </div>
             </div>
-
             <div id="monthly-stats-panel" class="hidden md:flex items-center gap-4 px-4 py-2 bg-white/5 rounded-2xl border border-white/10">
-                <div class="text-center">
-                    <p class="text-[7px] text-slate-500 font-black uppercase">Nacionais</p>
-                    <p id="count-nacionais" class="text-xs font-black text-amber-500">0</p>
-                </div>
+                <div class="text-center"><p class="text-[7px] text-slate-500 font-black uppercase">Nacionais</p><p id="count-nacionais" class="text-xs font-black text-amber-500">0</p></div>
                 <div class="w-px h-6 bg-white/10"></div>
-                <div class="text-center">
-                    <p class="text-[7px] text-slate-500 font-black uppercase">Regionais</p>
-                    <p id="count-regionais" class="text-xs font-black text-violet-400">0</p>
-                </div>
+                <div class="text-center"><p class="text-[7px] text-slate-500 font-black uppercase">Regionais</p><p id="count-regionais" class="text-xs font-black text-violet-400">0</p></div>
                 <div class="w-px h-6 bg-white/10"></div>
-                <div class="text-center">
-                    <p class="text-[7px] text-slate-500 font-black uppercase">Folgas</p>
-                    <p id="count-folgas" class="text-xs font-black text-cyan-400">0</p>
-                </div>
+                <div class="text-center"><p class="text-[7px] text-slate-500 font-black uppercase">Folgas</p><p id="count-folgas" class="text-xs font-black text-cyan-400">0</p></div>
             </div>
-
             <div class="flex items-center gap-6">
                 <div class="text-right">
                     <p class="text-[9px] text-slate-500 uppercase font-black tracking-widest mb-1">Total Marcado</p>
                     <p class="text-2xl font-black text-white"><span id="txt-dias-marcados">0</span>/30 <span class="text-xs text-slate-500">DIAS</span></p>
                 </div>
-                <button onclick="fecharCardFerias()" class="size-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-all hover:bg-white/10">
+                <button onclick="fecharCardFerias()" class="size-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-all">
                     <span class="material-symbols-outlined">close</span>
                 </button>
             </div>
         </header>
-
         <main class="grid grid-cols-1 lg:grid-cols-12 gap-0">
             <div class="lg:col-span-7 p-8 border-r border-white/5 space-y-8 bg-black/20">
-                <div class="space-y-6">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-4">
-                            <div class="size-12 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-500">
-                                <span class="material-symbols-outlined text-2xl font-variation-settings-fill">event_note</span>
-                            </div>
-                            <div>
-                                <h3 class="text-xs font-black uppercase tracking-[0.2em] text-white">Selecione o Período</h3>
-                                <p id="ferias-regras-info" class="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-1 italic">Mínimo de 10 dias por parcela</p>
-                            </div>
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center gap-4">
+                        <div class="size-12 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-500">
+                            <span class="material-symbols-outlined text-2xl font-variation-settings-fill">event_note</span>
                         </div>
-                        <div class="flex items-center gap-3 bg-white/5 p-1 rounded-xl border border-white/5">
-                            <button id="btn-prev-month" class="size-9 flex items-center justify-center hover:bg-white/10 rounded-lg transition-all text-slate-400">
-                                <span class="material-symbols-outlined text-lg">chevron_left</span>
-                            </button>
-                            <span id="txt-month-year" class="text-[11px] font-black uppercase tracking-widest text-white min-w-[120px] text-center">Janeiro 2026</span>
-                            <button id="btn-next-month" class="size-9 flex items-center justify-center hover:bg-white/10 rounded-lg transition-all text-slate-400">
-                                <span class="material-symbols-outlined text-lg">chevron_right</span>
-                            </button>
+                        <div>
+                            <h3 class="text-xs font-black uppercase tracking-widest text-white">Calendário de Escala</h3>
+                            <p id="ferias-regras-info" class="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-1 italic">Selecione o período clicando nos dias</p>
                         </div>
                     </div>
-
-                    <div id="grid-calendar-ferias" class="grid grid-cols-7 gap-1"></div>
-
-                    <div id="current-selection-panel" class="hidden p-6 bg-blue-500/10 border border-blue-500/20 rounded-3xl flex items-center justify-between animate-in zoom-in-95">
-                        <div class="flex items-center gap-8">
-                            <div class="text-center">
-                                <p class="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-1">Início</p>
-                                <p id="selection-start" class="text-sm font-black text-white italic">--/--/--</p>
-                            </div>
-                            <span class="material-symbols-outlined text-blue-500 opacity-40">arrow_forward</span>
-                            <div class="text-center">
-                                <p class="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-1">Fim</p>
-                                <p id="selection-end" class="text-sm font-black text-white italic">--/--/--</p>
-                            </div>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-1">Duração</p>
-                            <p class="text-lg font-black text-blue-400"><span id="selection-days">0</span> DIAS</p>
-                        </div>
+                    <div class="flex items-center gap-3 bg-white/5 p-1 rounded-xl border border-white/5">
+                        <button id="btn-prev-month" class="size-9 flex items-center justify-center hover:bg-white/10 rounded-lg transition-all text-slate-400"><span class="material-symbols-outlined text-lg">chevron_left</span></button>
+                        <span id="txt-month-year" class="text-[11px] font-black uppercase tracking-widest text-white min-w-[120px] text-center">---</span>
+                        <button id="btn-next-month" class="size-9 flex items-center justify-center hover:bg-white/10 rounded-lg transition-all text-slate-400"><span class="material-symbols-outlined text-lg">chevron_right</span></button>
                     </div>
-
-                    <button id="btn-gravar-parcela" disabled class="w-full h-16 bg-blue-500/10 border border-blue-500/20 text-blue-500/40 text-[11px] font-black uppercase tracking-widest rounded-2xl transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-500 hover:text-white group">
-                        Gravar Parcela de Férias
-                    </button>
                 </div>
+                <div id="grid-calendar-ferias" class="grid grid-cols-7 gap-1"></div>
+                <div id="current-selection-panel" class="hidden p-6 bg-blue-500/10 border border-blue-500/20 rounded-3xl flex items-center justify-between animate-in zoom-in-95">
+                    <div class="flex gap-8"><div class="text-center"><p class="text-[8px] text-slate-500 font-black uppercase">Início</p><p id="selection-start" class="text-xs font-black text-white italic">--/--/--</p></div><div class="text-center"><p class="text-[8px] text-slate-500 font-black uppercase">Fim</p><p id="selection-end" class="text-xs font-black text-white italic">--/--/--</p></div></div>
+                    <div class="text-right"><p class="text-[8px] text-slate-500 font-black uppercase">Duração</p><p class="text-lg font-black text-blue-400"><span id="selection-days">0</span> DIAS</p></div>
+                </div>
+                <button id="btn-gravar-parcela" disabled class="w-full h-16 bg-blue-500/10 border border-blue-500/20 text-blue-500/40 text-[11px] font-black uppercase rounded-2xl transition-all">Gravar Parcela</button>
             </div>
-
             <div class="lg:col-span-5 p-8 space-y-8 flex flex-col justify-between h-full bg-white/[0.01]">
                 <div class="space-y-6">
-                    <div class="flex items-center justify-between">
-                        <h3 class="text-[10px] font-black uppercase tracking-[0.2em] text-white flex items-center gap-2">
-                            <span class="material-symbols-outlined text-sm text-blue-500">photo_library</span>
-                            Resumo Visual (Foto Cards)
-                        </h3>
-                        <span id="parcela-count" class="text-[10px] text-slate-500 font-black uppercase tracking-widest">0/3 Parcelas</span>
-                    </div>
+                    <div class="flex items-center justify-between"><h3 class="text-[10px] font-black uppercase text-white flex items-center gap-2"><span class="material-symbols-outlined text-sm text-blue-500">photo_library</span>Resumo de Parcelas</h3><span id="parcela-count" class="text-[10px] text-slate-500 font-black uppercase">0/1 PARCELA</span></div>
                     <div id="photo-cards-container" class="space-y-4 max-h-[450px] overflow-y-auto custom-scrollbar pr-2 pb-4"></div>
                 </div>
-
                 <div id="final-control-panel" class="space-y-4 pt-8 border-t border-white/5">
-                    <div id="final-status-display" class="hidden animate-in slide-in-from-bottom-2">
-                        <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4 flex items-center gap-4 mb-4">
-                            <span class="material-symbols-outlined text-emerald-500">check_circle</span>
-                            <p class="text-[10px] text-emerald-500 font-black uppercase tracking-widest">PLANEJAMENTO DE 30 DIAS CONCLUÍDO</p>
-                        </div>
-                    </div>
-
                     <div id="manager-actions" class="hidden grid grid-cols-2 gap-3">
-                        <button id="btn-aprovar-ferias" class="bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 h-14 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all hover:bg-emerald-500 hover:text-white flex items-center justify-center gap-2 group">
-                            <span class="material-symbols-outlined text-lg group-hover:scale-110 transition-transform font-variation-settings-fill">check_circle</span>
-                            Abonar
+                        <button id="btn-aprovar-ferias" class="bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 h-14 rounded-2xl text-[10px] font-black uppercase hover:bg-emerald-500 hover:text-white flex items-center justify-center gap-2 group">
+                            <span class="material-symbols-outlined text-lg group-hover:scale-110 transition-transform font-variation-settings-fill">check_circle</span>Abonar
                         </button>
-                        <button id="btn-rejeitar-ferias" class="bg-rose-500/10 border border-rose-500/20 text-rose-500 h-14 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all hover:bg-rose-500 hover:text-white flex items-center justify-center gap-2 group">
-                            <span class="material-symbols-outlined text-lg group-hover:scale-110 transition-transform">block</span>
-                            Rejeitar
+                        <button id="btn-rejeitar-ferias" class="bg-rose-500/10 border border-rose-500/20 text-rose-500 h-14 rounded-2xl text-[10px] font-black uppercase hover:bg-rose-500 hover:text-white flex items-center justify-center gap-2 group">
+                            <span class="material-symbols-outlined text-lg group-hover:scale-110 transition-transform">block</span>Rejeitar
                         </button>
-                        <button id="btn-editar-emergencia" class="col-span-2 bg-amber-500/10 border border-amber-500/20 text-amber-500 h-10 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all hover:bg-amber-500 hover:text-white flex items-center justify-center gap-2 mt-2">
-                            <span class="material-symbols-outlined text-sm">edit_note</span>
-                            Habilitar Edição Emergencial
-                        </button>
-                    </div>
-
-                    <div id="employee-actions" class="grid grid-cols-2 gap-3">
-                        <button id="btn-confirmar-tudo-ferias" class="bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 h-14 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all hover:bg-emerald-500 hover:text-white flex items-center justify-center gap-2 group">
-                            <span class="material-symbols-outlined text-lg group-hover:scale-110 transition-transform font-variation-settings-fill">send</span>
-                            Enviar
-                        </button>
-                        <button onclick="fecharCardFerias()" class="bg-white/5 border border-white/10 text-slate-400 h-14 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all hover:bg-white/10 hover:text-white flex items-center justify-center gap-2">
-                            <span class="material-symbols-outlined text-lg">close</span>
-                            Cancelar
+                        <button id="btn-editar-emergencia" class="col-span-2 hidden bg-amber-500/10 border border-amber-500/20 text-amber-500 h-10 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all hover:bg-amber-500 hover:text-white flex items-center justify-center gap-2 mt-2">
+                            <span class="material-symbols-outlined text-sm">edit_note</span>Habilitar Edição Emergencial
                         </button>
                     </div>
                 </div>
             </div>
         </main>
     </div>
-  </div>
-
-  <!-- MODAL: REGRAS GERAIS (ADMIN) -->
-  <div id="modal-regras-gerais" class="fixed inset-0 bg-black/80 backdrop-blur-md hidden items-center justify-center p-6 z-[2500]">
-      <div class="glass-panel w-full max-w-md rounded-3xl p-8 relative overflow-y-auto max-h-[90dvh] custom-scrollbar neon-border">
-          <div class="absolute top-0 left-0 w-full h-1 bg-blue-500"></div>
-          
-          <div class="flex justify-between items-center mb-8">
-              <div class="flex items-center gap-3">
-                  <span class="material-symbols-outlined text-blue-500 text-3xl">policy</span>
-                  <div>
-                      <h3 id="titulo-regras-gerais" class="text-sm font-black uppercase tracking-widest">Regras Gerais</h3>
-                      <p class="text-[9px] text-slate-500 font-bold uppercase">Configuração de Parcelamento</p>
-                  </div>
-              </div>
-              <button onclick="fecharModalRegrasGerais()" class="text-slate-500 hover:text-white transition-colors">
-                  <span class="material-symbols-outlined">close</span>
-              </button>
-          </div>
-
-          <div class="space-y-6">
-              <p class="text-[10px] font-bold text-slate-400 uppercase leading-relaxed">
-                  Defina como as férias de 30 dias poderão ser gozadas por este setor.
-              </p>
-              
-              <div class="space-y-3">
-                  <label class="flex items-center gap-3 p-4 bg-white/5 border border-white/10 rounded-2xl cursor-pointer hover:bg-white/10 transition-all">
-                      <input type="radio" name="regra-parcela" value="1" class="size-4 text-blue-500 focus:ring-blue-500 bg-background-dark border-white/20">
-                      <div>
-                          <p class="text-xs font-black text-white uppercase tracking-widest">1 Parcela (30 dias)</p>
-                          <p class="text-[9px] text-slate-500 font-bold uppercase">Gozo integral e ininterrupto</p>
-                      </div>
-                  </label>
-                  <label class="flex items-center gap-3 p-4 bg-white/5 border border-white/10 rounded-2xl cursor-pointer hover:bg-white/10 transition-all">
-                      <input type="radio" name="regra-parcela" value="2" class="size-4 text-blue-500 focus:ring-blue-500 bg-background-dark border-white/20">
-                      <div>
-                          <p class="text-xs font-black text-white uppercase tracking-widest">2 Parcelas (Mín. 10 dias)</p>
-                          <p class="text-[9px] text-slate-500 font-bold uppercase">Uma parcela com 10 dias no mínimo</p>
-                      </div>
-                  </label>
-                  <label class="flex items-center gap-3 p-4 bg-white/5 border border-white/10 rounded-2xl cursor-pointer hover:bg-white/10 transition-all">
-                      <input type="radio" name="regra-parcela" value="3" class="size-4 text-blue-500 focus:ring-blue-500 bg-background-dark border-white/20">
-                      <div>
-                          <p class="text-xs font-black text-white uppercase tracking-widest">3 Parcelas (10+10+10)</p>
-                          <p class="text-[9px] text-slate-500 font-bold uppercase">Três períodos de 10 dias corridos</p>
-                      </div>
-                  </label>
-              </div>
-
-              <button id="btn-salvar-regras" class="w-full py-4 bg-blue-600 text-white text-[11px] font-black uppercase tracking-[0.2em] rounded-2xl shadow-lg transition-all">
-                  Salvar Configuração
-              </button>
-          </div>
-      </div>
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -574,34 +205,30 @@
     import { UI } from '../js/ui-utils.js';
     import { FeriasEngine } from '../js/modules/ferias/ferias.engine.js';
 
-    // --- ESTADO ---
     let sectors = [];
     let employees = [];
     let currentFilter = 'all';
-    let expandedSectorsFerias = new Set();
-    let activeSectorId = null;
+    let expandedSectors = new Set();
 
-    // --- CONFIGURAÇÃO DO MAPA ---
     const map = L.map('map', { zoomControl: false, attributionControl: false }).setView([-23.5505, -46.6333], 15);
-    L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
-      subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-      maxZoom: 20
-    }).addTo(map);
+    L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', { subdomains: ['mt0', 'mt1', 'mt2', 'mt3'], maxZoom: 20 }).addTo(map);
     const sectorsGroup = L.featureGroup().addTo(map);
 
     async function init() {
+        console.time('[FeriasAdmin] Init');
         UI.showLoader();
         try {
-            // Corrida contra o tempo (8s max) para evitar travamento da página
-            const timeoutInit = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout Global')), 8000));
-            await Promise.race([fetchData(), timeoutInit]);
-            
+            console.log('[FeriasAdmin] Iniciando fetchData...');
+            await fetchData();
+            console.log('[FeriasAdmin] Iniciando renderSidebar...');
             renderSidebar();
+            console.log('[FeriasAdmin] Iniciando renderMapLayers...');
             renderMapLayers();
         } catch (err) {
-            console.error('[FeriasAdmin] Falha ao inicializar:', err);
+            console.error('[FeriasAdmin] Erro no Init:', err);
         } finally {
             UI.hideLoader();
+            console.timeEnd('[FeriasAdmin] Init');
         }
     }
     window.init = init;
@@ -609,236 +236,144 @@
     async function fetchData() {
         try {
             const user = Auth.getUser();
-            const role = (user.role || '').toLowerCase();
-            const isGestorOnly = (role === 'manager' || role === 'gestor');
-            const sId = user.setorId;
+            const sid = user.setorId;
+            const isManager = (user.role || '').toLowerCase().includes('gest') || (user.role || '').toLowerCase().includes('man');
 
-            let queryS = supabase.from('setores').select('*, gestor:funcionarios!gestor_id(nome_completo)');
-            let queryF = supabase.from('funcionarios').select('id, nome_completo, nickname, cargo_id, especialidade_id, setor_id, foco_tecnico');
+            let qS = supabase.from('setores').select('*, gestor:funcionarios!gestor_id(nome_completo)');
+            let qF = supabase.from('funcionarios').select('*');
+            if (isManager && sid) { qS = qS.eq('id', sid); qF = qF.eq('setor_id', sid); }
 
-            if (isGestorOnly && sId) {
-                queryS = queryS.eq('id', sId);
-                queryF = queryF.eq('setor_id', sId);
-            }
-
-            const fetchProtected = async (query) => {
-                try {
-                    // Timeout de 5 segundos p/ evitar travamento (Hanging) de rede
-                    const timeoutPromise = new Promise((_, reject) => 
-                        setTimeout(() => reject(new Error('Timeout de consulta')), 5000)
-                    );
-                    
-                    const { data, error } = await Promise.race([query, timeoutPromise]);
-                    if (error) throw error;
-                    return data || [];
-                } catch (e) {
-                    console.warn('[fetchData] Falha em consulta específica:', e.message || e);
-                    return [];
-                }
-            };
-
-            const [sData, fData, ferData, cData, eData, pData] = await Promise.all([
-                fetchProtected(queryS),
-                fetchProtected(queryF),
-                fetchProtected(supabase.from('ferias').select('*')),
-                fetchProtected(supabase.from('cargos').select('id, nome')),
-                fetchProtected(supabase.from('especialidades').select('id, nome')),
-                fetchProtected(supabase.from('perfis_tripulantes').select('funcionario_id, foto_url'))
+            const [sD, fD, ferD, pD, cD] = await Promise.all([
+                qS, qF, supabase.from('ferias').select('*'),
+                supabase.from('perfis_tripulantes').select('funcionario_id, foto_url'),
+                supabase.from('cargos').select('id, nome')
             ]);
 
-            sectors = sData;
-            const feriasData = ferData;
-            const cargosMap = {}; cData.forEach(c => cargosMap[c.id] = c.nome);
-            const espMap = {}; eData.forEach(e => espMap[e.id] = e.nome);
-            const fotosMap = {}; pData.forEach(p => fotosMap[p.funcionario_id] = p.foto_url);
-
+            sectors = sD.data || [];
+            const ferData = ferD.data || [];
+            const fotos = {}; (pD.data || []).forEach(p => fotos[p.funcionario_id] = p.foto_url);
+            const cargos = {}; (cD.data || []).forEach(c => cargos[c.id] = c.nome);
             const today = new Date().toISOString().split('T')[0];
 
-            employees = (fData || []).map(f => {
-                const myFerias = feriasData.filter(v => v.funcionario_id === f.id);
-                const hasPendente = myFerias.some(v => v.status === 'pendente' || v.status === 'proposto');
-                const hasAprovadoFuturo = myFerias.some(v => v.status === 'aprovado' && v.data_inicio > today);
-                const isInRepouso = myFerias.some(v => v.status === 'aprovado' && today >= v.data_inicio && today <= v.data_fim);
-
-                let vacationStatus = 'nenhum';
-                if (isInRepouso) vacationStatus = 'repouso';
-                else if (hasPendente) vacationStatus = 'pendente';
-                else if (hasAprovadoFuturo) vacationStatus = 'aprovado';
-
-                return { ...f, foto_url: fotosMap[f.id] || null, cargo_nome: cargosMap[f.cargo_id] || 'Tripulante', vacationStatus };
+            employees = (fD.data || []).map(f => {
+                const myV = ferData.filter(v => v.funcionario_id === f.id);
+                const isP = myV.some(v => v.status === 'pendente');
+                const isR = myV.some(v => v.status === 'aprovado' && today >= v.data_inicio && today <= v.data_fim);
+                const isA = myV.some(v => v.status === 'aprovado' && v.data_inicio > today);
+                
+                let s = 'nenhum';
+                if (isR) s = 'repouso'; else if (isP) s = 'pendente'; else if (isA) s = 'aprovado';
+                return { ...f, foto_url: fotos[f.id] || null, cargo_nome: cargos[f.cargo_id] || 'TRIPULANTE', vacationStatus: s };
             });
 
-            updateFilterIndicators();
-            updateSidebarHeader();
-        } catch (err) { console.error('Error fetchData:', err); }
+            console.log(`[fetchData] Processados ${employees.length} tripulantes.`);
+            updateCounts();
+            updateGlobalHeader();
+        } catch (e) { console.error('Error fetchData:', e); }
     }
 
-    function updateSidebarHeader() {
-        const display = document.getElementById('regra-salva-display');
-        if (!display) return;
-        const globalRule = localStorage.getItem('ferias_global_rule') || (sectors.length > 0 ? sectors[0].regra_ferias : 1);
-        const ruleVal = parseInt(globalRule) || 1;
-        display.innerText = `REGRA GERAL: ${ruleVal} PARCELA${ruleVal > 1 ? 'S' : ''}`;
+    function updateGlobalHeader() {
+        const d = document.getElementById('regra-salva-display');
+        if (!d) return;
+        const rule = sectors[0]?.regra_ferias || 1;
+        d.innerText = `REGRA GERAL: ${rule} PARCELA${rule > 1 ? 'S' : ''}`;
     }
 
-    function updateFilterIndicators() {
-        const counts = {
-            all: employees.length,
-            repouso: employees.filter(e => e.vacationStatus === 'repouso').length,
+    function updateCounts() {
+        const counts = { 
+            all: employees.length, 
+            repouso: employees.filter(e => e.vacationStatus === 'repouso').length, 
             aprovado: employees.filter(e => e.vacationStatus === 'aprovado').length,
-            pendente: employees.filter(e => e.vacationStatus === 'pendente').length
+            pendente: employees.filter(e => e.vacationStatus === 'pendente').length 
         };
-        const updateBtn = (id, count) => {
-            const btn = document.getElementById(id);
-            if (btn) btn.querySelector('.count').innerText = `(${count})`;
-        };
-        updateBtn('filter-all', counts.all);
-        updateBtn('filter-repouso', counts.repouso);
-        updateBtn('filter-aprovado', counts.aprovado);
-        updateBtn('filter-pendente', counts.pendente);
-        document.getElementById('filter-repouso')?.classList.toggle('btn-pulse-rose', counts.repouso > 0);
-        document.getElementById('filter-pendente')?.classList.toggle('btn-pulse-amber', counts.pendente > 0);
+        document.querySelectorAll('.status-filter').forEach(btn => {
+            const st = btn.getAttribute('onclick').match(/'(.*?)'/)[1];
+            if (btn.querySelector('.count')) btn.querySelector('.count').innerText = `(${counts[st] || 0})`;
+        });
     }
 
     function renderMapLayers() {
         sectorsGroup.clearLayers();
         sectors.forEach(s => {
             if (s.latitude && s.longitude) {
-                const sectorEmployees = employees.filter(e => e.setor_id === s.id);
-                const onVacation = sectorEmployees.filter(e => e.vacationStatus === 'repouso').length;
-                L.circle([s.latitude, s.longitude], { color: '#3b82f6', fillOpacity: 0.1, radius: s.raio || 100 }).addTo(sectorsGroup);
+                const onV = employees.filter(e => e.setor_id === s.id && e.vacationStatus === 'repouso').length;
+                L.circle([s.latitude, s.longitude], { radius: s.raio || 100, color: '#3b82f6', fillOpacity: 0.1 }).addTo(sectorsGroup);
                 const icon = L.divIcon({
-                    className: 'custom-div-icon',
-                    html: `<div class="pin-container"><div class="pin-badge">${onVacation}</div><div class="pin-drop"><div class="pin-content"><span class="material-symbols-outlined text-blue-500 text-2xl">domain</span></div></div></div>`,
+                    className: 'custom-icon',
+                    html: `<div class="pin-container"><div class="pin-badge">${onV}</div><div class="pin-drop"><div class="pin-content"><span class="material-symbols-outlined text-blue-500 text-2xl">domain</span></div></div></div>`,
                     iconSize: [50, 60], iconAnchor: [25, 60]
                 });
-                const marker = L.marker([s.latitude, s.longitude], { icon }).addTo(sectorsGroup);
-                marker.bindPopup(`<div class="p-2 space-y-4">
-                    <div class="flex items-center gap-3 border-b border-white/10 pb-3"><span class="material-symbols-outlined text-blue-500 text-2xl">domain</span><div><h3 class="text-xs font-black uppercase tracking-widest text-white leading-none">${s.nome}</h3></div></div>
-                    <div class="grid grid-cols-2 gap-3 bg-white/5 p-3 rounded-2xl"><div class="text-center"><p class="text-[7px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">Equipe</p><p class="text-[10px] font-black text-white">${sectorEmployees.length}</p></div><div class="text-center border-l border-white/10"><p class="text-[7px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">Em Férias</p><p class="text-[10px] font-black text-blue-400">${onVacation}</p></div></div>
-                    <div class="flex flex-col gap-2"><button onclick="window.abrirModalRegrasGerais('${s.id}')" class="w-full py-3 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 border border-blue-500/20 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"><span class="material-symbols-outlined text-sm">settings</span><span>Gestão do Setor</span></button></div>
-                </div>`);
+                L.marker([s.latitude, s.longitude], { icon }).addTo(sectorsGroup).bindPopup(`<b>${s.nome}</b>`);
             }
         });
-        if (sectorsGroup.getLayers().length > 0) map.fitBounds(sectorsGroup.getBounds(), { padding: [50, 50] });
+        if (sectorsGroup.getLayers().length) map.fitBounds(sectorsGroup.getBounds());
     }
 
-    window.filterFeriasStatus = (status) => {
-        currentFilter = status;
-        document.querySelectorAll('.status-filter').forEach(btn => btn.classList.remove('active'));
-        const activeBtn = event.currentTarget || document.getElementById(`filter-${status}`);
-        if (activeBtn) activeBtn.classList.add('active');
+    window.filterFeriasStatus = (st) => {
+        currentFilter = st;
+        document.querySelectorAll('.status-filter').forEach(b => b.classList.toggle('active', b.getAttribute('onclick').includes(st)));
         renderSidebar();
-    };
+    }
+
+    window.toggleSetor = (id) => {
+        if (expandedSectors.has(id)) expandedSectors.delete(id); else expandedSectors.add(id);
+        renderSidebar();
+    }
 
     function renderSidebar() {
-        const container = document.getElementById('lista-setores-ferias');
-        container.innerHTML = sectors.map(s => {
-            let sectorEmployees = employees.filter(e => e.setor_id === s.id);
-            if (currentFilter !== 'all') sectorEmployees = sectorEmployees.filter(e => e.vacationStatus === currentFilter);
-            if (sectorEmployees.length === 0 && currentFilter !== 'all') return '';
-            const isExpanded = expandedSectorsFerias.has(s.id);
-            return `<div class="setor-group ${isExpanded ? 'active' : ''}">
-                <div onclick="window.toggleSetorFerias('${s.id}')" class="flex items-center justify-between px-3 py-3 bg-white/5 border border-white/5 rounded-2xl cursor-pointer hover:bg-blue-500/5 transition-all group">
-                    <div class="flex items-center gap-3"><div class="size-8 bg-blue-500/10 rounded-lg flex items-center justify-center text-blue-500 transition-all group-hover:bg-blue-500/20"><span class="material-symbols-outlined text-lg">domain</span></div><div><h4 class="text-[10px] font-black text-slate-100 uppercase tracking-widest leading-none">${s.nome}</h4><p class="text-[8px] text-slate-500 font-bold uppercase mt-1">${sectorEmployees.length} TRIPULANTES</p></div></div>
+        const c = document.getElementById('lista-setores-ferias');
+        c.innerHTML = sectors.map(s => {
+            let emps = employees.filter(e => e.setor_id === s.id);
+            if (currentFilter !== 'all') emps = emps.filter(e => e.vacationStatus === currentFilter);
+            if (!emps.length && currentFilter !== 'all') return '';
+            const exp = expandedSectors.has(s.id);
+            return `<div class="setor-group ${exp ? 'active' : ''}">
+                <div onclick="toggleSetor('${s.id}')" class="flex items-center justify-between px-3 py-3 bg-white/5 border border-white/5 rounded-2xl cursor-pointer hover:bg-blue-500/5 transition-all">
+                    <div class="flex items-center gap-3"><span class="material-symbols-outlined text-blue-500 text-lg">domain</span><h4 class="text-[10px] font-black text-slate-100 uppercase tracking-widest">${s.nome}</h4></div>
                     <span class="material-symbols-outlined text-slate-600 text-sm chevron-icon">expand_more</span>
                 </div>
-                <div class="setor-content space-y-2 mt-2 ml-4 border-l border-blue-500/20 pl-4">
-                    ${sectorEmployees.map(e => `<div onclick="event.stopPropagation(); abrirCardFerias('${e.id}')" class="flex items-center gap-3 p-3 bg-white/5 border border-white/5 rounded-xl hover:bg-blue-500/10 hover:border-blue-500/30 transition-all cursor-pointer group">
-                        <img src="${e.foto_url || `https://ui-avatars.com/api/?name=${e.nome_completo}&background=101622&color=60A5FA`}" class="size-8 rounded-full border border-white/10 shrink-0 object-cover">
-                        <div class="flex-1 min-w-0"><p class="text-[10px] font-black text-slate-100 uppercase truncate">${e.nickname || e.nome_completo}</p><p class="text-[8px] text-slate-500 font-bold uppercase truncate">${e.cargo_nome}</p></div>
-                        <span class="status-dot ${e.vacationStatus === 'repouso' ? 'status-repouso' : (e.vacationStatus === 'aprovado' ? 'status-aprovado' : (e.vacationStatus === 'pendente' ? 'status-pendente' : 'bg-slate-700'))}"></span>
+                <div class="setor-content space-y-1 mt-2 ml-4 border-l border-blue-500/20 pl-4">
+                    ${emps.map(e => `<div onclick="abrirCardFerias('${e.id}')" class="flex items-center gap-3 p-3 bg-white/5 border border-white/5 rounded-xl hover:bg-blue-500/10 transition-all cursor-pointer">
+                        <img src="${e.foto_url || `https://ui-avatars.com/api/?name=${e.nome_completo}&background=101622&color=60A5FA`}" class="size-8 rounded-full border border-white/10 shrink-0">
+                        <div class="flex-1 truncate"><p class="text-[10px] font-black text-slate-100 uppercase truncate">${e.nickname || e.nome_completo}</p><p class="text-[8px] text-slate-500 font-bold uppercase truncate">${e.cargo_nome}</p></div>
+                        <span class="status-dot status-${e.vacationStatus}"></span>
                     </div>`).join('')}
                 </div>
             </div>`;
         }).join('');
     }
 
-    window.toggleSetorFerias = (id) => {
-        const sector = sectors.find(s => s.id === id);
-        if (sector && sector.latitude && sector.longitude) map.flyTo([sector.latitude, sector.longitude], 17, { animate: true });
-        if (expandedSectorsFerias.has(id)) expandedSectorsFerias.delete(id);
-        else expandedSectorsFerias.add(id);
-        renderSidebar();
-    };
-
-    function filterSidebar(term) {
-        const query = term.toLowerCase();
-        document.querySelectorAll('#lista-setores-ferias > div').forEach(div => {
-            const text = div.innerText.toLowerCase();
-            div.style.display = text.includes(query) ? 'block' : 'none';
-        });
+    window.abrirCardFerias = async (id) => {
+        UI.showLoader();
+        try {
+            console.log('[abrirCardFerias] Iniciando motor para:', id);
+            const e = employees.find(emp => emp.id === id);
+            await FeriasEngine.init({ role: 'manager', targetEmployee: { ...e, setores: sectors.find(s => s.id === e.setor_id) } });
+            document.getElementById('modal-card-ferias').classList.replace('hidden', 'flex');
+        } catch (err) { console.error('[abrirCardFerias] Erro:', err); }
+        finally { UI.hideLoader(); }
     }
 
-    window.abrirCardFerias = async (empId) => {
-        UI.showLoader();
-        try {
-            const targetEmployee = employees.find(e => e.id === empId);
-            const sector = sectors.find(s => s.id === targetEmployee.setor_id);
-            
-            await FeriasEngine.init({ 
-                role: 'manager', 
-                targetEmployee: { ...targetEmployee, setores: sector } 
+    window.fecharCardFerias = () => document.getElementById('modal-card-ferias').classList.replace('flex', 'hidden');
+
+    document.getElementById('search-ferias').oninput = (e) => {
+        const term = e.target.value.toLowerCase();
+        document.querySelectorAll('.setor-group').forEach(group => {
+            let hasVisible = false;
+            group.querySelectorAll('.p-3').forEach(item => {
+                const text = item.innerText.toLowerCase();
+                const visible = text.includes(term);
+                item.classList.toggle('hidden', !visible);
+                if (visible) hasVisible = true;
             });
-
-            document.getElementById('modal-card-ferias').classList.replace('hidden', 'flex');
-        } catch (err) {
-            console.error('[FeriasAdmin] Erro ao abrir card:', err);
-            UI.showToast('Erro ao carregar detalhes do tripulante.', 'error');
-        } finally {
-            UI.hideLoader();
-        }
+            group.classList.toggle('hidden', !hasVisible && term !== '');
+        });
     };
 
-    window.fecharCardFerias = () => {
-        document.getElementById('modal-card-ferias').classList.replace('flex', 'hidden');
-    };
-
-    // --- REGRAS GERAIS ---
-    window.abrirModalRegrasGerais = (sId = null) => {
-        activeSectorId = sId;
-        const s = sectors.find(sec => sec.id === sId);
-        document.getElementById('titulo-regras-gerais').innerText = s ? `Regras: ${s.nome}` : 'Regras Gerais';
-        const current = s?.regra_ferias || 1;
-        document.querySelectorAll('input[name="regra-parcela"]').forEach(i => i.checked = (i.value == current));
-        document.getElementById('modal-regras-gerais').classList.replace('hidden', 'flex');
-    };
-
-    window.fecharModalRegrasGerais = () => document.getElementById('modal-regras-gerais').classList.replace('flex', 'hidden');
-
-    document.getElementById('btn-salvar-regras').onclick = async () => {
-        const val = document.querySelector('input[name="regra-parcela"]:checked').value;
-        UI.showLoader();
-        try {
-            const query = supabase.from('setores').update({ regra_ferias: parseInt(val) });
-            if (activeSectorId) await query.eq('id', activeSectorId);
-            else await query.neq('id', '00000000-0000-0000-0000-000000000000');
-            UI.showToast('Regras salvas!', 'success');
-            fecharModalRegrasGerais();
-            await init();
-        } catch (err) { console.error(err); }
-        finally { UI.hideLoader(); }
-    };
-
-    // --- EVENTOS DE INTERFACE ---
     document.getElementById('btn-toggle-menu').onclick = () => {
-        const side = document.getElementById('menu-lateral');
-        const btn = document.getElementById('btn-toggle-menu');
-        if (!side || !btn) return;
-        
-        const isCollapsed = side.classList.contains('collapsed');
-        if (isCollapsed) {
-            side.classList.remove('collapsed');
-            btn.classList.add('active');
-            btn.querySelector('.material-symbols-outlined').innerText = 'close';
-        } else {
-            side.classList.add('collapsed');
-            btn.classList.remove('active');
-            btn.querySelector('.material-symbols-outlined').innerText = 'menu';
-        }
+        document.getElementById('menu-lateral').classList.toggle('collapsed');
+        document.getElementById('btn-toggle-menu').classList.toggle('active');
     };
-
-    document.getElementById('search-ferias').oninput = (e) => filterSidebar(e.target.value);
 
     init();
   </script>
