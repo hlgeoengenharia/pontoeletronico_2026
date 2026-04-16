@@ -155,7 +155,7 @@ export const PontoDiagnostic = {
                 // 9. Lógica de Janela de Horário
                 if (activeScale.horario_entrada) {
                     const winDetails = ScalesEngine.calculateWindowDetails(activeScale, extraMin);
-                    const isInWindow = ScalesEngine.isInActivationWindow(activeScale, extraMin, now);
+                    const isInWindow = ScalesEngine.isInActivationWindow(activeScale, 'check-in', extraMin, now);
 
                     rules.janela_horario.status = isInWindow ? 'SIM' : 'NÃO';
                     rules.janela_horario.detail = winDetails ? `Janela: ${winDetails.antes.horario} até ${winDetails.prorrogacao.horario}` : "Horário não definido";
@@ -176,19 +176,23 @@ export const PontoDiagnostic = {
             // 10. Lógica de GPS
             try {
                 if (activeScale && activeScale.restrito_gps) {
-                    if (activeScale.lat && activeScale.lng) {
+                    const targetLat = activeScale.lat || user.setores?.latitude;
+                    const targetLng = activeScale.lng || user.setores?.longitude;
+
+                    if (targetLat && targetLng) {
                         const pos = await this.getCurrentLocation();
-                        const dist = ScalesEngine.calculateDistance(pos.lat, pos.lng, activeScale.lat, activeScale.lng);
-                        const raio = activeScale.raio_geofence || ScalesEngine.GEOFENCE_DEFAULT_RADIUS;
+                        const dist = ScalesEngine.calculateDistance(pos.lat, pos.lng, targetLat, targetLng);
+                        const raio = activeScale.raio_geofence || activeScale.raio || user.setores?.raio || ScalesEngine.GEOFENCE_DEFAULT_RADIUS;
 
                         const isInside = dist <= raio;
                         rules.gps_raio.status = isInside ? 'SIM' : 'NÃO';
                         rules.gps_raio.detail = `Distância: ${Math.round(dist)}m (Limite: ${raio}m)`;
                         rules.gps_raio.passed = isInside;
                     } else {
-                        rules.gps_raio.status = 'ERRO';
-                        rules.gps_raio.detail = "Regra ativa, mas sem coordenadas (Lat/Lng)!";
-                        rules.gps_raio.passed = false;
+                        // MODO FAIL-SAFE: Se exigir GPS mas não houver coordenadas cadastradas, não bloqueia o botão.
+                        rules.gps_raio.status = 'ISENTO*';
+                        rules.gps_raio.detail = "GPS exigido, mas sem coordenadas cadastradas (Escala/Setor). Liberado por precaução.";
+                        rules.gps_raio.passed = true;
                     }
                 } else {
                     rules.gps_raio.status = 'ISENTO';
