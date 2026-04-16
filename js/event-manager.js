@@ -241,7 +241,6 @@ const EventManager = {
         // G. Logs de Sistema (Processados por último para evitar ocultação indevida)
         logs.forEach(l => {
             // OCULTAR redundâncias e itens já processados na fusão
-            // NOTA: justificativa_resultado NÃO é redundante — é o card de feedback do admin para o funcionário
             const isJustificativaRedundante = l.tipo === 'justificativa';
             const isFeriasRedundante = l.tipo === 'aviso_ferias' && avisoFeriasProcessado;
             
@@ -261,6 +260,14 @@ const EventManager = {
 
             const content = l.mensagem_padrao || l.tipo_log || '';
             const isGeofenceLog = content.toUpperCase().includes('FORA DO RAIO');
+
+            // --- FILTRO DE LIMPEZA CHRONOSYNC ---
+            // Ignorar mensagens de rotina do rastreador que NÃO sejam divergências
+            const isRoutinePulse = content.includes('Localização registrada automaticamente') || 
+                                   content.includes('validar sua presença') ||
+                                   content.includes('TrackPulse: OK');
+            
+            if (isRoutinePulse && !isGeofenceLog) return;
 
             if (isGeofenceLog) {
                 // Tenta encontrar a justificativa vinculada ao log (pelo referencia_id, proximidade temporal ou campos de referência)
