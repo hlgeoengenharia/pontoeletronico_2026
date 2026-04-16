@@ -272,6 +272,83 @@ const UI = {
             overlay.classList.add('opacity-0');
             setTimeout(() => overlay.classList.add('hidden'), 300);
         }
+    },
+
+    /**
+     * Valida se um CPF é matematicamente correto
+     * @param {string} cpf CPF formatado ou apenas números
+     * @returns {boolean}
+     */
+    validateCPF(cpf) {
+        if (!cpf) return false;
+        const cleanCPF = String(cpf).replace(/\D/g, '');
+        
+        if (cleanCPF.length !== 11) return false;
+        if (/^(\d)\1+$/.test(cleanCPF)) return false;
+
+        let sum = 0;
+        let rest;
+
+        for (let i = 1; i <= 9; i++) sum = sum + parseInt(cleanCPF.substring(i - 1, i)) * (11 - i);
+        rest = (sum * 10) % 11;
+        if ((rest === 10) || (rest === 11)) rest = 0;
+        if (rest !== parseInt(cleanCPF.substring(9, 10))) return false;
+
+        sum = 0;
+        for (let i = 1; i <= 10; i++) sum = sum + parseInt(cleanCPF.substring(i - 1, i)) * (12 - i);
+        rest = (sum * 10) % 11;
+        if ((rest === 10) || (rest === 11)) rest = 0;
+        if (rest !== parseInt(cleanCPF.substring(10, 11))) return false;
+
+        return true;
+    },
+
+    /**
+     * Aplica máscara de CPF conforme digitação
+     * @param {string} value Valor puro
+     * @returns {string} Valor mascarado
+     */
+    maskCPF(value) {
+        if (!value) return "";
+        let v = value.replace(/\D/g, "");
+        if (v.length > 11) v = v.substring(0, 11);
+        if (v.length <= 11) {
+            v = v.replace(/(\d{3})(\d)/, "$1.$2");
+            v = v.replace(/(\d{3})(\d)/, "$1.$2");
+            v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+        }
+        return v;
+    },
+
+    /**
+     * Aplica máscara de RG (Padrão: 0.000.000 ou 00.000.000)
+     * @param {string} value 
+     * @returns {string}
+     */
+    maskRG(value) {
+        if (!value) return "";
+        let v = value.replace(/\D/g, "");
+        if (v.length > 9) v = v.substring(0, 9);
+        
+        if (v.length <= 2) return v;
+        if (v.length <= 5) return v.replace(/(\d+)(\d{3})/, "$1.$2");
+        return v.replace(/(\d+)(\d{3})(\d{3})/, "$1.$2.$3");
+    },
+
+    /**
+     * Aplica máscara de Telefone (Padrão: (83) 9 9692-1149)
+     * @param {string} value 
+     * @returns {string}
+     */
+    maskPhone(value) {
+        if (!value) return "";
+        let v = value.replace(/\D/g, "");
+        if (v.length > 11) v = v.substring(0, 11);
+
+        if (v.length <= 2) return v.length > 0 ? `(${v}` : "";
+        if (v.length <= 3) return v.replace(/(\d{2})(\d)/, "($1) $2");
+        if (v.length <= 7) return v.replace(/(\d{2})(\d)(\d{4})/, "($1) $2 $3");
+        return v.replace(/(\d{2})(\d)(\d{4})(\d{4})/, "($1) $2 $3-$4");
     }
 };
 

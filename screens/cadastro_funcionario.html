@@ -125,8 +125,9 @@
                             class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-primary">fingerprint</span>
                         <input id="cpf"
                             class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg py-3 pl-10 pr-4 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
-                            placeholder="000.000.000-00" type="text">
+                            placeholder="000.000.000-00" type="text" maxlength="14">
                     </div>
+                    <p id="cpf-error" class="hidden text-[8px] font-black text-rose-500 uppercase tracking-widest mt-1 ml-1">CPF Inválido</p>
                 </div>
                 <div class="group">
                     <label class="block text-xs font-bold uppercase tracking-widest text-primary mb-3">RG</label>
@@ -1370,6 +1371,193 @@
                     document.getElementById('pers-dias-semana').value = config.diasSemana || 5;
                     document.getElementById('pers-entrada').value = config.entrada;
                     document.getElementById('pers-saida').value = config.saida;
+                cargosData = cargos;
+
+                // Carregar dados específicos se for edição
+                await carregarDadosTripulante();
+                
+                // Inicializar calendário
+                refreshCalendar();
+
+            } catch (err) {
+                console.error('Erro ao carregar dados iniciais:', err);
+                UI.showToast('Erro ao carregar configurações básicas', 'error');
+            } finally {
+                UI.hideLoader();
+            }
+        }
+
+        // Funções de Escala
+        function renderizarMiniCalendario(escalaParaProjetar = null) {
+            const grid = document.getElementById('mini-calendario');
+            if (!grid) return;
+            grid.innerHTML = '';
+            
+            const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+            // Projeção usando ScalesEngine
+            const projection = escalaParaProjetar ? ScalesEngine.projectBaseDays(
+                escalaParaProjetar,
+                '2024-01-01', // Data base genérica para escala semanal
+                currentMonth,
+                currentYear
+            ) : [];
+
+            // Padding inicial
+            for (let i = 0; i < firstDay; i++) {
+                const empty = document.createElement('div');
+                empty.className = 'h-8';
+                grid.appendChild(empty);
+            }
+
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                const isTrabalho = projection.includes(dateStr);
+                const dayDate = new Date(currentYear, currentMonth, d);
+
+                const day = document.createElement('div');
+                day.className = `h-8 rounded-lg flex items-center justify-center text-[10px] border transition-all cursor-pointer select-none ${isTrabalho
+                    ? 'bg-primary text-white border-primary shadow-[0_0_8px_rgba(13,89,242,0.4)] font-bold'
+                    : 'bg-slate-100 dark:bg-slate-800/50 border-transparent opacity-30'}`;
+                day.innerText = d;
+                grid.appendChild(day);
+            }
+        }
+
+        function initEscalaListeners() {
+            const inputs = ['pers-carga', 'pers-entrada', 'pers-dias-semana'];
+            inputs.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    ['input', 'change'].forEach(evt => {
+                        el.addEventListener(evt, calcularSaidaAutomatica);
+                    });
+                }
+            });
+            if (modoPersonalizado) calcularSaidaAutomatica();
+
+            document.querySelectorAll('.pers-day-btn').forEach(btn => {
+                btn.onclick = () => {
+                    const isCurrentlyLocked = document.getElementById('nome_completo').disabled;
+                    if (isCurrentlyLocked) return;
+
+                    const day = parseInt(btn.dataset.day);
+                    const index = diasSelecionadosPers.indexOf(day);
+                    if (index > -1) {
+                        diasSelecionadosPers.splice(index, 1);
+                        btn.classList.remove('bg-primary', 'text-white', 'border-primary', 'neon-border-sm');
+                    } else {
+                        diasSelecionadosPers.push(day);
+                        btn.classList.add('bg-primary', 'text-white', 'border-primary', 'neon-border-sm');
+                    }
+                    
+                    document.getElementById('pers-dias-semana').value = diasSelecionadosPers.length;
+                    calcularSaidaAutomatica();
+                    refreshCalendar();
+                };
+            });
+        }
+
+        function calcularSaidaAutomatica() {
+            const carga = parseFloat(document.getElementById('pers-carga').value);
+            const entrada = document.getElementById('pers-entrada').value;
+            const diasManual = parseInt(document.getElementById('pers-dias-semana').value) || 5;
+            const diasCount = diasSelecionadosPers.length || diasManual;
+
+            if (!carga || !entrada || diasCount === 0) return;
+
+            const horasPorDia = carga / diasCount;
+            const h = Math.floor(horasPorDia);
+            const m = Math.round((horasPorDia - h) * 60);
+
+            const [entH, entM] = entrada.split(':').map(Number);
+            let saiH = entH + h;
+            let saiM = entM + m;
+
+            if (saiM >= 60) {
+                saiH += Math.floor(saiM / 60);
+                saiM = saiM % 60;
+            }
+
+            const format = (n) => String(n).padStart(2, '0');
+            const saidaFinal = `${format(saiH % 24)}:${format(saiM)}`;
+            document.getElementById('pers-saida').value = saidaFinal;
+            refreshCalendar();
+        }
+
+        function updatePersonalizedDaysUI() {
+            document.getElementById('pers-dias-semana').value = diasSelecionadosPers.length;
+            document.querySelectorAll('.pers-day-btn').forEach(btn => {
+                const day = parseInt(btn.dataset.day);
+                if (diasSelecionadosPers.includes(day)) {
+                    btn.classList.add('bg-primary', 'text-white', 'border-primary', 'neon-border-sm');
+                } else {
+                    btn.classList.remove('bg-primary', 'text-white', 'border-primary', 'neon-border-sm');
+                }
+            });
+        }
+
+        function atualizarDetalhesEscala() {
+            modoPersonalizado = false;
+            const select = document.getElementById('escala-select');
+            const card = document.getElementById('detalhes-escala-card');
+            const config = escalasData[select.value];
+
+            document.getElementById('view-escala-padrao').classList.remove('hidden');
+            document.getElementById('edit-escala-personalizada').classList.add('hidden');
+            document.getElementById('aviso-personalizacao').classList.add('hidden');
+
+            if (!config) {
+                card.classList.add('hidden');
+                return;
+            }
+            card.classList.remove('hidden');
+            document.getElementById('detalhe-nome').innerText = config.nome;
+            document.getElementById('detalhe-tipo').innerText = document.getElementById('regime_trabalho').value;
+            document.getElementById('detalhe-carga').innerText = config.carga + 'h/sem';
+            document.getElementById('detalhe-turno').innerText = `${config.entrada} às ${config.saida}`;
+
+            const setorId = document.getElementById('setor-select').value;
+            if (setorId) {
+                const setor = setoresData.find(s => s.id === setorId);
+                if (setor) {
+                    const radiusBadge = document.createElement('div');
+                    radiusBadge.id = 'badge-raio-setor';
+                    radiusBadge.className = "mt-2 p-2 bg-primary/10 border border-primary/20 rounded-lg flex items-center gap-2";
+                    radiusBadge.innerHTML = `
+                        <span class="material-symbols-outlined text-xs text-primary">distance</span>
+                        <span class="text-[9px] font-bold text-primary uppercase">Raio de Bloqueio: ${setor.raio}m (Definido pelo Setor)</span>
+                    `;
+                    const oldBadge = document.getElementById('badge-raio-setor');
+                    if (oldBadge) oldBadge.remove();
+                    card.querySelector('div').appendChild(radiusBadge);
+                }
+            }
+
+            refreshCalendar();
+        }
+
+        function alternarPersonalizacao() {
+            const isCurrentlyLocked = document.getElementById('nome_completo').disabled;
+            if (isCurrentlyLocked) return;
+
+            modoPersonalizado = !modoPersonalizado;
+            const viewPadrao = document.getElementById('view-escala-padrao');
+            const editPers = document.getElementById('edit-escala-personalizada');
+            const aviso = document.getElementById('aviso-personalizacao');
+            const select = document.getElementById('escala-select');
+            const config = escalasData[select.value];
+
+            if (modoPersonalizado) {
+                viewPadrao.classList.add('hidden');
+                editPers.classList.remove('hidden');
+                aviso.classList.remove('hidden');
+                if (config) {
+                    document.getElementById('pers-carga').value = config.carga;
+                    document.getElementById('pers-dias-semana').value = config.diasSemana || 5;
+                    document.getElementById('pers-entrada').value = config.entrada;
+                    document.getElementById('pers-saida').value = config.saida;
                     diasSelecionadosPers = config.dias ? [...config.dias] : [];
                     updatePersonalizedDaysUI();
                 }
@@ -1386,45 +1574,85 @@
         document.getElementById('setor-select').addEventListener('change', atualizarDetalhesEscala);
         document.getElementById('btn-personalizar').addEventListener('click', alternarPersonalizacao);
 
+        // Lógica de Máscara e Validação de CPF
+        const cpfInput = document.getElementById('cpf');
+        const cpfError = document.getElementById('cpf-error');
+        if (cpfInput) {
+            cpfInput.addEventListener('input', (e) => {
+                e.target.value = UI.maskCPF(e.target.value);
+                cpfInput.classList.remove('border-rose-500', 'border-emerald-500');
+                if (cpfError) cpfError.classList.add('hidden');
+            });
+            cpfInput.addEventListener('blur', () => {
+                if (!cpfInput.value) return;
+                const isValid = UI.validateCPF(cpfInput.value);
+                if (!isValid) {
+                    cpfInput.classList.add('border-rose-500');
+                    if (cpfError) cpfError.classList.remove('hidden');
+                } else {
+                    cpfInput.classList.add('border-emerald-500');
+                }
+            });
+        }
+
+        // Lógica de Máscara de RG e Telefone
+        const rgInput = document.getElementById('rg');
+        const whatsappInput = document.getElementById('whatsapp');
+
+        if (rgInput) {
+            rgInput.addEventListener('input', (e) => {
+                e.target.value = UI.maskRG(e.target.value);
+            });
+        }
+
+        if (whatsappInput) {
+            whatsappInput.addEventListener('input', (e) => {
+                e.target.value = UI.maskPhone(e.target.value);
+            });
+        }
+
         // Lógica de Busca de Especialidade
-        document.getElementById('busca-especialidade-input').addEventListener('input', (e) => {
-            if (e.target.disabled) return;
-            const termo = e.target.value.toLowerCase().trim();
-            const resultadosDiv = document.getElementById('resultados-especialidade');
-            
-            if (!termo) {
-                resultadosDiv.classList.add('hidden');
-                return;
-            }
+        const buscaInput = document.getElementById('busca-especialidade-input');
+        if (buscaInput) {
+            buscaInput.addEventListener('input', (e) => {
+                if (e.target.disabled) return;
+                const termo = e.target.value.toLowerCase().trim();
+                const resultadosDiv = document.getElementById('resultados-especialidade');
+                
+                if (!termo) {
+                    if (resultadosDiv) resultadosDiv.classList.add('hidden');
+                    return;
+                }
 
-            const filtradas = especialidadesCatalogo.filter(esp => 
-                esp.nome.toLowerCase().includes(termo) || (esp.codigo && esp.codigo.toLowerCase().includes(termo))
-            );
+                const filtradas = especialidadesCatalogo.filter(esp => 
+                    esp.nome.toLowerCase().includes(termo) || (esp.codigo && esp.codigo.toLowerCase().includes(termo))
+                );
 
-            if (filtradas.length > 0) {
-                resultadosDiv.innerHTML = filtradas.map(esp => `
-                    <div class="item-especialidade p-3 hover:bg-primary/10 cursor-pointer transition-colors" data-id="${esp.id}">
-                        <p class="text-[11px] font-bold uppercase text-slate-200">${esp.nome}</p>
-                        <p class="text-[8px] text-primary/60 uppercase font-black">${esp.codigo || ''} • ${esp.nome_graduacao_principal || ''}</p>
-                    </div>
-                `).join('');
-                resultadosDiv.classList.remove('hidden');
+                if (filtradas.length > 0) {
+                    resultadosDiv.innerHTML = filtradas.map(esp => `
+                        <div class="item-especialidade p-3 hover:bg-primary/10 cursor-pointer transition-colors" data-id="${esp.id}">
+                            <p class="text-[11px] font-bold uppercase text-slate-200">${esp.nome}</p>
+                            <p class="text-[8px] text-primary/60 uppercase font-black">${esp.codigo || ''} • ${esp.nome_graduacao_principal || ''}</p>
+                        </div>
+                    `).join('');
+                    if (resultadosDiv) resultadosDiv.classList.remove('hidden');
 
-                // Adicionar clicks
-                resultadosDiv.querySelectorAll('.item-especialidade').forEach(div => {
-                    div.onclick = () => {
-                        const id = div.getAttribute('data-id');
-                        const esp = especialidadesCatalogo.find(x => x.id === id);
-                        selecionarEspecialidade(esp);
-                    };
-                });
-            } else {
-                resultadosDiv.innerHTML = '<p class="p-3 text-[10px] text-slate-500 italic">Nenhuma especialidade encontrada</p>';
-                resultadosDiv.classList.remove('hidden');
-            }
-        });
-
-
+                    // Adicionar clicks
+                    resultadosDiv.querySelectorAll('.item-especialidade').forEach(div => {
+                        div.onclick = () => {
+                            const id = div.getAttribute('data-id');
+                            const esp = especialidadesCatalogo.find(x => x.id === id);
+                            selecionarEspecialidade(esp);
+                        };
+                    });
+                } else {
+                    if (resultadosDiv) {
+                        resultadosDiv.innerHTML = '<p class="p-3 text-[10px] text-slate-500 italic">Nenhuma especialidade encontrada</p>';
+                        resultadosDiv.classList.remove('hidden');
+                    }
+                }
+            });
+        }
 
         // Fechar resultados ao clicar fora
         document.addEventListener('click', (e) => {
@@ -1438,6 +1666,13 @@
         // Submit Final
         document.getElementById('cadastro-form').addEventListener('submit', async (e) => {
             e.preventDefault();
+            const cpfVal = document.getElementById('cpf').value;
+            if (cpfVal && !UI.validateCPF(cpfVal)) {
+                UI.showToast('CPF inválido!', 'error');
+                return;
+            }
+
+
             UI.showLoader();
 
             let avatarUrl = null;

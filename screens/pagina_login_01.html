@@ -65,23 +65,23 @@
           <span class="text-xs font-bold text-primary uppercase tracking-widest ml-1 mb-2 block">CHAVE DE
             ACESSO</span>
           <div class="relative flex items-center group">
-            <div class="absolute left-4 text-primary/60 group-focus-within:text-primary transition-colors">
-              <span class="material-symbols-outlined">lock</span>
+            <div id="toggle-password" class="absolute left-4 text-primary/60 group-focus-within:text-primary transition-colors cursor-pointer hover:text-primary" title="Mostrar/Ocultar Senha">
+              <span id="lock-icon" class="material-symbols-outlined">lock</span>
             </div>
             <input id="password"
-              class="w-full bg-slate-800/50 border-2 border-primary/20 rounded-lg py-4 pl-12 pr-4 focus:border-primary focus:ring-0 text-slate-100 placeholder:text-slate-500 transition-all"
+              class="w-full bg-slate-800/50 border-2 border-primary/20 rounded-lg py-4 pl-12 pr-4 focus:border-primary focus:ring-0 text-slate-100 placeholder:text-slate-500 transition-all font-mono"
               placeholder="••••••••" type="password">
           </div>
         </label>
       </div>
       <div class="flex items-center justify-between px-1">
         <label class="flex items-center gap-2 cursor-pointer group">
-          <input class="rounded border-primary/30 bg-slate-800 text-primary focus:ring-primary/20" type="checkbox">
-          <span class="text-xs font-medium text-slate-400 group-hover:text-slate-300 transition-colors">MANTER
+          <input id="remember-me" class="rounded border-primary/30 bg-slate-800 text-primary focus:ring-primary/20" type="checkbox">
+          <span class="text-xs font-medium text-slate-400 group-hover:text-slate-300 transition-all">MANTER
             CONECTADO</span>
         </label>
-        <a class="text-xs font-medium text-primary hover:text-primary/80 transition-colors uppercase tracking-wider"
-          href="#">ESQUECEU A CHAVE?</a>
+        <a id="forgot-password" class="text-xs font-medium text-primary hover:text-primary/80 transition-colors uppercase tracking-wider cursor-pointer"
+          onclick="UI.showToast('Contate o seu Gestor ou TI para recuperar sua chave de acesso.', 'info')">ESQUECEU A CHAVE?</a>
       </div>
       <button id="login-btn"
         class="w-full bg-primary hover:bg-primary/90 text-white font-bold py-5 rounded-lg transition-all transform active:scale-[0.98] shadow-lg shadow-primary/20 flex items-center justify-center gap-3 group">
@@ -93,7 +93,7 @@
       <p class="text-sm text-slate-400">
         Novo Jogador?
         <a class="text-primary font-bold hover:underline underline-offset-4 ml-1 uppercase tracking-tight"
-          href="#">FAZER CADASTRO</a>
+          href="cadastro_funcionario.html">FAZER CADASTRO</a>
       </p>
     </div>
     <div class="absolute -bottom-10 left-0 w-full flex justify-center gap-8 opacity-20">
@@ -179,6 +179,33 @@
         UI.showToast('Erro no sistema de autenticação.', 'error');
       }
     }
+
+
+    // Toggle Password Visibility
+    document.getElementById('toggle-password').addEventListener('click', () => {
+      const passInput = document.getElementById('password');
+      const lockIcon = document.getElementById('lock-icon');
+      
+      if (passInput.type === 'password') {
+        passInput.type = 'text';
+        lockIcon.innerText = 'visibility'; // Muda para olho aberto
+        lockIcon.classList.add('text-primary');
+      } else {
+        passInput.type = 'password';
+        lockIcon.innerText = 'lock'; // Volta para cadeado
+        lockIcon.classList.remove('text-primary');
+      }
+    });
+
+    // Manter Conectado Persistence
+    const rememberMe = document.getElementById('remember-me');
+    rememberMe.checked = localStorage.getItem('rememberUser') === 'true';
+    rememberMe.addEventListener('change', (e) => {
+        localStorage.setItem('rememberUser', e.target.checked);
+        if(e.target.checked) {
+            UI.showToast('Sua sessão será preservada neste dispositivo.', 'success');
+        }
+    });
 
     document.getElementById('login-btn').addEventListener('click', handleLogin);
     document.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleLogin(); });
