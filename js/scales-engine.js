@@ -322,9 +322,9 @@ const ScalesEngine = {
         const [hE, mE] = escala.horario_entrada.split(':').map(Number);
         const [hS, mS] = escala.horario_saida.split(':').map(Number);
 
-        const janelaAntes = (escala.janela_ativa_antes_minutos !== null && escala.janela_ativa_antes_minutos !== undefined) ? Number(escala.janela_ativa_antes_minutos) : 30;
-        const janelaDepois = (escala.janela_ativa_depois_minutos !== null && escala.janela_ativa_depois_minutos !== undefined) ? Number(escala.janela_ativa_depois_minutos) : 30;
-        const tolEntrada = (escala.tolerancia_entrada_minutos !== null && escala.tolerancia_entrada_minutos !== undefined) ? Number(escala.tolerancia_entrada_minutos) : 15;
+        const janelaAntes = parseInt(escala.janela_ativa_antes_minutos) || 30;
+        const janelaDepois = parseInt(escala.janela_ativa_depois_minutos) || 30;
+        const tolEntrada = parseInt(escala.tolerancia_entrada_minutos) || 15;
 
         for (let offset = -1; offset <= 1; offset++) {
             const baseDate = new Date(targetDate);
@@ -341,15 +341,17 @@ const ScalesEngine = {
 
             let startWindow, endWindow;
 
+            const safeExtra = Number(extraMinutes || 0);
+
             if (type === 'check-in') {
-                // Janela de Entrada: Do limite 'antes' até o 'horário + tolerância'
+                // Janela de Entrada: Do limite 'antes' até o final da jornada (endShift)
+                // Isso permite que atrasos sejam registrados sem bloquear o botão.
                 startWindow = new Date(startShift.getTime() - janelaAntes * 60000);
-                endWindow = new Date(startShift.getTime() + tolEntrada * 60000);
+                endWindow = new Date(endShift.getTime()); 
             } else {
-                // Janela de Saída: Do 'horário - janela_depois' (ativação antecipada) até 'horário + janela_depois + HE'
-                // Aqui usamos janela_depois como margem para sair um pouco antes ou depois
+                // Janela de Saída: Do 'horário - janela_depois' até 'horário + janela_depois + HE'
                 startWindow = new Date(endShift.getTime() - janelaDepois * 60000);
-                endWindow = new Date(endShift.getTime() + (janelaDepois + Number(extraMinutes)) * 60000);
+                endWindow = new Date(endShift.getTime() + (janelaDepois + safeExtra) * 60000);
             }
 
             if (targetDate >= startWindow && targetDate <= endWindow) return true;

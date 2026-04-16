@@ -897,7 +897,10 @@
             const timerEl = document.getElementById('user-timer');
 
             async function refreshStatus() {
-                const today = new Date().toISOString().split('T')[0];
+                // BUG FIX: Obter a data local correta (ISO string em UTC costuma pular o dia as 21h em BRT)
+                const now = new Date();
+                const today = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+                
                 const { data } = await supabase.from('pontos').select('*').eq('funcionario_id', userId).gte('data_hora', `${today}T00:00:00`).order('data_hora', { ascending: true });
 
                 const role = currentUser.nivel_acesso || 'Funcionário';
