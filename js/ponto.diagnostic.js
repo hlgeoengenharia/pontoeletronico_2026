@@ -176,13 +176,15 @@ export const PontoDiagnostic = {
             // 10. Lógica de GPS
             try {
                 if (activeScale && activeScale.restrito_gps) {
-                    const targetLat = activeScale.lat || user.setores?.latitude;
-                    const targetLng = activeScale.lng || user.setores?.longitude;
+                    // Normalização: Supabase pode retornar setor como objeto ou array
+                    const s = Array.isArray(user.setores) ? user.setores[0] : user.setores;
+                    const targetLat = activeScale.lat || s?.latitude;
+                    const targetLng = activeScale.lng || s?.longitude;
 
                     if (targetLat && targetLng) {
                         const pos = await this.getCurrentLocation();
                         const dist = ScalesEngine.calculateDistance(pos.lat, pos.lng, targetLat, targetLng);
-                        const raio = activeScale.raio_geofence || activeScale.raio || user.setores?.raio || ScalesEngine.GEOFENCE_DEFAULT_RADIUS;
+                        const raio = activeScale.raio_geofence || activeScale.raio || s?.raio || ScalesEngine.GEOFENCE_DEFAULT_RADIUS;
 
                         const isInside = dist <= raio;
                         rules.gps_raio.status = isInside ? 'SIM' : 'NÃO';

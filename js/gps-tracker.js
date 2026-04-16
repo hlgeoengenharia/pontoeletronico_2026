@@ -34,8 +34,9 @@ class GPSTracker {
         if (!user || !user.id) return;
 
         try {
-            // 1. Verificar se o expediente está ativo (Ponto Aberto)
-            const today = new Date().toISOString().split('T')[0];
+            // 1. Verificar se o expediente está ativo (Ponto Aberto) - Usando data local
+            const now = new Date();
+            const today = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
             const { data: punches, error: punchError } = await supabase
                 .from('pontos')
                 .select('id')

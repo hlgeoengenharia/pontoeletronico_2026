@@ -319,12 +319,20 @@ const ScalesEngine = {
     isInActivationWindow(escala, type = 'check-in', extraMinutes = 0, targetDate = new Date()) {
         if (!escala || !escala.horario_entrada) return true;
 
-        const [hE, mE] = escala.horario_entrada.split(':').map(Number);
-        const [hS, mS] = escala.horario_saida.split(':').map(Number);
+        const hEntrada = escala.horario_entrada || escala.entrada;
+        const hSaida = escala.horario_saida || escala.saida;
 
-        const janelaAntes = parseInt(escala.janela_ativa_antes_minutos) || 30;
-        const janelaDepois = parseInt(escala.janela_ativa_depois_minutos) || 30;
-        const tolEntrada = parseInt(escala.tolerancia_entrada_minutos) || 15;
+        if (!hEntrada || !hSaida) {
+            console.warn('[ScalesEngine] Escala sem horários definidos, liberando janela por padrão.');
+            return true;
+        }
+
+        const [hE, mE] = hEntrada.split(':').map(Number);
+        const [hS, mS] = hSaida.split(':').map(Number);
+
+        const janelaAntes = (escala.janela_ativa_antes_minutos !== null && escala.janela_ativa_antes_minutos !== undefined) ? parseInt(escala.janela_ativa_antes_minutos) : 30;
+        const janelaDepois = (escala.janela_ativa_depois_minutos !== null && escala.janela_ativa_depois_minutos !== undefined) ? parseInt(escala.janela_ativa_depois_minutos) : 30;
+        const tolEntrada = (escala.tolerancia_entrada_minutos !== null && escala.tolerancia_entrada_minutos !== undefined) ? parseInt(escala.tolerancia_entrada_minutos) : 15;
 
         for (let offset = -1; offset <= 1; offset++) {
             const baseDate = new Date(targetDate);
@@ -344,8 +352,8 @@ const ScalesEngine = {
             const safeExtra = Number(extraMinutes || 0);
 
             if (type === 'check-in') {
-                // Janela de Entrada: Do limite 'antes' até o final da jornada (endShift)
-                // Isso permite que atrasos sejam registrados sem bloquear o botão.
+                // MODO NUCLEAR: Se for dia de escala, o Check-In é permitido desde 'janelaAntes' até o FIM da jornada.
+                // Isso garante que atrasos NUNCA bloqueiem o botão de ponto.
                 startWindow = new Date(startShift.getTime() - janelaAntes * 60000);
                 endWindow = new Date(endShift.getTime()); 
             } else {
@@ -354,8 +362,14 @@ const ScalesEngine = {
                 endWindow = new Date(endShift.getTime() + (janelaDepois + safeExtra) * 60000);
             }
 
-            if (targetDate >= startWindow && targetDate <= endWindow) return true;
+            // Auditoria de Janela (Dashboard/Diagnóstico)
+            if (targetDate >= startWindow && targetDate <= endWindow) {
+                console.log(`[ScalesEngine] Sucesso: dentro da janela em offset ${offset} (${type})`);
+                return true;
+            }
         }
+
+        console.warn(`[ScalesEngine] Bloqueio: fora da janela ativa (${type}) para o horário ${targetDate.toLocaleTimeString()}`);
         return false;
     }
 };

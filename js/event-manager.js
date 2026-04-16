@@ -225,7 +225,8 @@ const EventManager = {
             const minDate = new Date(Math.min(...dates));
             const diffDays = (minDate - now) / (1000 * 60 * 60 * 24);
             
-            if (!options.isContextOnline && diffDays < 1) return;
+            // REGRA: No contexto de Diário/Histórico, mostramos todos. No Online, apenas futuros/atuais.
+            if (!options.isContextOnline && !options.isContextDiario && diffDays < -1) return; // Permitir histórico no diário
 
             unified.push({
                 id: list[0].id,
@@ -512,10 +513,12 @@ const EventManager = {
         const lat = ponto.latitude || (ponto.geolocalizacao_json ? ponto.geolocalizacao_json.lat : null);
         const lng = ponto.longitude || (ponto.geolocalizacao_json ? ponto.geolocalizacao_json.lng : null);
 
-// Busca coordenadas: primeiro escala, depois setor (setor usa latitude/longitude)
-        const escalaLat = escala.lat || escala.latitude || setor?.latitude;
-        const escalaLng = escala.lng || escala.longitude || setor?.longitude;
-        const escalaRaio = escala.raio_geofence || escala.raio_geofence_metros || setor?.raio || ScalesEngine.GEOFENCE_DEFAULT_RADIUS;
+        // Normalização: Supabase pode retornar setor como objeto ou array.
+        const s = Array.isArray(setor) ? setor[0] : setor;
+
+        const escalaLat = escala.lat || escala.latitude || s?.latitude;
+        const escalaLng = escala.lng || escala.longitude || s?.longitude;
+        const escalaRaio = escala.raio_geofence || escala.raio_geofence_metros || s?.raio || ScalesEngine.GEOFENCE_DEFAULT_RADIUS;
 
         if (escalaLat && escalaLng && lat && lng) {
             const dist = ScalesEngine.calculateDistance(lat, lng, escalaLat, escalaLng);

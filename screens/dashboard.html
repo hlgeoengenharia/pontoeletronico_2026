@@ -11,7 +11,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
         rel="stylesheet">
-    <script src="../js/theme.js?v=1.0"></script>
+    <script src="../js/theme.js?v=1.1"></script>
     <style>
         .font-variation-settings-fill {
             font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
@@ -288,6 +288,7 @@
                     00
                 </div>
             </button>
+            <p id="punch-status-label" class="hidden text-[9px] font-black text-rose-500 uppercase tracking-widest mt-2 animate-pulse"></p>
         </section>
 
         <!-- SEÇÃO: MINHA SESSÃO -->
@@ -498,16 +499,17 @@
 
     <!-- Script Core -->
     <script type="module">
-        import { supabase } from '../js/supabase-config.js';
-        import { Auth } from '../js/auth.js';
-        import { UI } from '../js/ui-utils.js';
-        import { ScalesEngine } from '../js/scales-engine.js';
-        import { EventManager } from '../js/event-manager.js';
-        import { GPSTracker } from '../js/gps-tracker.js';
-        import { PunchEngine } from '../js/punch-engine.js';
-        import { BiometricHelper } from '../js/biometric-helper.js';
-        import { Notifications } from '../js/notifications.js';
-        import { AlertarFeriadosScheduler } from '../js/modules/Alertar_feriados_folgas/alertar.feriados.scheduler.js';
+        import { supabase } from '../js/supabase-config.js?v=3.2';
+        import { Auth } from '../js/auth.js?v=3.2';
+        import { UI } from '../js/ui-utils.js?v=3.2';
+        import { ScalesEngine } from '../js/scales-engine.js?v=3.2';
+        import { EventManager } from '../js/event-manager.js?v=3.2';
+        import { GPSTracker } from '../js/gps-tracker.js?v=3.2';
+        import { PunchEngine } from '../js/punch-engine.js?v=3.2';
+        import { BiometricHelper } from '../js/biometric-helper.js?v=3.2';
+        import { Notifications } from '../js/notifications.js?v=3.2';
+        import { BusinessRulesManager } from '../js/business-rules-manager.js?v=3.2';
+        import { AlertarFeriadosScheduler } from '../js/modules/Alertar_feriados_folgas/alertar.feriados.scheduler.js?v=3.2';
 
         let currentUser = null;
         let timerInterval = null;
@@ -545,6 +547,13 @@
                 }
 
                 currentUser = funcionario;
+                
+                // Autorresolução de Pontos Esquecidos (Ponto Órfão)
+                const autoRes = await BusinessRulesManager.resolveOrphanedPunches(funcionario);
+                if (autoRes && autoRes.resolved) {
+                    UI.showToast(`O sistema detectou um ponto aberto em ${autoRes.date} e realizou o fechamento automático (Penalidade 50% aplicada).`, 'warning');
+                }
+
                 setupDashboard(funcionario);
 
                 // Iniciar Rastreamento GPS Automático
@@ -783,12 +792,80 @@
             } catch (e) { return 0; }
         };
 
-        const checkButtonWindow = async (btn) => {
+        const getTodayExemption = async () => {
+            try {
+                const now = new Date();
+                const todayStr = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+                const sId = currentUser.setor_id || '00000000-0000-0000-0000-000000000000';
+
+                // 1. Buscar Feriados/Folgas
+                const { data: feriados } = await supabase
+                    .from('feriados_folgas')
+                    .select('tipo')
+                    .eq('data', todayStr)
+                    .or(`funcionario_id.eq.${currentUser.id},setor_id.eq.${sId},escopo.eq.geral`)
+                    .limit(1);
+
+                if (feriados && feriados.length > 0) return { exempt: true, reason: feriados[0].tipo.replace('_', ' ').toUpperCase() };
+
+                // 2. Buscar Férias
+                const { data: ferias } = await supabase
+                    .from('ferias')
+                    .select('id')
+                    .eq('funcionario_id', currentUser.id)
+                    .eq('status', 'aprovado')
+                    .lte('data_inicio', todayStr)
+                    .gte('data_fim', todayStr)
+                    .limit(1);
+
+                if (ferias && ferias.length > 0) return { exempt: true, reason: 'FÉRIAS' };
+
+                // 3. Verificar Escala (Folga Semanal/Ciclo)
+                const currentScale = currentUser.escalas || currentUser;
+                const month = now.getMonth();
+                const year = now.getFullYear();
+                const plannedDays = ScalesEngine.projectBaseDays(currentScale, currentUser.data_inicio_vigencia || currentScale.data_inicio_vigencia, month, year);
+
+                if (!plannedDays.includes(todayStr)) return { exempt: true, reason: 'FOLGA (FORA DE ESCALA)' };
+
+                return { exempt: false };
+            } catch (e) { 
+                console.error('[Dashboard] Erro ao checar isenção:', e);
+                return { exempt: false }; 
+            }
+        };
+
+        const checkButtonWindow = async (btn, forcedType = null) => {
             const extraMin = await getExtraMinutes();
-            const { data: lastPunch } = await supabase.from('pontos').select('tipo').eq('funcionario_id', currentUser.id).order('data_hora', { ascending: false }).limit(1).maybeSingle();
-            const type = (!lastPunch || lastPunch.tipo === 'check-out') ? 'check-in' : 'check-out';
+            const exemption = await getTodayExemption();
             
-            const isActive = ScalesEngine.isInActivationWindow(currentUser.escalas, type, extraMin);
+            let type = forcedType;
+            if (!type) {
+                const { data: lastPunch } = await supabase.from('pontos').select('tipo').eq('funcionario_id', currentUser.id).order('data_hora', { ascending: false }).limit(1).maybeSingle();
+                type = (!lastPunch || lastPunch.tipo === 'check-out') ? 'check-in' : 'check-out';
+            }
+            
+            let isActive = ScalesEngine.isInActivationWindow(currentUser.escalas, type, extraMin);
+            const statusLabel = document.getElementById('punch-status-label');
+
+            // REGRA: Se for dia isento (Feriado/Folga) e NÃO houver Hora Extra authorized, BLOQUEIA.
+            if (exemption.exempt && extraMin === 0) {
+                isActive = false;
+                if (statusLabel) {
+                    statusLabel.innerText = `BLOQUEADO: ${exemption.reason}`;
+                    statusLabel.classList.remove('hidden');
+                    statusLabel.className = 'text-[9px] font-black text-rose-500 uppercase tracking-widest mt-2 animate-pulse';
+                }
+            } else if (!isActive) {
+                if (statusLabel) {
+                    const win = ScalesEngine.calculateWindowDetails(currentUser.escalas, extraMin);
+                    statusLabel.innerText = type === 'check-in' ? `AGUARDANDO JANELA (ÀS ${win?.antes.horario})` : 'FORA DA JANELA DE SAÍDA';
+                    statusLabel.classList.remove('hidden');
+                    statusLabel.className = 'text-[9px] font-black text-amber-500 uppercase tracking-widest mt-2';
+                }
+            } else {
+                if (statusLabel) statusLabel.classList.add('hidden');
+            }
 
             if (isActive) {
                 btn.classList.add('animate-celestial');
@@ -943,6 +1020,7 @@
                     const label = btn.querySelector('span.text-xs');
                     if (label) label.innerHTML = 'FINALIZAR<br>TURNO';
                     btn.onclick = () => PunchEngine.startFlow('check-out', currentUser);
+                    await checkButtonWindow(btn, 'check-out');
                 } else {
                     const roleLower = String(currentUser.nivel_acesso || '').toLowerCase();
                     if (roleLower === 'admin' || roleLower === 'gestor') btn.classList.add('punch-' + roleLower);
@@ -952,7 +1030,7 @@
                     if (label) label.innerHTML = 'REGISTRAR<br>PONTO';
                     btn.onclick = () => PunchEngine.startFlow('check-in', currentUser);
 
-                    await checkButtonWindow(btn);
+                    await checkButtonWindow(btn, 'check-in');
                 }
 
                 if (data && data.length > 0) {
@@ -1296,7 +1374,7 @@
         }
 
         // Carregamento de contextos gerenciais/operativos
-        import '../js/manager-context.js?v=3.0';
+        import '../js/manager-context.js?v=3.1';
     </script>
 </body>
 
