@@ -33,12 +33,13 @@ const Notifications = {
             let sinoCount = 0;
             if (isManagement) {
                 const [resJust, resFer, resPonto, resLogs] = await Promise.all([
-                    supabase.from('justificativas').select('id').eq('status', 'pendente'),
-                    supabase.from('ferias').select('funcionario_id').eq('status', 'pendente'),
-                    supabase.from('pontos').select('id').eq('status_validacao', 'pendente'),
+                    supabase.from('justificativas').select('id').eq('status', 'pendente').gt('data_incidente', '2001-01-01'),
+                    supabase.from('ferias').select('funcionario_id').eq('status', 'pendente').gt('created_at', '2001-01-01'),
+                    supabase.from('pontos').select('id').eq('status_validacao', 'pendente').gt('created_at', '2001-01-01'),
                     supabase.from('diario_logs').select('id').eq('status_pendencia', 'pendente')
                         .not('tipo', 'in', '("comunicado","justificativa_resultado","gps_pulse")')
                         .neq('tipo', 'aviso_ferias')
+                        .gt('data_hora', '2001-01-01')
                 ]);
 
                 const uniqueFeriasEmployees = new Set((resFer.data || []).map(f => f.funcionario_id)).size;

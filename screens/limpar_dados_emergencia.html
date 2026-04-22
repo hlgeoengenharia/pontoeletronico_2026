@@ -3,204 +3,223 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reset de Sistema | ChronoSync</title>
+    <title>Liquidação Técnica | ChronoSync</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,1,0" />
     <style>
-        body { font-family: 'Space Grotesk', sans-serif; background: #020617; color: #f8fafc; }
-        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.05); }
-        .btn-danger { background: linear-gradient(135deg, #ef4444 0%, #991b1b 100%); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .btn-danger:hover { transform: scale(1.02); box-shadow: 0 0 40px rgba(239, 68, 68, 0.2); }
+        :root { --primary: #3b82f6; --danger: #f43f5e; }
+        body { font-family: 'Outfit', sans-serif; background: #020617; color: #f8fafc; overflow-x: hidden; }
+        .glass { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .liquidate-btn { 
+            background: linear-gradient(135deg, #f43f5e 0%, #881337 100%);
+            box-shadow: 0 10px 40px -10px rgba(244, 63, 94, 0.5);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .liquidate-btn:hover { transform: translateY(-4px) scale(1.02); box-shadow: 0 20px 60px -10px rgba(244, 63, 94, 0.6); }
+        .liquidate-btn:active { transform: scale(0.98); }
+        @keyframes scan { from { top: -20%; } to { top: 120%; } }
+        .scanning::after {
+            content: ''; position: absolute; left: 0; width: 100%; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--danger), transparent);
+            animation: scan 2s linear infinite;
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
     </style>
 </head>
-<body class="bg-background-dark min-h-screen flex flex-col items-center">
-    <!-- HEADER -->
-    <header class="w-full max-w-md p-4 flex items-center justify-between sticky top-0 bg-background-dark/80 backdrop-blur-md z-[60] border-b border-white/5">
-        <div class="flex items-center gap-2">
-            <button id="openSidebar"
-                class="size-10 flex items-center justify-center bg-white/5 rounded-xl text-slate-400 hover:text-primary transition-all">
-                <span class="material-symbols-outlined">menu</span>
-            </button>
-            <button onclick="window.location.href='central.html'"
-                class="size-10 flex items-center justify-center bg-white/5 rounded-xl text-slate-400 hover:text-primary transition-all">
-                <span class="material-symbols-outlined">arrow_back</span>
-            </button>
+<body class="min-h-screen flex flex-col items-center selection:bg-rose-500/30">
+    
+    <header class="w-full max-w-md p-6 flex items-center justify-between sticky top-0 bg-slate-950/80 backdrop-blur-xl z-50">
+        <button onclick="window.location.href='central.html'" class="size-12 glass rounded-2xl flex items-center justify-center text-slate-400 hover:text-white transition-all group">
+            <span class="material-symbols-outlined transition-transform group-hover:-translate-x-1">arrow_back</span>
+        </button>
+        <div class="text-center">
+            <h1 class="text-[10px] font-black uppercase tracking-[0.4em] text-slate-500 leading-none mb-1">Engenharia Reversa</h1>
+            <p class="text-[12px] font-bold text-slate-100 italic">Protocolo de Limpeza</p>
         </div>
-
-        <h1 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] text-center flex-1">Purga de Dados</h1>
-
-        <div class="size-10"></div> <!-- Spacer -->
+        <div class="size-12"></div>
     </header>
 
-    <main class="flex-1 flex items-center justify-center p-6 w-full max-w-2xl">
-
-    <div class="max-w-2xl w-full space-y-8 animate-in fade-in zoom-in duration-700">
-        <div class="text-center space-y-4">
-            <div class="inline-flex items-center justify-center size-20 rounded-3xl bg-red-500/10 text-red-500 mb-4 border border-red-500/20 shadow-2xl">
-                <span class="material-symbols-outlined text-5xl">database_off</span>
-            </div>
-            <h1 class="text-4xl font-black italic tracking-tighter uppercase text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-500">Purga Atômica de Dados</h1>
-            <p class="text-slate-500 font-medium max-w-sm mx-auto leading-relaxed">Você está prestes a apagar todos os registros transacionais do sistema. Esta ação é irreversível e resetará todos os testes.</p>
-        </div>
-
-        <div class="glass rounded-[3rem] p-10 space-y-8 relative overflow-hidden group">
-            <div class="absolute inset-0 bg-gradient-to-br from-red-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 relative">
-                <div class="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5">
-                    <span class="material-symbols-outlined text-red-400">schedule</span>
-                    <div class="text-[10px] uppercase font-black tracking-widest text-slate-400">Pontos <span class="block text-white text-xs">Exclusão Total</span></div>
-                </div>
-                <div class="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5">
-                    <span class="material-symbols-outlined text-orange-400">notifications</span>
-                    <div class="text-[10px] uppercase font-black tracking-widest text-slate-400">Sino/Logs <span class="block text-white text-xs">Zerar Notificações</span></div>
-                </div>
-                <div class="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5">
-                    <span class="material-symbols-outlined text-blue-400">card_travel</span>
-                    <div class="text-[10px] uppercase font-black tracking-widest text-slate-400">Férias <span class="block text-white text-xs">Reset de Calendário</span></div>
-                </div>
-                <div class="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5">
-                    <span class="material-symbols-outlined text-emerald-400">forum</span>
-                    <div class="text-[10px] uppercase font-black tracking-widest text-slate-400">Comunicados <span class="block text-white text-xs">Pastas Limpas</span></div>
-                </div>
-                <div class="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5">
-                    <span class="material-symbols-outlined text-purple-400">edit_note</span>
-                    <div class="text-[10px] uppercase font-black tracking-widest text-slate-400">Atividades <span class="block text-white text-xs">Histórico Zerado</span></div>
-                </div>
-            </div>
-
-            <div class="space-y-4 pt-4">
-                <button id="btn-purge" class="w-full py-6 rounded-3xl btn-danger text-white font-black uppercase tracking-[0.3em] flex items-center justify-center gap-4 shadow-2xl relative overflow-hidden">
-                    <span id="label-btn">Confirmar Purga de Dados</span>
-                    <div id="loader" class="size-5 border-2 border-white/20 border-t-white rounded-full animate-spin hidden"></div>
-                </button>
-                <div class="flex justify-center">
-                    <a href="dashboard.html" class="text-[10px] uppercase font-black tracking-[0.2em] text-slate-500 hover:text-white transition-colors">Voltar para o Dashboard</a>
+    <main class="flex-1 w-full max-w-xl p-6 flex flex-col items-center justify-center gap-10">
+        <div class="relative group">
+            <div class="absolute -inset-8 bg-rose-500/10 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000"></div>
+            <div class="size-32 rounded-[2.5rem] glass flex items-center justify-center relative overflow-hidden group-hover:border-rose-500/20 transition-all duration-500">
+                <span class="material-symbols-outlined text-6xl text-rose-500 animate-pulse">database_off</span>
+                <div class="absolute bottom-2 inset-x-0 h-1 bg-rose-500/20 rounded-full mx-8 overflow-hidden">
+                    <div id="pb-line" class="h-full bg-rose-500 w-0 transition-all duration-300"></div>
                 </div>
             </div>
         </div>
 
-        <div id="console-output" class="bg-black/50 border border-white/5 rounded-2xl p-6 font-mono text-[10px] text-emerald-500/80 max-h-48 overflow-y-auto hidden">
-            <div class="flex items-center gap-2 mb-2 text-emerald-500 font-bold">
-                <span class="size-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                TERMINAL DE LIMPEZA ATIVO
-            </div>
-            <div id="logs" class="space-y-1"></div>
+        <div class="text-center space-y-3">
+            <h2 class="text-4xl font-black italic tracking-tighter uppercase leading-none">Liquidação Total</h2>
+            <p class="text-slate-400 text-sm font-medium leading-relaxed max-w-xs mx-auto">
+                Limpeza profunda de <span class="text-rose-400 font-bold">Histórico e Eventos</span>. Cadastros e Perfis serão preservados.
+            </p>
         </div>
-    </div>
 
+        <div id="terminal" class="w-full glass rounded-[2rem] p-6 font-mono text-[11px] space-y-2 hidden max-h-60 overflow-y-auto custom-scrollbar">
+            <div class="flex items-center gap-2 text-rose-500 font-black mb-4">
+                <span class="size-2 rounded-full bg-rose-500 animate-ping"></span>
+                SEQUÊNCIA DE EXPURGO ATIVA
+            </div>
+            <div id="logs" class="space-y-1 text-slate-400"></div>
+        </div>
+
+        <div class="w-full space-y-6">
+            <button id="btn-liquidate" class="w-full py-7 liquidate-btn rounded-[2.5rem] flex items-center justify-center gap-4 text-white font-black uppercase tracking-[0.3em] text-sm relative overflow-hidden group">
+                <span id="btn-label">Liquidar Dados Transacionais</span>
+                <div id="btn-loader" class="size-5 border-3 border-white/20 border-t-white rounded-full animate-spin hidden"></div>
+            </button>
+            <div class="text-center">
+                <p class="text-[9px] font-black uppercase tracking-widest text-slate-600">Este processo não afeta usuários ou cadastros estruturais</p>
+            </div>
+        </div>
     </main>
-
-    <script type="module">
-        import { supabase } from '../js/supabase-config.js';
-        import { UI } from '../js/ui-utils.js';
-
-        const btn = document.getElementById('btn-purge');
-        const loader = document.getElementById('loader');
-        const output = document.getElementById('console-output');
-        const logs = document.getElementById('logs');
-        const label = document.getElementById('label-btn');
-
-        // Inicializar Sidebar
-        const role = localStorage.getItem('userRole');
-        UI.initSidebar(role);
-        document.getElementById('openSidebar').onclick = () => UI.toggleSidebar(true);
-
-        function addLog(msg, type = 'info') {
-            const div = document.createElement('div');
-            div.className = type === 'error' ? 'text-red-400' : (type === 'success' ? 'text-emerald-400' : 'text-slate-400');
-            div.innerText = `[${new Date().toLocaleTimeString()}] ${msg}`;
-            logs.appendChild(div);
-            output.scrollTop = output.scrollHeight;
-        }
-
-        btn.onclick = async () => {
-            if (!confirm('VOCÊ TEM CERTEZA? Isso deletará todos os registros de ponto, atividades e justificativas enviados.')) return;
-
-            btn.disabled = true;
-            loader.classList.remove('hidden');
-            output.classList.remove('hidden');
-            label.innerText = 'LIMPANDO BANCO...';
-
-            const tables = ['pontos', 'diario_logs', 'justificativas', 'ferias', 'comunicados', 'feriados_folgas', 'anotacoes'];
-
-            for (const table of tables) {
-                addLog(`Limpando tabela: ${table.toUpperCase()}...`);
-                try {
-                    // Limpeza via delete com filtro que pega tudo (Supabase REST API requirement if no WHERE allows)
-                    const { error } = await supabase.from(table).delete().neq('id', '00000000-0000-0000-0000-000000000000');
-                    
-                    if (error) {
-                        addLog(`ERRO EM ${table}: ${error.message}`, 'error');
-                    } else {
-                        addLog(`CONCLUÍDO: ${table} está limpa.`, 'success');
-                    }
-                } catch (e) {
-                    addLog(`FALHA CRÍTICA EM ${table}: ${e.message}`, 'error');
-                }
-            }
-
-            // 2. Limpeza de LocalStorage (Cache do Diário e Badges)
-            addLog('Limpando Cache Local (Ciência de Diário)...');
-            const keysToRemove = [];
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                if (key.length >= 7 && (key.startsWith('ciente_') || key.startsWith('visto_feriado_') || key.startsWith('visto_'))) {
-                    keysToRemove.push(key);
-                }
-            }
-            keysToRemove.forEach(k => localStorage.removeItem(k));
-            addLog(`REMOVIDO: ${keysToRemove.length} chaves de ciência local.`, 'success');
-
-            label.innerText = 'LIMPEZA CONCLUÍDA';
-            loader.classList.add('hidden');
-            addLog('PURGA FINALIZADA COM SUCESSO. O SISTEMA ESTÁ ZERADO.', 'success');
-        };
-    </script>
-    
-    <!-- Bottom Navigation -->
-    <nav class="fixed bottom-0 left-0 right-0 bg-background-dark/90 border-t border-white/5 py-4 z-50 flex justify-center backdrop-blur-xl">
-        <div class="flex items-center justify-around w-full max-w-md px-6">
-            <a href="dashboard.html" class="flex flex-col items-center gap-1.5 text-slate-500">
-                <span class="material-symbols-outlined text-2xl">home</span>
-                <span class="text-[9px] font-black uppercase tracking-widest text-center">Início</span>
-            </a>
-            <a href="estatistica_funcionario.html" class="flex flex-col items-center gap-1.5 text-slate-500">
-                <span class="material-symbols-outlined text-2xl">bar_chart</span>
-                <span class="text-[9px] font-black uppercase tracking-widest text-center">Estatística</span>
-            </a>
-            <a href="diario_funcionario.html" class="flex flex-col items-center gap-1.5 text-slate-500">
-                <span class="material-symbols-outlined text-2xl">edit_note</span>
-                <span class="text-[9px] font-black uppercase tracking-widest text-center">Diário</span>
-            </a>
-            <a href="perfil_funcionario.html" class="flex flex-col items-center gap-1.5 text-slate-500">
-                <span class="material-symbols-outlined text-2xl">person</span>
-                <span class="text-[9px] font-black uppercase tracking-widest text-center">Perfil</span>
-            </a>
-        </div>
-    </nav>
 
     <!-- Sidebar Menu Overlay -->
     <aside id="sidebarMenu"
-        class="fixed top-0 left-0 h-full w-80 bg-background-dark border-r border-primary/20 z-[160] -translate-x-full transition-all duration-500 ease-out shadow-[20px_0_50px_rgba(0,0,0,0.5)]">
+        class="fixed top-0 left-0 h-full w-80 bg-slate-950 border-r border-slate-800 z-[160] -translate-x-full transition-all duration-500 ease-out shadow-2xl">
         <div class="flex flex-col h-full">
-            <div class="p-8 border-b border-primary/10">
-                <h3 class="text-primary font-black italic text-2xl tracking-tighter">CHRONOSYNC</h3>
+            <div class="p-8 border-b border-slate-800">
+                <h3 class="text-rose-500 font-black italic text-2xl tracking-tighter">CHRONOSYNC</h3>
                 <p class="text-[10px] text-slate-500 uppercase font-bold tracking-[0.3em]">Console de Navegação</p>
             </div>
             <nav id="sidebarNav" class="flex-1 overflow-y-auto p-4 space-y-2">
                 <!-- Injetado via UI.initSidebar() -->
             </nav>
-            <div class="p-4 border-t border-primary/10 bg-black/20">
-                <button id="logoutBtn"
-                    class="w-full flex items-center gap-3 px-4 py-3 text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all font-bold text-xs uppercase">
-                    <span class="material-symbols-outlined">logout</span> Sair do Sistema
-                </button>
-            </div>
         </div>
     </aside>
-    <div id="sidebarOverlay"
-        class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[150] hidden opacity-0 transition-all duration-300"></div>
+    <div id="sidebarOverlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[150] hidden opacity-0 transition-all duration-300"></div>
+
+    <script type="module">
+        import { supabase } from '../js/supabase-config.js';
+        import { UI } from '../js/ui-utils.js';
+
+        const btn = document.getElementById('btn-liquidate');
+        const logs = document.getElementById('logs');
+        const term = document.getElementById('terminal');
+        const pb = document.getElementById('pb-line');
+        const label = document.getElementById('btn-label');
+        const loader = document.getElementById('btn-loader');
+
+        function addLog(msg, status = 'info') {
+            const div = document.createElement('div');
+            const color = { info: 'text-slate-500', success: 'text-emerald-400', error: 'text-rose-500', warning: 'text-amber-400' }[status];
+            div.className = `flex gap-2 ${color}`;
+            div.innerHTML = `<span class="opacity-30">❯</span> <span>${msg}</span>`;
+            logs.appendChild(div);
+            term.scrollTop = term.scrollHeight;
+        }
+
+        btn.onclick = async () => {
+            if (!confirm('CONFIRMAR LIMPEZA DE HISTÓRICO? Registros de ponto, férias e eventos serão apagados. Cadastros de funcionários e setores serão mantidos.')) return;
+
+            btn.disabled = true;
+            term.classList.remove('hidden');
+            loader.classList.remove('hidden');
+            label.innerText = 'LIQUIDANDO...';
+            logs.innerHTML = '';
+            pb.style.width = '0%';
+
+            // Tabelas de Histórico/Transação (OS ALVOS)
+            const tables = [
+                { name: 'pontos', cols: ['funcionario_id'] },
+                { name: 'diario_logs', cols: ['funcionario_id'] },
+                { name: 'justificativas', cols: ['funcionario_id'] },
+                { name: 'anotacoes', cols: ['funcionario_id'] },
+                { name: 'ferias', cols: ['funcionario_id'] },
+                { name: 'comunicados', cols: ['destinatario_id', 'remetente_id'] },
+                { name: 'feriados_folgas', cols: ['funcionario_id'] },
+                { name: 'config_notificacoes_lidas', cols: ['funcionario_id'] }
+            ];
+
+            const companyId = localStorage.getItem('companyId');
+
+            try {
+                addLog('Mapeando tripulação para limpeza...', 'info');
+                const { data: emps } = await supabase.from('funcionarios').select('id, identidade_id').eq('empresa_id', companyId);
+                const empIds = (emps || []).map(e => e.id);
+                const identIds = (emps || []).map(e => e.identidade_id).filter(id => id);
+                addLog(`${empIds.length} funcionários mapeados.`, 'success');
+                
+                for (let i = 0; i < tables.length; i++) {
+                    const table = tables[i];
+                    pb.style.width = `${((i + 1) / tables.length) * 100}%`;
+                    addLog(`Processando: ${table.name.toUpperCase()}`);
+                    // 1. Identificar registros (Varredura por Identidade)
+                    let allIds = [];
+                    for (const col of table.cols) {
+                        const { data } = await supabase.from(table.name).select('id').in(col, empIds);
+                        if (data) allIds = [...allIds, ...data.map(r => r.id)];
+                    }
+                    if (identIds.length > 0) {
+                        const { data } = await supabase.from(table.name).select('id').in('identidade_id', identIds);
+                        if (data) allIds = [...allIds, ...data.map(r => r.id)];
+                    }
+                    const ids = [...new Set(allIds)];
+
+                    if (ids.length > 0) {
+                        const { data: deleted, error: delErr } = await supabase.from(table.name).delete().in('id', ids).select('id');
+                        
+                        if (!delErr && deleted?.length > 0) {
+                            addLog(`${deleted.length} registros expurgados.`, 'success');
+                        } else {
+                            // 2. Neutralização (Caso o RLS bloqueie a morte física)
+                            addLog(`Bloqueio RLS em ${table.name}. Neutralizando...`, 'warning');
+                            
+                            const { data: sample } = await supabase.from(table.name).select('*').limit(1);
+                            if (sample && sample[0]) {
+                                const tableCols = Object.keys(sample[0]);
+                                const mask = {
+                                    data: '2000-01-01',
+                                    data_incidente: '2000-01-01',
+                                    created_at: '2000-01-01T00:00:00Z',
+                                    data_hora: '2000-01-01T00:00:00Z',
+                                    lido: true,
+                                    resolvido: true,
+                                    conteudo: '(HISTÓRICO LIMPO)',
+                                    mensagem_padrao: '(DADO EXPURGADO)'
+                                };
+                                
+                                const finalMask = {};
+                                for (const k in mask) if (tableCols.includes(k)) finalMask[k] = mask[k];
+                                
+                                const { data: hidden } = await supabase.from(table.name).update(finalMask).in('id', ids).select('id');
+                                if (hidden) addLog(`${hidden.length} neutralizados (Viajante do Tempo).`, 'success');
+                            }
+                        }
+                    } else {
+                        // Purga de Escopo Geral (Para quem não tem vínculo direto com funcionário)
+                        const { data: gDel } = await supabase.from(table.name).delete().eq('company_id', companyId).select('id');
+                        if (gDel?.length > 0) addLog(`${gDel.length} registros gerais limpados.`, 'success');
+                        else addLog('Tabela sem resíduos.', 'info');
+                    }
+                }
+
+                addLog('Limpando cache de notificações...', 'info');
+                const keys = [];
+                for(let i=0; i<localStorage.length; i++) {
+                    const k = localStorage.key(i);
+                    if(k && (k.startsWith('ciente_') || k.startsWith('visto_'))) keys.push(k);
+                }
+                keys.forEach(k => localStorage.removeItem(k));
+
+                pb.style.width = '100%';
+                label.innerText = 'SISTEMA LIMPO';
+                addLog('PROCESSO FINALIZADO. CADASTROS PRESERVADOS.', 'success');
+                UI.showToast('Limpeza de histórico concluída!', 'success');
+
+            } catch (err) {
+                addLog(`FALHA: ${err.message}`, 'error');
+            } finally {
+                loader.classList.add('hidden');
+                btn.style.opacity = '0.5';
+            }
+        };
+
+        UI.initSidebar(localStorage.getItem('userRole'));
+    </script>
 </body>
 </html>

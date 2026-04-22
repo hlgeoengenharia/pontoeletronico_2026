@@ -375,12 +375,10 @@
             if (!confirm('Excluir registro permanentemente?')) return;
             UI.showLoader();
             try {
-                // Identificar tipo via EventManager para exclusão correta
-                const { supabase: sb } = await import('../js/supabase-config.js');
-                const { error } = await sb.from('justificativas').delete().eq('id', id);
-                if (error) {
-                    // Tentar na tabela de atividades se falhar na de justificativas
-                    await sb.from('anotacoes').delete().eq('id', id);
+                const tables = ['justificativas', 'anotacoes', 'comunicados', 'diario_logs', 'ferias', 'feriados_folgas'];
+                for (const t of tables) {
+                    const { data } = await supabase.from(t).delete().eq('id', id).select('id');
+                    if (data && data.length > 0) break;
                 }
                 await DiarioEngine.loadAndProcessHistory();
                 UI.showToast('Registro excluído', 'success');

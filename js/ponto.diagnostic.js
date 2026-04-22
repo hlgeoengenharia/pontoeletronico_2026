@@ -17,10 +17,16 @@ export const PontoDiagnostic = {
         if (!employeeId) return { error: "ID do funcionário não fornecido." };
 
         try {
-            // 1. Carregar dados completos do funcionário
+            // 1. Carregar dados completos do funcionário (com Identidade e Perfil)
             const { data: user, error: userError } = await supabase
                 .from('funcionarios')
-                .select('*, setores!funcionarios_setor_id_fkey(*), escalas!escala_id(*)')
+                .select(`
+                    *,
+                    setores!funcionarios_setor_id_fkey(*),
+                    escalas!escala_id(*),
+                    identidades_globais!inner(nome_completo, biometria_cadastrada),
+                    perfis_tripulantes(nickname, foto_url)
+                `)
                 .eq('id', employeeId)
                 .single();
 
@@ -95,9 +101,9 @@ export const PontoDiagnostic = {
                 },
                 biometria_facial: {
                     label: "Biometria Facial",
-                    status: user.biometria_cadastrada ? 'OK' : 'PENDENTE',
-                    detail: user.biometria_cadastrada ? "Cadastro facial ativo no sistema" : "Obrigatório cadastrar para liberar o ponto",
-                    passed: !!user.biometria_cadastrada
+                    status: user.identidades_globais?.biometria_cadastrada ? 'OK' : 'PENDENTE',
+                    detail: user.identidades_globais?.biometria_cadastrada ? "Cadastro facial ativo no sistema" : "Obrigatório cadastrar para liberar o ponto",
+                    passed: !!user.identidades_globais?.biometria_cadastrada
                 },
                 vinc_escala: {
                     label: "Escala Atribuída",
@@ -213,8 +219,8 @@ export const PontoDiagnostic = {
 
             return {
                 summary: {
-                    employee: user.nome_completo,
-                    nickname: user.nickname || user.nome_completo.split(' ')[0],
+                    employee: user.identidades_globais?.nome_completo || 'Tripulante',
+                    nickname: user.perfis_tripulantes?.nickname || user.identidades_globais?.nome_completo?.split(' ')[0] || 'T',
                     date: todayStr.split('-').reverse().join('/'),
                     time: currentTime,
                     result: allPassed ? 'BOTÃO ATIVO' : 'BOTÃO BLOQUEADO',

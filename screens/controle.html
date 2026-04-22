@@ -259,18 +259,39 @@
 
         async function carregarGestores() {
             try {
+                console.log('[Controle] Buscando gestores...');
+                // 1. Buscar Funcionários Gestores com Join (Tenta o caminho oficial)
                 const { data, error } = await supabase
                     .from('funcionarios')
-                    .select('id, nome_completo, nivel_acesso, permissoes_gestor, matricula')
-                    .eq('nivel_acesso', 'Gestor')
-                    .order('nome_completo');
+                    .select('id, matricula, permissoes_gestor, identidades_globais(nome_completo)')
+                    .eq('nivel_acesso', 'Gestor');
 
-                if (error) throw error;
-                gestoresData = data || [];
+                if (error) {
+                    console.warn('[Controle] Erro no join direto, tentando busca separada:', error);
+                    // Fallback para busca separada (o que fizemos antes, mas revisado)
+                    const { data: fData } = await supabase.from('funcionarios').select('*').eq('nivel_acesso', 'Gestor');
+                    const { data: iData } = await supabase.from('identidades_globais').select('id, nome_completo');
+                    
+                    const nMap = {};
+                    (iData || []).forEach(i => nMap[i.id] = i.nome_completo);
+                    
+                    gestoresData = (fData || []).map(f => ({
+                        ...f,
+                        nome_completo: nMap[f.id] || 'Gestor sem Nome'
+                    }));
+                } else {
+                    gestoresData = (data || []).map(f => ({
+                        ...f,
+                        nome_completo: f.identidades_globais?.nome_completo || 'Gestor sem Nome'
+                    }));
+                }
+
+                gestoresData.sort((a, b) => a.nome_completo.localeCompare(b.nome_completo));
+                console.log(`[Controle] ${gestoresData.length} gestores processados.`);
                 renderGestores(gestoresData);
 
             } catch (err) {
-                console.error('Erro ao carregar gestores:', err);
+                console.error('Erro fatal ao carregar gestores:', err);
                 UI.showToast('Erro ao carregar lista de gestores', 'error');
             }
         }

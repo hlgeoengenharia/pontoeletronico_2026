@@ -224,6 +224,7 @@
     <script type="module">
         import { supabase } from '../js/supabase-config.js';
         import { PontoDiagnostic } from '../js/ponto.diagnostic.js?v=3.1';
+        import { ScalesEngine } from '../js/scales-engine.js';
         import { UI } from '../js/ui-utils.js';
 
         const searchInput = document.getElementById('employee-search');
@@ -246,31 +247,56 @@
 
             if (searchTimeout) clearTimeout(searchTimeout);
             searchTimeout = setTimeout(async () => {
-                const { data, error } = await supabase
-                    .from('funcionarios')
-                    .select('id, nome_completo, matricula')
-                    .or(`nome_completo.ilike.%${term}%,matricula.ilike.%${term}%`)
-                    .limit(5);
+                try {
+                    // Estágio 1: Buscar IDs na identidades_globais pelo nome
+                    const { data: idEntries } = await supabase
+                        .from('identidades_globais')
+                        .select('id')
+                        .ilike('nome_completo', `%${term}%`)
+                        .limit(30);
 
-                if (data && data.length > 0) {
-                    renderSearchResults(data);
-                } else {
-                    resultsEl.innerHTML = '<p class="p-4 text-[10px] text-slate-600 font-bold uppercase text-center">Nenhum resultado</p>';
-                    resultsEl.classList.remove('hidden');
+                    const foundIds = (idEntries || []).map(i => i.id);
+
+                    // Estágio 2: Buscar funcionários por matricula OU pelos IDs de identidade encontrados
+                    let query = supabase
+                        .from('funcionarios')
+                        .select('id, matricula, identidades_globais(nome_completo)');
+
+                    if (foundIds.length > 0) {
+                        query = query.or(`matricula.ilike.%${term}%,identidade_id.in.(${foundIds.join(',')})`);
+                    } else {
+                        query = query.ilike('matricula', `%${term}%`);
+                    }
+
+                    const { data, error } = await query.limit(8);
+
+                    if (error) return;
+
+                    if (data && data.length > 0) {
+                        renderSearchResults(data);
+                    } else {
+                        resultsEl.innerHTML = '<p class="p-4 text-[10px] text-slate-600 font-bold uppercase text-center italic">Nenhum tripulante encontrado</p>';
+                        resultsEl.classList.remove('hidden');
+                    }
+                } catch (err) {
+                    console.error('Erro crítico na busca:', err);
                 }
-            }, 300);
+            }, 400);
         });
 
         function renderSearchResults(list) {
-            resultsEl.innerHTML = list.map(f => `
-                <div class="p-4 hover:bg-white/5 border-b border-white/5 cursor-pointer flex justify-between items-center group transition-all" onclick="window.selectEmployee('${f.id}', '${f.nome_completo.replace(/'/g, "\\'")}')">
-                    <div>
-                        <p class="text-xs font-black text-white uppercase tracking-tight">${f.nome_completo}</p>
-                        <p class="text-[10px] text-slate-500 font-bold tracking-widest mt-1">MATRÍCULA: ${f.matricula || '---'}</p>
+            resultsEl.innerHTML = list.map(f => {
+                const nome = f.identidades_globais?.nome_completo || 'Tripulante';
+                return `
+                    <div class="p-4 hover:bg-white/5 border-b border-white/5 cursor-pointer flex justify-between items-center group transition-all" onclick="window.selectEmployee('${f.id}', '${nome.replace(/'/g, "\\'")}')">
+                        <div>
+                            <p class="text-xs font-black text-white uppercase tracking-tight">${nome}</p>
+                            <p class="text-[10px] text-slate-500 font-bold tracking-widest mt-1">MATRÍCULA: ${f.matricula || '---'}</p>
+                        </div>
+                        <span class="material-symbols-outlined text-slate-700 group-hover:text-primary">check_circle</span>
                     </div>
-                    <span class="material-symbols-outlined text-slate-700 group-hover:text-primary">check_circle</span>
-                </div>
-            `).join('');
+                `;
+            }).join('');
             resultsEl.classList.remove('hidden');
         }
 
@@ -305,9 +331,10 @@
 
         function renderReport(report) {
             const { summary, rules, rawUser } = report;
+            const perfil = Array.isArray(rawUser.perfis_tripulantes) ? rawUser.perfis_tripulantes[0] : rawUser.perfis_tripulantes;
             
             // Update Summary Card
-            document.getElementById('res-photo').src = rawUser.perfis_tripulantes?.foto_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(summary.nickname)}&background=0D59F2&color=fff`;
+            document.getElementById('res-photo').src = perfil?.foto_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(summary.nickname)}&background=0D59F2&color=fff`;
             document.getElementById('res-name').innerText = summary.employee;
             document.getElementById('res-time').innerText = `AUDITADO ÀS ${summary.time}`;
             
