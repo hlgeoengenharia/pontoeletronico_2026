@@ -37,14 +37,26 @@ export const FeriasEngine = {
                 UI.hideLoader();
                 return;
             }
-            const { data: user, error } = await supabase.from('funcionarios').select('*, setores!funcionarios_setor_id_fkey(id, regra_ferias)').eq('id', this.state.userId).single();
+            const { data: user, error } = await supabase
+                .from('funcionarios')
+                .select('*, identidades_globais!inner(*), setores!funcionarios_setor_id_fkey(id, regra_ferias), cargos!cargo_id(nome)')
+                .eq('id', this.state.userId)
+                .single();
+            
             if (error || !user) {
                 console.error('[FeriasEngine] Erro crítico de inicialização:', error || 'User not found');
                 UI.hideLoader();
                 UI.showToast('Erro ao carregar perfil de férias.', 'error');
                 return;
             }
-            this.state.targetEmployee = user;
+            
+            // Unificar dados para compatibilidade
+            this.state.targetEmployee = {
+                ...user,
+                nome_completo: user.identidades_globais?.nome_completo || 'Tripulante',
+                foto_url: user.identidades_globais?.foto_url,
+                cargo_nome: user.cargos?.nome
+            };
             this.state.sectorRule = user.setores?.regra_ferias || 1;
         }
 
@@ -133,11 +145,17 @@ export const FeriasEngine = {
         const cargo = document.getElementById('ferias-cargo-admin') || document.getElementById('ferias-cargo');
         const regra = document.getElementById('ferias-regras-info-admin') || document.getElementById('ferias-regras-info');
 
-        if (nome) nome.innerText = this.state.targetEmployee.nome_completo.toUpperCase();
-        if (cargo) cargo.innerText = `${this.state.targetEmployee.cargo_nome || 'TRIPULANTE'}`;
+        const emp = this.state.targetEmployee;
+        if (!emp) return;
+
+        const nomeValue = emp.nome_completo || emp.identidades_globais?.nome_completo || 'Tripulante';
+        const cargoValue = emp.cargo_nome || emp.cargos?.nome || 'TRIPULANTE';
+        const fotoValue = emp.foto_url || emp.identidades_globais?.foto_url || emp.perfis_tripulantes?.[0]?.foto_url;
+
+        if (nome) nome.innerText = nomeValue.toUpperCase();
+        if (cargo) cargo.innerText = cargoValue.toUpperCase();
         if (foto) {
-            const profileFoto = this.state.targetEmployee.perfis_tripulantes?.[0]?.foto_url || this.state.targetEmployee.foto_url;
-            foto.src = profileFoto || `https://ui-avatars.com/api/?name=${this.state.targetEmployee.nome_completo}&background=0D59F2&color=fff`;
+            foto.src = fotoValue || `https://ui-avatars.com/api/?name=${encodeURIComponent(nomeValue)}&background=0D59F2&color=fff`;
         }
 
         if (regra) {
@@ -453,7 +471,14 @@ export const FeriasEngine = {
         }
 
         if (status === 'rejeitado') {
-            if (!confirm('Deseja realmente rejeitar este planejamento?')) return;
+            if (!confirm('Deseja realmente rejeitar este planejamento?')) {
+                this.state.isSubmitting = false;
+                if (btnSave) {
+                    btnSave.disabled = false;
+                    btnSave.classList.remove('opacity-50', 'grayscale');
+                }
+                return;
+            }
         }
 
         UI.showLoader();
@@ -472,7 +497,7 @@ export const FeriasEngine = {
                 status: (status === 'rejeitado' ? 'rejeitado' : status)
             }));
             await supabase.from('ferias').insert(toInsert);
-
+ 
             // 2. Notificar no Diário
             console.log('[FeriasEngine] Inserindo log no Diário de Bordo...');
             await supabase.from('diario_logs').insert([{

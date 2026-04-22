@@ -85,12 +85,19 @@
             UI.updateFooterNavigation(userObj.role);
 
             try {
-                const { data: user } = await supabase.from('funcionarios').select('*, setores!funcionarios_setor_id_fkey(nome)').eq('id', targetUserId).single();
+                const { data: user } = await supabase
+                    .from('funcionarios')
+                    .select('*, identidades_globais!inner(*), setores!funcionarios_setor_id_fkey(nome), cargos!cargo_id(nome)')
+                    .eq('id', targetUserId)
+                    .single();
+                    
                 if (user) {
-                    document.getElementById('user-nome').innerText = user.nome_completo.toUpperCase();
-                    document.getElementById('user-cargo').innerText = `CARGO/FUNÇÃO: ${(user.funcao || 'TRIPULANTE').toUpperCase()}`;
+                    const ident = user.identidades_globais;
+                    document.getElementById('user-nome').innerText = (ident?.nome_completo || 'TRIPULANTE').toUpperCase();
+                    document.getElementById('user-cargo').innerText = `CARGO/FUNÇÃO: ${(user.cargos?.nome || 'TRIPULANTE').toUpperCase()}`;
                     document.getElementById('user-setor-info').innerText = `SETOR: ${(user.setores?.nome || 'NÃO DEFINIDO').toUpperCase()}`;
-                    if (user.foto_url) document.getElementById('user-photo').src = user.foto_url;
+                    const photo = ident?.foto_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(ident?.nome_completo || 'User')}&background=0D59F2&color=fff`;
+                    document.getElementById('user-photo').src = photo;
                 }
 
                 const { data: allPoints } = await supabase.from('pontos').select('data_hora').eq('funcionario_id', targetUserId).order('data_hora', { ascending: false });

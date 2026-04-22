@@ -467,28 +467,43 @@ const EventManager = {
     canEdit(item, options = {}) {
         const now = new Date();
         const typeKey = (item.itemType || item.type || item.tipo || '').toUpperCase();
+        const itemTime = new Date(item.created_at || item.time || item.data_ref);
+        const diffHours = (now - itemTime) / (1000 * 60 * 60);
 
-        // Regra Admin: Hora Extra, Comunicados e Feriados SÓ em Online.html
-        if (typeKey === 'HORA_EXTRA' || typeKey === 'COMUNICADO' || typeKey === 'MENSAGEM' || typeKey === 'FERIAS_FOLGA') {
-            return options.isContextOnline === true;
+        // 1. Comunicados e Horas Extras (Regra Admin: Online + 24h)
+        if (typeKey === 'HORA_EXTRA' || typeKey === 'COMUNICADO' || typeKey === 'MENSAGEM') {
+            return options.isContextOnline === true && diffHours < 24;
         }
 
-        // Regra Funcionário: Justificativas (Pendente e < 24h)
+        // 2. Feriados e Folgas (Regra Admin: Online + 1 dia antes do evento)
+        if (typeKey === 'FERIAS_FOLGA') {
+            if (!options.isContextOnline) return false;
+            
+            // Buscar a data mais próxima do evento na lista agrupada
+            const list = item.list || [item];
+            const dates = list.map(f => {
+                const d = f.data || item.data;
+                return d ? new Date(d + 'T00:00:00') : now;
+            });
+            const minDate = new Date(Math.min(...dates));
+            
+            // O botão some no início do dia anterior ao evento (24h antes do 00:00:00 do feriado)
+            const deadline = new Date(minDate.getTime() - (24 * 60 * 60 * 1000));
+            return now < deadline;
+        }
+
+        // 3. Regra Funcionário: Justificativas (Pendente e < 24h)
         if (typeKey === 'JUSTIFICATIVA') {
-            const createdAt = new Date(item.created_at || item.time);
-            const diffHours = (now - createdAt) / (1000 * 60 * 60);
             const isPending = (item.status === 'pendente' || item.status_pendencia === 'pendente');
             return isPending && diffHours < 24;
         }
 
-        // Regra Funcionário: Atividades (< 24h)
+        // 4. Regra Funcionário: Atividades (< 24h)
         if (typeKey === 'ATIVIDADE') {
-            const createdAt = new Date(item.created_at || item.time);
-            const diffHours = (now - createdAt) / (1000 * 60 * 60);
             return diffHours < 24;
         }
 
-        // Regra Férias: Até 20 dias antes (se aprovado) ou qualquer momento se pendente
+        // 5. Regra Férias: Até 20 dias antes (se aprovado) ou qualquer momento se pendente
         if (typeKey === 'CRONOGRAMA_FERIAS') {
             if (!item.parcelas) return true; // Pendente de registro inicial
             if (item.status === 'aprovado') {

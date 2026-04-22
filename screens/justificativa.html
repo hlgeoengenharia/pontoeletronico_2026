@@ -422,6 +422,7 @@
             .from('justificativas')
             .insert([{
               funcionario_id: targetUserId,
+              company_id: Auth.getUser()?.companyId,
               data_incidente: dataVal,
               tipo_divergencia: tipoVal,
               descricao: descVal,

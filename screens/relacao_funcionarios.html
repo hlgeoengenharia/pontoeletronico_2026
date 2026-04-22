@@ -107,8 +107,14 @@
           // 1. Buscar Funcionários (com ou sem filtro de setor)
           let query = supabase
             .from('funcionarios')
-            .select('*, setores!funcionarios_setor_id_fkey(nome), cargos(nome, nivel), perfis_tripulantes(foto_url)')
-            .order('nome_completo');
+            .select(`
+              *,
+              identidades_globais!inner(nome_completo),
+              setores!funcionarios_setor_id_fkey(nome),
+              cargos(nome, nivel),
+              perfis_tripulantes(foto_url)
+            `)
+            .order('nome_completo', { foreignTable: 'identidades_globais' });
 
           if (setorId) {
             query = query.eq('setor_id', setorId);
@@ -136,6 +142,7 @@
 
           todosFuncionarios = funcData.map(f => ({
             ...f,
+            nome_completo: f.identidades_globais?.nome_completo || 'Tripulante',
             isOnline: (onlineCounts[f.id] || 0) % 2 !== 0
           }));
 

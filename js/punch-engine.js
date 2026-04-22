@@ -2,6 +2,8 @@ import { supabase } from './supabase-config.js';
 import { EventManager } from './event-manager.js';
 import { BusinessRulesManager } from './business-rules-manager.js';
 import { BiometricHelper } from './biometric-helper.js';
+import { Auth } from './auth.js';
+import { UI } from './ui-utils.js';
 
 /**
  * PunchEngine V3.1 - fluxo de ponto com biometria fail-closed.
@@ -323,6 +325,7 @@ export const PunchEngine = {
 
             const payload = {
                 funcionario_id: userId,
+                company_id: currentUser.company_id || Auth.getUser()?.companyId,
                 data_hora: now.toISOString(),
                 tipo: this.tempData.type,
                 status_validacao: isForaDoRaio ? 'pendente' : 'aprovado',
@@ -363,6 +366,7 @@ export const PunchEngine = {
         if (isDivergent && isForaDoRaio) {
             const { data, error } = await supabase.from('diario_logs').insert([{
                 funcionario_id: currentUser.id,
+                company_id: currentUser.company_id || Auth.getUser()?.companyId,
                 data_hora: now.toISOString(),
                 tipo: 'pendencia_geofence',
                 mensagem_padrao: `Registro de ${this.tempData.type.toUpperCase()} efetuado fora do raio permitido (${distancia || '?'}m).`,

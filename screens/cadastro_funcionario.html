@@ -53,7 +53,7 @@
             <input type="password" name="password_fake" id="password_fake" value="" style="display:none;" />
             
             <!-- Upload de Foto -->
-            <div class="flex flex-col items-center justify-center mb-8">
+            <div class="flex flex-col items-center justify-center mb-8 hidden">
                 <div class="relative group/avatar">
                     <input type="file" id="avatar-input" class="hidden" accept="image/*">
                     <div id="avatar-container" onclick="document.getElementById('avatar-input').click()" class="w-32 h-32 rounded-full border-4 border-orange-500 p-1 bg-background-dark shadow-[0_0_20px_rgba(249,115,22,0.2)] relative transition-all duration-300 cursor-pointer">
@@ -82,7 +82,7 @@
             </div>
 
             <!-- Cápsula Biométrica (Tornada interativa para registro/atualização) -->
-            <div class="flex justify-center mb-8">
+            <div class="flex justify-center mb-8 hidden">
                 <button type="button" id="capsula-biometria" onclick="handleBiometriaClick()" class="px-8 py-3 bg-slate-950/90 border border-emerald-500/30 rounded-full flex items-center gap-4 shadow-2xl backdrop-blur-md animate-in fade-in zoom-in duration-500 hover:scale-105 active:scale-95 transition-all outline-none">
                     <div id="capsula-icon-bg" class="size-8 rounded-lg bg-emerald-500/20 flex items-center justify-center transition-all duration-500">
                         <span id="capsula-icon" class="material-symbols-outlined text-emerald-500 text-lg">face</span>
@@ -360,11 +360,18 @@
                             <p id="detalhe-tipo" class="text-xs text-slate-500 dark:text-slate-400">Regime de Trabalho
                             </p>
                         </div>
-                        <button type="button" id="btn-personalizar"
-                            class="flex items-center gap-1 text-[10px] font-bold text-primary border border-primary/30 px-2 py-1 rounded bg-primary/5 hover:bg-primary/10 transition-all uppercase tracking-tighter">
-                            <span class="material-symbols-outlined text-xs">edit_note</span>
-                            Personalizar
-                        </button>
+                        <div class="flex items-center gap-1">
+                            <button type="button" id="btn-resetar-escala" onclick="resetarEscalaPadrao()"
+                                class="hidden flex items-center gap-1 text-[10px] font-bold text-rose-500 border border-rose-500/30 px-2 py-1 rounded bg-rose-500/5 hover:bg-rose-500/10 transition-all uppercase tracking-tighter">
+                                <span class="material-symbols-outlined text-xs">restart_alt</span>
+                                Resetar
+                            </button>
+                            <button type="button" id="btn-personalizar"
+                                class="flex items-center gap-1 text-[10px] font-bold text-primary border border-primary/30 px-2 py-1 rounded bg-primary/5 hover:bg-primary/10 transition-all uppercase tracking-tighter">
+                                <span class="material-symbols-outlined text-xs">edit_note</span>
+                                Personalizar
+                            </button>
+                        </div>
                     </div>
 
                     <div id="view-escala-padrao" class="grid grid-cols-2 gap-4 py-2 border-y border-primary/10">
@@ -952,6 +959,7 @@
                         .from('funcionarios')
                         .select(`
                             *,
+                            identidades_globais!inner (id, nome_completo, cpf, rg, data_nascimento, sexo, biometria_cadastrada, biometria_token, foto_url),
                             setores!funcionarios_setor_id_fkey (nome),
                             cargos!cargo_id (nome),
                             perfis_tripulantes (*)
@@ -960,18 +968,17 @@
                         .single();
                     if (errEmp) throw errEmp;
                     if (emp) {
-                         document.getElementById('nome_completo').value = emp.nome_completo || '';
-                         document.getElementById('cpf').value = emp.cpf || '';
-                         document.getElementById('rg').value = emp.rg || '';
-                         document.getElementById('data_nasc').value = emp.data_nascimento || '';
-                         if (emp.sexo) {
-                             const genderInput = document.querySelector(`input[name="gender"][value="${emp.sexo}"]`);
+                         document.getElementById('nome_completo').value = emp.identidades_globais?.nome_completo || '';
+                         document.getElementById('cpf').value = emp.identidades_globais?.cpf || '';
+                         document.getElementById('rg').value = emp.identidades_globais?.rg || '';
+                         document.getElementById('data_nasc').value = emp.identidades_globais?.data_nascimento || '';
+                         if (emp.identidades_globais?.sexo) {
+                             const genderInput = document.querySelector(`input[name="gender"][value="${emp.identidades_globais.sexo}"]`);
                              if (genderInput) genderInput.checked = true;
                          }
                          document.getElementById('matricula').value = emp.matricula || '';
                          if (emp.nivel_acesso) {
-                             const accessInput = document.querySelector(`input[name="access_level"][value="${emp.nivel_acesso}"]`);
-                             if (accessInput) accessInput.checked = true;
+                             document.getElementById('nivel_acesso_select').value = emp.nivel_acesso;
                          }
                          document.getElementById('setor-select').value = emp.setor_id || '';
                          document.getElementById('funcao-select').value = emp.cargo_id || '';
@@ -983,10 +990,25 @@
                          document.getElementById('regime_trabalho').value = emp.regime_trabalho || 'Presencial';
                          document.getElementById('rastreio_ativo').checked = emp.rastreio_ativo || false;
                          document.getElementById('data_inicio_prevista').value = emp.data_inicio_prevista || '';
-                         document.getElementById('biometria_cadastrada').value = emp.biometria_cadastrada || "false";
-                         document.getElementById('biometria_token').value = emp.biometria_token || '';
+                         document.getElementById('biometria_cadastrada').value = emp.identidades_globais?.biometria_cadastrada || "false";
+                         document.getElementById('biometria_token').value = emp.identidades_globais?.biometria_token || '';
 
-                         if (emp.biometria_cadastrada && BiometricHelper.isTemplateValid(emp.biometria_token || '')) {
+                          // Foto do Perfil
+                          const preview = document.getElementById('avatar-preview');
+                          const placeholder = document.getElementById('avatar-placeholder');
+                          const fotoUrl = emp.identidades_globais?.foto_url;
+
+                          if (fotoUrl) {
+                              preview.src = fotoUrl;
+                              preview.classList.remove('hidden');
+                              placeholder.classList.add('hidden');
+                          } else {
+                              preview.src = '';
+                              preview.classList.add('hidden');
+                              placeholder.classList.remove('hidden');
+                          }
+
+                         if (emp.identidades_globais?.biometria_cadastrada && BiometricHelper.isTemplateValid(emp.identidades_globais?.biometria_token || '')) {
                             const badge = document.getElementById('status-biometria-badge');
                             const capsula = document.getElementById('capsula-biometria');
                             const capsulaText = document.getElementById('capsula-text');
@@ -1237,8 +1259,16 @@
         function initEscalaListeners() {
             const inputs = ['pers-carga', 'pers-entrada', 'pers-dias-semana'];
             inputs.forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
                 ['input', 'change'].forEach(evt => {
-                    document.getElementById(id).addEventListener(evt, calcularSaidaAutomatica);
+                    el.addEventListener(evt, () => {
+                        calcularSaidaAutomatica();
+                        if (id === 'pers-dias-semana') {
+                            // Se o número de dias mudar, precisamos validar os botões selecionados
+                            validarLimiteDiasSemana();
+                        }
+                    });
                 });
             });
             // Chamar uma vez para garantir que carregue se já houver dados
@@ -1250,22 +1280,37 @@
                     const isCurrentlyLocked = document.getElementById('nome_completo').disabled;
                     if (isCurrentlyLocked) return;
 
+                    const maxDays = parseInt(document.getElementById('pers-dias-semana').value) || 0;
                     const day = parseInt(btn.dataset.day);
                     const index = diasSelecionadosPers.indexOf(day);
+
                     if (index > -1) {
+                        // Sempre permitir desmarcar
                         diasSelecionadosPers.splice(index, 1);
-                        btn.classList.remove('bg-primary', 'text-white', 'border-primary', 'neon-border-sm');
                     } else {
+                        // Só permitir marcar se não atingiu o limite
+                        if (diasSelecionadosPers.length >= maxDays) {
+                            UI.showToast(`Limite de ${maxDays} dias atingido. Aumente 'DIAS TRABALHADO/SEM' para selecionar mais.`, 'warning');
+                            return;
+                        }
                         diasSelecionadosPers.push(day);
-                        btn.classList.add('bg-primary', 'text-white', 'border-primary', 'neon-border-sm');
                     }
                     
-                    // Atualizar contador de dias e disparar cálculo
-                    document.getElementById('pers-dias-semana').value = diasSelecionadosPers.length;
+                    updatePersonalizedDaysUI(); // Atualiza cores dos botões
                     calcularSaidaAutomatica();
                     refreshCalendar();
                 };
             });
+        }
+
+        function validarLimiteDiasSemana() {
+            const maxDays = parseInt(document.getElementById('pers-dias-semana').value) || 0;
+            if (diasSelecionadosPers.length > maxDays) {
+                // Remove excedentes se o usuário diminuir o número manual
+                diasSelecionadosPers = diasSelecionadosPers.slice(0, maxDays);
+                updatePersonalizedDaysUI();
+                refreshCalendar();
+            }
         }
 
         function calcularSaidaAutomatica() {
@@ -1296,7 +1341,9 @@
         }
 
         function updatePersonalizedDaysUI() {
-            document.getElementById('pers-dias-semana').value = diasSelecionadosPers.length;
+            // Removido o update do input para permitir que o input controle a seleção
+            // document.getElementById('pers-dias-semana').value = diasSelecionadosPers.length; 
+            
             document.querySelectorAll('.pers-day-btn').forEach(btn => {
                 const day = parseInt(btn.dataset.day);
                 if (diasSelecionadosPers.includes(day)) {
@@ -1312,15 +1359,18 @@
             const select = document.getElementById('escala-select');
             const card = document.getElementById('detalhes-escala-card');
             const config = escalasData[select.value];
+            const btnReset = document.getElementById('btn-resetar-escala');
 
             document.getElementById('view-escala-padrao').classList.remove('hidden');
             document.getElementById('edit-escala-personalizada').classList.add('hidden');
             document.getElementById('aviso-personalizacao').classList.add('hidden');
-
+            
             if (!config) {
+                if (btnReset) btnReset.classList.add('hidden', 'flex');
                 card.classList.add('hidden');
                 return;
             }
+            if (btnReset) btnReset.classList.remove('hidden');
             card.classList.remove('hidden');
             document.getElementById('detalhe-nome').innerText = config.nome;
             // O Regime agora vem do funcionário
@@ -1365,6 +1415,10 @@
                 viewPadrao.classList.add('hidden');
                 editPers.classList.remove('hidden');
                 aviso.classList.remove('hidden');
+                // Botão reset deve continuar visível
+                if (document.getElementById('btn-resetar-escala')) 
+                    document.getElementById('btn-resetar-escala').classList.remove('hidden');
+                
                 if (config) {
                     document.getElementById('pers-carga').value = config.carga;
                     document.getElementById('pers-dias-semana').value = config.diasSemana || 5;
@@ -1377,6 +1431,9 @@
                 viewPadrao.classList.remove('hidden');
                 editPers.classList.add('hidden');
                 aviso.classList.add('hidden');
+                // Botão reset continua visível se houver config
+                if (config && document.getElementById('btn-resetar-escala')) 
+                    document.getElementById('btn-resetar-escala').classList.remove('hidden');
             }
             if (config) refreshCalendar();
         }
@@ -1385,6 +1442,32 @@
         document.getElementById('regime_trabalho').addEventListener('change', atualizarDetalhesEscala);
         document.getElementById('setor-select').addEventListener('change', atualizarDetalhesEscala);
         document.getElementById('btn-personalizar').addEventListener('click', alternarPersonalizacao);
+
+        window.resetarEscalaPadrao = () => {
+             const select = document.getElementById('escala-select');
+             const config = escalasData[select.value];
+             if (!config) return;
+             
+             if (!confirm("Restaurar configurações originais da escala? Isso ativará a personalização com os valores padrão.")) return;
+             
+             // Ativa modo personalizado para mostrar os valores
+             modoPersonalizado = true;
+             document.getElementById('view-escala-padrao').classList.add('hidden');
+             document.getElementById('edit-escala-personalizada').classList.remove('hidden');
+             document.getElementById('aviso-personalizacao').classList.remove('hidden');
+
+             document.getElementById('pers-carga').value = config.carga;
+             document.getElementById('pers-dias-semana').value = config.diasSemana || 5;
+             document.getElementById('pers-entrada').value = config.entrada;
+             document.getElementById('pers-saida').value = config.saida;
+             diasSelecionadosPers = config.dias ? [...config.dias] : [];
+             
+             updatePersonalizedDaysUI();
+             calcularSaidaAutomatica();
+             refreshCalendar();
+             
+             UI.showToast("Padrão da escala carregado para visualização.", "info");
+        };
 
         // Lógica de Busca de Especialidade
         document.getElementById('busca-especialidade-input').addEventListener('input', (e) => {
@@ -1499,16 +1582,21 @@
                     }
                 }
 
-                // 2. Montar Dados
-                const dadosFuncionario = {
+                // 2. Montar Dados Separados
+                const dadosIdentidade = {
                     nome_completo: document.getElementById('nome_completo').value,
                     cpf: rawCpf || null,
                     rg: document.getElementById('rg').value || null,
                     data_nascimento: document.getElementById('data_nasc').value || null,
                     sexo: e.target.querySelector('input[name="gender"]:checked')?.value || null,
+                    biometria_cadastrada: document.getElementById('biometria_cadastrada').value === "true",
+                    biometria_token: document.getElementById('biometria_token').value || null
+                };
+
+                const dadosProfissionais = {
                     matricula: document.getElementById('matricula').value,
                     cargo_id: cargoId || null,
-                    funcao: document.getElementById('funcao-select').options[document.getElementById('funcao-select').selectedIndex].text.split(' (')[0],
+                    funcao: document.getElementById('funcao-select').options[document.getElementById('funcao-select').selectedIndex]?.text.split(' (')[0] || null,
                     setor_id: document.getElementById('setor-select').value || null,
                     escala_id: document.getElementById('escala-select').value || null,
                     nivel_acesso: document.getElementById('nivel_acesso_select')?.value || 'Funcionário',
@@ -1517,8 +1605,6 @@
                     regime_trabalho: document.getElementById('regime_trabalho').value,
                     rastreio_ativo: document.getElementById('rastreio_ativo').checked,
                     data_inicio_prevista: document.getElementById('data_inicio_prevista').value || null,
-                    biometria_cadastrada: document.getElementById('biometria_cadastrada').value === "true",
-                    biometria_token: document.getElementById('biometria_token').value || null,
                     personalizacao_escala: modoPersonalizado ? {
                         carga_horaria_semanal: parseInt(document.getElementById('pers-carga').value),
                         dias_trabalho_semana: parseInt(document.getElementById('pers-dias-semana').value),
@@ -1537,17 +1623,40 @@
                     foto_url: avatarUrl
                 };
 
+                const companyId = localStorage.getItem('companyId');
+                if (!companyId) {
+                    console.error('[Cadastro] Erro: ID da Empresa (Tenant) não encontrado na sessão.');
+                    UI.showToast('Erro de Sessão: Empresa não identificada.', 'error');
+                    UI.hideLoader();
+                    return;
+                }
+
                 // 3. Inserir ou Atualizar no Banco
                 const urlParams = new URLSearchParams(window.location.search);
                 const editId = urlParams.get('id');
 
+                // Adicionar identificador de empresa em todos os payloads
+                dadosProfissionais.company_id = companyId;
+                dadosPerfil.company_id = companyId;
+
                 if (editId) {
-                    // Update Mode
-                    delete dadosPerfil.senha; // Não sobrepor a senha do usuário em edições comuns
+                    // --- MODO EDIÇÃO ---
+                    delete dadosPerfil.senha; 
                     
-                    const { error: funcError } = await supabase.from('funcionarios').update(dadosFuncionario).eq('id', editId);
+                    // Buscar o funcionário atual para obter o identidade_id
+                    const { data: currFunc } = await supabase.from('funcionarios').select('identidade_id').eq('id', editId).single();
+                    
+                    // 3.1 Atualizar Identidade
+                    if (currFunc?.identidade_id) {
+                        const { error: identErr } = await supabase.from('identidades_globais').update(dadosIdentidade).eq('id', currFunc.identidade_id);
+                        if (identErr) throw identErr;
+                    }
+
+                    // 3.2 Atualizar Profissional
+                    const { error: funcError } = await supabase.from('funcionarios').update(dadosProfissionais).eq('id', editId);
                     if (funcError) throw funcError;
 
+                    // 3.3 Atualizar Perfil
                     const { error: perfilError } = await supabase.from('perfis_tripulantes').update(dadosPerfil).eq('funcionario_id', editId);
                     if (perfilError) throw perfilError;
 
@@ -1567,16 +1676,30 @@
                     fecharFormCadastro();
                     loadFuncionarios();
                 } else {
-                    // Insert Mode
-                    const { data: funcData, error: funcError } = await supabase.from('funcionarios').insert([dadosFuncionario]).select().single();
+                    // --- MODO INSERÇÃO ---
+                    // 3.1 Criar Identidade
+                    // 3.1 Criar Identidade (Global - pode não ter company_id dependendo da arquitetura, mas mantemos isolado por segurança se a tabela permitir)
+                    const { data: identData, error: identErr } = await supabase.from('identidades_globais').insert([{...dadosIdentidade, company_id: companyId}]).select().single();
+                    if (identErr) {
+                        // Fallback se idents_globais não tiver company_id ainda
+                        if (identErr.code === 'PGRST204' || identErr.message.includes('company_id')) {
+                            const { data: identRetry, error: retryErr } = await supabase.from('identidades_globais').insert([dadosIdentidade]).select().single();
+                            if (retryErr) throw retryErr;
+                            identData = identRetry;
+                        } else {
+                            throw identErr;
+                        }
+                    }
+
+                    // 3.2 Criar Funcionário vinculado à identidade
+                    dadosProfissionais.identidade_id = identData.id;
+                    const { data: funcData, error: funcError } = await supabase.from('funcionarios').insert([dadosProfissionais]).select().single();
                     if (funcError) throw funcError;
 
+                    // 3.3 Criar Perfil
                     dadosPerfil.funcionario_id = funcData.id;
                     const { error: perfilError } = await supabase.from('perfis_tripulantes').insert([dadosPerfil]);
-                    if (perfilError) {
-                        console.error('Erro ao salvar perfil, dados de RH salvos isoladamente:', perfilError);
-                        throw perfilError;
-                    }
+                    if (perfilError) throw perfilError;
 
                     // 4. Salvar Especialidades
                     if (selectedEspecialidades.length > 0) {
@@ -1612,10 +1735,11 @@
                     .from('funcionarios')
                     .select(`
                         *,
+                        identidades_globais!inner (nome_completo, foto_url, biometria_cadastrada),
                         setores!funcionarios_setor_id_fkey (nome),
                         cargos!cargo_id (nome)
                     `)
-                    .order('nome_completo');
+                    .order('nome_completo', { foreignTable: 'identidades_globais' });
                 
                 if (error) {
                     console.error('DEBUG: Falha na query principal:', error);
@@ -1661,10 +1785,10 @@
                     <div onclick="abrirEdicaoCardV2('${f.id}')" class="p-4 flex items-center justify-between cursor-pointer">
                         <div class="flex items-center gap-4">
                             <div class="size-12 rounded-full border-2 border-primary/20 p-0.5 overflow-hidden">
-                                <img src="${f.foto_url || `https://ui-avatars.com/api/?name=${f.nome_completo}&background=0D59F2&color=fff`}" class="w-full h-full rounded-full object-cover">
+                                <img src="${f.identidades_globais?.foto_url || `https://ui-avatars.com/api/?name=${f.identidades_globais?.nome_completo || 'User'}&background=0D59F2&color=fff`}" class="w-full h-full rounded-full object-cover">
                             </div>
                             <div>
-                                <h3 class="text-sm font-bold uppercase text-slate-100 group-hover:text-primary transition-colors">${f.nome_completo}</h3>
+                                <h3 class="text-sm font-bold uppercase text-slate-100 group-hover:text-primary transition-colors">${f.identidades_globais?.nome_completo || 'Sem Nome'}</h3>
                                 <div class="flex items-center gap-2 mt-0.5">
                                     <span class="text-[9px] text-slate-500 uppercase font-black tracking-widest">${f.cargos?.nome || 'Cargo N/A'}</span>
                                     <span class="text-[8px] bg-white/5 px-1.5 py-0.5 rounded text-slate-400 font-mono">#${f.matricula || '---'}</span>
@@ -1695,9 +1819,9 @@
             }
 
             const filtrados = allFuncionariosData.filter(f => 
-                f.nome_completo.toLowerCase().includes(termo) || 
-                f.matricula?.toLowerCase().includes(termo) || 
-                f.cargos?.nome?.toLowerCase().includes(termo)
+                (f.identidades_globais?.nome_completo || '').toLowerCase().includes(termo) || 
+                (f.matricula || '').toLowerCase().includes(termo) || 
+                (f.cargos?.nome || '').toLowerCase().includes(termo)
             );
             renderFuncionarios(filtrados);
         };
@@ -1753,6 +1877,20 @@
             // Resetar estado de edição
             isEditMode = false;
             currentFuncId = null;
+            selectedAvatarFile = null;
+            selectedEspecialidades = [];
+
+            // Resetar Foto e Form
+            const preview = document.getElementById('avatar-preview');
+            const placeholder = document.getElementById('avatar-placeholder');
+            if (preview) {
+                preview.src = '';
+                preview.classList.add('hidden');
+            }
+            if (placeholder) placeholder.classList.remove('hidden');
+            
+            document.getElementById('cadastro-form').reset();
+            renderEspecialidades();
         };
 
         window.deletarFuncionarioQuick = async (id) => {

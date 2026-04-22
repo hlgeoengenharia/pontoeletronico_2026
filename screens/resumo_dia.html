@@ -256,15 +256,48 @@
             try {
                 const { data: perfil, error: errPerfil } = await supabase
                     .from('perfis_tripulantes')
-                    .select('*, funcionarios!inner(*, escalas(*), setores!funcionarios_setor_id_fkey(nome))')
+                    .select(`
+                        *, 
+                        funcionarios!inner(
+                            id, 
+                            nivel_acesso, 
+                            matricula, 
+                            funcao, 
+                            setor_id, 
+                            data_inicio_prevista,
+                            identidades_globais!inner(nome_completo),
+                            escalas(
+                                id, 
+                                nome, 
+                                tipo_escala, 
+                                horario_entrada, 
+                                horario_saida, 
+                                dias_padrao, 
+                                ciclo_config, 
+                                janela_ativa_antes_minutos, 
+                                janela_ativa_depois_minutos, 
+                                tolerancia_entrada_minutos, 
+                                regime, 
+                                dias_presenciais_json
+                            ), 
+                            setores!funcionarios_setor_id_fkey(nome)
+                        )
+                    `)
                     .eq('funcionario_id', targetId)
                     .single();
                 
                 if (errPerfil) throw errPerfil;
-                const func = { ...perfil.funcionarios, foto_url: perfil.foto_url };
+                
+                const func = { 
+                    ...perfil?.funcionarios, 
+                    nome_completo: perfil?.funcionarios?.identidades_globais?.nome_completo || 'Tripulante',
+                    // Importante: A vigência para o ScalesEngine agora vem de data_inicio_prevista
+                    vigencia_inicio: perfil?.funcionarios?.data_inicio_prevista,
+                    foto_url: perfil?.foto_url 
+                };
 
-                document.getElementById('user-nome-audit').innerText = func.nome_completo.toUpperCase();
-                document.getElementById('user-cargo-audit').innerText = (func.cargos?.nome || func.funcao || 'N/A').toUpperCase();
+                document.getElementById('user-nome-audit').innerText = (func.nome_completo || 'Tripulante').toUpperCase();
+                document.getElementById('user-cargo-audit').innerText = (func.funcao || 'N/A').toUpperCase();
                 document.getElementById('user-setor-audit').innerText = (func.setores?.nome || 'N/A').toUpperCase();
                 document.getElementById('user-matricula-audit').innerText = `#${func.matricula || '---'}`;
                 

@@ -68,7 +68,41 @@
     .setor-group.active .chevron-icon { transform: rotate(180deg); }
     .setor-content { max-height: 0; overflow: hidden; transition: all 0.3s ease; opacity: 0; }
     .setor-group.active .setor-content { max-height: 1000px; opacity: 1; margin-top: 8px; }
-  </style>
+      /* Escala de Cores Férias - Menu Lateral */
+    .emp-item.status-pendente { 
+        background: rgba(244, 63, 94, 0.1); 
+        border-color: rgba(244, 63, 94, 0.2); 
+        animation: pulse-red 2s infinite;
+    }
+    .emp-item.status-repouso { background: rgba(234, 179, 8, 0.1); border-color: rgba(234, 179, 8, 0.2); }
+    .emp-item.status-aprovado { background: rgba(34, 197, 94, 0.1); border-color: rgba(34, 197, 94, 0.2); }
+    
+    .status-dot-v { width: 6px; height: 6px; border-radius: 50%; }
+    .active .status-dot-v.bg-pendente { background: #f43f5e; box-shadow: 0 0 8px #f43f5e; }
+    .active .status-dot-v.bg-repouso { background: #eab308; box-shadow: 0 0 8px #eab308; }
+    .active .status-dot-v.bg-aprovado { background: #22c55e; box-shadow: 0 0 8px #22c55e; }
+
+    /* Botões Filtragem Custom */
+    .filter-btn { opacity: 0.8; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    .filter-btn.active { opacity: 1; transform: scale(1.05); box-shadow: 0 0 15px rgba(255,255,255,0.1); }
+
+    #btn-all { background: rgba(13, 89, 242, 0.1); border-color: rgba(13, 89, 242, 0.2); color: rgba(13, 89, 242, 0.8); }
+    #btn-all.active { background: rgba(13, 89, 242, 0.3); border-color: #0d59f2; color: #fff; }
+
+    #btn-repouso { background: rgba(234, 179, 8, 0.1); border-color: rgba(234, 179, 8, 0.2); color: rgba(234, 179, 8, 0.8); }
+    #btn-repouso.active { background: rgba(234, 179, 8, 0.3); border-color: #eab308; color: #fff; }
+
+    #btn-aprovado { background: rgba(34, 197, 94, 0.1); border-color: rgba(34, 197, 94, 0.2); color: rgba(34, 197, 94, 0.8); }
+    #btn-aprovado.active { background: rgba(34, 197, 94, 0.3); border-color: #22c55e; color: #fff; }
+
+    #btn-pendente { background: rgba(244, 63, 94, 0.1); border-color: rgba(244, 63, 94, 0.2); color: rgba(244, 63, 94, 0.8); }
+    #btn-pendente.active { background: rgba(244, 63, 94, 0.3); border-color: #f43f5e; color: #fff; animation: pulse-red 2s infinite; }
+
+    .filter-btn p { color: inherit; }
+
+    /* Itens da Lista */
+    .emp-item { background: rgba(255, 255, 255, 0.03); border: 1px border-white/5; }
+</style>
 </head>
 
 <body class="bg-background-dark text-slate-100 min-h-screen">
@@ -98,18 +132,22 @@
             <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-blue-500 opacity-40 text-sm">search</span>
         </div>
     </div>
-    <div id="ferias-filters" class="px-2 py-3 grid grid-cols-4 gap-1 bg-black/20">
-        <button onclick="filterFeriasStatus('all')" class="status-filter active flex flex-col items-center justify-center py-2.5 rounded-md bg-white/5 text-[9px] font-black uppercase tracking-tighter border border-white/5 transition-all">
-            <span>Todos</span><span class="count opacity-50 text-[8px]">(0)</span>
+    <div id="ferias-filters" class="px-2 py-3 grid grid-cols-4 gap-2 bg-black/10">
+        <button onclick="setFilter('all')" id="btn-all" class="filter-btn active flex flex-col items-center justify-center py-3 rounded-xl bg-white/5 border border-white/10 transition-all active:scale-95 group">
+            <span class="text-[8px] font-black uppercase tracking-tighter">Todos</span>
+            <span class="text-[10px] font-black mt-0.5" id="count-all">(0)</span>
         </button>
-        <button onclick="filterFeriasStatus('repouso')" class="status-filter flex flex-col items-center justify-center py-2.5 rounded-md bg-white/5 text-[9px] font-black uppercase tracking-tighter border border-white/5 transition-all">
-            <span>Em Férias</span><span class="count opacity-50 text-[8px]">(0)</span>
+        <button onclick="setFilter('repouso')" id="btn-repouso" class="filter-btn flex flex-col items-center justify-center py-3 rounded-xl bg-white/5 border border-white/10 transition-all active:scale-95 group">
+            <span class="text-[8px] font-black uppercase tracking-tighter">Férias</span>
+            <span class="text-[10px] font-black mt-0.5" id="count-repouso">(0)</span>
         </button>
-        <button onclick="filterFeriasStatus('aprovado')" class="status-filter flex flex-col items-center justify-center py-2.5 rounded-md bg-white/5 text-[9px] font-black uppercase tracking-tighter border border-white/5 transition-all">
-            <span>Aprovadas</span><span class="count opacity-50 text-[8px]">(0)</span>
+        <button onclick="setFilter('aprovado')" id="btn-aprovado" class="filter-btn flex flex-col items-center justify-center py-3 rounded-xl bg-white/5 border border-white/10 transition-all active:scale-95 group">
+            <span class="text-[8px] font-black uppercase tracking-tighter">Aprovadas</span>
+            <span class="text-[10px] font-black mt-0.5" id="count-aprovado">(0)</span>
         </button>
-        <button onclick="filterFeriasStatus('pendente')" class="status-filter flex flex-col items-center justify-center py-2.5 rounded-md bg-white/5 text-[9px] font-black uppercase tracking-tighter border border-white/5 transition-all">
-            <span>Pendentes</span><span class="count opacity-50 text-[8px]">(0)</span>
+        <button onclick="setFilter('pendente')" id="btn-pendente" class="filter-btn flex flex-col items-center justify-center py-3 rounded-xl bg-white/5 border border-white/10 transition-all active:scale-95 group">
+            <span class="text-[8px] font-black uppercase tracking-tighter">Pendentes</span>
+            <span class="text-[10px] font-black mt-0.5" id="count-pendente">(0)</span>
         </button>
     </div>
     <div id="lista-setores-ferias" class="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-4"></div>
@@ -208,7 +246,7 @@
     let sectors = [];
     let employees = [];
     let currentFilter = 'all';
-    let expandedSectors = new Set();
+    let expandedSectors = new Set(); // Será populado em fetchData
 
     const map = L.map('map', { zoomControl: false, attributionControl: false }).setView([-23.5505, -46.6333], 15);
     L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', { subdomains: ['mt0', 'mt1', 'mt2', 'mt3'], maxZoom: 20 }).addTo(map);
@@ -239,19 +277,22 @@
             const sid = user.setorId;
             const isManager = (user.role || '').toLowerCase().includes('gest') || (user.role || '').toLowerCase().includes('man');
 
-            let qS = supabase.from('setores').select('*, gestor:funcionarios!gestor_id(nome_completo)');
+            let qS = supabase.from('setores').select('*');
             let qF = supabase.from('funcionarios').select('*');
             if (isManager && sid) { qS = qS.eq('id', sid); qF = qF.eq('setor_id', sid); }
 
-            const [sD, fD, ferD, pD, cD] = await Promise.all([
+            const [sD, fD, ferD, pD, cD, iD] = await Promise.all([
                 qS, qF, supabase.from('ferias').select('*'),
-                supabase.from('perfis_tripulantes').select('funcionario_id, foto_url'),
-                supabase.from('cargos').select('id, nome')
+                supabase.from('perfis_tripulantes').select('funcionario_id, foto_url, nickname'),
+                supabase.from('cargos').select('id, nome'),
+                supabase.from('identidades_globais').select('id, nome_completo')
             ]);
-
+            
+            const idsMap = {}; (iD.data || []).forEach(i => idsMap[i.id] = i);
             sectors = sD.data || [];
             const ferData = ferD.data || [];
             const fotos = {}; (pD.data || []).forEach(p => fotos[p.funcionario_id] = p.foto_url);
+            const nicks = {}; (pD.data || []).forEach(p => nicks[p.funcionario_id] = p.nickname);
             const cargos = {}; (cD.data || []).forEach(c => cargos[c.id] = c.nome);
             const today = new Date().toISOString().split('T')[0];
 
@@ -261,12 +302,25 @@
                 const isR = myV.some(v => v.status === 'aprovado' && today >= v.data_inicio && today <= v.data_fim);
                 const isA = myV.some(v => v.status === 'aprovado' && v.data_inicio > today);
                 
-                let s = 'nenhum';
+                let s = 'none';
                 if (isR) s = 'repouso'; else if (isP) s = 'pendente'; else if (isA) s = 'aprovado';
-                return { ...f, foto_url: fotos[f.id] || null, cargo_nome: cargos[f.cargo_id] || 'TRIPULANTE', vacationStatus: s };
+                
+                const ident = idsMap[f.id] || {};
+                const nickname = nicks[f.id] || (ident.nome_completo ? ident.nome_completo.split(' ')[0] : 'N/A');
+                
+                return { 
+                    ...f, 
+                    nome_completo: ident.nome_completo || 'Tripulante',
+                    nickname: nickname,
+                    foto_url: fotos[f.id] || null, 
+                    cargo_nome: cargos[f.cargo_id] || 'TRIPULANTE', 
+                    vacationStatus: s 
+                };
             });
 
             console.log(`[fetchData] Processados ${employees.length} tripulantes.`);
+            // Expandir todos os setores por padrão
+            sectors.forEach(s => expandedSectors.add(s.id));
             updateCounts();
             updateGlobalHeader();
         } catch (e) { console.error('Error fetchData:', e); }
@@ -286,9 +340,9 @@
             aprovado: employees.filter(e => e.vacationStatus === 'aprovado').length,
             pendente: employees.filter(e => e.vacationStatus === 'pendente').length 
         };
-        document.querySelectorAll('.status-filter').forEach(btn => {
-            const st = btn.getAttribute('onclick').match(/'(.*?)'/)[1];
-            if (btn.querySelector('.count')) btn.querySelector('.count').innerText = `(${counts[st] || 0})`;
+        Object.keys(counts).forEach(key => {
+            const el = document.getElementById(`count-${key}`);
+            if (el) el.innerText = `(${counts[key]})`;
         });
     }
 
@@ -309,11 +363,13 @@
         if (sectorsGroup.getLayers().length) map.fitBounds(sectorsGroup.getBounds());
     }
 
-    window.filterFeriasStatus = (st) => {
-        currentFilter = st;
-        document.querySelectorAll('.status-filter').forEach(b => b.classList.toggle('active', b.getAttribute('onclick').includes(st)));
+    window.setFilter = (f) => {
+        currentFilter = f;
+        document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+        const activeBtn = document.getElementById(`btn-${f}`);
+        if (activeBtn) activeBtn.classList.add('active');
         renderSidebar();
-    }
+    };
 
     window.toggleSetor = (id) => {
         if (expandedSectors.has(id)) expandedSectors.delete(id); else expandedSectors.add(id);
@@ -333,11 +389,29 @@
                     <span class="material-symbols-outlined text-slate-600 text-sm chevron-icon">expand_more</span>
                 </div>
                 <div class="setor-content space-y-1 mt-2 ml-4 border-l border-blue-500/20 pl-4">
-                    ${emps.map(e => `<div onclick="abrirCardFerias('${e.id}')" class="flex items-center gap-3 p-3 bg-white/5 border border-white/5 rounded-xl hover:bg-blue-500/10 transition-all cursor-pointer">
-                        <img src="${e.foto_url || `https://ui-avatars.com/api/?name=${e.nome_completo}&background=101622&color=60A5FA`}" class="size-8 rounded-full border border-white/10 shrink-0">
-                        <div class="flex-1 truncate"><p class="text-[10px] font-black text-slate-100 uppercase truncate">${e.nickname || e.nome_completo}</p><p class="text-[8px] text-slate-500 font-bold uppercase truncate">${e.cargo_nome}</p></div>
-                        <span class="status-dot status-${e.vacationStatus}"></span>
-                    </div>`).join('')}
+                    ${emps.map(e => {
+                        const statusClass = e.vacationStatus === 'pendente' ? 'status-pendente' : (e.vacationStatus === 'repouso' ? 'status-repouso' : (e.vacationStatus === 'aprovado' ? 'status-aprovado' : ''));
+                        const dotClass = e.vacationStatus === 'pendente' ? 'bg-pendente' : (e.vacationStatus === 'repouso' ? 'bg-repouso' : (e.vacationStatus === 'aprovado' ? 'bg-aprovado' : 'bg-slate-700'));
+                        const labelTxt = e.vacationStatus === 'repouso' ? 'EM FÉRIAS' : e.vacationStatus;
+                        const labelClass = e.vacationStatus === 'pendente' ? 'text-rose-400' : (e.vacationStatus === 'repouso' ? 'text-yellow-400' : 'text-emerald-400');
+                        
+                        return `
+                        <div onclick="abrirCardFerias('${e.id}')" 
+                             class="emp-item flex items-center justify-between p-3 rounded-xl cursor-pointer group/emp transition-all hover:bg-blue-500/10 border border-white/5 ${statusClass}">
+                            <div class="flex items-center gap-3">
+                                <img src="${e.foto_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(e.nickname || e.nome_completo)}&background=101622&color=60A5FA`}" 
+                                     class="size-8 rounded-full border border-white/10 shrink-0 shadow-lg">
+                                <div class="flex flex-col">
+                                    <span class="text-[10px] font-black text-slate-100 uppercase tracking-wider group-hover/emp:text-white transition-colors">${e.nickname || e.nome_completo}</span>
+                                    <span class="text-[8px] font-bold text-slate-500 uppercase tracking-tighter opacity-60">${e.cargo_nome || 'Tripulante'}</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                ${e.vacationStatus !== 'none' ? `<span class="text-[8px] font-black uppercase tracking-widest ${labelClass}">${labelTxt === 'repouso' ? 'EM FÉRIAS' : labelTxt}</span>` : ''}
+                                <div class="status-dot-v ${dotClass} !w-1.5 !h-1.5"></div>
+                            </div>
+                        </div>`;
+                    }).join('')}
                 </div>
             </div>`;
         }).join('');

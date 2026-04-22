@@ -197,7 +197,10 @@
 
     async function carregarLista() {
         try {
-            const { data, error } = await supabase.from('funcionarios').select('*, setores!funcionarios_setor_id_fkey(nome)').order('nome_completo');
+            const { data, error } = await supabase
+                .from('funcionarios')
+                .select('*, identidades_globais!inner(nome_completo, cpf), setores!funcionarios_setor_id_fkey(nome)')
+                .order('nome_completo', { foreignTable: 'identidades_globais' });
             if (error) throw error;
             funcsCache = data;
             document.getElementById('total-funcs').innerText = data.length;
@@ -217,10 +220,10 @@
         container.innerHTML = list.map(f => `
             <div onclick="selectFunc('${f.id}')" class="p-3 bg-slate-800/20 border ${f.id === selectedId ? 'border-primary bg-primary/10' : 'border-white/5'} rounded-xl cursor-pointer hover:border-primary/50 transition-all flex items-center gap-3">
                 <div class="w-10 h-10 rounded-full bg-background-dark border border-white/10 shrink-0 overflow-hidden">
-                    <img src="${f.foto_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(f.nome_completo)}&background=0f172a&color=fff`}" class="w-full h-full object-cover">
+                    <img src="${f.foto_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(f.identidades_globais?.nome_completo || 'T')}&background=0f172a&color=fff`}" class="w-full h-full object-cover">
                 </div>
                 <div class="overflow-hidden">
-                    <p class="text-[11px] font-bold text-white truncate uppercase">${f.nome_completo}</p>
+                    <p class="text-[11px] font-bold text-white truncate uppercase">${f.identidades_globais?.nome_completo || 'Sem Nome'}</p>
                     <p class="text-[9px] text-primary truncate uppercase">MT: ${f.matricula}</p>
                 </div>
             </div>
@@ -229,7 +232,10 @@
 
     function filterList(term) {
         let t = term.toLowerCase().trim();
-        const filt = funcsCache.filter(f => f.nome_completo.toLowerCase().includes(t) || f.matricula.toLowerCase().includes(t));
+        const filt = funcsCache.filter(f => 
+            (f.identidades_globais?.nome_completo || '').toLowerCase().includes(t) || 
+            f.matricula.toLowerCase().includes(t)
+        );
         renderList(filt);
     }
 
@@ -244,9 +250,9 @@
         document.getElementById('action-buttons').classList.remove('hidden');
 
         // Populate fields
-        document.getElementById('f_nome').value = f.nome_completo || '';
+        document.getElementById('f_nome').value = f.identidades_globais?.nome_completo || '';
         document.getElementById('f_matricula').value = f.matricula || '';
-        document.getElementById('f_cpf').value = f.cpf || '';
+        document.getElementById('f_cpf').value = f.identidades_globais?.cpf || '';
         document.getElementById('f_email').value = f.email || '';
         document.getElementById('f_nivel').value = f.nivel_acesso || '';
         document.getElementById('f_setor').value = f.setor_id || '';

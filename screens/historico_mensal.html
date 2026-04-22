@@ -450,16 +450,24 @@
             try {
                 const { data: perfil, error: errPerfil } = await supabase
                     .from('perfis_tripulantes')
-                    .select('*, funcionarios!inner(*, escalas(*), setores!funcionarios_setor_id_fkey(nome))')
+                    .select('*, funcionarios!inner(*, identidades_globais!inner(*), escalas(*), setores!funcionarios_setor_id_fkey(nome), cargos!cargo_id(nome))')
                     .eq('funcionario_id', targetId)
                     .single();
                 
                 if (errPerfil) throw errPerfil;
-                const func = { ...perfil.funcionarios, foto_url: perfil.foto_url };
+                const f = perfil.funcionarios;
+                const ident = f?.identidades_globais;
+                
+                const func = { 
+                    ...f, 
+                    nome_completo: ident?.nome_completo || 'Sem Nome',
+                    foto_url: ident?.foto_url || perfil.foto_url,
+                    cargo_nome: f.cargos?.nome || 'N/A'
+                };
 
                 document.getElementById('user-nome-audit').innerText = func.nome_completo.toUpperCase();
-                document.getElementById('user-cargo-audit').innerText = (func.funcao || 'N/A').toUpperCase();
-                document.getElementById('user-setor-audit').innerText = (func.setores?.nome || 'N/A').toUpperCase();
+                document.getElementById('user-cargo-audit').innerText = func.cargo_nome.toUpperCase();
+                document.getElementById('user-setor-audit').innerText = (f.setores?.nome || 'N/A').toUpperCase();
                 document.getElementById('user-matricula-audit').innerText = `#${func.matricula || '---'}`;
                 
                 const photoImg = document.getElementById('user-photo-audit');

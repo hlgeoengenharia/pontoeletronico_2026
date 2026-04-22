@@ -75,13 +75,13 @@
 
             if (supabaseClient && employeeId) {
                 const { data, error } = await supabaseClient
-                    .from('perfis_tripulantes')
-                    .select('nickname, foto_url')
-                    .eq('funcionario_id', employeeId)
+                    .from('vw_funcionarios_gestao')
+                    .select('nome_completo, nickname, foto_url')
+                    .eq('id', employeeId)
                     .single();
                 
                 if (!error && data) {
-                    employeeName = data.nickname || 'Tripulante';
+                    employeeName = data.nickname || data.nome_completo || 'Tripulante';
                     if (data.foto_url) employeePhoto = data.foto_url;
                 }
             }

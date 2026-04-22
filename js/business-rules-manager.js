@@ -59,8 +59,14 @@ export const BusinessRulesManager = {
 
     async createAbsenceLog(funcionarioId, dataHora, adminObs) {
         const dateStr = new Date(dataHora).toLocaleDateString('pt-BR');
+        
+        // Buscar company_id do funcionário para garantir RLS
+        const { data: userData } = await supabase.from('funcionarios').select('company_id').eq('id', funcionarioId).maybeSingle();
+        const compId = userData?.company_id;
+
         await supabase.from('diario_logs').insert([{
             funcionario_id: funcionarioId,
+            company_id: compId,
             data_hora: new Date().toISOString(),
             tipo: 'falta',
             status_pendencia: 'visto',
@@ -80,6 +86,7 @@ export const BusinessRulesManager = {
             return;
         }
 
+        const compId = user.company_id;
         const escala = user.escalas;
         const [hE, mE] = (escala.horario_entrada || '08:00:00').split(':').map(Number);
         const workMinutes = ScalesEngine.calculateDailyWorkMinutes(escala);
@@ -95,6 +102,7 @@ export const BusinessRulesManager = {
             await supabase.from('pontos').update({
                 data_hora: departureTime.toISOString(),
                 status_validacao: 'rejeitado',
+                company_id: compId,
                 justificativa_usuario: `[PENALIDADE: MEIO-TURNO APLICADO] ${item.justificativa_usuario || ''}`,
                 comentario_gestor: adminObs
             }).eq('id', item.id);
@@ -102,6 +110,7 @@ export const BusinessRulesManager = {
             // Check-out Automático: Sincronizado c/ esquema real do banco (latitude/longitude)
             await supabase.from('pontos').insert([{
                 funcionario_id: item.funcionario_id,
+                company_id: compId,
                 data_hora: departureTime.toISOString(),
                 tipo: 'check-out',
                 status_validacao: 'pendente',
@@ -119,6 +128,7 @@ export const BusinessRulesManager = {
 
         await supabase.from('diario_logs').insert([{
             funcionario_id: item.funcionario_id,
+            company_id: compId,
             data_hora: new Date().toISOString(),
             tipo: 'sistema',
             status_pendencia: 'pendente',

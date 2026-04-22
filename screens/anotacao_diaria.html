@@ -264,6 +264,7 @@
             .from('anotacoes')
             .insert([{
               funcionario_id: targetUserId,
+              company_id: Auth.getUser()?.companyId,
               data: dataVal,
               conteudo: conteudoVal
             }]);

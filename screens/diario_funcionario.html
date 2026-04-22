@@ -380,7 +380,7 @@
                 const { error } = await sb.from('justificativas').delete().eq('id', id);
                 if (error) {
                     // Tentar na tabela de atividades se falhar na de justificativas
-                    await sb.from('anotacoes_diaria').delete().eq('id', id);
+                    await sb.from('anotacoes').delete().eq('id', id);
                 }
                 await DiarioEngine.loadAndProcessHistory();
                 UI.showToast('Registro excluído', 'success');
@@ -437,13 +437,23 @@
             UI.showLoader();
             
             try {
-                const payload = { funcionario_id: targetId, conteudo: content, descricao: content, data_incidente: new Date().toISOString() };
+                const emp = DiarioEngine.state.employee;
+                const basePayload = { 
+                    funcionario_id: targetId, 
+                    company_id: emp?.company_id || emp?.empresa_id,
+                    conteudo: content, 
+                    descricao: content, 
+                    data_incidente: new Date().toISOString() 
+                };
+                
                 let res;
-                if (mode === 'atividade') res = await AtividadesActions.save(payload);
-                else {
-                    if (file) payload.evidencia_url = await JustificativasWorkflow.uploadEvidence(file, targetId);
-                    payload.tipo_incidente = document.getElementById('selectTipoJustificativa').value;
-                    res = await JustificativasWorkflow.submit(payload);
+                if (mode === 'atividade') {
+                    // O motor de atividades agora requer company_id para RLS
+                    res = await AtividadesActions.save(basePayload);
+                } else {
+                    if (file) basePayload.evidencia_url = await JustificativasWorkflow.uploadEvidence(file, targetId);
+                    basePayload.tipo_incidente = document.getElementById('selectTipoJustificativa').value;
+                    res = await JustificativasWorkflow.submit(basePayload);
                 }
                 
                 if (res?.success) {

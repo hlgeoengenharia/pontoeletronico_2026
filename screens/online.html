@@ -516,6 +516,14 @@
                       </div>
                   </div>
                   
+                  <!-- Alerta de Conflito -->
+                  <div id="conflito-alerta" class="hidden p-4 bg-rose-500/10 border border-rose-500/30 rounded-xl mb-4 animate-pulse">
+                      <div class="flex items-start gap-3">
+                          <span class="material-symbols-outlined text-rose-500 text-lg">warning</span>
+                          <p id="conflito-msg" class="text-[9px] text-rose-200 font-bold uppercase leading-relaxed">Mensagem de conflito...</p>
+                      </div>
+                  </div>
+                  
                   <button id="btn-salvar-ferias" class="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-black uppercase tracking-[0.2em] rounded-2xl shadow-lg transition-all">
                       Confirmar Solicitação
                   </button>
@@ -708,7 +716,7 @@
             const sId = user.setorId;
 
             // 1. Setores
-            let queryS = supabase.from('setores').select('*, gestor:funcionarios!gestor_id(nome_completo)');
+            let queryS = supabase.from('setores').select('*');
             if (isGestorOnly && sId) queryS = queryS.eq('id', sId);
             
             const { data: sData, error: sError } = await queryS;
@@ -728,8 +736,8 @@
                 }
             }
 
-            // 2. Funcionários e Tabelas Relacionadas (Filtros por Setor)
-            let queryF = supabase.from('funcionarios').select('id, nome_completo, nickname, cargo_id, especialidade_id, setor_id, nivel_acesso, regime_trabalho');
+            // 2. Funcionários e Tabelas Relacionadas (Filtros por Setor via VIEW)
+            let queryF = supabase.from('vw_funcionarios_gestao').select('*');
             if (isGestorOnly && sId) queryF = queryF.eq('setor_id', sId);
 
             const [fRes, cRes, eRes, pRes] = await Promise.all([
@@ -752,9 +760,9 @@
 
             const fData = (fRes.data || []).map(f => ({
                 ...f,
-                foto_url: fotosMap[f.id] || null,
-                cargos: { nome: cargosMap[f.cargo_id] || 'Tripulante' },
-                especialidades: { nome: espMap[f.especialidade_id] || 'N/A' }
+                foto_url: f.foto_url || fotosMap[f.id] || null,
+                cargos: { nome: f.cargo_nome || cargosMap[f.cargo_id] || 'Tripulante' },
+                especialidades: { nome: f.especialidade_nome || espMap[f.especialidade_id] || 'N/A' }
             }));
             
             // 3. Status Online (Resiliente ao Fuso Horário)
@@ -766,7 +774,7 @@
                 
                 let queryPoints = supabase
                     .from('pontos')
-                    .select('funcionario_id, tipo, data_hora, funcionarios!inner(setor_id)')
+                    .select('funcionario_id, tipo, data_hora, funcionarios!inner(id)')
                     .gte('data_hora', `${localToday}T00:00:00`)
                     .order('data_hora', { ascending: true });
                 
@@ -785,7 +793,7 @@
             try {
                 let queryLocs = supabase
                     .from('pontos')
-                    .select('funcionario_id, latitude, longitude, data_hora, funcionarios!inner(setor_id)')
+                    .select('funcionario_id, latitude, longitude, data_hora, funcionarios!inner(id)')
                     .not('latitude', 'is', null)
                     .order('data_hora', { ascending: false });
                 
@@ -801,7 +809,7 @@
             // 5. Buscar Últimos Pulsos de GPS (Sinal de vida)
             let queryPulse = supabase
                 .from('diario_logs')
-                .select('funcionario_id, coordenadas, data_hora, funcionarios!inner(setor_id)')
+                .select('funcionario_id, coordenadas, data_hora, funcionarios!inner(id)')
                 .in('tipo', ['gps_pulse', 'gps_hora', 'geofence_in', 'geofence_out', 'ponto_fora_raio'])
                 .order('data_hora', { ascending: false });
             
@@ -825,7 +833,7 @@
             // 7. Buscar Todos os Comunicados (Filtrar já vistos para o monitoramento)
             let queryHE = supabase
                 .from('comunicados')
-                .select('*, funcionarios!inner(setor_id)')
+                .select('*, funcionarios!inner(id), identidades_globais(nome_completo)')
                 .order('created_at', { ascending: false });
             
             if (isGestorOnly && sId) queryHE = queryHE.eq('funcionarios.setor_id', sId);
@@ -847,7 +855,11 @@
             // 8. Dados de Férias
             let vData = [];
             try {
-                let queryV = supabase.from('ferias').select('*, funcionarios!inner(setor_id)');
+                const now = new Date();
+                const offset = now.getTimezoneOffset() * 60000;
+                const localToday = new Date(now - offset).toISOString().split('T')[0];
+                
+                let queryV = supabase.from('ferias').select('*, funcionarios!inner(id)');
                 if (isGestorOnly && sId) queryV = queryV.eq('funcionarios.setor_id', sId);
                 const resV = await queryV;
                 if (resV.data) vData = resV.data;
@@ -970,7 +982,7 @@
                     </div>
                     
                     <!-- Lista de Funcionários do Setor -->
-                    <div id="sublista-${s.id}" class="pl-4 space-y-1 hidden border-l border-primary/20 ml-5">
+                    <div id="sublista-${s.id}" class="pl-4 space-y-1 ${isFeriasMode ? '' : 'hidden'} border-l border-primary/20 ml-5">
                         ${sectorEmployees.map(e => {
                             const isMe = e.id === Auth.getUser()?.id;
                             return `
@@ -1060,7 +1072,7 @@
                     <div class="p-2 space-y-3 min-w-[180px]">
                         <div class="border-b border-white/10 pb-2">
                             <h3 class="text-xs font-black uppercase text-primary tracking-widest">${s.nome}</h3>
-                            <p class="text-[9px] text-slate-400 font-bold uppercase mt-1">Gestor: ${s.gestor?.nome_completo || 'N/A'}</p>
+                            <p class="text-[9px] text-slate-400 font-bold uppercase mt-1">Gestor: ${s.gestor?.identidades_globais?.nome_completo || 'N/A'}</p>
                         </div>
                         <div class="flex justify-between items-center bg-white/5 p-2 rounded-lg">
                             <span class="text-[8px] font-black text-slate-500 uppercase">Equipe Ativa</span>
@@ -1304,7 +1316,7 @@
             
             // Construir Query Dinâmica para Comunicados
             let queryCom = supabase.from('comunicados')
-                .select('*, funcionarios:funcionarios!remetente_id(id, nome_completo, nickname)')
+                .select('*, remetente:funcionarios!remetente_id(id, identidades_globais(nome_completo))')
                 .eq('remetente_id', remetenteId)
                 .order('created_at', { ascending: false });
 
@@ -1356,7 +1368,7 @@
                     itemType: isFer ? 'FERIAS_FOLGA' : (c.subtipo === 'hora_extra' ? 'HORA_EXTRA' : 'COMUNICADO'),
                     content: c.conteudo,
                     data_ref: c.created_at,
-                    target: c.funcionarios?.nome_completo || (c.tipo === 'setorial' ? 'SETOR' : 'GERAL'),
+                    target: c.funcionarios?.identidades_globais?.nome_completo || (c.tipo === 'setorial' ? 'SETOR' : 'GERAL'),
                     lido: c.lido,
                     list: relatedFer || [] // Anexa a lista de dias se houver
                 };

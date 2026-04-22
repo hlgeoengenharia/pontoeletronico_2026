@@ -84,19 +84,19 @@
           // 1. Buscar Justificativas Pendentes
           let queryJust = supabase
             .from('justificativas')
-            .select('*, funcionarios!inner(nome_completo, matricula, setor_id, funcao)')
+            .select('*, funcionarios!inner(matricula, setor_id, funcao, identidades_globais!inner(nome_completo))')
             .eq('status', 'pendente');
 
           // 2. Buscar Pontos com GPS Pendente
           let queryGps = supabase
             .from('pontos')
-            .select('*, funcionarios!inner(nome_completo, matricula, setor_id, funcao)')
+            .select('*, funcionarios!inner(matricula, setor_id, funcao, identidades_globais!inner(nome_completo))')
             .eq('status_validacao', 'pendente');
 
           // 3. Buscar Logs de Sistema (Divergências GPS no Diário)
           let queryLogs = supabase
             .from('diario_logs')
-            .select('*, funcionarios!inner(nome_completo, matricula, setor_id, funcao)')
+            .select('*, funcionarios!inner(matricula, setor_id, funcao, identidades_globais!inner(nome_completo))')
             .eq('status_pendencia', 'pendente')
             .not('tipo', 'in', '("comunicado","justificativa_resultado","gps_pulse")')
             .neq('tipo', 'aviso_ferias');
@@ -253,7 +253,7 @@
                                     `}
                                 </div>
                                 <div class="flex flex-col">
-                                    <h2 class="text-slate-100 font-bold text-base">${item.funcionarios.nome_completo}</h2>
+                                    <h2 class="text-slate-100 font-bold text-base">${item.funcionarios.identidades_globais?.nome_completo || 'Tripulante'}</h2>
                                     <p class="text-primary text-[11px] font-bold uppercase tracking-wider mb-0.5">${item.funcionarios.funcao || 'N/A'}</p>
                                     <div class="mt-1">
                                         <span class="text-[10px] px-2 py-0.5 rounded ${badgeClass} border font-bold uppercase inline-block">PENDENTE</span>
@@ -342,109 +342,116 @@
       }
 
       window.processarPendencia = async (id, action, type) => {
-        const status = action === 'aprovado' ? 'abonado' : 'rejeitado';
-        const modalLabel = action === 'aprovado' ? 'Confirmar Abono' : 'MOTIVO DA RECUSA';
-        
-        UI.showLoader();
-        try {
-          // Buscar dados do incidente para a mensagem padrão (Query Flexível e Segura)
-          const table = type === 'ABONO' ? 'justificativas' : (type === 'GPS' ? 'pontos' : 'diario_logs');
-          // Selecionamos '*' para evitar erros de coluna inexistente dependendo da tabela (como data_hora)
-          const { data: item } = await supabase.from(table).select('*').eq('id', id).single();
-          UI.hideLoader();
+          const status = action === 'aprovado' ? 'abonado' : 'rejeitado';
+          const modalLabel = action === 'aprovado' ? 'Confirmar Abono' : 'MOTIVO DA RECUSA';
           
-          const rawDate = item?.data_incidente || item?.data_hora || item?.created_at;
-          const dataRef = rawDate ? new Date(rawDate).toLocaleDateString('pt-BR') : '---';
-          const msgPadrao = `Sua justificativa de ${dataRef} foi ${action === 'aprovado' ? 'ABONADA' : 'REJEITADA'}.`;
-          
-          const obs = await showAnalysisModal({ title: modalLabel, defaultValue: msgPadrao });
-          if (!obs) return;
-
-          if (action !== 'aprovado' && !confirm('Deseja realmente rejeitar esta solicitação?')) return;
-
           UI.showLoader();
-          let error;
-          if (type === 'ABONO') {
-            const { error: errJ } = await supabase.from('justificativas').update({ 
-                status: status,
-                observacao_admin: obs || 'Processado pelo gestor.'
-            }).eq('id', id);
-            error = errJ;
-          } else if (type === 'SISTEMA' || type === 'ALERTA_MENSAL') {
-            const result = await supabase.from('diario_logs').update({ status_pendencia: status, mensagem_padrao: `[ANÁLISE] ${obs}` }).eq('id', id);
-            error = result.error;
-          } else {
-            // Para a tabela 'pontos', o enum esperado é 'aprovado' em vez de 'abonado'
-            const pointStatus = status === 'abonado' ? 'aprovado' : 'rejeitado';
-            console.log(`[Autorizacoes] Analisando GPS/Ponto: ID ${id} -> ${pointStatus}`);
-            const result = await supabase.from('pontos').update({ 
-                status_validacao: pointStatus,
-                observacao_admin: obs || 'Processado pelo gestor.'
-            }).eq('id', id);
+          try {
+            // Buscar dados do incidente para a mensagem padrão (Query Flexível e Segura)
+            const table = type === 'ABONO' ? 'justificativas' : (type === 'GPS' ? 'pontos' : 'diario_logs');
+            const { data: item, error: selErr } = await supabase.from(table).select('*').eq('id', id).single();
+            if (selErr) throw selErr;
+            UI.hideLoader();
             
-            if (result.error) {
-                console.error('[Autorizacoes] Erro crítico no Update do Ponto:', result.error);
-                throw result.error;
-            }
-            console.log('[Autorizacoes] Ponto atualizado com sucesso.');
+            const compId = item?.company_id || item?.empresa_id || user.companyId;
 
-            // SYNC 1: Atualizar a justificativa vinculada na tabela 'justificativas' (causa raiz do card "Aguardando Análise")
-            let justificativaVinculadaId = null;
-            if (item) {
-                const { data: justVinc } = await supabase.from('justificativas')
-                    .select('id')
-                    .eq('funcionario_id', item.funcionario_id)
-                    .eq('status', 'pendente')
-                    .gte('created_at', new Date(new Date(item.data_hora).getTime() - 300000).toISOString())
-                    .lte('created_at', new Date(new Date(item.data_hora).getTime() + 300000).toISOString())
-                    .limit(1);
-                
-                if (justVinc && justVinc.length > 0) {
-                    justificativaVinculadaId = justVinc[0].id;
-                    const justStatus = status === 'abonado' ? 'abonado' : 'rejeitado';
-                    const { error: justErr } = await supabase.from('justificativas').update({
-                        status: justStatus,
-                        observacao_admin: obs || 'Processado pelo gestor.'
-                    }).eq('id', justificativaVinculadaId);
+            const rawDate = item?.data_incidente || item?.data_hora || item?.created_at;
+            const dataRef = rawDate ? new Date(rawDate).toLocaleDateString('pt-BR') : '---';
+            const msgPadrao = `Sua justificativa de ${dataRef} foi ${action === 'aprovado' ? 'ABONADA' : 'REJEITADA'}.`;
+            
+            const obs = await showAnalysisModal({ title: modalLabel, defaultValue: msgPadrao });
+            if (!obs) return;
+
+            if (action !== 'aprovado' && !confirm('Deseja realmente rejeitar esta solicitação?')) return;
+
+            UI.showLoader();
+            if (type === 'ABONO') {
+              const { error: errJ } = await supabase.from('justificativas').update({ 
+                  status: status,
+                  company_id: compId,
+                  observacao_admin: obs || 'Processado pelo gestor.'
+              }).eq('id', id);
+              
+              if (errJ) throw errJ;
+            } else if (type === 'SISTEMA' || type === 'ALERTA_MENSAL') {
+              const { error: errL } = await supabase.from('diario_logs').update({ 
+                  status_pendencia: status, 
+                  mensagem_padrao: `[ANÁLISE] ${obs}` 
+              }).eq('id', id);
+              if (errL) throw errL;
+            } else {
+              // Para a tabela 'pontos', o enum esperado é 'aprovado' em vez de 'abonado'
+              const pointStatus = status === 'abonado' ? 'aprovado' : 'rejeitado';
+              console.log(`[Autorizacoes] Analisando GPS/Ponto: ID ${id} -> ${pointStatus}`);
+              const result = await supabase.from('pontos').update({ 
+                  status_validacao: pointStatus,
+                  company_id: compId,
+                  observacao_admin: obs || 'Processado pelo gestor.'
+              }).eq('id', id);
+              
+              if (result.error) {
+                  console.error('[Autorizacoes] Erro crítico no Update do Ponto:', result.error);
+                  throw result.error;
+              }
+              console.log('[Autorizacoes] Ponto atualizado com sucesso.');
+
+              // SYNC 1: Atualizar a justificativa vinculada na tabela 'justificativas' (causa raiz do card "Aguardando Análise")
+              if (item) {
+                  const { data: justVinc } = await supabase.from('justificativas')
+                      .select('id, company_id')
+                      .eq('funcionario_id', item.funcionario_id)
+                      .eq('status', 'pendente')
+                      .gte('created_at', new Date(new Date(item.data_hora).getTime() - 300000).toISOString())
+                      .lte('created_at', new Date(new Date(item.data_hora).getTime() + 300000).toISOString())
+                      .limit(1);
+                  
+                  if (justVinc && justVinc.length > 0) {
+                      const justId = justVinc[0].id;
+                      const justCompId = justVinc[0].company_id || compId;
+                      const justStatus = status === 'abonado' ? 'abonado' : 'rejeitado';
+                      const { error: justErr } = await supabase.from('justificativas').update({
+                          status: justStatus,
+                          company_id: justCompId,
+                          observacao_admin: obs || 'Processado pelo gestor.'
+                      }).eq('id', justId);
+                      
+                      if (justErr) console.warn('[Autorizacoes] Falha ao sincronizar justificativa vinculada:', justErr);
+                  }
+              }
+
+              // SYNC 2: Baixar log de sistema pendente para este ponto
+              if (item) {
+                  await supabase.from('diario_logs')
+                      .update({ status_pendencia: status })
+                      .eq('funcionario_id', item.funcionario_id)
+                      .eq('tipo', 'pendencia_geofence')
+                      .eq('status_pendencia', 'pendente')
+                      .filter('data_hora', 'gte', new Date(new Date(item.data_hora).getTime() - 60000).toISOString())
+                      .filter('data_hora', 'lte', new Date(new Date(item.data_hora).getTime() + 60000).toISOString());
+              }
+            }
+
+            // 4. Notificar Funcionário (Feedback Universal para o Diário)
+            if (item?.funcionario_id) {
+                try {
+                    const cardEl = document.getElementById(`card-${id}`);
+                    const cardTitle = cardEl?.querySelector('p.text-slate-200')?.innerText?.trim() || 'SOLICITAÇÃO DE PONTO';
+                    const employeeMsg = cardEl?.querySelector('p.text-slate-400')?.innerText?.trim() || '';
                     
-                    if (justErr) console.warn('[Autorizacoes] Falha ao sincronizar justificativa vinculada (não fatal):', justErr);
-                    else console.log(`[Autorizacoes] Justificativa vinculada ${justificativaVinculadaId} sincronizada -> ${justStatus}`);
+                    const logPayload = {
+                        funcionario_id: item.funcionario_id,
+                        company_id: compId,
+                        data_hora: new Date().toISOString(),
+                        tipo: 'justificativa_resultado',
+                        status_pendencia: 'pendente',
+                        mensagem_padrao: `[CONTEXTO: ${cardTitle}] [USER: ${employeeMsg}] [ANÁLISE: ${status.toUpperCase()}] ${obs || 'Seu pedido foi processado pelo gestor.'}`
+                    };
+                    
+                    await supabase.from('diario_logs').insert([logPayload]);
+                } catch (logErr) {
+                    console.warn('[Autorizacoes] Falha ao registrar log no diário (bloqueio de RLS/Schema):', logErr);
                 }
             }
-
-            // SYNC 2: Baixar log de sistema pendente para este ponto
-            if (item) {
-                const { error: syncErr } = await supabase.from('diario_logs')
-                    .update({ status_pendencia: status })
-                    .eq('funcionario_id', item.funcionario_id)
-                    .eq('tipo', 'pendencia_geofence')
-                    .eq('status_pendencia', 'pendente')
-                    .filter('data_hora', 'gte', new Date(new Date(item.data_hora).getTime() - 60000).toISOString())
-                    .filter('data_hora', 'lte', new Date(new Date(item.data_hora).getTime() + 60000).toISOString());
-                
-                if (syncErr) console.warn('[Autorizacoes] Falha na sincronização do log (não fatal):', syncErr);
-            }
-          }
-
-          // 4. Notificar Funcionário (Feedback Universal para o Diário)
-          if (item?.funcionario_id) {
-              const cardEl = document.getElementById(`card-${id}`);
-              
-              // Buscar o título dentro do card específico
-              // Prioriza o texto forte que contém o tipo da divergência
-              const cardTitle = cardEl?.querySelector('p.text-slate-200')?.innerText?.trim() || 'SOLICITAÇÃO DE PONTO';
-              
-              // Buscar a mensagem do funcionário (parágrafo itálico de cor slate-400)
-              const employeeMsg = cardEl?.querySelector('p.text-slate-400')?.innerText?.trim() || '';
-              
-              await supabase.from('diario_logs').insert([{
-                  funcionario_id: item.funcionario_id,
-                  data_hora: new Date().toISOString(),
-                  tipo: 'justificativa_resultado',
-                  status_pendencia: 'pendente',
-                  mensagem_padrao: `[CONTEXTO: ${cardTitle}] [USER: ${employeeMsg}] [ANÁLISE: ${status.toUpperCase()}] ${obs || 'Seu pedido foi processado pelo gestor.'}`
-              }]);
-          }
 
           // 4. Se for rejeição, acionar penalidades do BusinessRulesManager
           if (status === 'rejeitado') {

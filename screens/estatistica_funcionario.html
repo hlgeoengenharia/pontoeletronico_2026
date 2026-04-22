@@ -197,42 +197,46 @@
             try {
                 const { data: perfil, error: errPerfil } = await supabase
                     .from('perfis_tripulantes')
-                    .select('*, funcionarios!inner(*, escalas(*), setores!funcionarios_setor_id_fkey(nome))')
+                    .select(`
+                        *, 
+                        funcionarios!inner(
+                            id, 
+                            nivel_acesso, 
+                            matricula, 
+                            setor_id, 
+                            data_inicio_prevista,
+                            identidades_globais!inner(*),
+                            escalas(*), 
+                            setores!funcionarios_setor_id_fkey(nome),
+                            cargos!cargo_id(nome)
+                        )
+                    `)
                     .eq('funcionario_id', targetId)
                     .single();
                 
                 if (errPerfil) throw errPerfil;
-                const func = { ...perfil.funcionarios, foto_url: perfil.foto_url };
+                
+                const f = perfil?.funcionarios;
+                const ident = f?.identidades_globais;
+
+                const func = { 
+                    ...f, 
+                    nome_completo: ident?.nome_completo || 'Tripulante',
+                    vigencia_inicio: f?.data_inicio_prevista,
+                    foto_url: ident?.foto_url || perfil?.foto_url,
+                    cargo_nome: f?.cargos?.nome || 'N/A'
+                };
                 currentUserData = func;
 
-                // This block seems to be from ui-utils.js, but it's placed here.
-                // Assuming it's a conceptual instruction for ui-utils.js,
-                // but if it's meant to be *in this file*, it's syntactically incorrect here.
-                // I will keep the original structure of this file and only apply the HTML change.
-                // If this JS snippet was intended to be *added* to this file, please clarify its context.
-                /*
-                } else {
-                    // Funcionário comum - Unificado com Footer
-                    items.push({ href: 'dashboard.html', icon: 'home', label: 'Início' });
-                    items.push({ href: 'estatistica_funcionario.html', icon: 'bar_chart', label: 'Estatística' });
-                    items.push({ href: 'diario_funcionario.html', icon: 'edit_note', label: 'Diário' });
-                    items.push({ href: 'perfil_funcionario.html', icon: 'person', label: 'Meu Perfil' });
-                    items.push({ href: 'historico_mensal.html', icon: 'history', label: 'Espelho de Ponto' });
-                }
-                */
-
                 document.getElementById('user-nome-audit').innerText = func.nome_completo.toUpperCase();
-                document.getElementById('user-cargo-audit').innerText = (func.funcao || 'TRIPULANTE').toUpperCase();
-                document.getElementById('user-setor-audit').innerText = (func.setores?.nome || 'N/A').toUpperCase();
-                document.getElementById('user-matricula-audit').innerText = `#${func.matricula || '---'}`;
+                document.getElementById('user-cargo-audit').innerText = func.cargo_nome.toUpperCase();
+                document.getElementById('user-setor-audit').innerText = (f.setores?.nome || 'N/A').toUpperCase();
+                document.getElementById('user-matricula-audit').innerText = `#${f.matricula || '---'}`;
                 
                 // Photo Sync Logic with Error Fallback
                 const photoImg = document.getElementById('user-photo-audit');
-                if (func.foto_url) {
-                    photoImg.src = func.foto_url;
-                } else {
-                    photoImg.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(func.nome_completo)}&background=020617&color=fbbf24&bold=true`;
-                }
+                const finalPhoto = func.foto_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(func.nome_completo)}&background=020617&color=fbbf24&bold=true`;
+                photoImg.src = finalPhoto;
                 photoImg.onerror = () => {
                     photoImg.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(func.nome_completo)}&background=020617&color=fbbf24&bold=true`;
                 };

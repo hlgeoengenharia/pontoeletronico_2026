@@ -28,14 +28,17 @@ export const DiarioEngine = {
             await AwarenessManager.init(this.state.userId);
 
             const { data: user } = await supabase
-                .from('funcionarios')
-                .select('*, setores!funcionarios_setor_id_fkey(id, nome, regra_ferias)')
+                .from('vw_funcionarios_gestao')
+                .select('*')
                 .eq('id', this.state.userId)
                 .single();
             
+            console.log('[DiarioEngine] Dados do funcionário carregados:', user);
+            
             if (user) {
                 this.state.employee = user;
-                this.updateIdentityUI();
+                console.log('[DiarioEngine] Dados do funcionário (vw_funcionarios_gestao):', user);
+                console.log('[DiarioEngine] Chaves disponíveis no objeto:', Object.keys(user));
             }
 
             await this.loadAndProcessHistory();
@@ -57,9 +60,17 @@ export const DiarioEngine = {
         if (!user) return;
         const elNickname = document.getElementById('user-nickname');
         const elEnrollment = document.getElementById('user-enrollment');
+        const elPhoto = document.getElementById('user-photo');
         
-        if (elNickname) elNickname.innerText = user.nickname || user.nome_completo.split(' ')[0];
-        if (elEnrollment) elEnrollment.innerText = `#${user.matricula || '---'}`;
+        if (elNickname) {
+            elNickname.innerText = user.nickname || (user.nome_completo ? user.nome_completo.split(' ')[0] : 'Tripulante');
+        }
+        if (elEnrollment) {
+            elEnrollment.innerText = `#${user.matricula || '---'}`;
+        }
+        if (elPhoto && user.foto_url) {
+            elPhoto.src = user.foto_url;
+        }
     },
 
     async loadAndProcessHistory() {
@@ -187,8 +198,12 @@ export const DiarioEngine = {
         try {
             let res;
             if (type === 'atividade') {
-                const { AtividadesActions } = await import('../modules/atividades/atividades.actions.js');
-                res = await AtividadesActions.save({ id, conteudo: newContent, funcionario_id: this.state.userId });
+                res = await AtividadesActions.save({ 
+                    id, 
+                    conteudo: newContent, 
+                    funcionario_id: this.state.userId,
+                    company_id: this.state.employee?.company_id || this.state.employee?.empresa_id
+                });
             } else if (type === 'justificativa') {
                 const { JustificativasWorkflow } = await import('../modules/justificativas/justificativas.workflow.js');
                 const typeSelect = document.getElementById(`edit-type-${id}`);
