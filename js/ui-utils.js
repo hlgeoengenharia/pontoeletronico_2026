@@ -61,7 +61,7 @@ const UI = {
      * Mostra um loader overlay (Reentrante)
      */
     loaderCount: 0,
-    showLoader() {
+    showLoader(timeoutMs = 10000) {
         UI.loaderCount++;
         if (document.getElementById('ui-loader')) return;
         
@@ -79,15 +79,15 @@ const UI = {
         `;
         document.body.appendChild(loader);
 
-        // Safety Timeout: Forçar remoção após 10 segundos para evitar travamento de rede
+        // Safety Timeout: Forçar remoção após tempo definido para evitar travamento de rede
         setTimeout(() => {
             const el = document.getElementById('ui-loader');
             if (el) {
                 console.warn('[UI] Safety timeout acionado.');
                 UI.loaderCount = 0;
-                UI.hideLoader(); // Usa a própria função p/ garantir remoção limpa
+                UI.hideLoader(); 
             }
-        }, 10000);
+        }, timeoutMs);
     },
 
     /**

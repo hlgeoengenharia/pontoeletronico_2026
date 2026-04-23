@@ -105,12 +105,13 @@ const Auth = {
         }
 
         // Se a rota for restrita a certos papéis
-        if (allowedRoles.length > 0 && !allowedRoles.includes(userRole)) {
-            // Se o usuário não tiver permissão para a tela atual
-            alert('Acesso negado: Nível de autorização insuficiente.');
-
-            // Redireciona para o Dashboard Único
-            window.location.href = 'dashboard.html';
+        if (allowedRoles.length > 0) {
+            const isAuthorized = allowedRoles.includes(userRole) || userRole === 'SuperAdmin';
+            if (!isAuthorized) {
+                // Se o usuário não tiver permissão para a tela atual
+                alert('Acesso negado: Nível de autorização insuficiente.');
+                window.location.href = 'dashboard.html';
+            }
         }
 
         return { userId, userRole };
