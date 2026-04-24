@@ -105,26 +105,71 @@
 </style>
 </head>
 
-<body class="bg-background-dark text-slate-100 min-h-screen">
-  <div id="map"></div>
+<body class="bg-background-dark text-slate-100 min-h-screen overflow-hidden">
   
-  <div class="fixed top-6 right-6 z-[1100] flex gap-3">
-    <button onclick="window.location.href='dashboard.html'" class="size-12 glass-panel rounded-xl flex items-center justify-center text-rose-500 hover:bg-rose-500/10 transition-all border border-rose-500/30 shadow-2xl group">
-      <span class="material-symbols-outlined group-hover:scale-110 transition-transform">close</span>
-    </button>
-  </div>
+  <!-- BACKGROUND GRADIENT -->
+  <div class="fixed inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-blue-900/20 via-background-dark to-background-dark -z-10"></div>
 
-  <button id="btn-toggle-menu" class="btn-toggle size-12 glass-panel rounded-xl flex items-center justify-center text-blue-500 hover:bg-blue-500/10 transition-all border border-blue-500/30 shadow-2xl group">
-    <span class="material-symbols-outlined group-hover:scale-110 transition-transform">menu</span>
+  <!-- HEADER / NAVEGAÇÃO DE ANOS -->
+  <header id="main-header" class="fixed top-0 left-0 right-0 h-20 glass-panel border-b border-white/5 z-[1100] flex items-center justify-between px-8 pl-[360px] transition-all duration-400">
+      <div class="flex items-center gap-4">
+          <div class="size-12 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-500">
+              <span class="material-symbols-outlined text-2xl font-variation-settings-fill">calendar_month</span>
+          </div>
+          <div>
+              <h1 class="text-lg font-black uppercase tracking-[0.2em] text-white">Calendário Anual</h1>
+              <p id="view-scope-label" class="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Visão Geral da Empresa</p>
+          </div>
+      </div>
+
+      <div class="flex items-center gap-6">
+          <!-- Seletor de Ano -->
+          <div class="flex items-center gap-3 bg-black/40 p-2 rounded-2xl border border-white/10 shadow-2xl">
+              <button onclick="changeYear(-1)" class="size-10 flex items-center justify-center bg-white/5 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-all active:scale-90">
+                  <span class="material-symbols-outlined">chevron_left</span>
+              </button>
+              <div class="px-6 text-center">
+                  <h2 id="current-year-display" class="text-xl font-black italic tracking-tighter text-blue-400 leading-none">2026</h2>
+                  <p class="text-[7px] text-slate-600 font-bold uppercase tracking-widest mt-0.5">EXERCÍCIO</p>
+              </div>
+              <button onclick="changeYear(1)" class="size-10 flex items-center justify-center bg-white/5 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-all active:scale-90">
+                  <span class="material-symbols-outlined">chevron_right</span>
+              </button>
+          </div>
+
+          <div class="h-10 w-px bg-white/10 mx-2"></div>
+
+          <button onclick="window.location.href='dashboard.html'" class="size-12 bg-rose-500/10 border border-rose-500/20 rounded-xl flex items-center justify-center text-rose-500 hover:bg-rose-500 hover:text-white transition-all shadow-lg active:scale-95">
+              <span class="material-symbols-outlined">close</span>
+          </button>
+      </div>
+  </header>
+
+  <!-- CONTAINER PRINCIPAL: CALENDÁRIO ANUAL -->
+  <main id="main-content" class="pt-24 pl-[340px] h-screen overflow-y-auto custom-scrollbar p-8 transition-all duration-400">
+      <div id="annual-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-20">
+          <!-- 12 Meses gerados dinamicamente -->
+      </div>
+  </main>
+
+  <button id="btn-toggle-menu" class="btn-toggle size-12 glass-panel rounded-xl flex items-center justify-center text-blue-500 hover:bg-blue-500/10 transition-all border border-blue-500/30 shadow-2xl group active">
+    <span class="material-symbols-outlined group-hover:scale-110 transition-transform">close</span>
   </button>
 
-  <aside id="menu-lateral" class="floating-ui menu-lateral glass-panel flex flex-col overflow-hidden shadow-2xl border-r border-blue-500/20 collapsed">
+  <aside id="menu-lateral" class="floating-ui menu-lateral glass-panel flex flex-col overflow-hidden shadow-2xl border-r border-blue-500/20">
     <div class="p-6 border-b border-white/5 bg-blue-500/5">
         <div class="flex items-center gap-3 mb-4">
             <span class="material-symbols-outlined text-blue-500 text-3xl">beach_access</span>
-            <div>
-                <h2 class="text-sm font-black tracking-widest uppercase">GESTÃO DE FÉRIAS</h2>
-                <p id="regra-salva-display" class="text-[9px] text-blue-400 font-bold uppercase tracking-tight">Regra: Carregando...</p>
+            <div class="flex-1">
+                <h2 class="text-sm font-black tracking-widest uppercase italic">GESTÃO DE FÉRIAS</h2>
+                <p id="regra-salva-display" class="text-[8px] text-blue-400 font-bold uppercase tracking-tight">Regra Geral: 1 Parcela</p>
+            </div>
+            
+            <!-- REGRA GERAL -->
+            <div class="flex items-center bg-black/40 p-1 rounded-lg border border-white/5">
+                <button onclick="updateRegraParcelamento('global', null, 1)" class="rule-btn" id="rule-g-1" title="1 Parcela (30 dias)">1</button>
+                <button onclick="updateRegraParcelamento('global', null, 2)" class="rule-btn" id="rule-g-2" title="2 Parcelas (15/15)">2</button>
+                <button onclick="updateRegraParcelamento('global', null, 3)" class="rule-btn" id="rule-g-3" title="3 Parcelas (10/10/10)">3</button>
             </div>
         </div>
         <div class="relative">
@@ -155,12 +200,13 @@
 
   <!-- MODAL: CARD DE FÉRIAS (FULL-FIDELITY) -->
   <div id="modal-card-ferias" class="fixed inset-0 z-[2500] bg-black/95 backdrop-blur-xl hidden items-start justify-center overflow-y-auto p-4 md:p-12">
-    <div class="glass-panel w-full max-w-6xl rounded-[2.5rem] p-0 relative shadow-2xl border border-white/10 my-auto">
+    <div class="glass-panel w-full max-w-6xl rounded-[2.5rem] p-0 relative shadow-[0_0_100px_rgba(13,89,242,0.1)] border border-white/10 my-auto min-h-min">
         <div class="absolute top-0 left-0 w-full h-1 bg-primary"></div>
+        
         <header class="p-8 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
             <div class="flex items-center gap-6">
                 <div class="size-20 rounded-full border-2 border-blue-500/30 p-1 bg-slate-800 overflow-hidden shadow-2xl">
-                    <img id="ferias-foto" src="" class="w-full h-full object-cover rounded-full">
+                    <img id="ferias-foto" src="" class="w-full h-full object-cover rounded-full" onerror="this.src='https://ui-avatars.com/api/?name='+document.getElementById('ferias-nome').innerText+'&background=101622&color=60A5FA'">
                 </div>
                 <div>
                     <h2 class="text-2xl font-black italic tracking-tighter text-white uppercase">Planejamento de Férias</h2>
@@ -171,63 +217,121 @@
                     </div>
                 </div>
             </div>
+
             <div id="monthly-stats-panel" class="hidden md:flex items-center gap-4 px-4 py-2 bg-white/5 rounded-2xl border border-white/10">
-                <div class="text-center"><p class="text-[7px] text-slate-500 font-black uppercase">Nacionais</p><p id="count-nacionais" class="text-xs font-black text-amber-500">0</p></div>
+                <div class="text-center">
+                    <p class="text-[7px] text-slate-500 font-black uppercase">Nacionais</p>
+                    <p id="count-nacionais" class="text-xs font-black text-amber-500">0</p>
+                </div>
                 <div class="w-px h-6 bg-white/10"></div>
-                <div class="text-center"><p class="text-[7px] text-slate-500 font-black uppercase">Regionais</p><p id="count-regionais" class="text-xs font-black text-violet-400">0</p></div>
+                <div class="text-center">
+                    <p class="text-[7px] text-slate-500 font-black uppercase">Regionais</p>
+                    <p id="count-regionais" class="text-xs font-black text-violet-400">0</p>
+                </div>
                 <div class="w-px h-6 bg-white/10"></div>
-                <div class="text-center"><p class="text-[7px] text-slate-500 font-black uppercase">Folgas</p><p id="count-folgas" class="text-xs font-black text-cyan-400">0</p></div>
+                <div class="text-center">
+                    <p class="text-[7px] text-slate-500 font-black uppercase">Folgas</p>
+                    <p id="count-folgas" class="text-xs font-black text-cyan-400">0</p>
+                </div>
             </div>
+
             <div class="flex items-center gap-6">
                 <div class="text-right">
                     <p class="text-[9px] text-slate-500 uppercase font-black tracking-widest mb-1">Total Marcado</p>
                     <p class="text-2xl font-black text-white"><span id="txt-dias-marcados">0</span>/30 <span class="text-xs text-slate-500">DIAS</span></p>
                 </div>
-                <button onclick="fecharCardFerias()" class="size-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-all">
+                <button onclick="window.fecharCardFerias()" class="size-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-all hover:bg-white/10">
                     <span class="material-symbols-outlined">close</span>
                 </button>
             </div>
         </header>
-        <main class="grid grid-cols-1 lg:grid-cols-12 gap-0">
-            <div class="lg:col-span-7 p-8 border-r border-white/5 space-y-8 bg-black/20">
-                <div class="flex items-center justify-between mb-6">
-                    <div class="flex items-center gap-4">
-                        <div class="size-12 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-500">
-                            <span class="material-symbols-outlined text-2xl font-variation-settings-fill">event_note</span>
+
+        <main class="grid grid-cols-1 lg:grid-cols-12 gap-0 overflow-hidden min-h-[500px]">
+            <div class="lg:col-span-7 p-8 border-r border-white/5 space-y-8 bg-black/20 overflow-y-auto custom-scrollbar">
+                <div class="space-y-6">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-4">
+                            <div class="size-12 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-500">
+                                <span class="material-symbols-outlined text-2xl font-variation-settings-fill">event_note</span>
+                            </div>
+                            <div>
+                                <h3 class="text-xs font-black uppercase tracking-[0.2em] text-white">Selecione o Período</h3>
+                                <p id="ferias-regras-info" class="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-1 italic">Mínimo de 10 dias por parcela</p>
+                            </div>
                         </div>
-                        <div>
-                            <h3 class="text-xs font-black uppercase tracking-widest text-white">Calendário de Escala</h3>
-                            <p id="ferias-regras-info" class="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-1 italic">Selecione o período clicando nos dias</p>
+                        <div class="flex items-center gap-3 bg-white/5 p-1 rounded-xl border border-white/5">
+                            <button id="btn-prev-month" class="size-9 flex items-center justify-center hover:bg-white/10 rounded-lg transition-all text-slate-400">
+                                <span class="material-symbols-outlined text-lg">chevron_left</span>
+                            </button>
+                            <span id="txt-month-year" class="text-[11px] font-black uppercase tracking-widest text-white min-w-[120px] text-center">---</span>
+                            <button id="btn-next-month" class="size-9 flex items-center justify-center hover:bg-white/10 rounded-lg transition-all text-slate-400">
+                                <span class="material-symbols-outlined text-lg">chevron_right</span>
+                            </button>
                         </div>
                     </div>
-                    <div class="flex items-center gap-3 bg-white/5 p-1 rounded-xl border border-white/5">
-                        <button id="btn-prev-month" class="size-9 flex items-center justify-center hover:bg-white/10 rounded-lg transition-all text-slate-400"><span class="material-symbols-outlined text-lg">chevron_left</span></button>
-                        <span id="txt-month-year" class="text-[11px] font-black uppercase tracking-widest text-white min-w-[120px] text-center">---</span>
-                        <button id="btn-next-month" class="size-9 flex items-center justify-center hover:bg-white/10 rounded-lg transition-all text-slate-400"><span class="material-symbols-outlined text-lg">chevron_right</span></button>
+
+                    <div id="grid-calendar-ferias" class="grid grid-cols-7 gap-1"></div>
+
+                    <div id="current-selection-panel" class="hidden p-6 bg-blue-500/10 border border-blue-500/20 rounded-3xl flex items-center justify-between animate-in zoom-in-95">
+                        <div class="flex items-center gap-8">
+                            <div class="text-center">
+                                <p class="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-1">Início</p>
+                                <p id="selection-start" class="text-sm font-black text-white italic">--/--/--</p>
+                            </div>
+                            <span class="material-symbols-outlined text-blue-500 opacity-40">arrow_forward</span>
+                            <div class="text-center">
+                                <p class="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-1">Fim</p>
+                                <p id="selection-end" class="text-sm font-black text-white italic">--/--/--</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-1">Duração</p>
+                            <p class="text-lg font-black text-blue-400"><span id="selection-days">0</span> DIAS</p>
+                        </div>
                     </div>
+
+                    <button id="btn-gravar-parcela" disabled class="w-full h-16 bg-blue-500/10 border border-blue-500/20 text-blue-500/40 text-[11px] font-black uppercase tracking-widest rounded-2xl transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-500 hover:text-white group">
+                        Gravar Parcela de Férias
+                    </button>
                 </div>
-                <div id="grid-calendar-ferias" class="grid grid-cols-7 gap-1"></div>
-                <div id="current-selection-panel" class="hidden p-6 bg-blue-500/10 border border-blue-500/20 rounded-3xl flex items-center justify-between animate-in zoom-in-95">
-                    <div class="flex gap-8"><div class="text-center"><p class="text-[8px] text-slate-500 font-black uppercase">Início</p><p id="selection-start" class="text-xs font-black text-white italic">--/--/--</p></div><div class="text-center"><p class="text-[8px] text-slate-500 font-black uppercase">Fim</p><p id="selection-end" class="text-xs font-black text-white italic">--/--/--</p></div></div>
-                    <div class="text-right"><p class="text-[8px] text-slate-500 font-black uppercase">Duração</p><p class="text-lg font-black text-blue-400"><span id="selection-days">0</span> DIAS</p></div>
-                </div>
-                <button id="btn-gravar-parcela" disabled class="w-full h-16 bg-blue-500/10 border border-blue-500/20 text-blue-500/40 text-[11px] font-black uppercase rounded-2xl transition-all">Gravar Parcela</button>
             </div>
+
             <div class="lg:col-span-5 p-8 space-y-8 flex flex-col justify-between h-full bg-white/[0.01]">
                 <div class="space-y-6">
-                    <div class="flex items-center justify-between"><h3 class="text-[10px] font-black uppercase text-white flex items-center gap-2"><span class="material-symbols-outlined text-sm text-blue-500">photo_library</span>Resumo de Parcelas</h3><span id="parcela-count" class="text-[10px] text-slate-500 font-black uppercase">0/1 PARCELA</span></div>
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-[10px] font-black uppercase tracking-[0.2em] text-white flex items-center gap-2">
+                            <span class="material-symbols-outlined text-sm text-blue-500">photo_library</span>
+                            Resumo de Parcelas
+                        </h3>
+                        <span id="parcela-count" class="text-[10px] text-slate-500 font-black uppercase tracking-widest">0/3 Parcelas</span>
+                    </div>
                     <div id="photo-cards-container" class="space-y-4 max-h-[450px] overflow-y-auto custom-scrollbar pr-2 pb-4"></div>
                 </div>
+
                 <div id="final-control-panel" class="space-y-4 pt-8 border-t border-white/5">
-                    <div id="manager-actions" class="hidden grid grid-cols-2 gap-3">
-                        <button id="btn-aprovar-ferias" class="bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 h-14 rounded-2xl text-[10px] font-black uppercase hover:bg-emerald-500 hover:text-white flex items-center justify-center gap-2 group">
-                            <span class="material-symbols-outlined text-lg group-hover:scale-110 transition-transform font-variation-settings-fill">check_circle</span>Abonar
+                    <div id="manager-actions" class="hidden grid grid-cols-3 gap-2">
+                        <button id="btn-aprovar-ferias" class="bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 h-16 rounded-2xl text-[8px] font-black uppercase tracking-tighter transition-all hover:bg-emerald-500 hover:text-white flex flex-col items-center justify-center gap-1 group translate-y-0.5">
+                            <span class="material-symbols-outlined text-lg group-hover:scale-110 transition-transform font-variation-settings-fill">check_circle</span>
+                            Abonar
                         </button>
-                        <button id="btn-rejeitar-ferias" class="bg-rose-500/10 border border-rose-500/20 text-rose-500 h-14 rounded-2xl text-[10px] font-black uppercase hover:bg-rose-500 hover:text-white flex items-center justify-center gap-2 group">
-                            <span class="material-symbols-outlined text-lg group-hover:scale-110 transition-transform">block</span>Rejeitar
+                        <button id="btn-rejeitar-ferias" class="bg-rose-500/10 border border-rose-500/20 text-rose-500 h-16 rounded-2xl text-[8px] font-black uppercase tracking-tighter transition-all hover:bg-rose-500 hover:text-white flex flex-col items-center justify-center gap-1 group translate-y-0.5">
+                            <span class="material-symbols-outlined text-lg group-hover:scale-110 transition-transform">block</span>
+                            Rejeitar
                         </button>
-                        <button id="btn-editar-emergencia" class="col-span-2 hidden bg-amber-500/10 border border-amber-500/20 text-amber-500 h-10 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all hover:bg-amber-500 hover:text-white flex items-center justify-center gap-2 mt-2">
-                            <span class="material-symbols-outlined text-sm">edit_note</span>Habilitar Edição Emergencial
+                        <button id="btn-editar-emergencia" class="bg-amber-500/10 border border-amber-500/20 text-amber-500 h-16 rounded-2xl text-[8px] font-black uppercase tracking-tighter transition-all hover:bg-amber-500 hover:text-white flex flex-col items-center justify-center gap-1 group translate-y-0.5">
+                            <span class="material-symbols-outlined text-lg group-hover:scale-110 transition-transform">edit_note</span>
+                            Editar
+                        </button>
+                    </div>
+
+                    <div id="employee-actions" class="grid grid-cols-2 gap-3">
+                        <button id="btn-confirmar-tudo-ferias" class="bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 h-14 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all hover:bg-emerald-500 hover:text-white flex items-center justify-center gap-2 group">
+                            <span class="material-symbols-outlined text-lg group-hover:scale-110 transition-transform font-variation-settings-fill">send</span>
+                            Enviar
+                        </button>
+                        <button onclick="window.fecharCardFerias()" class="bg-white/5 border border-white/10 text-slate-400 h-14 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all hover:bg-white/10 hover:text-white flex items-center justify-center gap-2">
+                            <span class="material-symbols-outlined text-lg">close</span>
+                            Cancelar
                         </button>
                     </div>
                 </div>
@@ -236,101 +340,218 @@
     </div>
   </div>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+      .month-card {
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.05);
+          border-radius: 24px;
+          padding: 20px;
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+          backdrop-filter: blur(10px);
+      }
+      .month-card:hover {
+          background: rgba(255, 255, 255, 0.06);
+          border-color: rgba(59, 130, 246, 0.3);
+          transform: translateY(-4px);
+          box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+      }
+      .day-annual {
+          aspect-ratio: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 9px;
+          font-weight: 700;
+          border-radius: 6px;
+          border: 1px solid rgba(255, 255, 255, 0.05);
+          transition: all 0.2s ease;
+          position: relative;
+          cursor: default;
+      }
+      /* Status Colors */
+      .day-vac-approved { background: #10B981 !important; color: white !important; border: none !important; box-shadow: 0 0 10px rgba(16, 185, 129, 0.4); z-index: 2; }
+      .day-vac-pending { background: #F59E0B !important; color: white !important; border: none !important; box-shadow: 0 0 10px rgba(245, 158, 11, 0.4); z-index: 2; }
+      .day-vac-repouso { background: #3B82F6 !important; color: white !important; border: none !important; box-shadow: 0 0 15px rgba(59, 130, 246, 0.4); z-index: 3;}
+      
+      .day-overlap { border: 2px solid white !important; } /* Multiple people on vacation here */
+
+      .month-name {
+          font-size: 11px;
+          font-weight: 900;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          color: #94a3b8;
+          margin-bottom: 12px;
+          text-align: center;
+      }
+
+      /* Estilos Sincronizados com Diario Funcionario */
+      .glass-calendar-day {
+          transition: all 0.2s ease;
+          cursor: pointer;
+          position: relative;
+          z-index: 10;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 50px;
+          border-radius: 12px;
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          background: rgba(255, 255, 255, 0.08);
+          font-size: 14px;
+          font-weight: 900;
+          color: #FFFFFF !important;
+      }
+      .glass-calendar-day:hover:not(.disabled):not(.day-congelado) {
+          background: rgba(13, 89, 242, 0.4);
+          transform: scale(1.05);
+          color: white !important;
+      }
+      .glass-calendar-day.selected {
+          background: #0d59f2 !important;
+          color: white !important;
+          box-shadow: 0 0 20px rgba(13, 89, 242, 0.6);
+          border: none !important;
+          font-weight: 900;
+      }
+      .glass-calendar-day.selected-valid {
+          background: #10b981 !important;
+          box-shadow: 0 0 25px rgba(16, 185, 129, 0.8) !important;
+          color: white !important;
+          font-weight: 900;
+      }
+      .glass-calendar-day.holiday-national {
+          background: rgba(245, 158, 11, 0.3) !important;
+          border: 1px dashed rgba(245, 158, 11, 1) !important;
+          color: #fbbf24 !important;
+      }
+      .glass-calendar-day.holiday-regional {
+          background: rgba(139, 92, 246, 0.3) !important;
+          border: 1px dashed rgba(139, 92, 246, 1) !important;
+          color: #c4b5fd !important;
+      }
+      .glass-calendar-day.day-off {
+          background: rgba(6, 182, 212, 0.3) !important;
+          border: 1px dashed rgba(6, 182, 212, 1) !important;
+          color: #67e8f9 !important;
+      }
+      .glass-calendar-day.marked {
+          background: rgba(16, 185, 129, 0.6) !important;
+          border: 1.5px solid rgba(16, 185, 129, 1) !important;
+          color: #FFFFFF !important;
+          font-weight: 900;
+          text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+      }
+      .glass-calendar-day.day-congelado {
+          opacity: 0.4 !important;
+          cursor: not-allowed;
+          background: repeating-linear-gradient(45deg, rgba(255,255,255,0.02), rgba(255,255,255,0.02) 5px, transparent 5px, transparent 10px) !important;
+          color: rgba(255, 255, 255, 0.3) !important;
+          border-color: rgba(255, 255, 255, 0.05) !important;
+          pointer-events: none;
+      }
+
+      .rule-btn {
+          width: 24px;
+          height: 24px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 10px;
+          font-weight: 900;
+          color: #475569;
+          border-radius: 6px;
+          transition: all 0.3s;
+      }
+      .rule-btn.active {
+          background: #3B82F6;
+          color: white;
+          box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
+      }
+      .rule-btn:hover:not(.active) {
+          background: rgba(255,255,255,0.1);
+          color: #cbd5e1;
+      }
+
+      /* Expansão do Layout */
+      #main-header.expanded { pl-8; }
+      #main-content.expanded { pl-8; }
+  </style>
+
   <script type="module">
     import { supabase } from '../js/supabase-config.js';
     import { Auth } from '../js/auth.js';
     import { UI } from '../js/ui-utils.js';
     import { FeriasEngine } from '../js/modules/ferias/ferias.engine.js';
 
+    // ESTADO
     let sectors = [];
     let employees = [];
+    let allVacations = [];
+    let currentScope = { type: 'all', id: null, name: 'Visão Geral da Empresa' };
+    let currentYear = new Date().getFullYear();
     let currentFilter = 'all';
-    let expandedSectors = new Set(); // Será populado em fetchData
-
-    const map = L.map('map', { zoomControl: false, attributionControl: false }).setView([-23.5505, -46.6333], 15);
-    L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', { subdomains: ['mt0', 'mt1', 'mt2', 'mt3'], maxZoom: 20 }).addTo(map);
-    const sectorsGroup = L.featureGroup().addTo(map);
 
     async function init() {
-        console.time('[FeriasAdmin] Init');
         UI.showLoader();
         try {
-            console.log('[FeriasAdmin] Iniciando fetchData...');
             await fetchData();
-            console.log('[FeriasAdmin] Iniciando renderSidebar...');
             renderSidebar();
-            console.log('[FeriasAdmin] Iniciando renderMapLayers...');
-            renderMapLayers();
+            renderAnnualCalendar();
+            
+            // Inicializar display da regra global (usa a do primeiro setor como referência ou padrão 1)
+            const defaultRule = sectors[0]?.regra_ferias || 1;
+            updateGlobalRuleDisplay(defaultRule);
         } catch (err) {
-            console.error('[FeriasAdmin] Erro no Init:', err);
+            console.error('Init error:', err);
         } finally {
             UI.hideLoader();
-            console.timeEnd('[FeriasAdmin] Init');
         }
     }
-    window.init = init;
 
     async function fetchData() {
-        try {
-            const user = Auth.getUser();
-            const sid = user.setorId;
-            const isManager = (user.role || '').toLowerCase().includes('gest') || (user.role || '').toLowerCase().includes('man');
+        const user = Auth.getUser();
+        const isAdmin = (user.role || '').toLowerCase().includes('admin') || (user.role || '').toLowerCase().includes('man') || (user.role || '').toLowerCase().includes('gest');
+        const sid = user.setorId;
 
-            let qS = supabase.from('setores').select('*');
-            let qF = supabase.from('funcionarios').select('*');
-            if (isManager && sid) { qS = qS.eq('id', sid); qF = qF.eq('setor_id', sid); }
+        // 1. Setores e Funcionários
+        let qS = supabase.from('setores').select('*');
+        let qF = supabase.from('funcionarios').select('*, cargos(nome), identidades_globais(nome_completo), perfis_tripulantes(foto_url, nickname)');
+        
+        if (!isAdmin && sid) {
+            qS = qS.eq('id', sid);
+            qF = qF.eq('setor_id', sid);
+        }
 
-            const [sD, fD, ferD, pD, cD, iD] = await Promise.all([
-                qS, qF, supabase.from('ferias').select('*'),
-                supabase.from('perfis_tripulantes').select('funcionario_id, foto_url, nickname'),
-                supabase.from('cargos').select('id, nome'),
-                supabase.from('identidades_globais').select('id, nome_completo')
-            ]);
+        const [sD, fD, vD] = await Promise.all([
+            qS, qF, supabase.from('ferias').select('*')
+        ]);
+
+        sectors = sD.data || [];
+        allVacations = vD.data || [];
+        
+        const today = new Date().toISOString().split('T')[0];
+
+        employees = (fD.data || []).map(f => {
+            const myV = allVacations.filter(v => v.funcionario_id === f.id);
+            const isP = myV.some(v => v.status === 'pendente');
+            const isR = myV.some(v => v.status === 'aprovado' && today >= v.data_inicio && today <= v.data_fim);
+            const isA = myV.some(v => v.status === 'aprovado' && v.data_inicio > today);
             
-            const idsMap = {}; (iD.data || []).forEach(i => idsMap[i.id] = i);
-            sectors = sD.data || [];
-            const ferData = ferD.data || [];
-            const fotos = {}; (pD.data || []).forEach(p => fotos[p.funcionario_id] = p.foto_url);
-            const nicks = {}; (pD.data || []).forEach(p => nicks[p.funcionario_id] = p.nickname);
-            const cargos = {}; (cD.data || []).forEach(c => cargos[c.id] = c.nome);
-            const today = new Date().toISOString().split('T')[0];
+            let s = 'none';
+            if (isR) s = 'repouso'; else if (isP) s = 'pendente'; else if (isA) s = 'aprovado';
 
-            employees = (fD.data || []).map(f => {
-                const myV = ferData.filter(v => v.funcionario_id === f.id);
-                const isP = myV.some(v => v.status === 'pendente');
-                const isR = myV.some(v => v.status === 'aprovado' && today >= v.data_inicio && today <= v.data_fim);
-                const isA = myV.some(v => v.status === 'aprovado' && v.data_inicio > today);
-                
-                let s = 'none';
-                if (isR) s = 'repouso'; else if (isP) s = 'pendente'; else if (isA) s = 'aprovado';
-                
-                const ident = idsMap[f.id] || {};
-                const nickname = nicks[f.id] || (ident.nome_completo ? ident.nome_completo.split(' ')[0] : 'N/A');
-                
-                return { 
-                    ...f, 
-                    nome_completo: ident.nome_completo || 'Tripulante',
-                    nickname: nickname,
-                    foto_url: fotos[f.id] || null, 
-                    cargo_nome: cargos[f.cargo_id] || 'TRIPULANTE', 
-                    vacationStatus: s 
-                };
-            });
+            return {
+                ...f,
+                nome_completo: f.identidades_globais?.nome_completo || 'Tripulante',
+                nickname: f.perfis_tripulantes?.nickname || f.identidades_globais?.nome_completo?.split(' ')[0] || 'T',
+                foto_url: f.perfis_tripulantes?.foto_url || null,
+                cargo_nome: f.cargos?.nome || 'Tripulante',
+                vacationStatus: s
+            };
+        });
 
-            console.log(`[fetchData] Processados ${employees.length} tripulantes.`);
-            // Expandir todos os setores por padrão
-            sectors.forEach(s => expandedSectors.add(s.id));
-            updateCounts();
-            updateGlobalHeader();
-        } catch (e) { console.error('Error fetchData:', e); }
-    }
-
-    function updateGlobalHeader() {
-        const d = document.getElementById('regra-salva-display');
-        if (!d) return;
-        const rule = sectors[0]?.regra_ferias || 1;
-        d.innerText = `REGRA GERAL: ${rule} PARCELA${rule > 1 ? 'S' : ''}`;
+        updateCounts();
     }
 
     function updateCounts() {
@@ -341,40 +562,129 @@
             pendente: employees.filter(e => e.vacationStatus === 'pendente').length 
         };
         Object.keys(counts).forEach(key => {
-            const el = document.getElementById(`count-${key}`);
-            if (el) el.innerText = `(${counts[key]})`;
+            if (document.getElementById(`count-${key}`)) document.getElementById(`count-${key}`).innerText = `(${counts[key]})`;
         });
     }
 
-    function renderMapLayers() {
-        sectorsGroup.clearLayers();
-        sectors.forEach(s => {
-            if (s.latitude && s.longitude) {
-                const onV = employees.filter(e => e.setor_id === s.id && e.vacationStatus === 'repouso').length;
-                L.circle([s.latitude, s.longitude], { radius: s.raio || 100, color: '#3b82f6', fillOpacity: 0.1 }).addTo(sectorsGroup);
-                const icon = L.divIcon({
-                    className: 'custom-icon',
-                    html: `<div class="pin-container"><div class="pin-badge">${onV}</div><div class="pin-drop"><div class="pin-content"><span class="material-symbols-outlined text-blue-500 text-2xl">domain</span></div></div></div>`,
-                    iconSize: [50, 60], iconAnchor: [25, 60]
-                });
-                L.marker([s.latitude, s.longitude], { icon }).addTo(sectorsGroup).bindPopup(`<b>${s.nome}</b>`);
+    function renderAnnualCalendar() {
+        const grid = document.getElementById('annual-grid');
+        grid.innerHTML = '';
+        
+        document.getElementById('current-year-display').innerText = currentYear;
+        document.getElementById('view-scope-label').innerText = currentScope.name;
+
+        // Gerar 12 meses
+        const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+        
+        months.forEach((name, monthIndex) => {
+            const card = document.createElement('div');
+            card.className = 'month-card';
+            
+            let html = `<h4 class="month-name">${name}</h4>`;
+            html += `<div class="grid grid-cols-7 gap-1">`;
+            
+            // Header dias
+            ['D','S','T','Q','Q','S','S'].forEach(d => html += `<span class="text-[7px] text-slate-700 font-black text-center mb-1">${d}</span>`);
+            
+            const firstDay = new Date(currentYear, monthIndex, 1).getDay();
+            const daysInMonth = new Date(currentYear, monthIndex + 1, 0).getDate();
+            
+            // Padding
+            for (let i = 0; i < firstDay; i++) html += `<div></div>`;
+            
+            // Dias
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dateStr = `${currentYear}-${String(monthIndex + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+                const statusClass = getDayStatusClass(dateStr);
+                html += `<div class="day-annual ${statusClass}">${d}</div>`;
             }
+            
+            html += `</div>`;
+            card.innerHTML = html;
+            grid.appendChild(card);
         });
-        if (sectorsGroup.getLayers().length) map.fitBounds(sectorsGroup.getBounds());
     }
+
+    function getDayStatusClass(dateStr) {
+        // Filtrar férias baseadas no escopo (All, Sector, Individual)
+        let relevantVacations = allVacations;
+        
+        if (currentScope.type === 'sector') {
+            const sectorEmpIds = employees.filter(e => e.setor_id === currentScope.id).map(e => e.id);
+            relevantVacations = allVacations.filter(v => sectorEmpIds.includes(v.funcionario_id));
+        } else if (currentScope.type === 'employee') {
+            relevantVacations = allVacations.filter(v => v.funcionario_id === currentScope.id);
+        }
+
+        // Férias ativas hoje? (Repouso)
+        const today = new Date().toISOString().split('T')[0];
+        const isActiveNow = relevantVacations.some(v => v.status === 'aprovado' && dateStr >= v.data_inicio && dateStr <= v.data_fim && dateStr === today);
+        
+        // Férias agendadas (No passado ou futuro)
+        const approved = relevantVacations.filter(v => v.status === 'aprovado' && dateStr >= v.data_inicio && dateStr <= v.data_fim);
+        const pending = relevantVacations.filter(v => v.status === 'pendente' && dateStr >= v.data_inicio && dateStr <= v.data_fim);
+
+        if (approved.length > 0) {
+            // Se for hoje, destacar mais (Azure)
+            if (dateStr === today) return 'day-vac-repouso';
+            return 'day-vac-approved';
+        }
+        if (pending.length > 0) return 'day-vac-pending';
+        
+        return '';
+    }
+
+    window.updateRegraParcelamento = async (scope, sectorId, rule) => {
+        if (scope === 'global') {
+            if (!confirm(`Deseja aplicar a regra de ${rule} parcela(s) para TODOS os setores?`)) return;
+            UI.showLoader();
+            try {
+                // Atualiza todos os setores
+                await supabase.from('setores').update({ regra_ferias: rule }).not('id', 'is', null);
+                UI.showToast('Regra aplicada globalmente', 'success');
+                await fetchData();
+                renderSidebar();
+                updateGlobalRuleDisplay(rule);
+            } catch (err) { console.error(err); }
+            finally { UI.hideLoader(); }
+        } else {
+            UI.showLoader();
+            try {
+                await supabase.from('setores').update({ regra_ferias: rule }).eq('id', sectorId);
+                UI.showToast('Regra do setor atualizada', 'success');
+                await fetchData();
+                renderSidebar();
+            } catch (err) { console.error(err); }
+            finally { UI.hideLoader(); }
+        }
+    }
+
+    function updateGlobalRuleDisplay(rule) {
+        document.querySelectorAll('[id^="rule-g-"]').forEach(b => b.classList.remove('active'));
+        const btn = document.getElementById(`rule-g-${rule}`);
+        if (btn) btn.classList.add('active');
+        document.getElementById('regra-salva-display').innerText = `Regra Geral: ${rule} Parcela${rule > 1 ? 's' : ''}`;
+    }
+
+    window.changeYear = (delta) => {
+        currentYear += delta;
+        renderAnnualCalendar();
+    };
 
     window.setFilter = (f) => {
         currentFilter = f;
         document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-        const activeBtn = document.getElementById(`btn-${f}`);
-        if (activeBtn) activeBtn.classList.add('active');
+        document.getElementById(`btn-${f}`).classList.add('active');
         renderSidebar();
     };
 
-    window.toggleSetor = (id) => {
-        if (expandedSectors.has(id)) expandedSectors.delete(id); else expandedSectors.add(id);
-        renderSidebar();
-    }
+    window.selectScope = (type, id, name) => {
+        currentScope = { type, id, name };
+        renderAnnualCalendar();
+        
+        // No mobile, fechar menu ao selecionar
+        if (window.innerWidth < 1024) toggleMenu();
+    };
 
     function renderSidebar() {
         const c = document.getElementById('lista-setores-ferias');
@@ -382,72 +692,80 @@
             let emps = employees.filter(e => e.setor_id === s.id);
             if (currentFilter !== 'all') emps = emps.filter(e => e.vacationStatus === currentFilter);
             if (!emps.length && currentFilter !== 'all') return '';
-            const exp = expandedSectors.has(s.id);
-            return `<div class="setor-group ${exp ? 'active' : ''}">
-                <div onclick="toggleSetor('${s.id}')" class="flex items-center justify-between px-3 py-3 bg-white/5 border border-white/5 rounded-2xl cursor-pointer hover:bg-blue-500/5 transition-all">
-                    <div class="flex items-center gap-3"><span class="material-symbols-outlined text-blue-500 text-lg">domain</span><h4 class="text-[10px] font-black text-slate-100 uppercase tracking-widest">${s.nome}</h4></div>
-                    <span class="material-symbols-outlined text-slate-600 text-sm chevron-icon">expand_more</span>
-                </div>
-                <div class="setor-content space-y-1 mt-2 ml-4 border-l border-blue-500/20 pl-4">
-                    ${emps.map(e => {
-                        const statusClass = e.vacationStatus === 'pendente' ? 'status-pendente' : (e.vacationStatus === 'repouso' ? 'status-repouso' : (e.vacationStatus === 'aprovado' ? 'status-aprovado' : ''));
-                        const dotClass = e.vacationStatus === 'pendente' ? 'bg-pendente' : (e.vacationStatus === 'repouso' ? 'bg-repouso' : (e.vacationStatus === 'aprovado' ? 'bg-aprovado' : 'bg-slate-700'));
-                        const labelTxt = e.vacationStatus === 'repouso' ? 'EM FÉRIAS' : e.vacationStatus;
-                        const labelClass = e.vacationStatus === 'pendente' ? 'text-rose-400' : (e.vacationStatus === 'repouso' ? 'text-yellow-400' : 'text-emerald-400');
+
+            return `
+                <div class="space-y-2">
+                    <div onclick="selectScope('sector', '${s.id}', 'Setor: ${s.nome}')" class="flex items-center justify-between p-3 bg-white/5 hover:bg-blue-500/10 border border-white/5 rounded-xl cursor-pointer transition-all">
+                        <div class="flex items-center gap-3">
+                            <span class="material-symbols-outlined text-blue-500 text-lg">domain</span>
+                            <h4 class="text-[10px] font-black uppercase text-slate-100">${s.nome}</h4>
+                        </div>
                         
-                        return `
-                        <div onclick="abrirCardFerias('${e.id}')" 
-                             class="emp-item flex items-center justify-between p-3 rounded-xl cursor-pointer group/emp transition-all hover:bg-blue-500/10 border border-white/5 ${statusClass}">
-                            <div class="flex items-center gap-3">
-                                <img src="${e.foto_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(e.nickname || e.nome_completo)}&background=101622&color=60A5FA`}" 
-                                     class="size-8 rounded-full border border-white/10 shrink-0 shadow-lg">
-                                <div class="flex flex-col">
-                                    <span class="text-[10px] font-black text-slate-100 uppercase tracking-wider group-hover/emp:text-white transition-colors">${e.nickname || e.nome_completo}</span>
-                                    <span class="text-[8px] font-bold text-slate-500 uppercase tracking-tighter opacity-60">${e.cargo_nome || 'Tripulante'}</span>
+                        <div class="flex items-center gap-1 bg-black/20 p-0.5 rounded-lg border border-white/5" onclick="event.stopPropagation()">
+                            <button onclick="updateRegraParcelamento('sector', '${s.id}', 1)" class="rule-btn ${s.regra_ferias == 1 ? 'active' : ''}">1</button>
+                            <button onclick="updateRegraParcelamento('sector', '${s.id}', 2)" class="rule-btn ${s.regra_ferias == 2 ? 'active' : ''}">2</button>
+                            <button onclick="updateRegraParcelamento('sector', '${s.id}', 3)" class="rule-btn ${s.regra_ferias == 3 ? 'active' : ''}">3</button>
+                        </div>
+                    </div>
+                    <div class="pl-4 space-y-1">
+                        ${emps.map(e => `
+                            <div onclick="selectScope('employee', '${e.id}', 'Colaborador: ${e.nickname}'); abrirCardFerias('${e.id}')" 
+                                 class="flex items-center justify-between p-2 rounded-lg cursor-pointer hover:bg-white/5 border border-transparent hover:border-white/10 transition-all group">
+                                <div class="flex items-center gap-2">
+                                    <img src="${e.foto_url || `https://ui-avatars.com/api/?name=${e.nickname}&background=101622&color=60A5FA`}" class="size-6 rounded-full border border-white/10">
+                                    <span class="text-[9px] font-bold text-slate-400 group-hover:text-white">${e.nickname}</span>
                                 </div>
+                                <div class="status-dot-v ${e.vacationStatus === 'pendente' ? 'bg-pendente' : (e.vacationStatus === 'repouso' ? 'bg-repouso' : (e.vacationStatus === 'aprovado' ? 'bg-aprovado' : 'bg-slate-700'))}"></div>
                             </div>
-                            <div class="flex items-center gap-2">
-                                ${e.vacationStatus !== 'none' ? `<span class="text-[8px] font-black uppercase tracking-widest ${labelClass}">${labelTxt === 'repouso' ? 'EM FÉRIAS' : labelTxt}</span>` : ''}
-                                <div class="status-dot-v ${dotClass} !w-1.5 !h-1.5"></div>
-                            </div>
-                        </div>`;
-                    }).join('')}
+                        `).join('')}
+                    </div>
                 </div>
-            </div>`;
+            `;
         }).join('');
     }
 
     window.abrirCardFerias = async (id) => {
         UI.showLoader();
         try {
-            console.log('[abrirCardFerias] Iniciando motor para:', id);
             const e = employees.find(emp => emp.id === id);
-            await FeriasEngine.init({ role: 'manager', targetEmployee: { ...e, setores: sectors.find(s => s.id === e.setor_id) } });
+            const { FeriasEngine } = await import('../js/modules/ferias/ferias.engine.js');
+            await FeriasEngine.init({ 
+                role: 'manager', 
+                userId: id, // ID do funcionário que está sendo visualizado
+                targetEmployee: { ...e, setores: sectors.find(s => s.id === e.setor_id) } 
+            });
             document.getElementById('modal-card-ferias').classList.replace('hidden', 'flex');
-        } catch (err) { console.error('[abrirCardFerias] Erro:', err); }
-        finally { UI.hideLoader(); }
+        } catch (err) { 
+            console.error(err); 
+            UI.showToast('Erro ao carregar planejamento', 'error');
+        } finally { 
+            UI.hideLoader(); 
+        }
     }
 
     window.fecharCardFerias = () => document.getElementById('modal-card-ferias').classList.replace('flex', 'hidden');
 
-    document.getElementById('search-ferias').oninput = (e) => {
-        const term = e.target.value.toLowerCase();
-        document.querySelectorAll('.setor-group').forEach(group => {
-            let hasVisible = false;
-            group.querySelectorAll('.p-3').forEach(item => {
-                const text = item.innerText.toLowerCase();
-                const visible = text.includes(term);
-                item.classList.toggle('hidden', !visible);
-                if (visible) hasVisible = true;
-            });
-            group.classList.toggle('hidden', !hasVisible && term !== '');
-        });
-    };
+    function toggleMenu() {
+        const menu = document.getElementById('menu-lateral');
+        const header = document.getElementById('main-header');
+        const content = document.getElementById('main-content');
+        const btn = document.getElementById('btn-toggle-menu');
 
-    document.getElementById('btn-toggle-menu').onclick = () => {
-        document.getElementById('menu-lateral').classList.toggle('collapsed');
-        document.getElementById('btn-toggle-menu').classList.toggle('active');
-    };
+        const isCollapsed = menu.classList.toggle('collapsed');
+        btn.classList.toggle('active', !isCollapsed);
+        btn.querySelector('span').innerText = isCollapsed ? 'menu' : 'close';
+
+        // Ajustar Paddings
+        if (isCollapsed) {
+            header.style.paddingLeft = '2rem';
+            content.style.paddingLeft = '2rem';
+        } else {
+            header.style.paddingLeft = '360px';
+            content.style.paddingLeft = '340px';
+        }
+    }
+
+    document.getElementById('btn-toggle-menu').onclick = toggleMenu;
 
     init();
   </script>

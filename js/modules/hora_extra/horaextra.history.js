@@ -12,17 +12,22 @@ export const HoraExtraHistory = {
      */
     render(item, options = {}) {
         const date = new Date(item.data_ref || item.created_at);
-        const icon = 'timer';
+        const typeKey = (item.tipo || item.subtipo || '').toLowerCase();
+        const isDiaExtra = typeKey === 'dia_trabalho_extra';
+        const icon = isDiaExtra ? 'event_available' : 'timer';
         
-        // Extrair minutos do conteúdo [LIMITE:XX]
-        const match = (item.content || '').match(/\[LIMITE:(\d+)\]/);
-        const extraMinutes = match ? match[1] : '120';
+        // Extrair minutos do conteúdo [LIMITE:XX] ou Data do Dia Extra [DIA_EXTRA:XX]
+        const matchLimit = (item.content || '').match(/\[LIMITE:(\d+)\]/);
+        const extraMinutes = matchLimit ? matchLimit[1] : '120';
+
+        const matchDate = (item.content || '').match(/\[DIA_EXTRA:([\d-]+)\]/);
+        const targetDate = matchDate ? matchDate[1] : null;
         
         // Estado de "Ciente" (apenas para colaborador e se não for contexto Online)
         const isCiente = options.isContextOnline ? false : (localStorage.getItem(`ciente_${item.id}`) === 'true');
         
-        const bgBadge = isCiente ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500';
-        const colorClass = isCiente ? 'border-l-emerald-500' : 'border-l-amber-500';
+        const bgBadge = isCiente ? 'bg-emerald-500/10 text-emerald-500' : (isDiaExtra ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500');
+        const colorClass = isCiente ? 'border-l-emerald-500' : (isDiaExtra ? 'border-l-emerald-500' : 'border-l-amber-500');
 
         // Botões de Ciência (Se Colaborador) e Botões de Admin (Se Admin fora do contexto Diário)
         const canEdit = EventManager.canEdit(item, options);
@@ -46,12 +51,15 @@ export const HoraExtraHistory = {
                 </div>
             `;
         } else {
+                const btnLabel = isDiaExtra ? 'ESTOU CIENTE' : 'ESTOU CIENTE';
+            const btnType = isDiaExtra ? 'DE' : 'HE'; // DE = Dia Extra, HE = Hora Extra (para o handler)
+            
             actionButtons = `
                 <div class="flex justify-end pt-1.5">
-                    <button onclick="window.marcarCiente && window.marcarCiente('${item.id}', 'HE')" ${isCiente ? 'disabled' : ''} 
-                        class="px-4 py-2 rounded-xl border transition-all text-[9px] font-black uppercase tracking-widest flex items-center gap-2 ${isCiente ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500 opacity-60' : 'bg-primary/10 border-primary/20 text-primary shadow-lg shadow-amber-500/10'}">
+                    <button onclick="window.marcarCiente && window.marcarCiente('${item.id}', '${btnType}')" ${isCiente ? 'disabled' : ''} 
+                        class="px-4 py-2 rounded-xl border transition-all text-[9px] font-black uppercase tracking-widest flex items-center gap-2 ${isCiente ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400 opacity-60' : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400 shadow-lg shadow-emerald-500/10'}">
                         <span class="material-symbols-outlined text-sm font-black">${isCiente ? 'verified' : 'check'}</span>
-                        <span>${isCiente ? 'CONFIRMADO' : 'ESTOU CIENTE'}</span>
+                        <span>${isCiente ? 'CONFIRMADO' : btnLabel}</span>
                     </button>
                 </div>
             `;
@@ -68,12 +76,12 @@ export const HoraExtraHistory = {
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center justify-between mb-0.5">
                             <div class="flex items-center gap-2">
-                                <h5 class="text-[8px] font-black uppercase tracking-widest text-slate-500 italic">HORA EXTRA</h5>
-                                <span class="bg-amber-500/20 px-1 py-0.5 rounded text-[6px] font-black text-amber-500">+${extraMinutes}M</span>
+                                <h5 class="text-[8px] font-black uppercase tracking-widest text-slate-500 italic">${isDiaExtra ? 'DIA EXTRA' : 'HORA EXTRA'}</h5>
+                                ${isDiaExtra ? '' : `<span class="bg-amber-500/20 px-1 py-0.5 rounded text-[6px] font-black text-amber-500">+${extraMinutes}M</span>`}
                             </div>
                             <span class="text-[7px] font-bold text-slate-600">${date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
                         </div>
-                        <p class="text-[10px] text-slate-400 leading-tight italic line-clamp-2">"${cleanContent || '...'}"</p>
+                        <p class="text-[10px] text-slate-400 leading-tight italic line-clamp-2">"${(item.content || "").replace(/\[LIMITE:\d+\]\s*/, '').replace(/\[DIA_EXTRA:[\d-]+\].*?\.\s*/, '') || '...'}"</p>
                     </div>
                 </div>
             `;
@@ -88,8 +96,8 @@ export const HoraExtraHistory = {
                         </div>
                         <div>
                             <div class="flex items-center gap-2">
-                                <h5 class="text-[9px] font-black uppercase tracking-widest text-slate-100">SOLICITAÇÃO DE HORA EXTRA</h5>
-                                <span class="bg-black/40 px-2 py-0.5 rounded-md text-[8px] font-black text-amber-500 border border-amber-500/20">+${extraMinutes} MIN</span>
+                                <h5 class="text-[9px] font-black uppercase tracking-widest text-slate-100">${isDiaExtra ? 'CONVOCAÇÃO: DIA EXTRA' : 'SOLICITAÇÃO DE HORA EXTRA'}</h5>
+                                ${isDiaExtra ? '' : `<span class="bg-black/40 px-2 py-0.5 rounded-md text-[8px] font-black text-amber-500 border border-amber-500/20">+${extraMinutes} MIN</span>`}
                             </div>
                             <p class="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">
                                 ${date.toLocaleDateString('pt-BR')} às ${date.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})}
@@ -99,7 +107,7 @@ export const HoraExtraHistory = {
                 </div>
 
                 <div class="bg-black/20 rounded-xl p-3 border border-white/5">
-                    <p class="text-[11px] text-slate-400 leading-relaxed italic line-clamp-3 font-medium opacity-80">"${item.content.replace(/\[LIMITE:\d+\]\s*/, '')}"</p>
+                    <p class="text-[11px] text-slate-400 leading-relaxed italic line-clamp-3 font-medium opacity-80">"${(item.content || "").replace(/\[LIMITE:\d+\]\s*/, '').replace(/\[DIA_EXTRA:[\d-]+\].*?\.\s*/, '')}"</p>
                 </div>
                 
                 ${actionButtons}

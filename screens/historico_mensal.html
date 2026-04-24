@@ -485,7 +485,7 @@
                     supabase.from('pontos').select('*').eq('funcionario_id', targetId).gte('data_hora', startMonth).lte('data_hora', endMonth).order('data_hora', { ascending: true }),
                     supabase.from('anotacoes').select('*').eq('funcionario_id', targetId).gte('data', startMonth.split('T')[0]).lte('data', endMonth.split('T')[0]),
                     supabase.from('justificativas').select('*').eq('funcionario_id', targetId).gte('data_incidente', startMonth.split('T')[0]).lte('data_incidente', endMonth.split('T')[0]),
-                    supabase.from('comunicados').select('*').or(`destinatario_id.eq.${targetId},tipo.eq.geral,setor_id.eq.${mySectorId || '00000000-0000-0000-0000-000000000000'}`).gte('created_at', startMonth).lte('created_at', endMonth),
+                    supabase.from('comunicados').select('*').or(`destinatario_id.eq.${targetId},tipo.eq.geral,setor_id.eq.${mySectorId || '00000000-0000-0000-0000-000000000000'}`),
                     supabase.from('diario_logs').select('*').eq('funcionario_id', targetId).gte('created_at', startMonth).lte('created_at', endMonth),
                     supabase.from('feriados_folgas').select('*').or(`funcionario_id.eq.${targetId},setor_id.eq.${mySectorId},escopo.eq.geral`).gte('data', startMonth.split('T')[0]).lte('data', endMonth.split('T')[0]),
                     supabase.from('ferias').select('*').eq('funcionario_id', targetId).eq('status', 'aprovado').lte('data_inicio', endMonth.split('T')[0]).gte('data_fim', startMonth.split('T')[0])
@@ -580,10 +580,25 @@
                     const dayPoints = pontos.filter(p => p.data_hora.startsWith(dateStr));
                     const dayAnotacoes = anotacoes.filter(a => a.data === dateStr);
                     const dayJustificativas = justificativas.filter(j => j.data_incidente === dateStr);
-                    const dayComunicados = (comunicados || []).filter(c => (c.created_at || '').startsWith(dateStr));
-                    const dayLogs = (logs || []).filter(l => (l.created_at || '').startsWith(dateStr));
                     const daySpecial = (feriados || []).filter(f => f.data === dateStr);
                     const dayVacations = (ferias || []).filter(f => f.data_inicio <= dateStr && f.data_fim >= dateStr);
+                    const dayLogs = (logs || []).filter(l => l.created_at.startsWith(dateStr));
+
+                    // [MELHORIA] Identificar se este dia é um DIA EXTRA (pela tag, não pela data de criação)
+                    const matchesDiaExtra = (comunicados || []).filter(c => (c.conteudo || '').includes(`[DIA_EXTRA:${dateStr}]`));
+                    const isDiaExtra = matchesDiaExtra.length > 0;
+
+                    // Unificar comunicados do dia: 
+                    // Se for mensagem normal, aparece no dia da criação.
+                    // Se for DIA_EXTRA, aparece APENAS no dia agendado.
+                    const dayComunicados = (comunicados || []).filter(c => {
+                        const isDiaExtraTag = (c.conteudo || '').includes('[DIA_EXTRA:');
+                        const isScheduledForToday = (c.conteudo || '').includes(`[DIA_EXTRA:${dateStr}]`);
+                        const isCreatedToday = (c.created_at || '').startsWith(dateStr);
+
+                        if (isDiaExtraTag) return isScheduledForToday;
+                        return isCreatedToday;
+                    });
 
                     const possessesLunch = escala?.possui_almoco !== false;
                     let dayWorkedMinutes = calculateWorkedMinutes(dayPoints, possessesLunch);
@@ -597,8 +612,13 @@
                         exempt: !isPlanned || isFeriado || isVacation, 
                         type: isVacation ? 'FÉRIAS' : (isFeriado ? 'FERIADO' : 'FOLGA') 
                     };
+
+                    if (isDiaExtra) {
+                        dayExemptInfo.exempt = false;
+                        dayExemptInfo.type = 'DIA EXTRA';
+                    }
                     
-                    const shouldCharge = isPlanned && !dayExemptInfo.exempt && (dayPoints.length > 0 || isFinished);
+                    const shouldCharge = (isPlanned || isDiaExtra) && !dayExemptInfo.exempt && (dayPoints.length > 0 || isFinished);
                     const dailyPlannedMinutes = shouldCharge ? ScalesEngine.calculateDailyWorkMinutes(escala) : 0;
 
                     const dayUnified = EventManager.unifyHistory(
@@ -612,7 +632,7 @@
                     );
 
                     const isAbonado = dayUnified.some(i => i.itemType === 'JUSTIFICATIVA' && (i.status === 'aprovado' || i.status === 'abonado'));
-                    if (isAbonado && isPlanned && !dayExemptInfo.exempt) {
+                    if (isAbonado && (isPlanned || isDiaExtra) && !dayExemptInfo.exempt) {
                         dayWorkedMinutes = dailyPlannedMinutes;
                     }
 
@@ -642,6 +662,8 @@
                     if (dayExemptInfo.exempt) {
                         const colors = { 'FÉRIAS': 'bg-sky-500/20 text-sky-400 border-sky-500/40', 'FOLGA': 'text-slate-700 opacity-50', 'FERIADO': 'bg-purple-500/10 text-purple-500 border-purple-500/20' };
                         statusHtml = `<span class="px-2 py-1 rounded ${colors[dayExemptInfo.type] || 'text-slate-500'} text-[9px] font-black uppercase border border-white/5">${dayExemptInfo.type}</span>`;
+                    } else if (isDiaExtra) {
+                        statusHtml = '<span class="px-2 py-1 rounded bg-emerald-500/20 text-emerald-400 text-[9px] font-black uppercase border border-emerald-500/40">Convocado</span>';
                     } else if (isAbonado) {
                         statusHtml = '<span class="px-2 py-1 rounded bg-emerald-500/20 text-emerald-400 text-[9px] font-black uppercase border border-emerald-500/40">Abonado</span>';
                     } else if (dayUnified.some(i => i.itemType === 'JUSTIFICATIVA' && i.status === 'rejeitado')) {

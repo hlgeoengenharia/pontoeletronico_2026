@@ -97,6 +97,13 @@ const EventManager = {
             colorClass: 'text-slate-100',
             premiumBorder: 'premium-border-blue',
             autoClear: true
+        },
+        'DIA_EXTRA': {
+            title: 'CONVOCAÇÃO TRABALHO EXTRA',
+            icon: 'calendar_add_on',
+            colorClass: 'text-emerald-500',
+            premiumBorder: 'premium-border-green',
+            autoClear: false // Requer ciência/botão "Estou Ciente"
         }
     },
 
@@ -107,9 +114,12 @@ const EventManager = {
         
         // Mapeamentos específicos por subtipo ou tipo raw
         if (subtipo === 'hora_extra') return this.EVENT_CONFIG['HORA_EXTRA'];
+        if (subtipo === 'dia_trabalho_extra') return this.EVENT_CONFIG['DIA_EXTRA'];
         if (subtipo === 'aviso_ferias' || subtipo === 'ferias') return this.EVENT_CONFIG['FERIAS'];
         if (subtipo === 'folga' || subtipo === 'feriado' || subtipo === 'ferias_manual') return this.EVENT_CONFIG['FERIAS_FOLGA'];
         if (subtipo === 'mensagem' || subtipo === 'comunicado') return this.EVENT_CONFIG['COMUNICADO'];
+        
+        if (typeKey === 'DIA_EXTRA' || item.itemType === 'DIA_EXTRA') return this.EVENT_CONFIG['DIA_EXTRA'];
         
         if (typeKey === 'ALERTA_FERIADOS_FOLGAS' || item.tipo === 'alerta_feriados_folgas') return this.EVENT_CONFIG['ALERTA_FERIADOS_FOLGAS'];
         if (typeKey === 'GPS' || item.tipo === 'gps_pulse' || item.tipo === 'gps_hora') return this.EVENT_CONFIG['GPS'];
@@ -178,14 +188,22 @@ const EventManager = {
             const diffHours = (now - createdAt) / (1000 * 60 * 60);
             if (!options.isContextOnline && diffHours > 24) return;
 
-            const realType = (subtipo === 'hora_extra') ? 'hora_extra' : 'mensagem';
-            const itemType = (subtipo === 'hora_extra') ? 'HORA_EXTRA' : (subtipo === 'ferias_folgas' ? 'FERIAS_FOLGA' : 'COMUNICADO');
+            const realType = (subtipo === 'hora_extra') ? 'hora_extra' : (subtipo === 'dia_trabalho_extra' ? 'dia_trabalho_extra' : 'mensagem');
+            const itemType = (subtipo === 'hora_extra') ? 'HORA_EXTRA' : (subtipo === 'dia_trabalho_extra' ? 'DIA_EXTRA' : (subtipo === 'ferias_folgas' ? 'FERIAS_FOLGA' : 'COMUNICADO'));
             
+            // [SINCRONIZAÇÃO] Se for DIA EXTRA, o tempo do evento é o dia do trabalho marcado na tag
+            let eventTime = c.created_at;
+            const diaExtraTag = (c.conteudo || '').match(/\[DIA_EXTRA:(\d{4}-\d{2}-\d{2})\]/);
+            if (diaExtraTag && diaExtraTag[1]) {
+                // Forçar o horário para o início da manhã do dia agendado para aparecer corretamente na timeline
+                eventTime = `${diaExtraTag[1]}T08:00:00`;
+            }
+
             unified.push({ 
                 ...c, 
                 tipo: realType, 
                 itemType: itemType,
-                time: c.created_at,
+                time: eventTime,
                 content: c.conteudo || ''
             });
         });

@@ -46,6 +46,7 @@ export const EventRegistry = {
         // Mapeamentos resilientes (ChronoSync Core)
         if (typeKey === 'mensagem' || typeKey === 'comunicado') return this.modules['mensagem'];
         if (typeKey === 'hora_extra') return this.modules['hora_extra'];
+        if (typeKey === 'dia_trabalho_extra' || typeKey === 'dia_extra') return this.modules['dia_trabalho_extra'];
         if (typeKey.includes('ferias_folga')) return this.modules['ferias_folgas'];
         if (typeKey === 'atividade') return this.modules['atividade'];
         if (typeKey === 'justificativa') return this.modules['justificativa'];
@@ -70,6 +71,7 @@ EventRegistry.register('ferias', { history: FeriasHistory, counter: FeriasCounte
 EventRegistry.register('cronograma_ferias', { history: FeriasHistory, counter: FeriasCounter });
 EventRegistry.register('mensagem', { history: ComunicadoHistory, counter: ComunicadoCounter });
 EventRegistry.register('hora_extra', { history: HoraExtraHistory, counter: ComunicadoCounter });
+EventRegistry.register('dia_trabalho_extra', { history: HoraExtraHistory, counter: ComunicadoCounter });
 EventRegistry.register('ferias_folgas', { history: FeriadosHistory, counter: FeriadosCounter });
 EventRegistry.register('alerta_feriados_folgas', { history: { render: (item) => AlertarFeriadosCard.render(item) }, counter: AlertarFeriadosBadge });
 EventRegistry.register('justificativa_resultado', { history: ResultadoFeedbackHistory });
