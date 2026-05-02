@@ -103,10 +103,26 @@
 
           const role = (user.role || '').toLowerCase();
           const isGestorOnly = ['manager', 'gestor', 'comandante'].includes(role);
+          const userEmpresaId = user.empresa_id || localStorage.getItem('companyId');
+          const isSuperAdmin = (role === 'superadmin');
 
           if (isGestorOnly && user.setorId) {
               const { data: setorialEmployees } = await supabase.from('funcionarios').select('id').eq('setor_id', user.setorId);
               const ids = (setorialEmployees || []).map(f => f.id);
+              if (ids.length > 0) {
+                  queryJust = queryJust.in('funcionario_id', ids);
+                  queryGps = queryGps.in('funcionario_id', ids);
+                  queryLogs = queryLogs.in('funcionario_id', ids);
+              } else {
+                  const z = '00000000-0000-0000-0000-000000000000';
+                  queryJust = queryJust.eq('funcionario_id', z);
+                  queryGps = queryGps.eq('funcionario_id', z);
+                  queryLogs = queryLogs.eq('funcionario_id', z);
+              }
+          } else if (!isSuperAdmin && userEmpresaId) {
+              // Admin (não SuperAdmin) - filtra pela empresa logada
+              const { data: empresaEmployees } = await supabase.from('funcionarios').select('id').eq('empresa_id', userEmpresaId);
+              const ids = (empresaEmployees || []).map(f => f.id);
               if (ids.length > 0) {
                   queryJust = queryJust.in('funcionario_id', ids);
                   queryGps = queryGps.in('funcionario_id', ids);

@@ -573,8 +573,19 @@
       const container = document.getElementById('lista-escalas');
       const countSpan = document.getElementById('total-escalas');
 
+      const userRole = localStorage.getItem('userRole') || '';
+      const userEmpresaId = localStorage.getItem('companyId');
+      const isSuperAdmin = userRole === 'SuperAdmin';
+
       try {
-        const { data, error } = await supabase.from('escalas').select('*').order('nome');
+        let query = supabase.from('escalas').select('*').order('nome');
+        
+        // Filtrar por empresa para Admin (não SuperAdmin)
+        if (!isSuperAdmin && userEmpresaId) {
+          query = query.eq('empresa_id', userEmpresaId);
+        }
+        
+        const { data, error } = await query;
         if (error) throw error;
 
         allEscalasData = data;
@@ -1183,10 +1194,12 @@
 
       UI.showLoader();
 
+      const userEmpresaId = localStorage.getItem('companyId');
       const dados = {
         nome: document.getElementById('nome_escala').value.trim(),
         tipo_escala: tipo,
         regime: regimeTrabalhoSel.value,
+        empresa_id: userEmpresaId,
         carga_horaria_semanal: parseInt(document.getElementById('carga_horaria').value) || 0,
         horario_entrada: document.getElementById('horario_entrada').value,
         horario_saida: document.getElementById('horario_saida').value,

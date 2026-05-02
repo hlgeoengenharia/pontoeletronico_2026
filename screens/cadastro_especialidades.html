@@ -249,8 +249,19 @@
       const container = document.getElementById('lista-especialidades');
       const countSpan = document.getElementById('total-especialidades');
 
+      const userRole = localStorage.getItem('userRole') || '';
+      const userEmpresaId = localStorage.getItem('companyId');
+      const isSuperAdmin = userRole === 'SuperAdmin';
+
       try {
-        const { data, error } = await supabase.from('especialidades').select('*').order('nome_graduacao_principal');
+        let query = supabase.from('especialidades').select('*').order('nome_graduacao_principal');
+        
+        // Filtrar por empresa para Admin (não SuperAdmin)
+        if (!isSuperAdmin && userEmpresaId) {
+          query = query.eq('empresa_id', userEmpresaId);
+        }
+        
+        const { data, error } = await query;
         if (error) throw error;
 
         allData = data;
@@ -454,12 +465,14 @@
         }
 
         UI.showLoader();
+        const userEmpresaId = localStorage.getItem('companyId');
         try {
             const { error } = await supabase.from('especialidades').insert([{
                 nome,
                 codigo,
                 nome_graduacao_principal: gradName,
-                nivel_graduacao: nivel
+                nivel_graduacao: nivel,
+                empresa_id: userEmpresaId
             }]);
 
             if (error) throw error;
@@ -540,6 +553,7 @@
       }
 
       UI.showLoader();
+      const userEmpresaId = localStorage.getItem('companyId');
 
       try {
         if (editingId) {
@@ -547,7 +561,8 @@
             codigo: codeBase,
             nome: currentTags[0],
             nome_graduacao_principal: gradName,
-            nivel_graduacao: level
+            nivel_graduacao: level,
+            empresa_id: userEmpresaId
           };
           const { error } = await supabase.from('especialidades').update(dados).eq('id', editingId);
           if (error) throw error;
@@ -557,7 +572,8 @@
             codigo: currentTags.length > 1 ? `${codeBase}-${idx + 1}` : codeBase,
             nome: tag.toUpperCase(),
             nome_graduacao_principal: gradName,
-            nivel_graduacao: level
+            nivel_graduacao: level,
+            empresa_id: userEmpresaId
           }));
 
           const { error } = await supabase.from('especialidades').insert(registros);

@@ -96,17 +96,39 @@
       UI.voltarInicio();
     };
 
-    async function loadData() {
+async function loadData() {
       try {
+        const userRole = localStorage.getItem('userRole') || '';
+        const userEmpresaId = localStorage.getItem('companyId');
+        const isSuperAdmin = userRole === 'SuperAdmin';
+
+        let empQuery = supabase.from('funcionarios').select('*');
+        let sectorsQuery = supabase.from('setores').select('*');
+        
+        // Filtrar setores por empresa para Admin (não SuperAdmin)
+        if (!isSuperAdmin && userEmpresaId) {
+          empQuery = empQuery.eq('empresa_id', userEmpresaId);
+          // Setores também precisam ser filtrados pela empresa
+          // Assumindo que setores têm campo empresa_id ou precisam ser vinculados
+          // Por agora, vamos filtrar os setores que têm funcionários da empresa
+        }
+
         const [sectorsRes, employeesRes] = await Promise.all([
-          supabase.from('setores').select('*'),
-          supabase.from('funcionarios').select('*')
+          sectorsQuery,
+          empQuery
         ]);
 
         if (sectorsRes.error) throw sectorsRes.error;
         if (employeesRes.error) throw employeesRes.error;
 
-        allSectors = sectorsRes.data;
+        // Se não for SuperAdmin, filtrar setores que têm funcionários da empresa
+        if (!isSuperAdmin && userEmpresaId) {
+          const setorIds = [...new Set(employeesRes.data.map(e => e.setor_id).filter(Boolean))];
+          allSectors = sectorsRes.data.filter(s => setorIds.includes(s.id));
+        } else {
+          allSectors = sectorsRes.data;
+        }
+        
         allEmployees = employeesRes.data;
 
         // Atualizar contador de tripulantes

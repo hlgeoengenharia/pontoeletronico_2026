@@ -783,6 +783,16 @@
 
             // 2. Funcionários e Tabelas Relacionadas (Filtros por Setor via VIEW)
             let queryF = supabase.from('vw_funcionarios_gestao').select('*');
+            
+            // Filtrar por empresa para Admin (não SuperAdmin)
+            const userRole = localStorage.getItem('userRole') || '';
+            const userEmpresaId = localStorage.getItem('companyId');
+            const isSuperAdmin = userRole === 'SuperAdmin';
+            
+            if (!isSuperAdmin && userEmpresaId) {
+                queryF = queryF.eq('empresa_id', userEmpresaId);
+            }
+            
             if (isGestorOnly && sId) queryF = queryF.eq('setor_id', sId);
 
             const [fRes, cRes, eRes, pRes] = await Promise.all([

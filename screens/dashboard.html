@@ -537,7 +537,7 @@
 
                 const { data: funcionario } = await supabase
                     .from('funcionarios')
-                    .select('*, setores!funcionarios_setor_id_fkey(*), escalas!escala_id(*), perfis_tripulantes(foto_url, nickname), identidades_globais(biometria_cadastrada, biometria_token)')
+                    .select('*, setores!funcionarios_setor_id_fkey(*), escalas!escala_id(*), perfis_tripulantes(foto_url, nickname), identidades_globais(biometria_cadastrada, biometria_token, foto_url)')
                     .eq('id', targetId)
                     .single();
                 if (!funcionario) {
@@ -725,8 +725,8 @@
             const nickEl = document.getElementById('user-nickname');
             if (nickEl) nickEl.innerText = nickname;
 
-            // Foto de Perfil (da tabela perfis_tripulantes)
-            const fotoUrl = perfil?.foto_url || user.foto_url;
+            // Foto de Perfil (busca em perfis_tripulantes, identidades_globais ou funcionarios)
+            const fotoUrl = perfil?.foto_url || user.foto_url || user.identidades_globais?.foto_url;
             if (fotoUrl) {
                 document.getElementById('user-photo').src = fotoUrl;
                 document.getElementById('user-photo').onerror = function () {
@@ -776,7 +776,7 @@
                 return;
             }
 
-            if (role === 'admin') {
+            if (role === 'admin' || role === 'superadmin') {
                 document.querySelectorAll('.role-admin').forEach(el => el.classList.remove('role-hidden'));
                 document.querySelectorAll('.role-gestor').forEach(el => el.classList.remove('role-hidden'));
             } else if (role === 'gestor' || role === 'manager') {
@@ -958,9 +958,15 @@
 
                 const linkSetores = document.getElementById('link-setores');
                 if (linkSetores) {
-                    if (role === 'Admin') linkSetores.href = 'relacao_setores.html';
-                    else if (isGestor && sId) linkSetores.href = `relacao_funcionarios.html?setor=${sId}`;
-                    else linkSetores.href = `relacao_funcionarios.html`;
+                    // Admin e SuperAdmin vão para relacao_setores.html
+                    // Gestor vai direto para relacao_funcionarios.html do seu setor
+                    if (role === 'Admin' || role === 'SuperAdmin') {
+                        linkSetores.href = 'relacao_setores.html';
+                    } else if (isGestor && sId) {
+                        linkSetores.href = `relacao_funcionarios.html?setor=${sId}`;
+                    } else {
+                        linkSetores.href = `relacao_funcionarios.html`;
+                    }
                 }
 
                 if (document.getElementById('stat-total-setores')) {

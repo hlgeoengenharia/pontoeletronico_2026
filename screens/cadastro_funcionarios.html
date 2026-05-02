@@ -197,10 +197,22 @@
 
     async function carregarLista() {
         try {
-            const { data, error } = await supabase
+            const userData = Auth.getUser();
+            const userRole = (userData.role || '').toLowerCase();
+            const userEmpresaId = userData.empresa_id || localStorage.getItem('companyId');
+            const isSuperAdmin = userRole === 'superadmin';
+
+            let query = supabase
                 .from('funcionarios')
                 .select('*, identidades_globais!inner(nome_completo, cpf), setores!funcionarios_setor_id_fkey(nome)')
                 .order('nome_completo', { foreignTable: 'identidades_globais' });
+
+            // Filtrar por empresa se não for SuperAdmin
+            if (!isSuperAdmin && userEmpresaId) {
+                query = query.eq('empresa_id', userEmpresaId);
+            }
+
+            const { data, error } = await query;
             if (error) throw error;
             funcsCache = data;
             document.getElementById('total-funcs').innerText = data.length;

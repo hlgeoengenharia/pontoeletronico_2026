@@ -84,18 +84,22 @@
                 <h3 id="display-name-profile" class="text-xl font-black text-slate-100 uppercase italic truncate leading-tight border-b border-amber-500/20 pb-2 mb-2">
                     CARREGANDO...
                 </h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-1 gap-x-4">
+                <div class="flex flex-col gap-y-2">
                     <div class="flex items-center gap-2">
-                        <span class="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none">Cargo:</span>
+                        <span class="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none w-20">Cargo:</span>
                         <span id="user-role-profile" class="text-[9px] font-bold text-amber-500 uppercase truncate leading-none">...</span>
                     </div>
                     <div class="flex items-center gap-2">
-                        <span class="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none">Setor:</span>
+                        <span class="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none w-20">Setor:</span>
                         <span id="user-setor-profile" class="text-[9px] font-bold text-amber-500 uppercase truncate leading-none">...</span>
                     </div>
                     <div class="flex items-center gap-2">
-                        <span class="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none">Matrícula:</span>
+                        <span class="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none w-20">Matrícula:</span>
                         <span id="display-matricula-profile" class="text-[9px] font-bold text-amber-500 uppercase truncate leading-none">#...</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none w-20">Empresa:</span>
+                        <span id="user-empresa-profile" class="text-[9px] font-bold text-amber-500 uppercase truncate leading-none">...</span>
                     </div>
                 </div>
             </div>
@@ -1111,6 +1115,29 @@
                         return;
                     }
 
+                    // VERIFICAÇÃO DE ACESSO: Admin só pode ver funcionários da sua empresa
+                    const loggedUser = Auth.getUser();
+                    const userRole = (loggedUser?.role || '').toLowerCase();
+                    const userEmpresaId = loggedUser?.empresa_id || localStorage.getItem('companyId');
+                    const isSuperAdmin = userRole === 'superadmin';
+                    const isInspecting = urlParams.get('id') && urlParams.get('id') !== localStorage.getItem('userId');
+
+                    // Se estiver inspecionando e NÃO for SuperAdmin, verificar se o funcionário é da mesma empresa
+                    if (isInspecting && !isSuperAdmin && userEmpresaId) {
+                        // Buscar dados do funcionário para verificar empresa
+                        const { data: funcData } = await supabase
+                            .from('funcionarios')
+                            .select('empresa_id')
+                            .eq('id', urlParams.get('id'))
+                            .single();
+                        
+                        if (funcData && funcData.empresa_id !== userEmpresaId) {
+                            UI.showToast('Acesso negado: Este funcionário pertence a outra empresa.', 'error');
+                            window.location.href = 'perfil_funcionario.html';
+                            return;
+                        }
+                    }
+
                     // Carregar dados auxiliares (Setores, Cargos, etc)
                     await carregarDadosIniciais();
 
@@ -1165,6 +1192,7 @@
                                     setor_id, 
                                     cargo_id, 
                                     escala_id, 
+                                    empresa_id,
                                     nivel_acesso,
                                     nivel_escolaridade,
                                     graduacao_principal,
@@ -1215,7 +1243,8 @@
                             perfil_id: perfilData.id,
                             identidade_id: funcData.identidades_globais?.id,
                             biometria_cadastrada: funcData.identidades_globais?.biometria_cadastrada,
-                            biometria_token: funcData.identidades_globais?.biometria_token
+                            biometria_token: funcData.identidades_globais?.biometria_token,
+                            empresa_id: funcData.empresa_id
                         };
 
                         // Carregar Escala Base (Se houver)
@@ -1228,6 +1257,28 @@
                         await loadConfirmedShifts();
 
                         preencherDados(globalFunc);
+                        
+                        // Buscar nome da empresa de forma assíncrona
+                        console.log('[DEBUG] globalFunc.empresa_id:', globalFunc.empresa_id);
+                        if (globalFunc.empresa_id) {
+                            console.log('[DEBUG] Buscando empresa ID:', globalFunc.empresa_id);
+                            const { data: empresaData } = await supabase
+                                .from('empresas')
+                                .select('nome_fantasia')
+                                .eq('id', globalFunc.empresa_id)
+                                .single();
+                            console.log('[DEBUG] empresaData:', empresaData);
+                            const empresaEl = document.getElementById('user-empresa-profile');
+                            if (empresaEl) {
+                                empresaEl.innerText = (empresaData?.nome_fantasia || 'Não Definida').toUpperCase();
+                            }
+                        } else {
+                            console.log('[DEBUG] empresa_id é null/undefined');
+                            const empresaEl = document.getElementById('user-empresa-profile');
+                            if (empresaEl) {
+                                empresaEl.innerText = 'NENHUMA';
+                            }
+                        }
                         
                         // Renderizar calendário inicial
                         if (typeof refreshCalendar === 'function') {
@@ -1357,6 +1408,11 @@
                     if (el('user-role-profile')) el('user-role-profile').innerText = (func.cargos?.nome || func.funcao || 'Tripulante').toUpperCase();
                     if (el('user-setor-profile')) el('user-setor-profile').innerText = (func.setores?.nome || 'Não Definido').toUpperCase();
                     if (el('display-matricula-profile')) el('display-matricula-profile').innerText = `#${func.matricula || '---'}`;
+                    
+                    // Empresa - exibir diretamente do func
+                    if (el('user-empresa-profile')) {
+                        el('user-empresa-profile').innerText = func.empresa_id ? 'Carregando...' : 'NENHUMA';
+                    }
 
                     const avatarImg = el('user-photo-profile');
                     if (avatarImg) {

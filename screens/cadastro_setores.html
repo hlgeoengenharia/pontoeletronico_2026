@@ -464,11 +464,23 @@
     async function loadSetores() {
       const container = document.getElementById('lista-setores');
       const countSpan = document.getElementById('total-setores');
+      
+      const userRole = localStorage.getItem('userRole') || '';
+      const userEmpresaId = localStorage.getItem('companyId');
+      const isSuperAdmin = userRole === 'SuperAdmin';
+      
       try {
-        const { data, error } = await supabase
+        let query = supabase
           .from('setores')
           .select('*, gestor:funcionarios!gestor_id(identidades_globais(nome_completo))')
           .order('nome');
+        
+        // Filtrar por empresa para Admin (não SuperAdmin)
+        if (!isSuperAdmin && userEmpresaId) {
+          query = query.eq('empresa_id', userEmpresaId);
+        }
+        
+        const { data, error } = await query;
 
         if (error) throw error;
 
@@ -823,12 +835,14 @@
 
       UI.showLoader();
 
+      const userEmpresaId = localStorage.getItem('companyId');
       const dados = {
         nome: document.getElementById('nome-setor').value,
         gestor_id: gestorId,
         raio: parseInt(document.getElementById('radius-input').value),
         latitude: selectedLat,
-        longitude: selectedLng
+        longitude: selectedLng,
+        empresa_id: userEmpresaId
       };
 
       try {
