@@ -278,7 +278,8 @@
                                 janela_ativa_depois_minutos, 
                                 tolerancia_entrada_minutos, 
                                 regime, 
-                                dias_presenciais_json
+                                dias_presenciais_json,
+                                possui_almoco
                             ), 
                             setores!funcionarios_setor_id_fkey(nome)
                         )
@@ -346,7 +347,7 @@
                     logsRes.data || [],
                     vacRes.data || [],
                     ferRes.data || [],
-                    { hideActions: true, isContextDiario: false }
+                    { hideActions: true, isContextDiario: false, pontos: ptsRes.data || [] }
                 );
 
                 renderResumo(ptsRes.data, unifiedHistory, func.escalas, dataRef, HistoryRenderer);
@@ -497,7 +498,8 @@
                 if (activePoints[i + 1]) mins += (new Date(activePoints[i + 1].data_hora) - new Date(activePoints[i].data_hora)) / 60000;
             }
 
-            // Dedução automática de 1h se configurado e jornada > 6h
+            // Dedução automática de 1h APENAS se a escala possui_almoco E jornada > 6h
+            // (Mesma lógica do ScalesEngine.calculateDailyWorkMinutes)
             if (possuiAlmoco && mins > 360) mins -= 60;
             
             return Math.max(0, mins);

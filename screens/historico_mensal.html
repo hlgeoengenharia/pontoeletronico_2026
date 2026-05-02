@@ -461,6 +461,7 @@
                 const func = { 
                     ...f, 
                     nome_completo: ident?.nome_completo || 'Sem Nome',
+                    vigencia_inicio: f?.data_inicio_prevista,
                     foto_url: ident?.foto_url || perfil.foto_url,
                     cargo_nome: f.cargos?.nome || 'N/A'
                 };
@@ -491,7 +492,7 @@
                     supabase.from('ferias').select('*').eq('funcionario_id', targetId).eq('status', 'aprovado').lte('data_inicio', endMonth.split('T')[0]).gte('data_fim', startMonth.split('T')[0])
                 ]);
 
-                renderEspelho(ptsRes.data || [], anotRes.data || [], justRes.data || [], comsRes.data || [], logsRes.data || [], ferRes.data || [], vacRes.data || [], func.escalas, month, year);
+                renderEspelho(ptsRes.data || [], anotRes.data || [], justRes.data || [], comsRes.data || [], logsRes.data || [], ferRes.data || [], vacRes.data || [], func.escalas, func, month, year);
 
             } catch (err) {
                 console.error(err);
@@ -556,7 +557,7 @@
         mainContainer.addEventListener('mousedown', handleStart);
         mainContainer.addEventListener('mouseup', handleEnd);
 
-        async function renderEspelho(pontos, anotacoes, justificativas, comunicados, logs, feriados, ferias, escala, mParam, yParam) {
+        async function renderEspelho(pontos, anotacoes, justificativas, comunicados, logs, feriados, ferias, escala, func, mParam, yParam) {
             const { EventManager } = await import('../js/event-manager.js');
             const { HistoryRenderer } = await import('../js/core/history.renderer.js');
             
@@ -564,7 +565,8 @@
             const year = parseInt(yParam);
             const body = document.getElementById('espelhoBody');
             const daysInMonth = new Date(year, month + 1, 0).getDate();
-            const plannedDays = (escala) ? ScalesEngine.projectBaseDays(escala, escala.vigencia_inicio, month, year) : [];
+            const vigencia = (escala?.vigencia_inicio) || (func?.vigencia_inicio);
+            const plannedDays = (escala) ? ScalesEngine.projectBaseDays(escala, vigencia, month, year) : [];
 
             let totalWorkedMinutes = 0;
             let totalPlannedMinutes = 0;
@@ -628,7 +630,7 @@
                         dayLogs,
                         dayVacations,
                         daySpecial,
-                        { hideActions: true, isContextDiario: false }
+                        { hideActions: true, isContextDiario: false, pontos: dayPoints }
                     );
 
                     const isAbonado = dayUnified.some(i => i.itemType === 'JUSTIFICATIVA' && (i.status === 'aprovado' || i.status === 'abonado'));

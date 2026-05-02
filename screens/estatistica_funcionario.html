@@ -334,11 +334,14 @@
                 if (year === now.getFullYear() && m > now.getMonth()) break;
 
                 const monthPoints = (pontosAno || []).filter(p => p.data_hora.startsWith(`${year}-${(m+1).toString().padStart(2, '0')}`));
-                const specialMonthDays = (feriadosAno || []).filter(f => f.data.startsWith(`${year}-${(m+1).toString().padStart(2, '0')}`)).map(f => f.data);
-                
-                let plannedDays = ScalesEngine.projectBaseDays(currentUserData.escalas, currentUserData.escalas.vigencia_inicio, m, year);
-                // Excluir dias especiais (feriados/folgas) do planejamento
-                plannedDays = plannedDays.filter(d => !specialMonthDays.includes(d));
+                // Verificação de segurança: sem escala não há planejamento
+                if (!currentUserData.escalas) {
+                    monthlyData.push({ month: m, workedMins: 0, faltas: 0, freq: 0, saldo: 0, planned: 0 });
+                    continue;
+                }
+
+                const vigencia = currentUserData.escalas.vigencia_inicio || currentUserData.vigencia_inicio;
+                let plannedDays = ScalesEngine.projectBaseDays(currentUserData.escalas, vigencia, m, year);
                 
                 let workedMins = 0;
                 monthPoints.forEach((p, i) => {
@@ -371,7 +374,8 @@
             document.getElementById('anoCarga').innerText = formatMinutes(totalYearMins);
             document.getElementById('anoFaltas').innerText = totalYearFaltas;
             
-            const totalPlannedDays = monthlyData.reduce((acc, curr) => acc + (curr.planned / ScalesEngine.calculateDailyWorkMinutes(currentUserData.escalas)), 0);
+            const dailyMins = currentUserData.escalas ? ScalesEngine.calculateDailyWorkMinutes(currentUserData.escalas) : 0;
+            const totalPlannedDays = dailyMins > 0 ? monthlyData.reduce((acc, curr) => acc + (curr.planned / dailyMins), 0) : 0;
             const totalPresentDays = totalPlannedDays - totalYearFaltas;
             const finalYearFreq = totalPlannedDays > 0 ? Math.round((totalPresentDays / totalPlannedDays) * 100) : 0;
             document.getElementById('anoFreq').innerText = `${finalYearFreq}%`;

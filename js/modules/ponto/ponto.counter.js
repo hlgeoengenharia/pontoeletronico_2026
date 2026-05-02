@@ -13,9 +13,11 @@ export const PontoCounter = {
     count(data = []) {
         if (!data || !Array.isArray(data)) return 0;
         
-        // No diário do funcionário, contamos o que ele ainda não viu
+        // No diário do funcionário, contamos apenas logs de comunicação (que usam status_pendencia).
+        // REGRA: Pontos brutos pendentes (status_validacao) NÃO geram notificação pro colaborador, ele aguarda análise.
         return data.filter(item => {
-            const isPendente = (item.status_validacao === 'pendente' || item.status_pendencia === 'pendente');
+            if (item.status_validacao) return false; // Ignora tabela 'pontos'.
+            const isPendente = (item.status_pendencia === 'pendente');
             return isPendente && !AwarenessManager.isSeen(item.id);
         }).length;
     },

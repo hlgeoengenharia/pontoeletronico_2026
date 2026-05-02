@@ -325,7 +325,6 @@ export const PunchEngine = {
 
             const payload = {
                 funcionario_id: userId,
-                company_id: currentUser.company_id || Auth.getUser()?.companyId,
                 data_hora: now.toISOString(),
                 tipo: this.tempData.type,
                 status_validacao: isForaDoRaio ? 'pendente' : 'aprovado',
@@ -361,23 +360,10 @@ export const PunchEngine = {
     async processSideEffects(currentUser, isDivergent, isForaDoRaio = false, distancia = null) {
         const now = new Date();
 
-        console.log('[PunchEngine] processSideEffects:', { isDivergent, isForaDoRaio, distancia, type: this.tempData.type });
-
-        if (isDivergent && isForaDoRaio) {
-            const { data, error } = await supabase.from('diario_logs').insert([{
-                funcionario_id: currentUser.id,
-                company_id: currentUser.company_id || Auth.getUser()?.companyId,
-                data_hora: now.toISOString(),
-                tipo: 'pendencia_geofence',
-                mensagem_padrao: `Registro de ${this.tempData.type.toUpperCase()} efetuado fora do raio permitido (${distancia || '?'}m).`,
-                status_pendencia: 'pendente'
-            }]);
-            if (error) {
-                console.error('[PunchEngine] Erro ao criar pendência:', error);
-            } else {
-                console.log('[PunchEngine] Pendência criada:', data);
-            }
-        }
+        // processSideEffects: Desabilitado para evitar duplicidade. 
+        // O sistema agora rastreia pendências de Geofence exclusivamente pela tabela 'pontos', 
+        // mantendo um fluxo limpo sem criar logs de 'pendencia_geofence' redundantes.
+        console.log('[PunchEngine] processSideEffects: Log redundante ignorado.');
     },
 
     retryCamera() {

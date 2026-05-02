@@ -626,15 +626,23 @@
                         }
                     });
 
-                    if (btnUnlock) {
-                        btnUnlock.innerText = locked ? 'Ativar Edição' : 'Encerrar Edição';
-                        btnUnlock.classList.toggle('bg-amber-500', locked);
-                        btnUnlock.classList.toggle('bg-rose-500', !locked);
-                    }
-
                     const urlParams = new URLSearchParams(window.location.search);
                     const employeeIdParam = urlParams.get('id');
                     const isInspecting = employeeIdParam && employeeIdParam !== loggedUser?.id;
+
+                    if (btnUnlock) {
+                        // MODO INSPECT: Admin/Gestor visualizando perfil de outro usuário - SEMPRE bloqueado, sem opção de editar
+                        if (isInspecting) {
+                            btnUnlock.classList.add('hidden');
+                            // Também oculta o container de controle de edição
+                            const editContainer = document.getElementById('edit-control-container');
+                            if (editContainer) editContainer.classList.add('hidden');
+                        } else {
+                            btnUnlock.innerText = locked ? 'Ativar Edição' : 'Encerrar Edição';
+                            btnUnlock.classList.toggle('bg-amber-500', locked);
+                            btnUnlock.classList.toggle('bg-rose-500', !locked);
+                        }
+                    }
                     const loggedRole = String(loggedUser?.role || '').toLowerCase();
                     const isAdmin = loggedRole === 'admin';
                     const isGestor = loggedRole === 'gestor' || loggedRole === 'manager' || loggedRole === 'comandante' || isAdmin;
@@ -1536,7 +1544,7 @@
 
                     const baseProjection = escalaParaProjetar ? ScalesEngine.projectBaseDays(
                         escalaParaProjetar,
-                        globalFunc.data_inicio_vigencia || '2024-01-01',
+                        globalFunc.vigencia_inicio || '2024-01-01',
                         currentMonth,
                         currentYear
                     ) : [];

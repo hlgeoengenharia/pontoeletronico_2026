@@ -139,6 +139,11 @@ const EventManager = {
 
     // 3. Unificação de Histórico (ChronoSync Core)
     unifyHistory(anotacoes = [], justificativas = [], comunicados = [], logs = [], ferias = [], feriados = [], options = {}) {
+        // Helper para identificar tipo de ponto
+        const isCheckin = (tipo) => {
+            const t = String(tipo || '').toLowerCase();
+            return t === 'entrada' || t === 'check-in' || t.includes('entrada');
+        };
         const unified = [];
         const now = new Date();
         const justificativasConsumidas = new Set();
@@ -265,16 +270,12 @@ const EventManager = {
             
             if (isJustificativaRedundante || isFeriasRedundante) return;
 
-            // CARD DE RESULTADO DE ANÁLISE: Renderizar com provider dedicado (ResultadoFeedbackHistory)
+            // CARD DE RESULTADO DE ANÁLISE: 
+            // REGRA CHRONOSYNC: Não adicionamos como card separado na timeline do diário, 
+            // pois o feedback já é incorporado ao card original da justificativa ou do ponto.
+            // Isso evita a duplicidade visual relatada (dois cards para o mesmo evento).
             if (l.tipo === 'justificativa_resultado') {
-                unified.push({
-                    ...l,
-                    tipo: 'justificativa_resultado',
-                    itemType: 'justificativa_resultado',
-                    time: l.created_at || l.data_hora,
-                    content: l.mensagem_padrao || ''
-                });
-                return;
+                return; // Ignorar renderização como card independente
             }
 
             const content = l.mensagem_padrao || l.tipo_log || '';
@@ -289,90 +290,8 @@ const EventManager = {
             if (isRoutinePulse && !isGeofenceLog) return;
 
             if (isGeofenceLog) {
-                // Tenta encontrar a justificativa vinculada ao log (pelo referencia_id, proximidade temporal ou campos de referência)
-                const justificativa = justificativas.find(j => {
-                    const idMatch = (l.referencia_id && (String(j.id) === String(l.referencia_id) || String(j.ponto_id) === String(l.referencia_id)));
-                    const jDate = new Date(j.created_at || j.data_incidente).getTime();
-                    const lDate = new Date(l.created_at).getTime();
-                    const timeMatch = Math.abs(lDate - jDate) / (1000 * 60) < 15;
-                    return idMatch || timeMatch;
-                });
-
-                // Buscar resultado de análise: primeiro por referencia_id direto, depois por contexto temporal
-                const findResult = (targetId, targetTime) => {
-                    if (justificativaResultados[targetId]) return justificativaResultados[targetId];
-                    // Fallback: buscar por proximidade temporal + funcionario_id
-                    const tRef = new Date(targetTime).getTime();
-                    return justificativaResultadosByContext.find(r => 
-                        r.funcionario_id === l.funcionario_id &&
-                        Math.abs(new Date(r.created_at).getTime() - tRef) / (1000 * 60 * 60) < 24
-                    ) || null;
-                };
-
-                if (justificativa) {
-                    justificativasConsumidas.add(justificativa.id);
-                    const result = findResult(justificativa.id, justificativa.created_at || l.created_at);
-                    
-                    // Priorizar o status da justificativa (que é atualizado no banco após análise)
-                    let finalStatus = justificativa.status || 'pendente';
-                    if (result && finalStatus === 'pendente') finalStatus = 'abonado'; // Fallback se o resultado existe
-
-                    // Extrair feedback do admin: priorizar observacao_admin direto, depois parsear do log de resultado
-                    let adminFeedback = justificativa.observacao_admin || null;
-                    if (!adminFeedback && result) {
-                        const rawMsg = result.mensagem_padrao || '';
-                        const analiseIdx = rawMsg.lastIndexOf('[ANÁLISE:');
-                        adminFeedback = analiseIdx > -1 ? rawMsg.substring(rawMsg.indexOf(']', analiseIdx) + 1).trim() : rawMsg;
-                    }
-
-                    unified.push({
-                        ...l,
-                        tipo: 'ponto',
-                        itemType: 'PONTO',
-                        time: l.created_at,
-                        content: content,
-                        justificativa_usuario: justificativa.justificativa || justificativa.justificativa_usuario || justificativa.descricao || justificativa.conteudo || '',
-                        status: finalStatus,
-                        admin_feedback: adminFeedback,
-                        evidencia_url: justificativa.evidencia_url || justificativa.url_anexo || null
-                    });
-                } else {
-                    // Sem registro na tabela 'justificativas': buscar dados diretamente do ponto correspondente
-                    const pontosArr = options.pontos || [];
-                    const lTime = new Date(l.created_at || l.data_hora).getTime();
-                    const matchedPonto = pontosArr.find(p => 
-                        p.funcionario_id === l.funcionario_id &&
-                        Math.abs(new Date(p.data_hora).getTime() - lTime) / (1000 * 60) < 5
-                    );
-
-                    let pontoStatus = matchedPonto?.status_validacao || 'pendente';
-                    let pontoJustificativa = matchedPonto?.justificativa_usuario || '';
-                    let pontoAdminFeedback = matchedPonto?.observacao_admin || null;
-
-                    // Buscar resultado de análise pelo ID do ponto ou por proximidade temporal
-                    const resultLog = matchedPonto ? findResult(matchedPonto.id, l.created_at) : findResult(l.id, l.created_at);
-                    if (resultLog && pontoStatus === 'pendente') pontoStatus = 'abonado';
-                    if (!pontoAdminFeedback && resultLog) {
-                        const rawMsg = resultLog.mensagem_padrao || '';
-                        const analiseIdx = rawMsg.lastIndexOf('[ANÁLISE:');
-                        pontoAdminFeedback = analiseIdx > -1 ? rawMsg.substring(rawMsg.indexOf(']', analiseIdx) + 1).trim() : rawMsg;
-                    }
-
-                    // Limpar tags técnicas da justificativa do colaborador (ex: [EXPEDIENTE PRORROGADO:...])
-                    const cleanJust = pontoJustificativa.replace(/\[EXPEDIENTE PRORROGADO:.*?\]/g, '').replace(/\[Distancia:.*?\]/g, '').trim();
-
-                    unified.push({
-                        ...l,
-                        tipo: 'ponto',
-                        itemType: 'PONTO',
-                        time: l.created_at,
-                        content: content,
-                        justificativa_usuario: cleanJust || '',
-                        status: pontoStatus,
-                        admin_feedback: pontoAdminFeedback,
-                        distancia_metros: matchedPonto?.distancia_metros || null
-                    });
-                }
+                // REGRA CHRONOSYNC: Os logs de Geofence não devem mais gerar cards clonados na timeline.
+                // A Seção H. (Registros de Pontos) processa a tabela real e constrói o card unificado final com o Parecer.
                 return;
             }
 
@@ -439,7 +358,7 @@ const EventManager = {
                         tipo: 'ponto',
                         itemType: 'PONTO',
                         time: p.data_hora,
-                        content: p.tipo === 'ENTRADA' ? `Check-in realizado fora do raio` : `Check-out realizado fora do raio`,
+                        content: isCheckin(p.tipo) ? `Check-in realizado fora do raio` : `Check-out realizado fora do raio`,
                         justificativa_usuario: justificativa.descricao || justificativa.justificativa_usuario || p.justificativa_usuario || '',
                         status: finalStatus,
                         admin_feedback: adminFeedback,
@@ -463,7 +382,7 @@ const EventManager = {
                         tipo: 'ponto',
                         itemType: 'PONTO',
                         time: p.data_hora,
-                        content: p.tipo === 'ENTRADA' ? `Check-in fora do raio` : `Check-out fora do raio`,
+                        content: isCheckin(p.tipo) ? `Check-in fora do raio` : `Check-out fora do raio`,
                         justificativa_usuario: p.justificativa_usuario || '',
                         status: pontoStatus,
                         admin_feedback: adminFeedback

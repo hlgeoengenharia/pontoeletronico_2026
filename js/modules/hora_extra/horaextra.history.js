@@ -87,6 +87,41 @@ export const HoraExtraHistory = {
             `;
         }
 
+        if (isDiaExtra) {
+            const dateStr = targetDate ? targetDate.split('-').reverse().join('/') : date.toLocaleDateString('pt-BR');
+            const cleanContent = (item.content || "").replace(/\[DIA_EXTRA:[\d-]+\].*?\.\s*/, '').trim();
+
+            return `
+                <div id="event-${item.id}" class="bg-[#0f1115] border border-white/5 rounded-[32px] p-6 space-y-5 group border-l-[6px] border-l-emerald-500/80 shadow-2xl relative transition-all hover:bg-[#15181e] ${isCiente ? 'opacity-80' : 'ring-1 ring-emerald-500/20'}">
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center gap-3">
+                            <span class="material-symbols-outlined text-emerald-500 text-[20px]">${icon}</span>
+                            <h5 class="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-500">CONVOCAÇÃO: DIA EXTRA</h5>
+                            <span class="text-[11px] font-bold text-slate-600 ml-2 tracking-tight">
+                                ${date.toLocaleDateString('pt-BR')} | ${date.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-2.5">
+                        <div class="w-full px-4 py-3 rounded-xl text-[10px] font-black uppercase flex flex-col gap-2 transition-all hover:brightness-110 bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                            <div class="flex items-center gap-2">
+                                <span class="material-symbols-outlined md-18">event_available</span>
+                                <span class="tracking-widest">DATA AGENDADA: ${dateStr}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    ${cleanContent ? `
+                    <div class="bg-black/20 rounded-xl p-3 border border-white/5">
+                        <p class="text-[11px] text-slate-400 leading-relaxed italic line-clamp-3 font-medium opacity-80">"${cleanContent}"</p>
+                    </div>` : ''}
+
+                    ${actionButtons}
+                </div>
+            `;
+        }
+
         return `
             <div class="bg-white/5 border border-white/5 rounded-2xl p-4 space-y-3 group border-l-4 ${colorClass} transition-all hover:bg-white/10 relative">
                 <div class="flex justify-between items-start">
@@ -96,8 +131,8 @@ export const HoraExtraHistory = {
                         </div>
                         <div>
                             <div class="flex items-center gap-2">
-                                <h5 class="text-[9px] font-black uppercase tracking-widest text-slate-100">${isDiaExtra ? 'CONVOCAÇÃO: DIA EXTRA' : 'SOLICITAÇÃO DE HORA EXTRA'}</h5>
-                                ${isDiaExtra ? '' : `<span class="bg-black/40 px-2 py-0.5 rounded-md text-[8px] font-black text-amber-500 border border-amber-500/20">+${extraMinutes} MIN</span>`}
+                                <h5 class="text-[9px] font-black uppercase tracking-widest text-slate-100">SOLICITAÇÃO DE HORA EXTRA</h5>
+                                <span class="bg-black/40 px-2 py-0.5 rounded-md text-[8px] font-black text-amber-500 border border-amber-500/20">+${extraMinutes} MIN</span>
                             </div>
                             <p class="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">
                                 ${date.toLocaleDateString('pt-BR')} às ${date.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})}
@@ -107,7 +142,7 @@ export const HoraExtraHistory = {
                 </div>
 
                 <div class="bg-black/20 rounded-xl p-3 border border-white/5">
-                    <p class="text-[11px] text-slate-400 leading-relaxed italic line-clamp-3 font-medium opacity-80">"${(item.content || "").replace(/\[LIMITE:\d+\]\s*/, '').replace(/\[DIA_EXTRA:[\d-]+\].*?\.\s*/, '')}"</p>
+                    <p class="text-[11px] text-slate-400 leading-relaxed italic line-clamp-3 font-medium opacity-80">"${(item.content || "").replace(/\[LIMITE:\d+\]\s*/, '')}"</p>
                 </div>
                 
                 ${actionButtons}

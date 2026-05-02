@@ -384,9 +384,7 @@
               const pointStatus = status === 'abonado' ? 'aprovado' : 'rejeitado';
               console.log(`[Autorizacoes] Analisando GPS/Ponto: ID ${id} -> ${pointStatus}`);
               const result = await supabase.from('pontos').update({ 
-                  status_validacao: pointStatus,
-                  company_id: compId,
-                  observacao_admin: obs || 'Processado pelo gestor.'
+                  status_validacao: pointStatus
               }).eq('id', id);
               
               if (result.error) {

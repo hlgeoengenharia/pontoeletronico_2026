@@ -11,22 +11,26 @@ export const PontoHistory = {
         
         const status = (item.status || 'pendente').toLowerCase();
         
-        // Cores e Labels baseadas no Status de Abono
         let statusClass = 'bg-amber-500/10 text-amber-500 border-amber-500/20';
-        let accentBorder = isCheckin ? 'border-l-emerald-500' : 'border-l-rose-500';
         let statusLabel = 'AGUARDANDO ANÁLISE';
+        
+        let accentBorder = isCheckin ? 'border-l-emerald-500' : 'border-l-rose-500';
+        let colorClass = isCheckin ? 'text-emerald-500 bg-emerald-500/10' : 'text-rose-500 bg-rose-500/10';
+        let borderClass = isCheckin ? 'border-emerald-500/20' : 'border-rose-500/20';
 
         if (status === 'abonado' || status === 'aprovado') {
             statusClass = 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30';
             statusLabel = 'ABONADO / VALIDADO';
+            accentBorder = 'border-l-emerald-500';
+            colorClass = 'text-emerald-500 bg-emerald-500/10';
+            borderClass = 'border-emerald-500/20';
         } else if (status === 'rejeitado' || status === 'negado') {
             statusClass = 'bg-rose-500/20 text-rose-400 border-rose-500/30';
             statusLabel = 'REJEITADO / IRREGULAR';
             accentBorder = 'border-l-rose-600';
+            colorClass = 'text-rose-500 bg-rose-500/10';
+            borderClass = 'border-rose-500/20';
         }
-
-        const colorClass = isCheckin ? 'text-emerald-500 bg-emerald-500/10' : 'text-rose-500 bg-rose-500/10';
-        const borderClass = isCheckin ? 'border-emerald-500/20' : 'border-rose-500/20';
         
         return `
             <div class="group relative bg-[#0f1115] border border-white/5 rounded-[2.5rem] p-6 border-l-4 ${accentBorder} hover:border-white/10 transition-all duration-300 shadow-2xl overflow-hidden mb-4">

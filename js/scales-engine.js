@@ -20,7 +20,7 @@ const ScalesEngine = {
         const days = [];
         const startDay = new Date(year, month, 1);
         const endDay = new Date(year, month + 1, 0);
-        
+
         const toLocaleISO = (date) => {
             const y = date.getFullYear();
             const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -55,7 +55,7 @@ const ScalesEngine = {
                 if (diasTrabalho.includes(dayOfWeek)) {
                     days.push(dateStr);
                 }
-            } 
+            }
             else if (escala.tipo_escala === 'ciclo') {
                 if (!startDate) continue; // Ciclo exige vigência
                 const trabalho = Number(escala.ciclo_config?.trabalho_total || 12);
@@ -64,7 +64,7 @@ const ScalesEngine = {
 
                 const dayStart = new Date(d);
                 dayStart.setHours(0, 0, 0, 0);
-                
+
                 let refStart = new Date(startDate);
 
                 if (escala.tipo_repeticao === 'fixa') {
@@ -168,18 +168,18 @@ const ScalesEngine = {
     isOnSiteDay(escala, date) {
         if (!escala) return true;
         const regime = escala.regime || 'Presencial';
-        
+
         if (regime === 'Presencial') return true;
         if (regime === 'Teletrabalho') return false;
         if (regime === 'Externo') return true; // Externo é considerado "em campo", similar ao presencial para geofencing se aplicável
-        
+
         if (regime === 'Híbrido') {
             const d = new Date(date);
             const dayOfWeek = d.getDay();
             const diasPresenciais = escala.dias_presenciais_json || [];
             return diasPresenciais.includes(dayOfWeek);
         }
-        
+
         return true;
     },
 
@@ -188,31 +188,48 @@ const ScalesEngine = {
      */
     calculateDailyWorkMinutes(escala) {
         if (!escala || !escala.horario_entrada || !escala.horario_saida) return 0;
-        
+
         const [h1, m1] = escala.horario_entrada.split(':').map(Number);
         const [h2, m2] = escala.horario_saida.split(':').map(Number);
-        
+
         let diffMinutes = (h2 * 60 + m2) - (h1 * 60 + m1);
-        if (diffMinutes < 0) diffMinutes += 1440; 
-        
+        if (diffMinutes < 0) diffMinutes += 1440;
+
         // Se possui almoço, deduz 1 hora (60 minutos)
         if (escala.possui_almoco !== false) {
             diffMinutes -= 60;
         }
-        
+
         return diffMinutes > 0 ? diffMinutes : 0;
     },
 
     /**
-     * Calcula o horário de término real da jornada considerando extensões de Hora Extra.
-     * @param {Object} escala 
+     * Calcula o horário de término real da jornada considerando extensões de Hora Extra e Janela Depois.
+     * @param {Object} escala Configuração da escala
      * @param {number} extraMinutes Minutos de HE autorizados (ex: do comunicado [LIMITE:XX])
+     * @param {Date} referenceDate Data base para o cálculo (ex: data do check-in)
      */
-    getShiftEndWithHE(escala, extraMinutes = 0) {
+    getShiftEndWithHE(escala, extraMinutes = 0, referenceDate = new Date()) {
         if (!escala || !escala.horario_saida) return null;
-        const [h, m] = escala.horario_saida.split(':').map(Number);
-        const exitTime = new Date();
-        exitTime.setHours(h, m + Number(extraMinutes), 0, 0);
+
+        const [hS, mS] = escala.horario_saida.split(':').map(Number);
+        const exitTime = new Date(referenceDate);
+        exitTime.setHours(hS, mS, 0, 0);
+
+        if (escala.horario_entrada) {
+            const [hE, mE] = escala.horario_entrada.split(':').map(Number);
+            // Se a saída é numericamente menor que a entrada, o turno cruza a meia-noite (+1 dia)
+            if (hS < hE || (hS === hE && mS < mE)) {
+                exitTime.setDate(exitTime.getDate() + 1);
+            }
+        }
+
+        const janelaDepois = (escala.janela_ativa_depois_minutos !== null && escala.janela_ativa_depois_minutos !== undefined)
+            ? parseInt(escala.janela_ativa_depois_minutos) : 30;
+
+        // Fechamento Total = Horário de Saída + Janela Depois + Horas Extras (Prorrogação)
+        exitTime.setMinutes(exitTime.getMinutes() + janelaDepois + Number(extraMinutes || 0));
+
         return exitTime;
     },
 
@@ -224,16 +241,16 @@ const ScalesEngine = {
         const now = new Date();
         // Em vez de ISO (UTC), usamos o fuso local para bater com a data local do browser
         const todayStr = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
-        
+
         if (dateStr < todayStr) return true;
         if (dateStr > todayStr) return false;
-        
+
         // É hoje. Verifica se já passou da hora de saída (considerando HE).
         const exitTime = this.getShiftEndWithHE(escala, extraMinutes);
         if (exitTime) {
             return now >= exitTime;
         }
-        
+
         // Se for hoje mas não tem horário cadastrado, consideramos que não acabou.
         return false;
     },
@@ -243,7 +260,7 @@ const ScalesEngine = {
      */
     isExemptDay(dateStr, feriados, ferias, escala, plannedDays) {
         if (!dateStr) return false;
-        
+
         // 1. É Férias Aprovada?
         const isVacation = (ferias || []).some(f => f.data_inicio <= dateStr && f.data_fim >= dateStr);
         if (isVacation) return { exempt: true, type: 'FÉRIAS' };
@@ -316,7 +333,7 @@ const ScalesEngine = {
      * Verifica se um determinado horário (ou o atual) está dentro da janela permitida.
      * Considera janelas de ativação antes/depois e atravessa meia-noite.
      */
-    isInActivationWindow(escala, type = 'check-in', extraMinutes = 0, targetDate = new Date()) {
+    isInActivationWindow(escala, type = 'check-in', extraMinutes = 0, targetDate = new Date(), isFirstCheckin = true) {
         if (!escala || !escala.horario_entrada) return true;
 
         const hEntrada = escala.horario_entrada || escala.entrada;
@@ -343,7 +360,7 @@ const ScalesEngine = {
 
             const endShift = new Date(baseDate);
             endShift.setHours(hS, mS, 0, 0);
-            
+
             // Tratamento de jornada que atravessa a meia-noite
             if (endShift < startShift) endShift.setDate(endShift.getDate() + 1);
 
@@ -352,13 +369,17 @@ const ScalesEngine = {
             const safeExtra = Number(extraMinutes || 0);
 
             if (type === 'check-in') {
-                // MODO NUCLEAR: Se for dia de escala, o Check-In é permitido desde 'janelaAntes' até o FIM da jornada.
-                // Isso garante que atrasos NUNCA bloqueiem o botão de ponto.
                 startWindow = new Date(startShift.getTime() - janelaAntes * 60000);
-                endWindow = new Date(endShift.getTime()); 
+                if (isFirstCheckin) {
+                    // REGRA 1: Primeiro Check-in MATA o relógio no limite da Tolerância (O funcionário volta pra casa).
+                    endWindow = new Date(startShift.getTime() + tolEntrada * 60000);
+                } else {
+                    // REGRA 3: Retorno. Se for um acúmulo de turno na mesma escala, o botão volta à vida até o limite.
+                    endWindow = new Date(endShift.getTime());
+                }
             } else {
-                // Janela de Saída: Do 'horário - janela_depois' até 'horário + janela_depois + HE'
-                startWindow = new Date(endShift.getTime() - janelaDepois * 60000);
+                // REGRA 2: Check-out TOTALMENTE LIVRE a partir do momento que bateu o check-in até o fim da janela/HE.
+                startWindow = new Date(startShift.getTime());
                 endWindow = new Date(endShift.getTime() + (janelaDepois + safeExtra) * 60000);
             }
 
@@ -371,6 +392,65 @@ const ScalesEngine = {
 
         console.warn(`[ScalesEngine] Bloqueio: fora da janela ativa (${type}) para o horário ${targetDate.toLocaleTimeString()}`);
         return false;
+    },
+
+    /**
+     * Analisa os pares de ponto (In/Out) do dia e determina se há necessidade de
+     * Fechamento Automático (Penalidade de Meio-Turno) no par órfão.
+     * @param {Array} pontosDoDia Lista de batidas do dia atual
+     * @param {Object} escala Configuração da escala do funcionário
+     * @param {number} extraMinutes Prorrogação aprovada (HE)
+     */
+    analyzePunchPairs(pontosDoDia, escala, extraMinutes = 0) {
+        if (!pontosDoDia || pontosDoDia.length === 0) return { pairs: [], isAutoCheckoutPending: false };
+
+        // 1. Ordena cronologicamente
+        const sorted = [...pontosDoDia].sort((a, b) => new Date(a.data_hora || a.created_at) - new Date(b.data_hora || b.created_at));
+
+        const pairs = [];
+        let currentPair = null;
+
+        // 2. Agrupa em pares (Sessões)
+        sorted.forEach(ponto => {
+            const isEntrada = ponto.tipo === 'ENTRADA' || ponto.tipo === 'check-in';
+            if (isEntrada) {
+                if (currentPair) pairs.push(currentPair); // Força fechamento como 'aberto' se houve outro check-in seguido
+                currentPair = { in: ponto, out: null, status: 'open' };
+            } else {
+                if (currentPair && !currentPair.out) {
+                    currentPair.out = ponto;
+                    currentPair.status = 'closed';
+                    pairs.push(currentPair);
+                    currentPair = null;
+                } else {
+                    pairs.push({ in: null, out: ponto, status: 'orphan_out' }); // Anomalia de sistema
+                }
+            }
+        });
+
+        if (currentPair) pairs.push(currentPair); // Empurra o último par, que provavelmente está aberto
+
+        // 3. Verifica regra de Fechamento Automático Imediato
+        let isAutoCheckoutPending = false;
+        const openPair = pairs.find(p => p.status === 'open');
+        let targetTimeForCheckout = null;
+
+        if (openPair) {
+            const checkInDate = new Date(openPair.in.data_hora || openPair.in.created_at);
+            targetTimeForCheckout = this.getShiftEndWithHE(escala, extraMinutes, checkInDate);
+
+            const now = new Date();
+            if (targetTimeForCheckout && new Date() >= targetTimeForCheckout) {
+                isAutoCheckoutPending = true;
+            }
+        }
+
+        return {
+            pairs,
+            isAutoCheckoutPending,
+            targetTimeForCheckout: targetTimeForCheckout || this.getShiftEndWithHE(escala, extraMinutes, new Date()),
+            openPair
+        };
     }
 };
 

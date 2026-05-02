@@ -537,7 +537,7 @@
 
                 const { data: funcionario } = await supabase
                     .from('funcionarios')
-                    .select('*, setores!funcionarios_setor_id_fkey(*), escalas!escala_id(*), perfis_tripulantes(foto_url, nickname)')
+                    .select('*, setores!funcionarios_setor_id_fkey(*), escalas!escala_id(*), perfis_tripulantes(foto_url, nickname), identidades_globais(biometria_cadastrada, biometria_token)')
                     .eq('id', targetId)
                     .single();
                 if (!funcionario) {
@@ -546,7 +546,11 @@
                     return;
                 }
 
-                currentUser = funcionario;
+                currentUser = {
+                    ...funcionario,
+                    biometria_cadastrada: funcionario.identidades_globais?.biometria_cadastrada,
+                    biometria_token: funcionario.identidades_globais?.biometria_token
+                };
                 
                 // Autorresolução de Pontos Esquecidos (Ponto Órfão)
                 const autoRes = await BusinessRulesManager.resolveOrphanedPunches(funcionario);
@@ -636,7 +640,7 @@
                 supabase.from('feriados_folgas').select('*').or(`funcionario_id.eq.${currentUser.id},setor_id.eq.${currentUser.setor_id},escopo.eq.geral`).gte('data', startMonth).lte('data', endMonth),
                 supabase.from('pontos').select('*').eq('funcionario_id', currentUser.id).gte('data_hora', startMonth + 'T00:00:00').lte('data_hora', endMonth + 'T23:59:59'),
                 supabase.from('ferias').select('*').eq('funcionario_id', currentUser.id).eq('status', 'aprovado'),
-                supabase.from('comunicados').select('*').eq('subtipo', 'dia_trabalho_extra').or(`destinatario_id.eq.${currentUser.id},setor_id.eq.${currentUser.setor_id},tipo.eq.geral`).gte('created_at', startMonth),
+                supabase.from('comunicados').select('*').eq('subtipo', 'dia_trabalho_extra').or(`destinatario_id.eq.${currentUser.id},setor_id.eq.${currentUser.setor_id},tipo.eq.geral`),
                 supabase.from('config_notificacoes_lidas').select('item_id').eq('funcionario_id', currentUser.id)
             ]);
 
@@ -863,7 +867,7 @@
             }
         };
 
-        const checkButtonWindow = async (btn, forcedType = null) => {
+        const checkButtonWindow = async (btn, forcedType = null, isFirstCheckin = true) => {
             const extraMin = await getExtraMinutes();
             const exemption = await getTodayExemption();
             
@@ -873,7 +877,7 @@
                 type = (!lastPunch || lastPunch.tipo === 'check-out') ? 'check-in' : 'check-out';
             }
             
-            let isActive = ScalesEngine.isInActivationWindow(currentUser.escalas, type, extraMin);
+            let isActive = ScalesEngine.isInActivationWindow(currentUser.escalas, type, extraMin, new Date(), isFirstCheckin);
             const statusLabel = document.getElementById('punch-status-label');
 
             // REGRA: Se for dia isento (Feriado/Folga) e NÃO houver Hora Extra authorized, BLOQUEIA.
@@ -887,7 +891,7 @@
             } else if (!isActive) {
                 if (statusLabel) {
                     const win = ScalesEngine.calculateWindowDetails(currentUser.escalas, extraMin);
-                    statusLabel.innerText = type === 'check-in' ? `AGUARDANDO JANELA (ÀS ${win?.antes.horario})` : 'FORA DA JANELA DE SAÍDA';
+                    statusLabel.innerText = type === 'check-in' ? `AGUARDANDO JANELA (ÀS ${win?.antes.horario}) / EXCEDEU TOLERÂNCIA` : 'FORA DA JANELA DE SAÍDA';
                     statusLabel.classList.remove('hidden');
                     statusLabel.className = 'text-[9px] font-black text-amber-500 uppercase tracking-widest mt-2';
                 }
@@ -1009,7 +1013,9 @@
                 const { data } = await supabase.from('pontos').select('*').eq('funcionario_id', userId).gte('data_hora', `${today}T00:00:00`).order('data_hora', { ascending: true });
 
                 const role = currentUser.nivel_acesso || 'Funcionário';
-                const isOnline = data && data.length % 2 !== 0;
+                const punchCount = data ? data.length : 0;
+                const isOnline = punchCount % 2 !== 0;
+                const isFirstCheckin = punchCount === 0;
 
                 // --- VERIFICAÇÃO DE FÉRIAS (BLOQUEIO) ---
                 let isOnVacation = false;
@@ -1047,8 +1053,20 @@
                     btn.classList.add('bg-rose-500'); 
                     const label = btn.querySelector('span.text-xs');
                     if (label) label.innerHTML = 'FINALIZAR<br>TURNO';
-                    btn.onclick = () => PunchEngine.startFlow('check-out', currentUser);
-                    await checkButtonWindow(btn, 'check-out');
+                    btn.onclick = () => {
+                        const hSaida = currentUser.escalas?.horario_saida || currentUser.escalas?.saida;
+                        if (hSaida) {
+                            const nowObj = new Date();
+                            const nowStr = nowObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                            if (nowStr < hSaida.substring(0, 5)) {
+                                if (!confirm(`Atenção: A saída prevista da sua escala é apenas às ${hSaida.substring(0, 5)}.\n\nDeseja REALMENTE finalizar o seu turno antecipadamente?`)) {
+                                    return;
+                                }
+                            }
+                        }
+                        PunchEngine.startFlow('check-out', currentUser);
+                    };
+                    await checkButtonWindow(btn, 'check-out', false);
                 } else {
                     const roleLower = String(currentUser.nivel_acesso || '').toLowerCase();
                     if (roleLower === 'admin' || roleLower === 'gestor') btn.classList.add('punch-' + roleLower);
@@ -1058,7 +1076,7 @@
                     if (label) label.innerHTML = 'REGISTRAR<br>PONTO';
                     btn.onclick = () => PunchEngine.startFlow('check-in', currentUser);
 
-                    await checkButtonWindow(btn, 'check-in');
+                    await checkButtonWindow(btn, 'check-in', isFirstCheckin);
                 }
 
                 if (data && data.length > 0) {

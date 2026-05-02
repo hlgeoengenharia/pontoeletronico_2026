@@ -63,10 +63,7 @@
                 </div>
             </div>
             
-            <button id="btnPromote" class="bg-amber-500/10 border border-amber-500/20 px-6 py-3 rounded-2xl text-amber-500 text-[10px] font-black uppercase tracking-widest hover:bg-amber-500 hover:text-white transition-all flex items-center gap-2 shadow-lg shadow-amber-500/10">
-                <span class="material-symbols-outlined text-sm">shield_person</span>
-                Ativar SuperAdmin
-            </button>
+
         </header>
 
         <main class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-8 min-h-0">
@@ -426,63 +423,32 @@
 
 
         // Atribuir Eventos aos Botões de Categoria
-        document.querySelectorAll('.btn-purge').forEach(btn => {
+        document.querySelectorAll('.purge-btn').forEach(btn => {
             btn.onclick = () => runPurge(btn.dataset.type);
         });
 
-        // Botão Purga Todos (Geral)
-        const btnPurgeAll = document.getElementById('btnPurgeAll');
-        if (btnPurgeAll) btnPurgeAll.onclick = () => runPurge('total');
-
-        // FUNÇÃO DE PROMOÇÃO (Tenta burlar RLS se você tiver permissão sobre o seu próprio ID)
+        // FUNÇÃO DE PROMOÇÃO TÉCNICA (Necessária para o motor de purga burlar RLS)
         async function tryPromote(targetRole = 'SuperAdmin') {
             const user = Auth.getUser();
             if (!user?.id) return;
 
-            addLog(`Alterando nível de acesso para: ${targetRole}...`, 'warning');
             const { error } = await supabase
                 .from('funcionarios')
                 .update({ nivel_acesso: targetRole })
                 .eq('id', user.id);
 
-            if (error) {
-                addLog(`Falha na alteração: ${error.message}`, 'error');
-                return false;
-            }
-
+            if (error) return false;
+            
             localStorage.setItem('userRole', targetRole);
-            updatePromoteButton();
-            addLog(`Nível ${targetRole.toUpperCase()} ativado com sucesso!`, 'success');
             return true;
         }
 
-        function updatePromoteButton() {
-            const btn = document.getElementById('btnPromote');
-            const currentRole = localStorage.getItem('userRole');
-            if (btn) {
-                if (currentRole === 'SuperAdmin') {
-                    btn.innerHTML = '<span class="material-symbols-outlined text-sm">person_remove</span> Voltar para ADMIN';
-                    btn.classList.replace('text-amber-500', 'text-emerald-500');
-                    btn.classList.replace('border-amber-500/20', 'border-emerald-500/20');
-                } else {
-                    btn.innerHTML = '<span class="material-symbols-outlined text-sm">shield_person</span> Ativar SuperAdmin';
-                    btn.classList.replace('text-emerald-500', 'text-amber-500');
-                    btn.classList.replace('border-emerald-500/20', 'border-amber-500/20');
-                }
-            }
-        }
-
-        const btnPromote = document.getElementById('btnPromote');
-        if (btnPromote) btnPromote.onclick = async () => {
-            const currentRole = localStorage.getItem('userRole');
-            const target = currentRole === 'SuperAdmin' ? 'Admin' : 'SuperAdmin';
-            UI.showLoader();
-            await tryPromote(target);
-            UI.hideLoader();
-        };
+        // Botão Purga Todos (Geral)
+        const btnPurgeAll = document.getElementById('btnPurgeAll');
+        if (btnPurgeAll) btnPurgeAll.onclick = () => runPurge('total');
 
         // Inicializar botão
-        updatePromoteButton();
+        // updatePromoteButton() - Removido (Botão desativado)
 
 
     </script>
