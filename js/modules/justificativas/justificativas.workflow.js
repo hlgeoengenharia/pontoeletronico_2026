@@ -1,5 +1,6 @@
 import { supabase } from '../../supabase-config.js';
 import { UI } from '../../ui-utils.js';
+import { Auth } from '../../auth.js';
 
 /**
  * Justificativas Workflow Module - ChronoSync Core
@@ -12,8 +13,10 @@ export const JustificativasWorkflow = {
     async submit(data) {
         UI.showLoader();
         try {
+            const currentUser = Auth.getUser();
             const payload = {
                 funcionario_id: data.funcionario_id,
+                company_id: data.company_id || currentUser.companyId, // Obrigatório para RLS
                 data_incidente: data.data_incidente || new Date().toISOString(),
                 tipo_divergencia: data.tipo_incidente || data.tipo_divergencia || 'OUTROS',
                 descricao: data.justificativa || data.descricao || '---',

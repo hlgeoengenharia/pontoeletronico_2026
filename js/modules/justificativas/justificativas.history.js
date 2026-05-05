@@ -25,6 +25,17 @@ export const JustificativasHistory = {
             statusLabel = 'REJEITADO';
         }
 
+        const tipoKey = (item.tipo_divergencia || 'OUTROS').toUpperCase();
+        const tipoMap = {
+            'ESQUECIMENTO': 'ESQUECIMENTO DE PONTO',
+            'PROBLEMA_TECNICO': 'PROBLEMA TÉCNICO',
+            'SERVICO_EXTERNO': 'SERVIÇO EXTERNO',
+            'SAUDE': 'SAÚDE / ATESTADO',
+            'HOME_OFFICE': 'HOME OFFICE',
+            'OUTROS': 'OUTROS MOTIVOS'
+        };
+        const motivoText = tipoMap[tipoKey] || tipoKey.replace(/_/g, ' ');
+
         const isEditing = options.editingId === item.id;
         
         let actionButtons = '';
@@ -41,6 +52,8 @@ export const JustificativasHistory = {
                             <option value="ESQUECIMENTO" ${item.tipo_divergencia === 'ESQUECIMENTO' ? 'selected' : ''}>ESQUECIMENTO</option>
                             <option value="PROBLEMA_TECNICO" ${item.tipo_divergencia === 'PROBLEMA_TECNICO' ? 'selected' : ''}>PROBLEMA TÉCNICO</option>
                             <option value="SERVICO_EXTERNO" ${item.tipo_divergencia === 'SERVICO_EXTERNO' ? 'selected' : ''}>SERVIÇO EXTERNO</option>
+                            <option value="SAUDE" ${item.tipo_divergencia === 'SAUDE' ? 'selected' : ''}>SAÚDE (ATESTADO/DECLARAÇÃO)</option>
+                            <option value="HOME_OFFICE" ${item.tipo_divergencia === 'HOME_OFFICE' ? 'selected' : ''}>HOME OFFICE</option>
                             <option value="OUTROS" ${item.tipo_divergencia === 'OUTROS' ? 'selected' : ''}>OUTROS</option>
                         </select>
                     </div>
@@ -133,6 +146,7 @@ export const JustificativasHistory = {
                             <div class="flex items-center gap-2">
                                 <h5 class="text-[8px] font-black uppercase tracking-widest text-slate-500 italic">JUSTIFICATIVA</h5>
                                 <span class="px-1.5 py-0.5 rounded border ${statusClass} text-[6px] font-black">${statusLabel}</span>
+                                <span class="px-1.5 py-0.5 rounded border border-white/10 bg-white/5 text-slate-400 text-[6px] font-black uppercase">${motivoText}</span>
                             </div>
                             <span class="text-[7px] font-bold text-slate-600">${date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
                         </div>
@@ -162,9 +176,15 @@ export const JustificativasHistory = {
                             <span class="material-symbols-outlined text-[20px]">${icon}</span>
                         </div>
                         <div>
-                             <div class="flex items-center gap-2 mb-0.5">
+                             <div class="flex items-center flex-wrap gap-2 mb-0.5">
                                  <h5 class="text-[10px] font-black uppercase tracking-widest text-slate-100">JUSTIFICATIVA DE PONTO</h5>
                                  <span class="px-2 py-0.5 rounded-md text-[7px] font-black border ${statusClass}">${statusLabel}</span>
+                             </div>
+                             <div class="flex items-center gap-2 mb-2">
+                                 <span class="px-2 py-1 rounded-md text-[8px] font-black uppercase tracking-widest border border-primary/20 bg-primary/10 text-primary flex items-center gap-1.5">
+                                     <span class="material-symbols-outlined text-[10px]">label</span>
+                                     ${motivoText}
+                                 </span>
                              </div>
                              <p class="text-[11px] font-bold text-slate-500 uppercase tracking-tighter">
                                  ${date.toLocaleTimeString('pt-BR')} | ${date.toLocaleDateString('pt-BR')}

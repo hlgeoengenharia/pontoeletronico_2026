@@ -107,15 +107,41 @@
           // 1. Buscar Funcionários (com ou sem filtro de setor)
           let query = supabase
             .from('funcionarios')
-            .select('*, setores!funcionarios_setor_id_fkey(nome), cargos(nome, nivel), perfis_tripulantes(foto_url)')
-            .order('nome_completo');
+            .select(`
+              *,
+              identidades_globais!inner(nome_completo),
+              setores!funcionarios_setor_id_fkey(nome),
+              cargos(nome, nivel),
+              perfis_tripulantes(foto_url)
+            `)
+            .order('nome_completo', { foreignTable: 'identidades_globais' });
+
+          const userRole = (userData.role || '').toLowerCase();
+          const userEmpresaId = localStorage.getItem('companyId');
+          const isSuperAdmin = userRole === 'superadmin';
+          
+          console.log('[DEBUG] userRole:', userRole);
+          console.log('[DEBUG] userEmpresaId:', userEmpresaId);
 
           if (setorId) {
             query = query.eq('setor_id', setorId);
-          } else if (userData.role && userData.role.toLowerCase() === 'gestor' && userData.setorId) {
+            // Mesmo com setor na URL, Admin deve filtrar também por empresa
+            if (!isSuperAdmin && userEmpresaId && userEmpresaId !== 'null' && userEmpresaId !== '') {
+              query = query.eq('empresa_id', userEmpresaId);
+              console.log('[Filtro Admin + Setor] Aplicando filtro de empresa também');
+            }
+          } else if (userRole === 'gestor' || userRole === 'manager') {
             // Se for gestor e NÃO tiver setor específico na URL, filtra pelo setor do gestor
-            query = query.eq('setor_id', userData.setorId);
-            console.log('[Filtro Gestor] Aplicando filtro automático para setor ID:', userData.setorId);
+            if (userData.setorId) {
+              query = query.eq('setor_id', userData.setorId);
+              console.log('[Filtro Gestor] Aplicando filtro automático para setor ID:', userData.setorId);
+            }
+          } else if (!isSuperAdmin && userEmpresaId && userEmpresaId !== 'null' && userEmpresaId !== '') {
+            // Se for Admin (não SuperAdmin), filtra pela empresa
+            query = query.eq('empresa_id', userEmpresaId);
+            console.log('[Filtro Admin] Aplicando filtro automático para empresa ID:', userEmpresaId);
+          } else {
+            console.log('[Filtro] Nenhum filtro de empresa aplicado. userRole:', userRole, 'userEmpresaId:', userEmpresaId);
           }
 
           const { data: funcData, error: funcError } = await query;
@@ -136,6 +162,7 @@
 
           todosFuncionarios = funcData.map(f => ({
             ...f,
+            nome_completo: f.identidades_globais?.nome_completo || 'Tripulante',
             isOnline: (onlineCounts[f.id] || 0) % 2 !== 0
           }));
 

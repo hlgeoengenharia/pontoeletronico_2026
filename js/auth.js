@@ -50,6 +50,7 @@ const Auth = {
             localStorage.setItem('userMatricula', f.matricula);
             localStorage.setItem('userSetor', f.setores?.nome || 'Não definido');
             localStorage.setItem('userSetorId', f.setor_id || '');
+            localStorage.setItem('companyId', f.company_id || f.empresa_id || f.id_empresa || '');
             localStorage.setItem('userFuncao', f.cargos?.nome || f.funcao || 'Tripulante');
             localStorage.setItem('userCargoNivel', f.cargos?.nivel || 'N/A');
             
@@ -74,7 +75,7 @@ const Auth = {
         // Limpar apenas chaves de sessão, preservando preferências e marcadores de leitura (ciente_, visto_)
         const sessionKeys = [
             'userId', 'userRole', 'userName', 'userNickname', 
-            'userMatricula', 'userSetor', 'userSetorId', 
+            'userMatricula', 'userSetor', 'userSetorId', 'companyId',
             'userFuncao', 'userCargoNivel', 'userPermissions', 'force_password_change'
         ];
         sessionKeys.forEach(key => localStorage.removeItem(key));
@@ -104,12 +105,13 @@ const Auth = {
         }
 
         // Se a rota for restrita a certos papéis
-        if (allowedRoles.length > 0 && !allowedRoles.includes(userRole)) {
-            // Se o usuário não tiver permissão para a tela atual
-            alert('Acesso negado: Nível de autorização insuficiente.');
-
-            // Redireciona para o Dashboard Único
-            window.location.href = 'dashboard.html';
+        if (allowedRoles.length > 0) {
+            const isAuthorized = allowedRoles.includes(userRole) || userRole === 'SuperAdmin';
+            if (!isAuthorized) {
+                // Se o usuário não tiver permissão para a tela atual
+                alert('Acesso negado: Nível de autorização insuficiente.');
+                window.location.href = 'dashboard.html';
+            }
         }
 
         return { userId, userRole };
@@ -136,6 +138,7 @@ const Auth = {
             setorId: localStorage.getItem('userSetorId'),
             funcao: localStorage.getItem('userFuncao'),
             funcaoNivel: localStorage.getItem('userCargoNivel'),
+            companyId: localStorage.getItem('companyId'),
             permissions: permissions
         };
     }

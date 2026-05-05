@@ -244,9 +244,13 @@
       const container = document.getElementById('lista-cargos');
       const countSpan = document.getElementById('total-cargos');
 
+      const userRole = localStorage.getItem('userRole') || '';
+      const userEmpresaId = localStorage.getItem('companyId');
+      const isSuperAdmin = userRole === 'SuperAdmin';
+
       try {
         // Busca cargos e suas especialidades usando a tabela de ligação
-        const { data, error } = await supabase
+        let query = supabase
           .from('cargos')
           .select(`
             *,
@@ -255,6 +259,13 @@
             )
           `)
           .order('nome');
+        
+        // Filtrar por empresa para Admin (não SuperAdmin)
+        if (!isSuperAdmin && userEmpresaId) {
+          query = query.eq('empresa_id', userEmpresaId);
+        }
+        
+        const { data, error } = await query;
           
         if (error) throw error;
 
@@ -704,11 +715,13 @@
       e.preventDefault();
       UI.showLoader();
 
+      const userEmpresaId = localStorage.getItem('companyId');
       const dados = {
         nome: document.getElementById('nome-cargo').value,
         nivel: document.getElementById('nivel-cargo').value,
         descricao: document.getElementById('descricao-cargo').value,
-        graduacao_principal: document.getElementById('graduacao-principal').value
+        graduacao_principal: document.getElementById('graduacao-principal').value,
+        empresa_id: userEmpresaId
       };
 
       try {

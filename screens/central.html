@@ -157,8 +157,31 @@
         if (!session) window.location.href = 'pagina_login_01.html';
         
         const role = localStorage.getItem('userRole');
-        if (role !== 'Admin' && role !== 'Gestor' && role !== 'Comandante') {
+        const isAdmin = (role === 'Admin' || role === 'Comandante' || role === 'SuperAdmin');
+        const isGestor = (role === 'Gestor' || role === 'Manager');
+        
+        if (role !== 'Admin' && role !== 'Gestor' && role !== 'Comandante' && role !== 'SuperAdmin' && role !== 'Manager') {
             window.location.href = 'dashboard.html';
+        }
+
+        // Gestor NÃO acessa central.html - redireciona para dashboard
+        if (isGestor) {
+            window.location.href = 'dashboard.html';
+        }
+
+        // Se for Admin (não SuperAdmin), oculta cards de Diagnóstico e Limpeza
+        if (role === 'Admin') {
+            // Ocultar card "Diagnóstico de Ponto"
+            const diagnosticoCard = document.querySelector('a[href="diagnostico.html"]');
+            if (diagnosticoCard) diagnosticoCard.classList.add('hidden');
+            
+            // Ocultar card "Limpeza de Dados"
+            const limpezaCard = document.querySelector('a[href="limpar_dados_emergencia.html"]');
+            if (limpezaCard) limpezaCard.classList.add('hidden');
+            
+            // Atualizar título da página
+            document.querySelector('h2').innerText = 'GESTÃO DE SISTEMAS';
+            document.querySelector('p').innerText = 'Parâmetros e Configurações Globais';
         }
 
         // Inicializar Sidebar

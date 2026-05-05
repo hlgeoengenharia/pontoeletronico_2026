@@ -537,7 +537,7 @@
 
                 const { data: funcionario } = await supabase
                     .from('funcionarios')
-                    .select('*, setores!funcionarios_setor_id_fkey(*), escalas!escala_id(*), perfis_tripulantes(foto_url, nickname)')
+                    .select('*, setores!funcionarios_setor_id_fkey(*), escalas!escala_id(*), perfis_tripulantes(foto_url, nickname), identidades_globais(biometria_cadastrada, biometria_token, foto_url)')
                     .eq('id', targetId)
                     .single();
                 if (!funcionario) {
@@ -546,7 +546,11 @@
                     return;
                 }
 
-                currentUser = funcionario;
+                currentUser = {
+                    ...funcionario,
+                    biometria_cadastrada: funcionario.identidades_globais?.biometria_cadastrada,
+                    biometria_token: funcionario.identidades_globais?.biometria_token
+                };
                 
                 // Autorresolução de Pontos Esquecidos (Ponto Órfão)
                 const autoRes = await BusinessRulesManager.resolveOrphanedPunches(funcionario);
@@ -632,13 +636,28 @@
             const startMonth = new Date(year, month, 1).toISOString();
             const endMonth = new Date(year, month + 1, 0).toISOString();
 
-            const [feriadosRes, pontosRes, feriasRes] = await Promise.all([
+            const [feriadosRes, pontosRes, feriasRes, diaExtraRes, seenRes] = await Promise.all([
                 supabase.from('feriados_folgas').select('*').or(`funcionario_id.eq.${currentUser.id},setor_id.eq.${currentUser.setor_id},escopo.eq.geral`).gte('data', startMonth).lte('data', endMonth),
                 supabase.from('pontos').select('*').eq('funcionario_id', currentUser.id).gte('data_hora', startMonth + 'T00:00:00').lte('data_hora', endMonth + 'T23:59:59'),
-                supabase.from('ferias').select('*').eq('funcionario_id', currentUser.id).eq('status', 'aprovado')
+                supabase.from('ferias').select('*').eq('funcionario_id', currentUser.id).eq('status', 'aprovado'),
+                supabase.from('comunicados').select('*').eq('subtipo', 'dia_trabalho_extra').or(`destinatario_id.eq.${currentUser.id},setor_id.eq.${currentUser.setor_id},tipo.eq.geral`),
+                supabase.from('config_notificacoes_lidas').select('item_id').eq('funcionario_id', currentUser.id)
             ]);
 
-            renderCalendar(feriadosRes.data || [], pontosRes.data || [], feriasRes.data || [], month, year);
+            const seenIds = new Set((seenRes.data || []).map(s => s.item_id.toString()));
+
+            // Filtrar Dias Extras pela data contida no conteúdo [DIA_EXTRA:YYYY-MM-DD]
+            const diasExtrasNoMes = (diaExtraRes.data || []).filter(c => {
+                const match = (c.conteudo || '').match(/\[DIA_EXTRA:([\d-]+)\]/);
+                if (match) {
+                    const d = match[1];
+                    // Mostramos sempre no calendário como lembrete visual de trabalho
+                    return d >= startMonth.split('T')[0] && d <= endMonth.split('T')[0];
+                }
+                return false;
+            });
+
+            renderCalendar(feriadosRes.data || [], pontosRes.data || [], feriasRes.data || [], month, year, diasExtrasNoMes);
         }
 
         async function setupCalendarNavigation() {
@@ -706,8 +725,8 @@
             const nickEl = document.getElementById('user-nickname');
             if (nickEl) nickEl.innerText = nickname;
 
-            // Foto de Perfil (da tabela perfis_tripulantes)
-            const fotoUrl = perfil?.foto_url || user.foto_url;
+            // Foto de Perfil (busca em perfis_tripulantes, identidades_globais ou funcionarios)
+            const fotoUrl = perfil?.foto_url || user.foto_url || user.identidades_globais?.foto_url;
             if (fotoUrl) {
                 document.getElementById('user-photo').src = fotoUrl;
                 document.getElementById('user-photo').onerror = function () {
@@ -757,7 +776,7 @@
                 return;
             }
 
-            if (role === 'admin') {
+            if (role === 'admin' || role === 'superadmin') {
                 document.querySelectorAll('.role-admin').forEach(el => el.classList.remove('role-hidden'));
                 document.querySelectorAll('.role-gestor').forEach(el => el.classList.remove('role-hidden'));
             } else if (role === 'gestor' || role === 'manager') {
@@ -798,6 +817,19 @@
                 const todayStr = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
                 const sId = currentUser.setor_id || '00000000-0000-0000-0000-000000000000';
 
+                // 0. Buscar Dia Extra (Convocação) - TEM PRIORIDADE MÁXIMA
+                const { data: diaExtra } = await supabase
+                    .from('comunicados')
+                    .select('id, conteudo')
+                    .eq('subtipo', 'dia_trabalho_extra')
+                    .or(`destinatario_id.eq.${currentUser.id},setor_id.eq.${sId},tipo.eq.geral`)
+                    .filter('conteudo', 'ilike', `%${todayStr}%`)
+                    .limit(1);
+
+                if (diaExtra && diaExtra.length > 0) {
+                    return { exempt: false, reason: 'DIA EXTRA (CONVOCADO)' }; // LIBERA O PONTO
+                }
+
                 // 1. Buscar Feriados/Folgas
                 const { data: feriados } = await supabase
                     .from('feriados_folgas')
@@ -835,7 +867,7 @@
             }
         };
 
-        const checkButtonWindow = async (btn, forcedType = null) => {
+        const checkButtonWindow = async (btn, forcedType = null, isFirstCheckin = true) => {
             const extraMin = await getExtraMinutes();
             const exemption = await getTodayExemption();
             
@@ -845,7 +877,7 @@
                 type = (!lastPunch || lastPunch.tipo === 'check-out') ? 'check-in' : 'check-out';
             }
             
-            let isActive = ScalesEngine.isInActivationWindow(currentUser.escalas, type, extraMin);
+            let isActive = ScalesEngine.isInActivationWindow(currentUser.escalas, type, extraMin, new Date(), isFirstCheckin);
             const statusLabel = document.getElementById('punch-status-label');
 
             // REGRA: Se for dia isento (Feriado/Folga) e NÃO houver Hora Extra authorized, BLOQUEIA.
@@ -859,7 +891,7 @@
             } else if (!isActive) {
                 if (statusLabel) {
                     const win = ScalesEngine.calculateWindowDetails(currentUser.escalas, extraMin);
-                    statusLabel.innerText = type === 'check-in' ? `AGUARDANDO JANELA (ÀS ${win?.antes.horario})` : 'FORA DA JANELA DE SAÍDA';
+                    statusLabel.innerText = type === 'check-in' ? `AGUARDANDO JANELA (ÀS ${win?.antes.horario}) / EXCEDEU TOLERÂNCIA` : 'FORA DA JANELA DE SAÍDA';
                     statusLabel.classList.remove('hidden');
                     statusLabel.className = 'text-[9px] font-black text-amber-500 uppercase tracking-widest mt-2';
                 }
@@ -926,9 +958,15 @@
 
                 const linkSetores = document.getElementById('link-setores');
                 if (linkSetores) {
-                    if (role === 'Admin') linkSetores.href = 'relacao_setores.html';
-                    else if (isGestor && sId) linkSetores.href = `relacao_funcionarios.html?setor=${sId}`;
-                    else linkSetores.href = `relacao_funcionarios.html`;
+                    // Admin e SuperAdmin vão para relacao_setores.html
+                    // Gestor vai direto para relacao_funcionarios.html do seu setor
+                    if (role === 'Admin' || role === 'SuperAdmin') {
+                        linkSetores.href = 'relacao_setores.html';
+                    } else if (isGestor && sId) {
+                        linkSetores.href = `relacao_funcionarios.html?setor=${sId}`;
+                    } else {
+                        linkSetores.href = `relacao_funcionarios.html`;
+                    }
                 }
 
                 if (document.getElementById('stat-total-setores')) {
@@ -981,7 +1019,9 @@
                 const { data } = await supabase.from('pontos').select('*').eq('funcionario_id', userId).gte('data_hora', `${today}T00:00:00`).order('data_hora', { ascending: true });
 
                 const role = currentUser.nivel_acesso || 'Funcionário';
-                const isOnline = data && data.length % 2 !== 0;
+                const punchCount = data ? data.length : 0;
+                const isOnline = punchCount % 2 !== 0;
+                const isFirstCheckin = punchCount === 0;
 
                 // --- VERIFICAÇÃO DE FÉRIAS (BLOQUEIO) ---
                 let isOnVacation = false;
@@ -1019,8 +1059,20 @@
                     btn.classList.add('bg-rose-500'); 
                     const label = btn.querySelector('span.text-xs');
                     if (label) label.innerHTML = 'FINALIZAR<br>TURNO';
-                    btn.onclick = () => PunchEngine.startFlow('check-out', currentUser);
-                    await checkButtonWindow(btn, 'check-out');
+                    btn.onclick = () => {
+                        const hSaida = currentUser.escalas?.horario_saida || currentUser.escalas?.saida;
+                        if (hSaida) {
+                            const nowObj = new Date();
+                            const nowStr = nowObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                            if (nowStr < hSaida.substring(0, 5)) {
+                                if (!confirm(`Atenção: A saída prevista da sua escala é apenas às ${hSaida.substring(0, 5)}.\n\nDeseja REALMENTE finalizar o seu turno antecipadamente?`)) {
+                                    return;
+                                }
+                            }
+                        }
+                        PunchEngine.startFlow('check-out', currentUser);
+                    };
+                    await checkButtonWindow(btn, 'check-out', false);
                 } else {
                     const roleLower = String(currentUser.nivel_acesso || '').toLowerCase();
                     if (roleLower === 'admin' || roleLower === 'gestor') btn.classList.add('punch-' + roleLower);
@@ -1030,7 +1082,7 @@
                     if (label) label.innerHTML = 'REGISTRAR<br>PONTO';
                     btn.onclick = () => PunchEngine.startFlow('check-in', currentUser);
 
-                    await checkButtonWindow(btn, 'check-in');
+                    await checkButtonWindow(btn, 'check-in', isFirstCheckin);
                 }
 
                 if (data && data.length > 0) {
@@ -1097,7 +1149,7 @@
 
 
 
-        function renderCalendar(feriadosDataRaw = [], pontosData = [], feriasData = [], month, year) {
+        function renderCalendar(feriadosDataRaw = [], pontosData = [], feriasData = [], month, year, diasExtras = []) {
             const grid = document.getElementById('app-calendar');
             if (!grid) return;
 
@@ -1138,6 +1190,7 @@
                 });
 
                 const event = feriadosData.find(f => f.data === dateStr);
+                const diaExtra = diasExtras.find(c => (c.conteudo || '').includes(`[DIA_EXTRA:${dateStr}]`));
 
                 // 2. Calcular Saldo (Se passado ou hoje)
                 let balanceClass = '';
@@ -1150,7 +1203,7 @@
                         workedMin += (outT - inT) / 60000;
                     }
 
-                    if (workedMin > 0 || (isPast && !event)) {
+                    if (workedMin > 0 || (isPast && !event && !diaExtra)) {
                         balanceClass = workedMin >= jornadaDiariaMin ? 'bg-emerald-500' : 'bg-rose-500';
                     }
                 }
@@ -1166,6 +1219,8 @@
 
                 if (isVacation) {
                     circleClass += 'bg-sky-500/30 text-sky-200 border border-sky-500/40 shadow-xl shadow-sky-500/10';
+                } else if (diaExtra) {
+                    circleClass += 'bg-emerald-600 text-white shadow-xl shadow-emerald-600/30 ring-2 ring-emerald-500/20';
                 } else if (event) {
                     const type = event.tipo.toLowerCase();
                     if (type === 'feriado_nacional') {
@@ -1203,10 +1258,10 @@
             }
 
             // --- LEGENDA E LISTA DE EVENTOS ---
-            renderCalendarLegend(feriadosData, feriasData, month, year);
+            renderCalendarLegend(feriadosData, feriasData, month, year, diasExtras);
         }
 
-        function renderCalendarLegend(feriadosData, feriasData, month, year) {
+        function renderCalendarLegend(feriadosData, feriasData, month, year, diasExtras = []) {
             const container = document.getElementById('app-calendar').parentNode;
             let legendSection = document.getElementById('calendar-footer-section');
 
@@ -1244,8 +1299,21 @@
                 }
             });
 
-            // 3. Unificar e Ordenar
-            const sortedEvents = [...filteredFeriados, ...filteredFerias].sort((a, b) => a.data.localeCompare(b.data));
+            // 3. Extrair Dias Extras
+            const filteredExtras = diasExtras.map(c => {
+                const match = (c.conteudo || '').match(/\[DIA_EXTRA:([\d-]+)\]/);
+                return {
+                    data: match ? match[1] : c.created_at.split('T')[0],
+                    tipo: 'dia_extra',
+                    descricao: 'Convocação para Trabalho Extra'
+                };
+            }).filter(ev => {
+                const d = new Date(ev.data + 'T12:00:00');
+                return d.getMonth() === month && d.getFullYear() === year;
+            });
+
+            // 4. Unificar e Ordenar
+            const sortedEvents = [...filteredFeriados, ...filteredFerias, ...filteredExtras].sort((a, b) => a.data.localeCompare(b.data));
 
             legendSection.innerHTML = `
                 <!-- Legenda de Cores (Horizontal e Centralizada) -->
@@ -1268,8 +1336,8 @@
                         <span class="text-[8px] font-black text-slate-500 uppercase tracking-widest">Regional</span>
                     </div>
                     <div class="flex items-center gap-2">
-                        <span class="size-2.5 rounded-full bg-purple-600 shadow-lg shadow-purple-600/20"></span>
-                        <span class="text-[8px] font-black text-slate-500 uppercase tracking-widest">Folga</span>
+                        <span class="size-2.5 rounded-full bg-emerald-600 shadow-lg shadow-emerald-600/20"></span>
+                        <span class="text-[8px] font-black text-slate-500 uppercase tracking-widest">Dia Extra</span>
                     </div>
                 </div>
 
@@ -1283,6 +1351,7 @@
                 if (type === 'feriado_nacional') typeColor = 'text-amber-500';
                 else if (type === 'feriado_regional') typeColor = 'text-orange-500';
                 else if (type === 'ferias') typeColor = 'text-sky-400';
+                else if (type === 'dia_extra') typeColor = 'text-emerald-500';
 
                 return `
                             <div class="flex items-center gap-3 bg-white/5 p-3 rounded-xl border border-white/5">

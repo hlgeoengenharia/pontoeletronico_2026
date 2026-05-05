@@ -69,15 +69,24 @@ export const BiometricHelper = {
     async fetchTemplateForUser(funcionarioId) {
         const { data, error } = await supabase
             .from('funcionarios')
-            .select('id, biometria_cadastrada, biometria_token')
+            .select(`
+                id, 
+                identidades_globais!inner (
+                    biometria_cadastrada, 
+                    biometria_token
+                )
+            `)
             .eq('id', funcionarioId)
             .single();
 
         if (error) throw error;
 
-        const parsedTemplate = this.parseTemplate(data?.biometria_token || '');
+        const biometria_token = data?.identidades_globais?.biometria_token;
+        const biometria_cadastrada = data?.identidades_globais?.biometria_cadastrada;
+
+        const parsedTemplate = this.parseTemplate(biometria_token || '');
         return {
-            user: data,
+            user: { ...data, biometria_cadastrada },
             parsedTemplate
         };
     },

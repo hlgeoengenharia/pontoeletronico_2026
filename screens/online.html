@@ -312,18 +312,22 @@
 
           <div class="space-y-6">
               <!-- Seletor de Subtipo -->
-              <div class="flex bg-background-dark p-1 rounded-2xl border border-white/10">
+              <div class="grid grid-cols-4 gap-1 bg-background-dark p-1 rounded-2xl border border-white/10">
                   <button type="button" id="btn-msg-texto" onclick="setComunicadoSubtipo('mensagem')"
-                      class="flex-1 px-4 py-3 text-[10px] font-black uppercase tracking-wider rounded-xl bg-primary text-white transition-all shadow-lg">
+                      class="px-1 py-3 text-[8px] font-black uppercase tracking-wider rounded-xl bg-primary text-white transition-all shadow-lg">
                       Comunicado
                   </button>
                   <button type="button" id="btn-msg-horaextra" onclick="setComunicadoSubtipo('hora_extra')"
-                      class="flex-1 px-4 py-3 text-[10px] font-black uppercase tracking-wider rounded-xl text-slate-400 hover:text-white transition-all">
+                      class="px-1 py-3 text-[8px] font-black uppercase tracking-wider rounded-xl text-slate-400 hover:text-white transition-all">
                       Hora Extra
                   </button>
+                  <button type="button" id="btn-msg-diaextra" onclick="setComunicadoSubtipo('dia_trabalho_extra')"
+                      class="px-1 py-3 text-[8px] font-black uppercase tracking-wider rounded-xl text-slate-400 hover:text-white transition-all">
+                      Dia Extra
+                  </button>
                   <button type="button" id="btn-msg-ferias" onclick="setComunicadoSubtipo('ferias_folgas')"
-                      class="flex-1 px-4 py-3 text-[10px] font-black uppercase tracking-wider rounded-xl text-slate-400 hover:text-white transition-all">
-                      FERIADOS/FOLGAS
+                      class="px-1 py-3 text-[8px] font-black uppercase tracking-wider rounded-xl text-slate-400 hover:text-white transition-all">
+                      FOLGAS
                   </button>
               </div>
 
@@ -339,6 +343,42 @@
                           <span class="text-[8px] text-slate-500 font-bold uppercase block">Janela extra pós-expediente (minutos)</span>
                       </div>
                       <input id="input-limite-extra" type="number" min="1" value="120" class="w-16 bg-background-dark border border-white/20 rounded-lg p-2 text-xs text-primary font-bold focus:border-primary outline-none text-center shadow-inner">
+                  </div>
+
+                  <div id="container-dia-extra" class="hidden border-t border-white/5 pt-3 mt-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                      <div class="bg-primary/5 p-4 rounded-3xl border border-primary/20 mb-4">
+                          <h4 class="text-[10px] font-black text-primary uppercase tracking-widest mb-1">CONVOCAR PARA DIA EXTRA?</h4>
+                          <p class="text-[8px] font-bold text-slate-500 uppercase tracking-widest">Selecione o dia no calendário abaixo para marcar um dia não previsto na escala</p>
+                      </div>
+
+                      <!-- Calendário Dia Extra -->
+                      <div class="bg-background-dark p-6 rounded-3xl border border-white/10 shadow-inner mb-4">
+                          <div class="flex justify-between items-center mb-6 px-2">
+                              <p id="calendar-dia-extra-month" class="text-xs font-black text-slate-100 uppercase tracking-widest">---</p>
+                              <div class="flex gap-2">
+                                  <button type="button" onclick="navigateDiaExtraCalendar(-1)" class="w-10 h-10 flex items-center justify-center bg-white/5 rounded-xl text-slate-400 hover:text-primary active:scale-90 transition-all border border-white/5">
+                                      <span class="material-symbols-outlined text-xl">chevron_left</span>
+                                  </button>
+                                  <button type="button" onclick="navigateDiaExtraCalendar(1)" class="w-10 h-10 flex items-center justify-center bg-white/5 rounded-xl text-slate-400 hover:text-primary active:scale-90 transition-all border border-white/5">
+                                      <span class="material-symbols-outlined text-xl">chevron_right</span>
+                                  </button>
+                              </div>
+                          </div>
+                          <div class="grid grid-cols-7 text-center text-[9px] font-bold text-slate-500 uppercase mb-2">
+                              <span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span>
+                          </div>
+                          <div id="calendar-dia-extra-grid" class="grid grid-cols-7 gap-1">
+                              <!-- Gerado via JS -->
+                          </div>
+                      </div>
+                      
+                      <!-- Input Invisível para manter compatibilidade com o envio atual -->
+                      <input id="input-data-extra" type="hidden">
+                      
+                      <div id="exibicao-data-extra" class="hidden flex items-center justify-between p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl animate-in zoom-in-95">
+                          <span class="text-[9px] font-black text-emerald-500 uppercase tracking-widest ml-1">Data Selecionada:</span>
+                          <span id="txt-data-extra-selecionada" class="text-xs font-black text-white italic">--/--/--</span>
+                      </div>
                   </div>
               </div>
 
@@ -516,6 +556,14 @@
                       </div>
                   </div>
                   
+                  <!-- Alerta de Conflito -->
+                  <div id="conflito-alerta" class="hidden p-4 bg-rose-500/10 border border-rose-500/30 rounded-xl mb-4 animate-pulse">
+                      <div class="flex items-start gap-3">
+                          <span class="material-symbols-outlined text-rose-500 text-lg">warning</span>
+                          <p id="conflito-msg" class="text-[9px] text-rose-200 font-bold uppercase leading-relaxed">Mensagem de conflito...</p>
+                      </div>
+                  </div>
+                  
                   <button id="btn-salvar-ferias" class="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-black uppercase tracking-[0.2em] rounded-2xl shadow-lg transition-all">
                       Confirmar Solicitação
                   </button>
@@ -624,6 +672,11 @@
     let feriasCalendarYear = new Date().getFullYear();
     let selectedSpecialDays = []; // { data, tipo, descricao }
 
+    // Estado do Calendário de Dia Extra
+    let diaExtraCalendarMonth = new Date().getMonth();
+    let diaExtraCalendarYear = new Date().getFullYear();
+    let selectedDiaExtra = null; // String 'YYYY-MM-DD'
+
     // Modo Férias
     const urlParams = new URLSearchParams(window.location.search);
     const isFeriasMode = urlParams.get('mode') === 'ferias';
@@ -708,7 +761,7 @@
             const sId = user.setorId;
 
             // 1. Setores
-            let queryS = supabase.from('setores').select('*, gestor:funcionarios!gestor_id(nome_completo)');
+            let queryS = supabase.from('setores').select('*');
             if (isGestorOnly && sId) queryS = queryS.eq('id', sId);
             
             const { data: sData, error: sError } = await queryS;
@@ -728,8 +781,18 @@
                 }
             }
 
-            // 2. Funcionários e Tabelas Relacionadas (Filtros por Setor)
-            let queryF = supabase.from('funcionarios').select('id, nome_completo, nickname, cargo_id, especialidade_id, setor_id, nivel_acesso, regime_trabalho');
+            // 2. Funcionários e Tabelas Relacionadas (Filtros por Setor via VIEW)
+            let queryF = supabase.from('vw_funcionarios_gestao').select('*');
+            
+            // Filtrar por empresa para Admin (não SuperAdmin)
+            const userRole = localStorage.getItem('userRole') || '';
+            const userEmpresaId = localStorage.getItem('companyId');
+            const isSuperAdmin = userRole === 'SuperAdmin';
+            
+            if (!isSuperAdmin && userEmpresaId) {
+                queryF = queryF.eq('empresa_id', userEmpresaId);
+            }
+            
             if (isGestorOnly && sId) queryF = queryF.eq('setor_id', sId);
 
             const [fRes, cRes, eRes, pRes] = await Promise.all([
@@ -752,9 +815,9 @@
 
             const fData = (fRes.data || []).map(f => ({
                 ...f,
-                foto_url: fotosMap[f.id] || null,
-                cargos: { nome: cargosMap[f.cargo_id] || 'Tripulante' },
-                especialidades: { nome: espMap[f.especialidade_id] || 'N/A' }
+                foto_url: f.foto_url || fotosMap[f.id] || null,
+                cargos: { nome: f.cargo_nome || cargosMap[f.cargo_id] || 'Tripulante' },
+                especialidades: { nome: f.especialidade_nome || espMap[f.especialidade_id] || 'N/A' }
             }));
             
             // 3. Status Online (Resiliente ao Fuso Horário)
@@ -766,7 +829,7 @@
                 
                 let queryPoints = supabase
                     .from('pontos')
-                    .select('funcionario_id, tipo, data_hora, funcionarios!inner(setor_id)')
+                    .select('funcionario_id, tipo, data_hora, funcionarios!inner(id)')
                     .gte('data_hora', `${localToday}T00:00:00`)
                     .order('data_hora', { ascending: true });
                 
@@ -785,7 +848,7 @@
             try {
                 let queryLocs = supabase
                     .from('pontos')
-                    .select('funcionario_id, latitude, longitude, data_hora, funcionarios!inner(setor_id)')
+                    .select('funcionario_id, latitude, longitude, data_hora, funcionarios!inner(id)')
                     .not('latitude', 'is', null)
                     .order('data_hora', { ascending: false });
                 
@@ -801,7 +864,7 @@
             // 5. Buscar Últimos Pulsos de GPS (Sinal de vida)
             let queryPulse = supabase
                 .from('diario_logs')
-                .select('funcionario_id, coordenadas, data_hora, funcionarios!inner(setor_id)')
+                .select('funcionario_id, coordenadas, data_hora, funcionarios!inner(id)')
                 .in('tipo', ['gps_pulse', 'gps_hora', 'geofence_in', 'geofence_out', 'ponto_fora_raio'])
                 .order('data_hora', { ascending: false });
             
@@ -825,7 +888,7 @@
             // 7. Buscar Todos os Comunicados (Filtrar já vistos para o monitoramento)
             let queryHE = supabase
                 .from('comunicados')
-                .select('*, funcionarios!inner(setor_id)')
+                .select('*, funcionarios!inner(id), identidades_globais(nome_completo)')
                 .order('created_at', { ascending: false });
             
             if (isGestorOnly && sId) queryHE = queryHE.eq('funcionarios.setor_id', sId);
@@ -847,7 +910,11 @@
             // 8. Dados de Férias
             let vData = [];
             try {
-                let queryV = supabase.from('ferias').select('*, funcionarios!inner(setor_id)');
+                const now = new Date();
+                const offset = now.getTimezoneOffset() * 60000;
+                const localToday = new Date(now - offset).toISOString().split('T')[0];
+                
+                let queryV = supabase.from('ferias').select('*, funcionarios!inner(id)');
                 if (isGestorOnly && sId) queryV = queryV.eq('funcionarios.setor_id', sId);
                 const resV = await queryV;
                 if (resV.data) vData = resV.data;
@@ -970,7 +1037,7 @@
                     </div>
                     
                     <!-- Lista de Funcionários do Setor -->
-                    <div id="sublista-${s.id}" class="pl-4 space-y-1 hidden border-l border-primary/20 ml-5">
+                    <div id="sublista-${s.id}" class="pl-4 space-y-1 ${isFeriasMode ? '' : 'hidden'} border-l border-primary/20 ml-5">
                         ${sectorEmployees.map(e => {
                             const isMe = e.id === Auth.getUser()?.id;
                             return `
@@ -1060,7 +1127,7 @@
                     <div class="p-2 space-y-3 min-w-[180px]">
                         <div class="border-b border-white/10 pb-2">
                             <h3 class="text-xs font-black uppercase text-primary tracking-widest">${s.nome}</h3>
-                            <p class="text-[9px] text-slate-400 font-bold uppercase mt-1">Gestor: ${s.gestor?.nome_completo || 'N/A'}</p>
+                            <p class="text-[9px] text-slate-400 font-bold uppercase mt-1">Gestor: ${s.gestor?.identidades_globais?.nome_completo || 'N/A'}</p>
                         </div>
                         <div class="flex justify-between items-center bg-white/5 p-2 rounded-lg">
                             <span class="text-[8px] font-black text-slate-500 uppercase">Equipe Ativa</span>
@@ -1182,7 +1249,10 @@
 
     window.focarFuncionario = (id) => {
         const emp = employees.find(e => e.id === id);
-        if (emp && emp.last_lat !== null && emp.last_lng !== null) {
+        if (!emp) return;
+
+        if (emp.status === 'online' && emp.last_lat !== null && emp.last_lng !== null) {
+            // Se estiver Online: Navega no mapa e abre o balão do Pin
             map.flyTo([emp.last_lat, emp.last_lng], 18);
             
             // Abrir popup no mapa
@@ -1192,7 +1262,14 @@
                 }
             });
         } else {
-            UI.showToast('Localização indisponível.', 'info');
+            // Se estiver Offline: Abre direto o modal de comunicação individual
+            // Isso permite mandar Dia Extra/Solicitações mesmo antes dele bater o ponto
+            if (window.abrirModalComunicado) {
+                window.abrirModalComunicado('individual', emp.id, emp.nickname || emp.nome_completo);
+                UI.showToast(`Tripulante offline. Abrindo comunicação direta.`, 'info');
+            } else {
+                UI.showToast('Funcionalidade de comunicação indisponível.', 'warning');
+            }
         }
     };
 
@@ -1251,15 +1328,18 @@
         activeComunicado.subtipo = subtipo;
         const btnMsg = document.getElementById('btn-msg-texto');
         const btnHE = document.getElementById('btn-msg-horaextra');
+        const btnDE = document.getElementById('btn-msg-diaextra');
         const btnFer = document.getElementById('btn-msg-ferias');
         const labelConteudo = document.getElementById('label-conteudo-mensagem');
         const containerPadrao = document.getElementById('container-comunicado-padrao');
         const containerFerias = document.getElementById('container-ferias-folgas');
         const containerLimite = document.getElementById('container-limite-extra');
+        const containerDiaExtra = document.getElementById('container-dia-extra');
         
         // Reset Buttons
-        [btnMsg, btnHE, btnFer].forEach(btn => {
-            btn.classList.remove('bg-primary', 'bg-emerald-500', 'bg-rose-500', 'text-white', 'shadow-lg');
+        [btnMsg, btnHE, btnDE, btnFer].forEach(btn => {
+            if (!btn) return;
+            btn.classList.remove('bg-primary', 'text-white', 'shadow-lg');
             btn.classList.add('text-slate-400');
         });
 
@@ -1277,12 +1357,23 @@
             containerPadrao.classList.remove('hidden');
             containerFerias.classList.add('hidden');
             if (containerLimite) containerLimite.classList.remove('hidden');
+            if (containerDiaExtra) containerDiaExtra.classList.add('hidden');
+        } else if (subtipo === 'dia_trabalho_extra') {
+            btnDE.classList.add('bg-primary', 'text-white', 'shadow-lg');
+            btnDE.classList.remove('text-slate-400');
+            if (labelConteudo) labelConteudo.innerText = 'CONVOCAÇÃO PARA DIA EXTRA';
+            containerPadrao.classList.remove('hidden');
+            containerFerias.classList.add('hidden');
+            if (containerLimite) containerLimite.classList.add('hidden');
+            if (containerDiaExtra) containerDiaExtra.classList.remove('hidden');
+            renderDiaExtraCalendar();
         } else if (subtipo === 'ferias_folgas') {
             btnFer.classList.add('bg-primary', 'text-white', 'shadow-lg');
             btnFer.classList.remove('text-slate-400');
             containerPadrao.classList.add('hidden');
             containerFerias.classList.remove('hidden');
             if (containerLimite) containerLimite.classList.add('hidden');
+            if (containerDiaExtra) containerDiaExtra.classList.add('hidden');
             renderFeriasCalendar();
         }
         
@@ -1304,14 +1395,14 @@
             
             // Construir Query Dinâmica para Comunicados
             let queryCom = supabase.from('comunicados')
-                .select('*, funcionarios:funcionarios!remetente_id(id, nome_completo, nickname)')
+                .select('*, remetente:funcionarios!remetente_id(id, identidades_globais(nome_completo))')
                 .eq('remetente_id', remetenteId)
                 .order('created_at', { ascending: false });
 
             if (activeComunicado.tipo === 'setorial') {
                 queryCom = queryCom.eq('tipo', 'setorial').eq('setor_id', activeComunicado.targetId);
             } else if (activeComunicado.tipo === 'individual') {
-                queryCom = queryCom.eq('tipo', 'individual').eq('funcionario_id', activeComunicado.targetId);
+                queryCom = queryCom.eq('tipo', 'individual').eq('destinatario_id', activeComunicado.targetId);
             }
             // No caso 'geral', não aplicamos filtro para mostrar todos os envios do gestor conforme pedido
             
@@ -1356,7 +1447,7 @@
                     itemType: isFer ? 'FERIAS_FOLGA' : (c.subtipo === 'hora_extra' ? 'HORA_EXTRA' : 'COMUNICADO'),
                     content: c.conteudo,
                     data_ref: c.created_at,
-                    target: c.funcionarios?.nome_completo || (c.tipo === 'setorial' ? 'SETOR' : 'GERAL'),
+                    target: c.funcionarios?.identidades_globais?.nome_completo || (c.tipo === 'setorial' ? 'SETOR' : 'GERAL'),
                     lido: c.lido,
                     list: relatedFer || [] // Anexa a lista de dias se houver
                 };
@@ -1584,6 +1675,66 @@
             if (source === 'regional' && toggRegional.checked) toggFolga.checked = false;
             if (source === 'folga' && toggFolga.checked) toggRegional.checked = false;
         }
+    };
+
+    window.navigateDiaExtraCalendar = (delta) => {
+        diaExtraCalendarMonth += delta;
+        if (diaExtraCalendarMonth < 0) {
+            diaExtraCalendarMonth = 11;
+            diaExtraCalendarYear--;
+        } else if (diaExtraCalendarMonth > 11) {
+            diaExtraCalendarMonth = 0;
+            diaExtraCalendarYear++;
+        }
+        renderDiaExtraCalendar();
+    };
+
+    window.renderDiaExtraCalendar = () => {
+        const container = document.getElementById('calendar-dia-extra-grid');
+        const monthTitle = document.getElementById('calendar-dia-extra-month');
+        if (!container || !monthTitle) return;
+
+        const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+        monthTitle.innerText = `${monthNames[diaExtraCalendarMonth]} ${diaExtraCalendarYear}`;
+        container.innerHTML = '';
+
+        const firstDay = new Date(diaExtraCalendarYear, diaExtraCalendarMonth, 1).getDay();
+        const daysInMonth = new Date(diaExtraCalendarYear, diaExtraCalendarMonth + 1, 0).getDate();
+
+        for (let i = 0; i < firstDay; i++) container.innerHTML += '<div></div>';
+
+        for (let d = 1; d <= daysInMonth; d++) {
+            const dateStr = `${diaExtraCalendarYear}-${String(diaExtraCalendarMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+            const isSelected = selectedDiaExtra === dateStr;
+            const isToday = new Date().toISOString().split('T')[0] === dateStr;
+            
+            let colorClass = 'bg-white/5 text-slate-400 hover:bg-white/10';
+            if (isToday) colorClass = 'bg-white/10 text-white border border-white/20';
+            if (isSelected) colorClass = 'bg-primary text-white shadow-lg shadow-primary/30 scale-110 z-10';
+
+            container.innerHTML += `
+                <div onclick="selectDiaExtra('${dateStr}')" 
+                    class="relative aspect-square rounded-full flex items-center justify-center text-[10px] font-bold cursor-pointer transition-all hover:scale-105 active:scale-95 ${colorClass}">
+                    ${d}
+                </div>
+            `;
+        }
+    };
+
+    window.selectDiaExtra = (date) => {
+        selectedDiaExtra = date;
+        document.getElementById('input-data-extra').value = date;
+        
+        const display = document.getElementById('exibicao-data-extra');
+        const txt = document.getElementById('txt-data-extra-selecionada');
+        
+        if (display && txt) {
+            display.classList.remove('hidden');
+            const dateObj = new Date(date + 'T00:00:00');
+            txt.innerText = dateObj.toLocaleDateString('pt-BR');
+        }
+        
+        renderDiaExtraCalendar();
     };
 
     window.navigateFeriasCalendar = (delta) => {
@@ -1845,15 +1996,26 @@
             }
 
             // --- FLUXO PADRÃO (MENSAGEM / HORA EXTRA) ---
-            const conteudo = document.getElementById('comunicado-texto').value.trim();
+            let conteudo = document.getElementById('comunicado-texto').value.trim();
+            const subtipo = activeComunicado.subtipo;
+
+            // Auto-preenchimento de mensagem padrão se estiver vazio para tipos específicos
             if (!conteudo) {
-                UI.hideLoader();
-                UI.showToast('Escreva o conteúdo da mensagem.', 'warning');
-                return;
+                if (subtipo === 'hora_extra') {
+                    conteudo = "Solicitação de autorização para realização de horas extraordinárias.";
+                } else if (subtipo === 'dia_trabalho_extra') {
+                    conteudo = "Convocação para cumprimento de jornada de trabalho em dia extra.";
+                } else {
+                    UI.hideLoader();
+                    UI.showToast('Escreva o conteúdo da mensagem.', 'warning');
+                    return;
+                }
             }
             
             // 1. Criar ou Atualizar Comunicado
             let finalConteudo = conteudo;
+            let finalSubtipo = activeComunicado.subtipo;
+
             if (activeComunicado.subtipo === 'hora_extra') {
                 const limit = document.getElementById('input-limite-extra').value || 120;
                 if (!finalConteudo.includes('[LIMITE:')) {
@@ -1861,12 +2023,22 @@
                 } else {
                     finalConteudo = finalConteudo.replace(/\[LIMITE:\d+\]/, `[LIMITE:${limit}]`);
                 }
+            } else if (activeComunicado.subtipo === 'dia_trabalho_extra') {
+                if (!selectedDiaExtra) {
+                    UI.hideLoader();
+                    UI.showToast('Selecione o dia da convocação no calendário.', 'warning');
+                    return;
+                }
+                // Formatar data para exibição no card
+                const dateObj = new Date(selectedDiaExtra + 'T00:00:00');
+                const dateFormatted = dateObj.toLocaleDateString('pt-BR');
+                finalConteudo = `[DIA_EXTRA:${selectedDiaExtra}] CONVOCAÇÃO PARA TRABALHO EXTRA NO DIA ${dateFormatted}. ${finalConteudo}`;
             }
 
             const comunicadoData = {
                 remetente_id: remetenteId,
                 tipo: activeComunicado.tipo,
-                subtipo: activeComunicado.subtipo,
+                subtipo: finalSubtipo,
                 conteudo: finalConteudo,
                 destinatario_id: activeComunicado.tipo === 'individual' ? activeComunicado.targetId : null,
                 setor_id: activeComunicado.tipo === 'setorial' ? activeComunicado.targetId : null

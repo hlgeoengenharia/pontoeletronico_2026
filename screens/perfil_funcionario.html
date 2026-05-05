@@ -84,18 +84,22 @@
                 <h3 id="display-name-profile" class="text-xl font-black text-slate-100 uppercase italic truncate leading-tight border-b border-amber-500/20 pb-2 mb-2">
                     CARREGANDO...
                 </h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-1 gap-x-4">
+                <div class="flex flex-col gap-y-2">
                     <div class="flex items-center gap-2">
-                        <span class="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none">Cargo:</span>
+                        <span class="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none w-20">Cargo:</span>
                         <span id="user-role-profile" class="text-[9px] font-bold text-amber-500 uppercase truncate leading-none">...</span>
                     </div>
                     <div class="flex items-center gap-2">
-                        <span class="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none">Setor:</span>
+                        <span class="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none w-20">Setor:</span>
                         <span id="user-setor-profile" class="text-[9px] font-bold text-amber-500 uppercase truncate leading-none">...</span>
                     </div>
                     <div class="flex items-center gap-2">
-                        <span class="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none">Matrícula:</span>
+                        <span class="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none w-20">Matrícula:</span>
                         <span id="display-matricula-profile" class="text-[9px] font-bold text-amber-500 uppercase truncate leading-none">#...</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none w-20">Empresa:</span>
+                        <span id="user-empresa-profile" class="text-[9px] font-bold text-amber-500 uppercase truncate leading-none">...</span>
                     </div>
                 </div>
             </div>
@@ -247,70 +251,44 @@
             </div>
 
             <!-- Senhas Modernizadas -->
-            <div class="space-y-4 bg-slate-100/50 dark:bg-white/5 p-4 rounded-2xl border border-slate-200 dark:border-white/10">
+            <div id="container-seguranca" class="space-y-4 p-4 bg-slate-500/5 rounded-2xl border border-white/5">
                 <div class="flex items-center gap-2 mb-2">
                     <span class="material-symbols-outlined text-neon-cyan text-sm">security</span>
-                    <h3 class="text-xs font-black uppercase tracking-widest text-neon-cyan/80">Segurança da Conta</h3>
+                    <h3 class="text-[10px] font-black uppercase tracking-widest text-slate-400">Segurança da Conta</h3>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <!-- Nova Senha -->
                     <div class="group">
-                        <label class="block text-[10px] font-bold uppercase tracking-widest text-primary mb-3 pl-1">Nova Senha</label>
+                        <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Definir Nova Senha</label>
                         <div class="relative">
-                            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-neon-cyan transition-colors">lock_reset</span>
+                            <span id="icon-nova-senha" class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-neon-cyan transition-colors">lock_open</span>
                             <input id="nova_senha"
-                                class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-3 pl-10 pr-12 focus:ring-2 focus:ring-neon-cyan focus:border-transparent outline-none transition-all"
+                                class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-3 pl-10 pr-12 focus:ring-2 focus:ring-neon-cyan/50 focus:border-neon-cyan outline-none transition-all text-sm"
                                 placeholder="Mínimo 6 caracteres" type="password">
-                            
-                            <button type="button" onclick="togglePasswordVisibility('nova_senha', this)" 
-                                class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors">
-                                <span class="material-symbols-outlined text-lg">visibility</span>
+                            <button type="button" onclick="togglePassword('nova_senha', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-neon-cyan transition-colors">
+                                <span class="material-symbols-outlined text-xl">visibility</span>
                             </button>
                         </div>
-                        
-                        <!-- Medidor de Força -->
-                        <div class="mt-3 px-1">
-                            <div class="h-1.5 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
-                                <div id="strength-bar" class="h-full w-0 transition-all duration-500 ease-out bg-rose-500"></div>
-                            </div>
-                            <div class="flex justify-between items-center mt-2">
-                                <span id="strength-text" class="text-[8px] font-black uppercase tracking-wider text-slate-500">Senha não informada</span>
-                            </div>
+                        <!-- Password Strength Meter -->
+                        <div id="strength-meter" class="mt-2 h-1 w-full bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden hidden">
+                            <div id="strength-bar" class="h-full w-0 transition-all duration-500"></div>
                         </div>
+                        <p id="strength-text" class="text-[9px] uppercase font-bold mt-1 hidden"></p>
                     </div>
 
                     <!-- Confirmar Senha -->
                     <div class="group">
-                        <label class="block text-[10px] font-bold uppercase tracking-widest text-primary mb-3 pl-1">Confirmar Senha</label>
+                        <label class="block text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-2">Confirmar Nova Senha</label>
                         <div class="relative">
-                            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-neon-cyan transition-colors">verified_user</span>
+                            <span id="icon-confirm-senha" class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors">verified</span>
                             <input id="confirmar_senha"
-                                class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-3 pl-10 pr-12 focus:ring-2 focus:ring-neon-cyan focus:border-transparent outline-none transition-all"
-                                placeholder="Repita a senha" type="password">
-                            
-                            <button type="button" onclick="togglePasswordVisibility('confirmar_senha', this)" 
-                                class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors">
-                                <span class="material-symbols-outlined text-lg">visibility</span>
+                                class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl py-3 pl-10 pr-12 focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 outline-none transition-all text-sm"
+                                placeholder="Repita a nova senha" type="password">
+                            <button type="button" onclick="togglePassword('confirmar_senha', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-emerald-500 transition-colors">
+                                <span class="material-symbols-outlined text-xl">visibility</span>
                             </button>
                         </div>
-                        
-                        <!-- Status de Coincidência -->
-                        <p id="match-status" class="hidden text-[8px] font-black uppercase tracking-widest mt-3 ml-1 flex items-center gap-1">
-                            <!-- Injetado via JS -->
-                        </p>
-                    </div>
-                </div>
-
-                <!-- Checklist de Requisitos Silencioso -->
-                <div class="pt-2 flex flex-wrap gap-4 px-1 border-t border-white/5 mt-2">
-                    <div id="req-length" class="flex items-center gap-1.5 text-slate-500 transition-colors">
-                        <span class="material-symbols-outlined text-xs">circle</span>
-                        <span class="text-[8px] font-bold uppercase tracking-widest">6+ Caracteres</span>
-                    </div>
-                    <div id="req-number" class="flex items-center gap-1.5 text-slate-500 transition-colors">
-                        <span class="material-symbols-outlined text-xs">circle</span>
-                        <span class="text-[8px] font-bold uppercase tracking-widest">Contém Número</span>
                     </div>
                 </div>
             </div>
@@ -653,15 +631,23 @@
                         }
                     });
 
-                    if (btnUnlock) {
-                        btnUnlock.innerText = locked ? 'Ativar Edição' : 'Encerrar Edição';
-                        btnUnlock.classList.toggle('bg-amber-500', locked);
-                        btnUnlock.classList.toggle('bg-rose-500', !locked);
-                    }
-
                     const urlParams = new URLSearchParams(window.location.search);
                     const employeeIdParam = urlParams.get('id');
                     const isInspecting = employeeIdParam && employeeIdParam !== loggedUser?.id;
+
+                    if (btnUnlock) {
+                        // MODO INSPECT: Admin/Gestor visualizando perfil de outro usuário - SEMPRE bloqueado, sem opção de editar
+                        if (isInspecting) {
+                            btnUnlock.classList.add('hidden');
+                            // Também oculta o container de controle de edição
+                            const editContainer = document.getElementById('edit-control-container');
+                            if (editContainer) editContainer.classList.add('hidden');
+                        } else {
+                            btnUnlock.innerText = locked ? 'Ativar Edição' : 'Encerrar Edição';
+                            btnUnlock.classList.toggle('bg-amber-500', locked);
+                            btnUnlock.classList.toggle('bg-rose-500', !locked);
+                        }
+                    }
                     const loggedRole = String(loggedUser?.role || '').toLowerCase();
                     const isAdmin = loggedRole === 'admin';
                     const isGestor = loggedRole === 'gestor' || loggedRole === 'manager' || loggedRole === 'comandante' || isAdmin;
@@ -672,13 +658,10 @@
                     // BIOMETRIA E SENHA: Em nenhuma hipótese Admin/Gestor podem alterar de outro funcionário
                     if (isInspecting) {
                         const capsulaBio = document.getElementById('capsula-biometria');
-                        if (capsulaBio) capsulaBio.classList.add('hidden'); // Ocultar para não gerar confusão
+                        if (capsulaBio) capsulaBio.classList.add('hidden');
                         
-                        const inputSenha = document.getElementById('nova_senha');
-                        if (inputSenha) {
-                            inputSenha.disabled = true;
-                            inputSenha.parentElement.parentElement.classList.add('hidden'); // Ocultar campo de senha
-                        }
+                        const containerSeguranca = document.getElementById('container-seguranca');
+                        if (containerSeguranca) containerSeguranca.classList.add('hidden');
                         
                         const btnRemoverFoto = document.getElementById('btn-remover-foto');
                         if (btnRemoverFoto) btnRemoverFoto.classList.add('hidden');
@@ -687,37 +670,60 @@
                         if (btnCamera) btnCamera.classList.add('hidden');
                     }
 
-                    // RESTRIÇÕES POR NÍVEL DE ACESSO
-                    // -----------------------------
-                    inputs.forEach(input => {
-                        // Admin Only: Matrícula, Nível de Acesso, Previsão de Início
-                        const isAdminOnly = (input.id === 'campo-matricula' || input.id === 'nivel_acesso_select' || input.id === 'data_inicio_prevista');
+                    // Reset de senhas e ícones ao trancar
+                    if (locked) {
+                        const nova = document.getElementById('nova_senha');
+                        const confirma = document.getElementById('confirmar_senha');
+                        if (nova) nova.value = '';
+                        if (confirma) confirma.value = '';
                         
-                        // Admin & Gestor Only: Função, Setor, Regime, Rastreio, Escala
-                        const isManagementField = (input.id === 'funcao-select' || input.id === 'setor-select' || input.id === 'regime_trabalho' || input.id === 'rastreio_ativo' || input.id === 'btn-personalizar' || input.id === 'escala-select');
+                        const iconConfirm = document.getElementById('icon-confirm-senha');
+                        if (iconConfirm) {
+                            iconConfirm.innerText = 'verified';
+                            iconConfirm.className = 'material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors';
+                        }
 
-                        if (isAdminOnly && !isAdmin) {
-                            input.disabled = true;
-                            input.classList.add('cursor-not-allowed', 'opacity-50');
-                        } else if (isManagementField && !isGestor) {
+                        const meter = document.getElementById('strength-meter');
+                        const text = document.getElementById('strength-text');
+                        if (meter) meter.classList.add('hidden');
+                        if (text) text.classList.add('hidden');
+                    }
+
+                    // CAMPOS ADMINISTRATIVOS E ESCALA: Sempre bloqueados nesta tela (Editáveis apenas no Cadastro)
+                    inputs.forEach(input => {
+                        const isRestricted = (
+                            input.id === 'campo-matricula' || 
+                            input.id === 'nivel_acesso_select' || 
+                            input.id === 'data_inicio_prevista' ||
+                            input.id === 'funcao-select' || 
+                            input.id === 'setor-select' || 
+                            input.id === 'regime_trabalho' || 
+                            input.id === 'rastreio_ativo' || 
+                            input.id === 'escala-select'
+                        );
+
+                        if (isRestricted) {
                             input.disabled = true;
                             input.classList.add('cursor-not-allowed', 'opacity-50');
                         } else {
-                            // Aplicar tranca geral (Safety Lock)
-                            input.disabled = locked;
-                            if (locked) input.classList.add('opacity-80');
-                            else input.classList.remove('opacity-80');
+                            // Aplicar tranca geral (Safety Lock) para campos permitidos (Email, Nickname, etc)
+                            if (locked) {
+                                if (input.type === 'checkbox' || input.tagName === 'SELECT') input.disabled = true;
+                                else input.readOnly = true;
+                                input.classList.add('opacity-80');
+                            } else {
+                                // Apenas desbloqueia se não for um campo proibido (já filtrado acima)
+                                if (input.type === 'checkbox' || input.tagName === 'SELECT') input.disabled = false;
+                                else input.readOnly = false;
+                                input.classList.remove('opacity-80');
+                            }
                         }
                     });
 
-                    // Botão de Personalizar Escala
+                    // Botão de Personalizar Escala: Sempre oculto nesta tela
                     const btnPers = document.getElementById('btn-personalizar');
                     if (btnPers) {
-                        if (!isGestor || locked) {
-                            btnPers.classList.add('hidden');
-                        } else {
-                            btnPers.classList.remove('hidden');
-                        }
+                        btnPers.classList.add('hidden');
                     }
 
                     // 2. CONTROLES DE BOTÕES E UI
@@ -1110,6 +1116,29 @@
                         return;
                     }
 
+                    // VERIFICAÇÃO DE ACESSO: Admin só pode ver funcionários da sua empresa
+                    const loggedUser = Auth.getUser();
+                    const userRole = (loggedUser?.role || '').toLowerCase();
+                    const userEmpresaId = loggedUser?.empresa_id || localStorage.getItem('companyId');
+                    const isSuperAdmin = userRole === 'superadmin';
+                    const isInspecting = urlParams.get('id') && urlParams.get('id') !== localStorage.getItem('userId');
+
+                    // Se estiver inspecionando e NÃO for SuperAdmin, verificar se o funcionário é da mesma empresa
+                    if (isInspecting && !isSuperAdmin && userEmpresaId) {
+                        // Buscar dados do funcionário para verificar empresa
+                        const { data: funcData } = await supabase
+                            .from('funcionarios')
+                            .select('empresa_id')
+                            .eq('id', urlParams.get('id'))
+                            .single();
+                        
+                        if (funcData && funcData.empresa_id !== userEmpresaId) {
+                            UI.showToast('Acesso negado: Este funcionário pertence a outra empresa.', 'error');
+                            window.location.href = 'perfil_funcionario.html';
+                            return;
+                        }
+                    }
+
                     // Carregar dados auxiliares (Setores, Cargos, etc)
                     await carregarDadosIniciais();
 
@@ -1157,13 +1186,39 @@
                         const { data: perfilData, error } = await supabase
                             .from('perfis_tripulantes')
                             .select(`
-                        *,
-                        funcionarios!inner (
-                            *,
-                            setores!funcionarios_setor_id_fkey (nome, raio),
-                            cargos!cargo_id (nome, nivel)
-                        )
-                    `)
+                                *,
+                                 funcionarios!funcionario_id (
+                                    id, 
+                                    matricula, 
+                                    setor_id, 
+                                    cargo_id, 
+                                    escala_id, 
+                                    empresa_id,
+                                    nivel_acesso,
+                                    nivel_escolaridade,
+                                    graduacao_principal,
+                                    regime_trabalho,
+                                    rastreio_ativo,
+                                    data_inicio_prevista,
+                                    identidades_globais!inner(id, nome_completo, cpf, rg, data_nascimento, sexo, biometria_cadastrada, biometria_token, foto_url),
+                                    setores!funcionarios_setor_id_fkey (nome, raio),
+                                    cargos!cargo_id (nome, nivel),
+                                    escalas!escala_id(
+                                        id, 
+                                        nome, 
+                                        tipo_escala, 
+                                        horario_entrada, 
+                                        horario_saida, 
+                                        dias_padrao, 
+                                        ciclo_config, 
+                                        janela_ativa_antes_minutos, 
+                                        janela_ativa_depois_minutos, 
+                                        tolerancia_entrada_minutos, 
+                                        regime, 
+                                        dias_presenciais_json
+                                    )
+                                )
+                            `)
                             .eq('funcionario_id', funcionarioId)
                             .single();
 
@@ -1173,16 +1228,24 @@
                         let funcData = perfilData.funcionarios;
                         globalFunc = { 
                             ...funcData, 
+                            nome_completo: funcData.identidades_globais?.nome_completo || '',
+                            cpf: funcData.identidades_globais?.cpf || '',
+                            rg: funcData.identidades_globais?.rg || '',
+                            data_nascimento: funcData.identidades_globais?.data_nascimento || '',
+                            sexo: funcData.identidades_globais?.sexo || '',
+                            vigencia_inicio: funcData.data_inicio_prevista,
                             nickname: perfilData.nickname, 
                             email: perfilData.email,
                             telefone: perfilData.telefone, 
-                            foto_url: perfilData.foto_url, 
+                            foto_url: funcData.identidades_globais?.foto_url || perfilData.foto_url, 
                             lembrete_ponto_ativo: perfilData.lembrete_ponto_ativo, 
                             lembrete_ponto_minutos: perfilData.lembrete_ponto_minutos,
                             id: funcData.id, 
                             perfil_id: perfilData.id,
-                            biometria_cadastrada: funcData.biometria_cadastrada,
-                            biometria_token: funcData.biometria_token
+                            identidade_id: funcData.identidades_globais?.id,
+                            biometria_cadastrada: funcData.identidades_globais?.biometria_cadastrada,
+                            biometria_token: funcData.identidades_globais?.biometria_token,
+                            empresa_id: funcData.empresa_id
                         };
 
                         // Carregar Escala Base (Se houver)
@@ -1195,6 +1258,28 @@
                         await loadConfirmedShifts();
 
                         preencherDados(globalFunc);
+                        
+                        // Buscar nome da empresa de forma assíncrona
+                        console.log('[DEBUG] globalFunc.empresa_id:', globalFunc.empresa_id);
+                        if (globalFunc.empresa_id) {
+                            console.log('[DEBUG] Buscando empresa ID:', globalFunc.empresa_id);
+                            const { data: empresaData } = await supabase
+                                .from('empresas')
+                                .select('nome_fantasia')
+                                .eq('id', globalFunc.empresa_id)
+                                .single();
+                            console.log('[DEBUG] empresaData:', empresaData);
+                            const empresaEl = document.getElementById('user-empresa-profile');
+                            if (empresaEl) {
+                                empresaEl.innerText = (empresaData?.nome_fantasia || 'Não Definida').toUpperCase();
+                            }
+                        } else {
+                            console.log('[DEBUG] empresa_id é null/undefined');
+                            const empresaEl = document.getElementById('user-empresa-profile');
+                            if (empresaEl) {
+                                empresaEl.innerText = 'NENHUMA';
+                            }
+                        }
                         
                         // Renderizar calendário inicial
                         if (typeof refreshCalendar === 'function') {
@@ -1324,6 +1409,11 @@
                     if (el('user-role-profile')) el('user-role-profile').innerText = (func.cargos?.nome || func.funcao || 'Tripulante').toUpperCase();
                     if (el('user-setor-profile')) el('user-setor-profile').innerText = (func.setores?.nome || 'Não Definido').toUpperCase();
                     if (el('display-matricula-profile')) el('display-matricula-profile').innerText = `#${func.matricula || '---'}`;
+                    
+                    // Empresa - exibir diretamente do func
+                    if (el('user-empresa-profile')) {
+                        el('user-empresa-profile').innerText = func.empresa_id ? 'Carregando...' : 'NENHUMA';
+                    }
 
                     const avatarImg = el('user-photo-profile');
                     if (avatarImg) {
@@ -1511,7 +1601,7 @@
 
                     const baseProjection = escalaParaProjetar ? ScalesEngine.projectBaseDays(
                         escalaParaProjetar,
-                        globalFunc.data_inicio_vigencia || '2024-01-01',
+                        globalFunc.vigencia_inicio || '2024-01-01',
                         currentMonth,
                         currentYear
                     ) : [];
@@ -1786,6 +1876,22 @@
 
                     UI.showLoader();
                     try {
+                        const novaPass = document.getElementById('nova_senha').value;
+                        const confirmaPass = document.getElementById('confirmar_senha').value;
+                        
+                        if (novaPass) {
+                            if (novaPass.length < 6) {
+                                UI.showToast("A nova senha deve ter no mínimo 6 caracteres.", "warning");
+                                UI.hideLoader();
+                                return;
+                            }
+                            if (novaPass !== confirmaPass) {
+                                UI.showToast("As senhas não coincidem. Verifique a confirmação.", "error");
+                                UI.hideLoader();
+                                return;
+                            }
+                        }
+
                         let fotoUrlAtualizada = globalFunc.foto_url;
 
                         if (selectedAvatarFile && selectedAvatarFile !== "delete") {
@@ -1816,24 +1922,29 @@
                         const loggedUser = Auth.getUser();
                         const employeeIdParam = new URLSearchParams(window.location.search).get('id');
                         const canEditOwnBiometry = !employeeIdParam || employeeIdParam === loggedUser?.id;
-                        const updatesFunc = {
-                            nome_completo: document.getElementById('nome_completo').value,
-                            cpf: document.getElementById('cpf').value || null,
-                            rg: document.getElementById('rg').value || null,
-                            data_nascimento: document.getElementById('data_nasc').value || null,
-                            sexo: document.querySelector('input[name="gender"]:checked')?.value || null,
-                            nivel_acesso: document.getElementById('nivel_acesso_select')?.value || 'Funcionário',
-                            cargo_id: selectFuncao?.value || null,
-                            funcao: selectFuncao?.selectedIndex > -1 ? selectFuncao.options[selectFuncao.selectedIndex].text.split(' (')[0] : null,
-                            setor_id: document.getElementById('setor-select')?.value || null,
-                            data_inicio_prevista: document.getElementById('data_inicio_prevista')?.value || null,
-                            nivel_escolaridade: document.getElementById('nivel_escolaridade').value,
-                            graduacao_principal: document.getElementById('graduacao_principal_select').value || null,
-                            regime_trabalho: document.getElementById('regime_trabalho').value,
-                            rastreio_ativo: document.getElementById('rastreio_ativo').checked,
-                            biometria_cadastrada: canEditOwnBiometry ? document.getElementById('biometria_cadastrada').value === "true" : !!globalFunc.biometria_cadastrada,
-                            biometria_token: canEditOwnBiometry ? (document.getElementById('biometria_token').value || null) : (globalFunc.biometria_token || null)
-                        };
+                        
+                        const updatesIdentidade = {
+                             nome_completo: document.getElementById('nome_completo').value,
+                             cpf: document.getElementById('cpf').value || null,
+                             rg: document.getElementById('rg').value || null,
+                             data_nascimento: document.getElementById('data_nasc').value || null,
+                             sexo: document.querySelector('input[name="gender"]:checked')?.value || null,
+                             biometria_cadastrada: canEditOwnBiometry ? document.getElementById('biometria_cadastrada').value === "true" : !!globalFunc.biometria_cadastrada,
+                             biometria_token: canEditOwnBiometry ? (document.getElementById('biometria_token').value || null) : (globalFunc.biometria_token || null)
+                         };
+
+                         const updatesFunc = {
+                             matricula: document.getElementById('campo-matricula')?.value || globalFunc.matricula,
+                             nivel_acesso: document.getElementById('nivel_acesso_select')?.value || 'Funcionário',
+                             cargo_id: selectFuncao?.value || null,
+                             funcao: selectFuncao?.selectedIndex > -1 ? selectFuncao.options[selectFuncao.selectedIndex].text.split(' (')[0] : null,
+                             setor_id: document.getElementById('setor-select')?.value || null,
+                             data_inicio_prevista: document.getElementById('data_inicio_prevista')?.value || null,
+                             nivel_escolaridade: document.getElementById('nivel_escolaridade').value,
+                             graduacao_principal: document.getElementById('graduacao_principal_select').value || null,
+                             regime_trabalho: document.getElementById('regime_trabalho').value,
+                             rastreio_ativo: document.getElementById('rastreio_ativo').checked
+                         };
 
                         // Personalização de Escala
                         if (modoPersonalizado) {
@@ -1860,18 +1971,27 @@
                             foto_url: fotoUrlAtualizada
                         };
 
-                        if (novaSenhaInput && novaSenhaInput.value) {
-                            updatesPerfil.senha = novaSenhaInput.value;
+                        if (novaPass) {
+                            updatesPerfil.senha = novaPass;
                         }
 
-                        // 1. Atualizar Tabela Funcionários
+                        // 1. Atualizar Tabela Identidades Globais
+                        if (globalFunc.identidade_id) {
+                            const { error: errorIdent } = await supabase
+                                .from('identidades_globais')
+                                .update(updatesIdentidade)
+                                .eq('id', globalFunc.identidade_id);
+                            if (errorIdent) throw errorIdent;
+                        }
+
+                        // 2. Atualizar Tabela Funcionários
                         const { error: errorFunc } = await supabase
                             .from('funcionarios')
                             .update(updatesFunc)
                             .eq('id', globalFunc.id);
                         if (errorFunc) throw errorFunc;
 
-                        // 2. Atualizar Tabela Perfis Tripulantes
+                        // 3. Atualizar Tabela Perfis Tripulantes
                         const { error: errorPerfil } = await supabase
                             .from('perfis_tripulantes')
                             .upsert(updatesPerfil);
@@ -1967,6 +2087,88 @@
                 window.processarBiometriaESalvar = processarBiometriaESalvar;
                 window.salvarApenasFoto = salvarApenasFoto;
                 window.fecharModalConfirmacaoBio = fecharModalConfirmacaoBio;
+
+                // --- LÓGICA DE SENHA PROFISSIONAL ---
+                window.togglePassword = (id, btn) => {
+                    const input = document.getElementById(id);
+                    const icon = btn.querySelector('.material-symbols-outlined');
+                    if (input.type === 'password') {
+                        input.type = 'text';
+                        icon.innerText = 'visibility_off';
+                    } else {
+                        input.type = 'password';
+                        icon.innerText = 'visibility';
+                    }
+                };
+
+                const inputNovaSenha = document.getElementById('nova_senha');
+                if (inputNovaSenha) {
+                    inputNovaSenha.addEventListener('input', (e) => {
+                        const pass = e.target.value;
+                        const meter = document.getElementById('strength-meter');
+                        const bar = document.getElementById('strength-bar');
+                        const text = document.getElementById('strength-text');
+
+                        if (!pass) {
+                            meter.classList.add('hidden');
+                            text.classList.add('hidden');
+                            return;
+                        }
+
+                        meter.classList.remove('hidden');
+                        text.classList.remove('hidden');
+
+                        let strength = 0;
+                        if (pass.length >= 6) strength += 25;
+                        if (/[A-Z]/.test(pass)) strength += 25;
+                        if (/[0-9]/.test(pass)) strength += 25;
+                        if (/[^A-Za-z0-9]/.test(pass)) strength += 25;
+
+                        bar.style.width = strength + '%';
+                        
+                        if (strength <= 25) {
+                            bar.className = 'h-full bg-rose-500 transition-all duration-500';
+                            text.innerText = 'Sua senha é muito fraca';
+                            text.className = 'text-[9px] uppercase font-bold mt-1 text-rose-500';
+                        } else if (strength <= 50) {
+                            bar.className = 'h-full bg-orange-500 transition-all duration-500';
+                            text.innerText = 'Melhorando...';
+                            text.className = 'text-[9px] uppercase font-bold mt-1 text-orange-500';
+                        } else if (strength <= 75) {
+                            bar.className = 'h-full bg-amber-500 transition-all duration-500';
+                            text.innerText = 'Senha razoável';
+                            text.className = 'text-[9px] uppercase font-bold mt-1 text-amber-500';
+                        } else {
+                            bar.className = 'h-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)] transition-all duration-500';
+                            text.innerText = 'Senha Segura';
+                            text.className = 'text-[9px] uppercase font-bold mt-1 text-emerald-500';
+                        }
+                    });
+                }
+
+                const inputConfirmar = document.getElementById('confirmar_senha');
+                const checkPasswordsMatch = () => {
+                    const pass = inputNovaSenha.value;
+                    const confirm = inputConfirmar.value;
+                    const icon = document.getElementById('icon-confirm-senha');
+                    
+                    if (!confirm) {
+                        icon.innerText = 'verified';
+                        icon.className = 'material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors';
+                        return;
+                    }
+
+                    if (pass === confirm && pass.length > 0) {
+                        icon.innerText = 'verified';
+                        icon.className = 'material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-emerald-500 transition-colors scale-110';
+                    } else {
+                        icon.innerText = 'gpp_bad';
+                        icon.className = 'material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-rose-500 transition-colors scale-110';
+                    }
+                };
+
+                if (inputNovaSenha) inputNovaSenha.addEventListener('input', checkPasswordsMatch);
+                if (inputConfirmar) inputConfirmar.addEventListener('input', checkPasswordsMatch);
                 window.handleBiometriaClick = async () => {
                     const isLocked = document.getElementById('nome_completo').disabled;
                     if (isLocked) {

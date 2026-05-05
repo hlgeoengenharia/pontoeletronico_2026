@@ -1,206 +1,456 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html class="dark" lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reset de Sistema | ChronoSync</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        surface: '#0F172A',
+                        glass: 'rgba(15, 23, 42, 0.8)'
+                    }
+                }
+            },
+            darkMode: 'class'
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Space Grotesk', sans-serif; background: #020617; color: #f8fafc; }
-        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.05); }
-        .btn-danger { background: linear-gradient(135deg, #ef4444 0%, #991b1b 100%); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .btn-danger:hover { transform: scale(1.02); box-shadow: 0 0 40px rgba(239, 68, 68, 0.2); }
+        body { font-family: 'Space Grotesk', sans-serif; overflow: hidden; }
+        .glass-panel { background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .neon-glow { box-shadow: 0 0 20px rgba(59, 130, 246, 0.2); }
+        .terminal-scroll::-webkit-scrollbar { width: 4px; }
+        .terminal-scroll::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.3); border-radius: 10px; }
+        @keyframes pulse-red { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        .animate-danger { animation: pulse-red 2s infinite; }
     </style>
+    <title>Console de Purga | ChronoSync</title>
 </head>
-<body class="bg-background-dark min-h-screen flex flex-col items-center">
-    <!-- HEADER -->
-    <header class="w-full max-w-md p-4 flex items-center justify-between sticky top-0 bg-background-dark/80 backdrop-blur-md z-[60] border-b border-white/5">
-        <div class="flex items-center gap-2">
-            <button id="openSidebar"
-                class="size-10 flex items-center justify-center bg-white/5 rounded-xl text-slate-400 hover:text-primary transition-all">
-                <span class="material-symbols-outlined">menu</span>
-            </button>
-            <button onclick="window.location.href='central.html'"
-                class="size-10 flex items-center justify-center bg-white/5 rounded-xl text-slate-400 hover:text-primary transition-all">
-                <span class="material-symbols-outlined">arrow_back</span>
-            </button>
-        </div>
 
-        <h1 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.4em] text-center flex-1">Purga de Dados</h1>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
 
-        <div class="size-10"></div> <!-- Spacer -->
-    </header>
-
-    <main class="flex-1 flex items-center justify-center p-6 w-full max-w-2xl">
-
-    <div class="max-w-2xl w-full space-y-8 animate-in fade-in zoom-in duration-700">
-        <div class="text-center space-y-4">
-            <div class="inline-flex items-center justify-center size-20 rounded-3xl bg-red-500/10 text-red-500 mb-4 border border-red-500/20 shadow-2xl">
-                <span class="material-symbols-outlined text-5xl">database_off</span>
+    <!-- Sidebar Menu Overlay -->
+    <aside id="sidebarMenu" class="fixed top-0 left-0 h-full w-80 bg-slate-950 border-r border-slate-800 z-[160] -translate-x-full transition-all duration-500 ease-out shadow-2xl">
+        <div class="flex flex-col h-full">
+            <div class="p-8 border-b border-slate-800">
+                <h3 class="text-rose-500 font-black italic text-2xl tracking-tighter text-shadow">CHRONOSYNC</h3>
+                <p class="text-[10px] text-slate-500 uppercase font-bold tracking-[0.3em]">Console de Diagnóstico</p>
             </div>
-            <h1 class="text-4xl font-black italic tracking-tighter uppercase text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-500">Purga Atômica de Dados</h1>
-            <p class="text-slate-500 font-medium max-w-sm mx-auto leading-relaxed">Você está prestes a apagar todos os registros transacionais do sistema. Esta ação é irreversível e resetará todos os testes.</p>
+            <nav id="sidebarNav" class="flex-1 overflow-y-auto p-4 space-y-2"></nav>
         </div>
+    </aside>
+    <div id="sidebarOverlay" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[150] hidden opacity-0 transition-all duration-300"></div>
 
-        <div class="glass rounded-[3rem] p-10 space-y-8 relative overflow-hidden group">
-            <div class="absolute inset-0 bg-gradient-to-br from-red-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 relative">
-                <div class="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5">
-                    <span class="material-symbols-outlined text-red-400">schedule</span>
-                    <div class="text-[10px] uppercase font-black tracking-widest text-slate-400">Pontos <span class="block text-white text-xs">Exclusão Total</span></div>
-                </div>
-                <div class="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5">
-                    <span class="material-symbols-outlined text-orange-400">notifications</span>
-                    <div class="text-[10px] uppercase font-black tracking-widest text-slate-400">Sino/Logs <span class="block text-white text-xs">Zerar Notificações</span></div>
-                </div>
-                <div class="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5">
-                    <span class="material-symbols-outlined text-blue-400">card_travel</span>
-                    <div class="text-[10px] uppercase font-black tracking-widest text-slate-400">Férias <span class="block text-white text-xs">Reset de Calendário</span></div>
-                </div>
-                <div class="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5">
-                    <span class="material-symbols-outlined text-emerald-400">forum</span>
-                    <div class="text-[10px] uppercase font-black tracking-widest text-slate-400">Comunicados <span class="block text-white text-xs">Pastas Limpas</span></div>
-                </div>
-                <div class="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5">
-                    <span class="material-symbols-outlined text-purple-400">edit_note</span>
-                    <div class="text-[10px] uppercase font-black tracking-widest text-slate-400">Atividades <span class="block text-white text-xs">Histórico Zerado</span></div>
-                </div>
-            </div>
-
-            <div class="space-y-4 pt-4">
-                <button id="btn-purge" class="w-full py-6 rounded-3xl btn-danger text-white font-black uppercase tracking-[0.3em] flex items-center justify-center gap-4 shadow-2xl relative overflow-hidden">
-                    <span id="label-btn">Confirmar Purga de Dados</span>
-                    <div id="loader" class="size-5 border-2 border-white/20 border-t-white rounded-full animate-spin hidden"></div>
+    <div class="max-w-6xl mx-auto p-4 md:p-8 space-y-8 relative z-10 h-screen flex flex-col">
+        
+        <!-- Header -->
+        <header class="flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <button id="btn-sidebar" class="size-12 rounded-2xl glass-panel flex items-center justify-center hover:bg-white/10 transition-all">
+                    <span class="material-symbols-outlined text-primary">menu</span>
                 </button>
-                <div class="flex justify-center">
-                    <a href="dashboard.html" class="text-[10px] uppercase font-black tracking-[0.2em] text-slate-500 hover:text-white transition-colors">Voltar para o Dashboard</a>
+                <div>
+                    <h1 class="text-2xl font-black italic tracking-tighter uppercase">Console de Purga Controlada</h1>
+                    <div class="flex items-center gap-2">
+                        <span class="size-1.5 rounded-full bg-rose-500 animate-pulse"></span>
+                        <p class="text-[10px] text-slate-500 font-black uppercase tracking-widest">Modo Administrador de Emergência</p>
+                    </div>
                 </div>
             </div>
-        </div>
+            
 
-        <div id="console-output" class="bg-black/50 border border-white/5 rounded-2xl p-6 font-mono text-[10px] text-emerald-500/80 max-h-48 overflow-y-auto hidden">
-            <div class="flex items-center gap-2 mb-2 text-emerald-500 font-bold">
-                <span class="size-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                TERMINAL DE LIMPEZA ATIVO
+        </header>
+
+        <main class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-8 min-h-0">
+            
+            <!-- Left: Control Panel -->
+            <div class="lg:col-span-7 space-y-6 flex flex-col overflow-y-auto pr-2 terminal-scroll">
+                
+                <!-- Employee Selector -->
+                <div class="glass-panel rounded-[2rem] p-6 space-y-4 relative z-20">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-[10px] font-black uppercase tracking-widest text-slate-500">Seletor de Funcionário</h3>
+                        <span id="targetModeLabel" class="text-[9px] font-black px-2 py-0.5 bg-rose-500/10 text-rose-500 rounded-md transition-all duration-500">GLOBAL</span>
+                    </div>
+                    
+                    <div class="relative">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-500">search</span>
+                        <input id="empSearch" type="text" placeholder="Pesquisar por nome ou ID..." class="w-full bg-black/40 border border-white/5 rounded-2xl py-4 pl-12 pr-4 text-sm focus:ring-1 focus:ring-primary/50 transition-all">
+                        
+                        <!-- Search Results Dropdown -->
+                        <div id="searchResults" class="hidden absolute top-full left-0 w-full mt-2 glass-panel rounded-2xl shadow-2xl overflow-hidden z-[200] max-h-60 overflow-y-auto"></div>
+                    </div>
+
+                    <!-- Selected Target View -->
+                    <div id="selectedTarget" class="hidden flex items-center justify-between bg-primary/5 border border-primary/20 p-4 rounded-2xl animate-in zoom-in-95">
+                        <div class="flex items-center gap-4">
+                            <div class="size-10 rounded-full border border-primary/30 bg-slate-800 overflow-hidden">
+                                <img id="targetPhoto" src="" class="w-full h-full object-cover">
+                            </div>
+                            <div>
+                                <p id="targetName" class="text-xs font-black uppercase text-white"></p>
+                                <p id="targetIdLabel" class="text-[8px] text-primary font-bold uppercase"></p>
+                            </div>
+                        </div>
+                        <button id="btnClearTarget" class="size-8 rounded-xl hover:bg-rose-500/20 text-rose-500 transition-all flex items-center justify-center">
+                            <span class="material-symbols-outlined text-sm">close</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Action Grid -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <button data-type="ponto" class="purge-btn group glass-panel aspect-square rounded-3xl flex flex-col items-center justify-center gap-3 hover:border-primary/50 transition-all">
+                        <span class="material-symbols-outlined text-3xl group-hover:scale-110 transition-transform">schedule</span>
+                        <span class="text-[8px] font-black uppercase text-center tracking-widest opacity-60">Registros de Ponto</span>
+                    </button>
+                    <button data-type="justificativa" class="purge-btn group glass-panel aspect-square rounded-3xl flex flex-col items-center justify-center gap-3 hover:border-amber-500/50 transition-all">
+                        <span class="material-symbols-outlined text-3xl group-hover:scale-110 transition-transform">edit_note</span>
+                        <span class="text-[8px] font-black uppercase text-center tracking-widest opacity-60">Justificativas</span>
+                    </button>
+                    <button data-type="ferias" class="purge-btn group glass-panel aspect-square rounded-3xl flex flex-col items-center justify-center gap-3 hover:border-emerald-500/50 transition-all">
+                        <span class="material-symbols-outlined text-3xl group-hover:scale-110 transition-transform">beach_access</span>
+                        <span class="text-[8px] font-black uppercase text-center tracking-widest opacity-60">Férias</span>
+                    </button>
+                    <button data-type="atividade" class="purge-btn group glass-panel aspect-square rounded-3xl flex flex-col items-center justify-center gap-3 hover:border-blue-400/50 transition-all">
+                        <span class="material-symbols-outlined text-3xl group-hover:scale-110 transition-transform">history_edu</span>
+                        <span class="text-[8px] font-black uppercase text-center tracking-widest opacity-60">Atividades</span>
+                    </button>
+                    <button data-type="comunicado" class="purge-btn group glass-panel aspect-square rounded-3xl flex flex-col items-center justify-center gap-3 hover:border-violet-500/50 transition-all">
+                        <span class="material-symbols-outlined text-3xl group-hover:scale-110 transition-transform">campaign</span>
+                        <span class="text-[8px] font-black uppercase text-center tracking-widest opacity-60">Comunicados</span>
+                    </button>
+                    <button data-type="hora_extra" class="purge-btn group glass-panel aspect-square rounded-3xl flex flex-col items-center justify-center gap-3 hover:border-orange-500/50 transition-all">
+                        <span class="material-symbols-outlined text-3xl group-hover:scale-110 transition-transform">more_time</span>
+                        <span class="text-[8px] font-black uppercase text-center tracking-widest opacity-60">Hora Extra</span>
+                    </button>
+                    <button data-type="feriados" class="purge-btn group glass-panel aspect-square rounded-3xl flex flex-col items-center justify-center gap-3 hover:border-cyan-500/50 transition-all">
+                        <span class="material-symbols-outlined text-3xl group-hover:scale-110 transition-transform">calendar_month</span>
+                        <span class="text-[8px] font-black uppercase text-center tracking-widest opacity-60">Feriados/Folgas</span>
+                    </button>
+                    <button data-type="gps" class="purge-btn group glass-panel aspect-square rounded-3xl flex flex-col items-center justify-center gap-3 hover:border-rose-500/50 transition-all">
+                        <span class="material-symbols-outlined text-3xl group-hover:scale-110 transition-transform">location_on</span>
+                        <span class="text-[8px] font-black uppercase text-center tracking-widest opacity-60">Batidas GPS</span>
+                    </button>
+                </div>
+
+                <!-- Danger Zone -->
+                <div class="glass-panel rounded-[2rem] p-6 border-rose-500/20 bg-rose-500/5 flex items-center justify-between">
+                    <div>
+                        <h4 class="text-xs font-black uppercase text-rose-500">Liquidação Total</h4>
+                        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Apaga todo o histórico da empresa.</p>
+                    </div>
+                    <button id="btnPurgeAll" class="px-8 py-4 bg-rose-500 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:brightness-110 transition-all shadow-lg shadow-rose-500/20">PURGAR TODOS</button>
+                </div>
             </div>
-            <div id="logs" class="space-y-1"></div>
-        </div>
-    </div>
 
-    </main>
+            <!-- Right: Terminal Output -->
+            <div class="lg:col-span-5 glass-panel rounded-[2.5rem] bg-black/40 flex flex-col overflow-hidden">
+                <div class="p-6 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
+                    <div class="flex items-center gap-2">
+                        <span class="size-2 rounded-full bg-primary animate-pulse"></span>
+                        <h3 class="text-xs font-black uppercase tracking-widest">Monitor de Execução</h3>
+                    </div>
+                    <button id="btnClearLog" class="text-[9px] font-black uppercase text-slate-500 hover:text-white transition-all">Limpar</button>
+                </div>
+                
+                <div id="terminal" class="flex-1 p-6 font-mono text-[11px] overflow-y-auto terminal-scroll space-y-1">
+                    <div class="text-slate-500">❯ Aguardando instrução...</div>
+                </div>
+
+                <!-- Progress -->
+                <div class="h-1 w-full bg-white/5">
+                    <div id="pb-line" class="h-full bg-primary shadow-[0_0_10px_#3B82F6] transition-all duration-300 w-0"></div>
+                </div>
+            </div>
+        </main>
+    </div>
 
     <script type="module">
         import { supabase } from '../js/supabase-config.js';
         import { UI } from '../js/ui-utils.js';
+        import { Auth } from '../js/auth.js';
 
-        const btn = document.getElementById('btn-purge');
-        const loader = document.getElementById('loader');
-        const output = document.getElementById('console-output');
-        const logs = document.getElementById('logs');
-        const label = document.getElementById('label-btn');
+        // Estágios e Estado
+        let selectedUser = null;
+        const companyId = localStorage.getItem('companyId');
+
+        // Elementos
+        const empSearch = document.getElementById('empSearch');
+        const searchResults = document.getElementById('searchResults');
+        const selectedTarget = document.getElementById('selectedTarget');
+        const targetModeLabel = document.getElementById('targetModeLabel');
+        const terminal = document.getElementById('terminal');
+        const pb = document.getElementById('pb-line');
 
         // Inicializar Sidebar
-        const role = localStorage.getItem('userRole');
-        UI.initSidebar(role);
-        document.getElementById('openSidebar').onclick = () => UI.toggleSidebar(true);
+        UI.initSidebar();
+        document.getElementById('btn-sidebar').onclick = () => UI.toggleSidebar();
 
-        function addLog(msg, type = 'info') {
+        // LOGGING
+        function addLog(msg, status = 'info') {
             const div = document.createElement('div');
-            div.className = type === 'error' ? 'text-red-400' : (type === 'success' ? 'text-emerald-400' : 'text-slate-400');
-            div.innerText = `[${new Date().toLocaleTimeString()}] ${msg}`;
-            logs.appendChild(div);
-            output.scrollTop = output.scrollHeight;
+            const color = { info: 'text-slate-500', success: 'text-primary', error: 'text-rose-500', warning: 'text-amber-500' }[status];
+            div.className = `flex gap-2 ${color}`;
+            div.innerHTML = `<span class="opacity-30">❯</span> <span>${msg}</span>`;
+            terminal.appendChild(div);
+            terminal.scrollTop = terminal.scrollHeight;
         }
 
-        btn.onclick = async () => {
-            if (!confirm('VOCÊ TEM CERTEZA? Isso deletará todos os registros de ponto, atividades e justificativas enviados.')) return;
+        document.getElementById('btnClearLog').onclick = () => terminal.innerHTML = '<div class="text-slate-500">❯ Aguardando instrução...</div>';
 
-            btn.disabled = true;
-            loader.classList.remove('hidden');
-            output.classList.remove('hidden');
-            label.innerText = 'LIMPANDO BANCO...';
-
-            const tables = ['pontos', 'diario_logs', 'justificativas', 'ferias', 'comunicados', 'feriados_folgas', 'anotacoes'];
-
-            for (const table of tables) {
-                addLog(`Limpando tabela: ${table.toUpperCase()}...`);
-                try {
-                    // Limpeza via delete com filtro que pega tudo (Supabase REST API requirement if no WHERE allows)
-                    const { error } = await supabase.from(table).delete().neq('id', '00000000-0000-0000-0000-000000000000');
-                    
-                    if (error) {
-                        addLog(`ERRO EM ${table}: ${error.message}`, 'error');
-                    } else {
-                        addLog(`CONCLUÍDO: ${table} está limpa.`, 'success');
-                    }
-                } catch (e) {
-                    addLog(`FALHA CRÍTICA EM ${table}: ${e.message}`, 'error');
-                }
+        // PESQUISA DE FUNCIONÁRIO
+        empSearch.oninput = async (e) => {
+            const q = e.target.value.trim();
+            if (q.length < 2) {
+                searchResults.classList.add('hidden');
+                return;
             }
 
-            // 2. Limpeza de LocalStorage (Cache do Diário e Badges)
-            addLog('Limpando Cache Local (Ciência de Diário)...');
-            const keysToRemove = [];
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                if (key.length >= 7 && (key.startsWith('ciente_') || key.startsWith('visto_feriado_') || key.startsWith('visto_'))) {
-                    keysToRemove.push(key);
-                }
-            }
-            keysToRemove.forEach(k => localStorage.removeItem(k));
-            addLog(`REMOVIDO: ${keysToRemove.length} chaves de ciência local.`, 'success');
+            const { data: emps } = await supabase.from('funcionarios')
+                .select(`
+                    id, 
+                    identidades_globais!inner (
+                        nome_completo,
+                        foto_url
+                    )
+                `)
+                .eq('empresa_id', companyId)
+                .ilike('identidades_globais.nome_completo', `%${q}%`)
+                .limit(5);
 
-            label.innerText = 'LIMPEZA CONCLUÍDA';
-            loader.classList.add('hidden');
-            addLog('PURGA FINALIZADA COM SUCESSO. O SISTEMA ESTÁ ZERADO.', 'success');
+            if (emps?.length > 0) {
+                searchResults.innerHTML = emps.map(emp => {
+                    const profile = emp.identidades_globais || {};
+                    const nome = profile.nome_completo || 'Sem Nome';
+                    return `
+                    <div class="p-5 hover:bg-white/10 cursor-pointer border-b border-white/5 flex items-center gap-5 transition-all text-left" onclick="window.selectEmployee('${emp.id}', '${nome}', '${profile.foto_url}')">
+                        <img src="${profile.foto_url || 'https://ui-avatars.com/api/?name='+nome}" class="size-10 rounded-full border border-white/10 shrink-0">
+                        <div class="min-w-0">
+                            <p class="text-sm font-black uppercase text-white truncate">${nome}</p>
+                            <p class="text-[9px] text-slate-500 font-bold tracking-widest truncate">${emp.id}</p>
+                        </div>
+                    </div>
+                `}).join('');
+                searchResults.classList.remove('hidden');
+            } else {
+                searchResults.classList.add('hidden');
+            }
         };
-    </script>
-    
-    <!-- Bottom Navigation -->
-    <nav class="fixed bottom-0 left-0 right-0 bg-background-dark/90 border-t border-white/5 py-4 z-50 flex justify-center backdrop-blur-xl">
-        <div class="flex items-center justify-around w-full max-w-md px-6">
-            <a href="dashboard.html" class="flex flex-col items-center gap-1.5 text-slate-500">
-                <span class="material-symbols-outlined text-2xl">home</span>
-                <span class="text-[9px] font-black uppercase tracking-widest text-center">Início</span>
-            </a>
-            <a href="estatistica_funcionario.html" class="flex flex-col items-center gap-1.5 text-slate-500">
-                <span class="material-symbols-outlined text-2xl">bar_chart</span>
-                <span class="text-[9px] font-black uppercase tracking-widest text-center">Estatística</span>
-            </a>
-            <a href="diario_funcionario.html" class="flex flex-col items-center gap-1.5 text-slate-500">
-                <span class="material-symbols-outlined text-2xl">edit_note</span>
-                <span class="text-[9px] font-black uppercase tracking-widest text-center">Diário</span>
-            </a>
-            <a href="perfil_funcionario.html" class="flex flex-col items-center gap-1.5 text-slate-500">
-                <span class="material-symbols-outlined text-2xl">person</span>
-                <span class="text-[9px] font-black uppercase tracking-widest text-center">Perfil</span>
-            </a>
-        </div>
-    </nav>
 
-    <!-- Sidebar Menu Overlay -->
-    <aside id="sidebarMenu"
-        class="fixed top-0 left-0 h-full w-80 bg-background-dark border-r border-primary/20 z-[160] -translate-x-full transition-all duration-500 ease-out shadow-[20px_0_50px_rgba(0,0,0,0.5)]">
-        <div class="flex flex-col h-full">
-            <div class="p-8 border-b border-primary/10">
-                <h3 class="text-primary font-black italic text-2xl tracking-tighter">CHRONOSYNC</h3>
-                <p class="text-[10px] text-slate-500 uppercase font-bold tracking-[0.3em]">Console de Navegação</p>
-            </div>
-            <nav id="sidebarNav" class="flex-1 overflow-y-auto p-4 space-y-2">
-                <!-- Injetado via UI.initSidebar() -->
-            </nav>
-            <div class="p-4 border-t border-primary/10 bg-black/20">
-                <button id="logoutBtn"
-                    class="w-full flex items-center gap-3 px-4 py-3 text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all font-bold text-xs uppercase">
-                    <span class="material-symbols-outlined">logout</span> Sair do Sistema
-                </button>
-            </div>
-        </div>
-    </aside>
-    <div id="sidebarOverlay"
-        class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[150] hidden opacity-0 transition-all duration-300"></div>
+        window.selectEmployee = (id, name, photo) => {
+            selectedUser = { id, name, photo };
+            searchResults.classList.add('hidden');
+            empSearch.value = '';
+            
+            document.getElementById('targetName').innerText = name;
+            document.getElementById('targetIdLabel').innerText = `ID: ${id}`;
+            document.getElementById('targetPhoto').src = photo || `https://ui-avatars.com/api/?name=${name}`;
+            selectedTarget.classList.remove('hidden');
+            targetModeLabel.innerText = 'INDIVIDUAL';
+            targetModeLabel.classList.replace('bg-rose-500/10', 'bg-primary/10');
+            targetModeLabel.classList.replace('text-rose-500', 'text-primary');
+            addLog(`Alvo selecionado: ${name}`, 'info');
+        };
+
+        document.getElementById('btnClearTarget').onclick = () => {
+            selectedUser = null;
+            selectedTarget.classList.add('hidden');
+            targetModeLabel.innerText = 'GLOBAL';
+            targetModeLabel.classList.replace('bg-primary/10', 'bg-rose-500/10');
+            targetModeLabel.classList.replace('text-primary', 'text-rose-500');
+            addLog('Modo de purga resetado para Global.', 'warning');
+        };
+
+        // MOTOR DE PURGA UNIVERSAL
+        async function runPurge(type) {
+            if (!Auth) {
+                UI.showToast("Módulo de autenticação não carregado.", "error");
+                return;
+            }
+
+            const user = Auth.getUser();
+            const cid = user?.companyId || companyId; 
+
+            if (!cid) {
+                UI.showToast("Sessão inválida. Faça login novamente.", "error");
+                return;
+            }
+
+            const label = type === 'total' ? 'LIQUIDAÇÃO TOTAL' : type.toUpperCase();
+            if (!confirm(`CONFIRMAR PURGA DE [${label}]? Esta ação mascarará/apagará o histórico irremediavelmente.`)) return;
+
+            UI.showLoader(60000); 
+            if (pb) pb.style.width = '10%';
+            addLog(`Iniciando purga: ${label}...`, 'warning');
+
+            try {
+                let affectedIds = [];
+                
+                // 1. Identificar Alvos (Individual ou Empresa Toda)
+                if (selectedUser?.id) {
+                    affectedIds = [selectedUser.id];
+                    addLog(`Alvo Individual: ${selectedUser.name} (${selectedUser.id})`, 'info');
+                } else {
+                    addLog('Mapeando tripulação da empresa...', 'warning');
+                    
+                    const { data: emps, error: errEmps } = await supabase
+                        .from('funcionarios')
+                        .select('id')
+                        .or(`empresa_id.eq.${cid},company_id.eq.${cid}`);
+                    
+                    if (errEmps) throw new Error("Erro ao mapear empresa: " + errEmps.message);
+                    
+                    affectedIds = (emps || []).map(e => e.id);
+                    addLog(`${affectedIds.length} tripulantes localizados.`, 'info');
+                    if (affectedIds.length > 0) {
+                        addLog(`Exemplos de IDs: ${affectedIds.slice(0, 2).join(', ')}...`, 'info');
+                    }
+
+                    if (affectedIds.length === 0) {
+                        addLog('Nenhum tripulante encontrado para esta empresa.', 'info');
+                        UI.hideLoader();
+                        return;
+                    }
+                }
+
+                // CICLO DE ELEVAÇÃO AUTOMÁTICA
+                const originalRole = localStorage.getItem('userRole') || 'Admin';
+                let elevated = false;
+                if (originalRole !== 'SuperAdmin') {
+                    addLog('Elevando privilégios para modo SuperAdmin...', 'warning');
+                    elevated = await tryPromote('SuperAdmin');
+                    if (!elevated) addLog('Aviso: Falha na elevação. Tentando com privilégios atuais...', 'error');
+                }
+
+                // 2. Definir tabelas baseadas no Tipo
+                const mapping = {
+                    ponto: [{ table: 'pontos', cols: ['funcionario_id'] }],
+                    justificativa: [
+                        { table: 'justificativas', cols: ['funcionario_id'] },
+                        { table: 'diario_logs', cols: ['funcionario_id'], filter: { tipo: 'justificativa_resultado' } }
+                    ],
+                    ferias: [
+                        { table: 'ferias', cols: ['funcionario_id'] },
+                        { table: 'diario_logs', cols: ['funcionario_id'], filter: { tipo: 'aviso_ferias' } }
+                    ],
+                    atividade: [{ table: 'anotacoes', cols: ['funcionario_id'] }],
+                    comunicado: [{ table: 'comunicados', cols: ['destinatario_id', 'remetente_id'] }], 
+                    hora_extra: [{ table: 'comunicados', cols: ['destinatario_id', 'remetente_id'], filter: { tipo: 'hora_extra' } }],
+                    feriados: [{ table: 'feriados_folgas', cols: ['funcionario_id'] }],
+                    gps: [
+                        { table: 'diario_logs', cols: ['funcionario_id'], filter: { tipo: 'gps_pulse' } },
+                        { table: 'diario_logs', cols: ['funcionario_id'], filter: { tipo: 'pendencia_geofence' } }
+                    ],
+                    total: [
+                        { table: 'pontos', cols: ['funcionario_id'] },
+                        { table: 'justificativas', cols: ['funcionario_id'] },
+                        { table: 'ferias', cols: ['funcionario_id'] },
+                        { table: 'anotacoes', cols: ['funcionario_id'] },
+                        { table: 'comunicados', cols: ['destinatario_id', 'remetente_id'] },
+                        { table: 'feriados_folgas', cols: ['funcionario_id'] },
+                        { table: 'diario_logs', cols: ['funcionario_id'] },
+                        { table: 'config_notificacoes_lidas', cols: ['funcionario_id'] }
+                    ]
+                };
+
+                const targets = mapping[type];
+                for (let i = 0; i < targets.length; i++) {
+                    const t = targets[i];
+                    addLog(`Processando: ${t.table}...`, 'info');
+                    if (pb) pb.style.width = `${((i + 1) / targets.length) * 100}%`;
+
+                    // 1. Montar Filtro 'OR' para Múltiplas Coluna (ex: remetente ou destinatario)
+                    const filterValues = `(${affectedIds.join(',')})`;
+                    let orParts = t.cols.map(c => `${c}.in.${filterValues}`);
+                    
+                    // CASO ESPECIAL: Feriados Globais (funcionario_id é NULL)
+                    if (t.table === 'feriados_folgas' && !selectedUser?.id) {
+                        orParts.push('funcionario_id.is.null');
+                    }
+
+                    const filterOr = orParts.join(',');
+
+                    // 2. BUSCA CIRÚRGICA (Apenas para log de diagnóstico)
+                    const { data: itemsFound } = await supabase.from(t.table).select('id').or(filterOr);
+                    const beforeCount = itemsFound?.length || 0;
+                    addLog(`${t.table}: ${beforeCount} registros localizados.`, beforeCount > 0 ? 'warning' : 'info');
+
+                    if (beforeCount > 0) {
+                        addLog(`[REFORÇO] Atacando ${t.table} via Bypass Direto...`, 'warning');
+                        const config = await import('../js/supabase-config.js');
+                        const url = `https://pptprelbbrcqrbjssoci.supabase.co/rest/v1/${t.table}?or=(${filterOr})`;
+                        
+                        addLog(`URL: .../${t.table}?or=(${filterOr.substring(0, 50)}...)`, 'info');
+
+                        const res = await fetch(url, { 
+                            method: 'DELETE', 
+                            headers: { 
+                                'apikey': config.SUPABASE_ANON_KEY, 
+                                'Authorization': 'Bearer ' + config.SUPABASE_ANON_KEY 
+                            } 
+                        });
+
+                        if (res.ok) addLog(`${t.table}: Purga concluída com sucesso.`, 'success');
+                        else addLog(`[FALHA] Banco recusou comando em ${t.table}.`, 'error');
+                    }
+                }
+
+                addLog('PURGA FINALIZADA.', 'success');
+
+                // VOLTAR AO CARGO ORIGINAL
+                if (elevated && originalRole !== 'SuperAdmin') {
+                    addLog(`Restaurando nível de acesso para ${originalRole}...`, 'info');
+                    await tryPromote(originalRole);
+                }
+
+                UI.showToast('Operação concluída.', 'success');
+
+            } catch (err) {
+                addLog(`ERRO CRÍTICO: ${err.message}`, 'error');
+                UI.showToast(`Falha: ${err.message}`, 'error');
+            } finally {
+                UI.hideLoader();
+                if (pb) pb.style.width = '0%';
+            }
+        }
+
+
+
+        // Atribuir Eventos aos Botões de Categoria
+        document.querySelectorAll('.purge-btn').forEach(btn => {
+            btn.onclick = () => runPurge(btn.dataset.type);
+        });
+
+        // FUNÇÃO DE PROMOÇÃO TÉCNICA (Necessária para o motor de purga burlar RLS)
+        async function tryPromote(targetRole = 'SuperAdmin') {
+            const user = Auth.getUser();
+            if (!user?.id) return;
+
+            const { error } = await supabase
+                .from('funcionarios')
+                .update({ nivel_acesso: targetRole })
+                .eq('id', user.id);
+
+            if (error) return false;
+            
+            localStorage.setItem('userRole', targetRole);
+            return true;
+        }
+
+        // Botão Purga Todos (Geral)
+        const btnPurgeAll = document.getElementById('btnPurgeAll');
+        if (btnPurgeAll) btnPurgeAll.onclick = () => runPurge('total');
+
+        // Inicializar botão
+        // updatePromoteButton() - Removido (Botão desativado)
+
+
+    </script>
 </body>
 </html>

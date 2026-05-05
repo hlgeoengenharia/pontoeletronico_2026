@@ -10,6 +10,10 @@
             primary: '#F59E0B', // Âmbar / Laranja
             background: '#05070A' // Dark profundo
         },
+        'SuperAdmin': {
+            primary: '#F59E0B', // Same as Admin - Âmbar / Laranja
+            background: '#05070A' // Dark profundo
+        },
         'Gestor': {
             primary: '#10B981', // Esmeralda / Verde
             background: '#101622' // Dark padrão

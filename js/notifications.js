@@ -32,19 +32,22 @@ const Notifications = {
             // 1. Contagem do Sino (Gestão)
             let sinoCount = 0;
             if (isManagement) {
-                const [resJust, resFer, resLogs] = await Promise.all([
-                    supabase.from('justificativas').select('id').eq('status', 'pendente'),
-                    supabase.from('ferias').select('funcionario_id').eq('status', 'pendente'),
-                    supabase.from('diario_logs').select('id').eq('status_pendencia', 'pendente').not('tipo', 'in', '("comunicado","justificativa_resultado","aviso_ferias")')
+                const [resJust, resFer, resPonto, resLogs] = await Promise.all([
+                    supabase.from('justificativas').select('id').eq('status', 'pendente').gt('data_incidente', '2001-01-01'),
+                    supabase.from('ferias').select('funcionario_id').eq('status', 'pendente').gt('created_at', '2001-01-01'),
+                    supabase.from('pontos').select('id').eq('status_validacao', 'pendente').gt('created_at', '2001-01-01'),
+                    supabase.from('diario_logs').select('id').eq('status_pendencia', 'pendente')
+                        .not('tipo', 'in', '("comunicado","justificativa_resultado","gps_pulse")')
+                        .neq('tipo', 'aviso_ferias')
+                        .gt('data_hora', '2001-01-01')
                 ]);
 
-                // Deduplicação de Férias: Contar funcionários únicos com solicitações pendentes
                 const uniqueFeriasEmployees = new Set((resFer.data || []).map(f => f.funcionario_id)).size;
                 
-                // Sino Geral passa a contar apenas Justificativas e Logs (Sem Férias p/ evitar redundância)
-                sinoCount = (resJust.data?.length || 0) + (resLogs.data?.length || 0);
+                // Sino Gestão: Total de pendências para analisar
+                sinoCount = (resJust.data?.length || 0) + (resPonto.data?.length || 0) + (resLogs.data?.length || 0);
 
-                // 2. Contagem do Diário (Alvo) via Aggregator (Awareness Aware)
+                // 2. Contagem do Diário: Apenas logs pessoais (resultados, comunicados, etc.)
                 const aggregatorResult = await DiarioAggregator.fetchAndAggregate(supabase, userId, sectorId);
                 const diarioCount = aggregatorResult.total;
                 
@@ -54,17 +57,16 @@ const Notifications = {
                 this.setBadge('badge-diario', diarioCount);
                 this.setBadge('badge-diario-footer', diarioCount);
 
-                // 4. Sincronização de Férias (Dashboard + Sidebar Gestão)
                 this.setBadge('stat-ferias-mes', uniqueFeriasEmployees);
                 this.setBadge('badge-ferias-sidebar', uniqueFeriasEmployees);
                 
-                console.log(`[Notifications] Badges Atualizados (Alvo ${userId}): Sino=${sinoCount}, Diário=${diarioCount}, Férias=${uniqueFeriasEmployees}`);
+                console.log(`[Notifications] Badges Atualizados (Gestor ${userId}): Sino=${sinoCount}, Diário=${diarioCount}`);
             } else {
-                // Lógica p/ Funcionários: Contar apenas respostas de justificativas pendentes de ciência
-                const { data: juData } = await supabase.from('justificativas').select('id').eq('funcionario_id', userId).eq('status', 'pendente');
-                sinoCount = (juData?.length || 0);
+                // Lógica p/ Funcionários: O Sino não deve mostrar pendências de abono, pois ele já sabe que enviou.
+                // O Sino pode ser usado para outros fins (ex: mensagens urgentes), mas por ora deixamos zerado ou para comunicados.
+                sinoCount = 0; 
 
-                // 2. Contagem do Diário (Alvo) via Aggregator (Awareness Aware)
+                // 2. Contagem do Diário: Mostra resultados analisados via Aggregator
                 const aggregatorResult = await DiarioAggregator.fetchAndAggregate(supabase, userId, sectorId);
                 const diarioCount = aggregatorResult.total;
 

@@ -61,7 +61,7 @@ const UI = {
      * Mostra um loader overlay (Reentrante)
      */
     loaderCount: 0,
-    showLoader() {
+    showLoader(timeoutMs = 10000) {
         UI.loaderCount++;
         if (document.getElementById('ui-loader')) return;
         
@@ -79,15 +79,15 @@ const UI = {
         `;
         document.body.appendChild(loader);
 
-        // Safety Timeout: Forçar remoção após 10 segundos para evitar travamento de rede
+        // Safety Timeout: Forçar remoção após tempo definido para evitar travamento de rede
         setTimeout(() => {
             const el = document.getElementById('ui-loader');
             if (el) {
                 console.warn('[UI] Safety timeout acionado.');
                 UI.loaderCount = 0;
-                UI.hideLoader(); // Usa a própria função p/ garantir remoção limpa
+                UI.hideLoader(); 
             }
-        }, 10000);
+        }, timeoutMs);
     },
 
     /**
@@ -161,9 +161,9 @@ const UI = {
         // Definir itens por papel
         const items = [];
 
-        // Itens Administrativos (Admin, Gestor, Comandante)
-        if (role === 'admin' || role === 'manager' || role === 'gestor' || role === 'comandante') {
-            const isAdmin = (role === 'admin' || role === 'comandante');
+        // Itens Administrativos (Admin, Gestor, Comandante, SuperAdmin)
+        if (role === 'admin' || role === 'manager' || role === 'gestor' || role === 'comandante' || role === 'superadmin') {
+            const isAdmin = (role === 'admin' || role === 'comandante' || role === 'superadmin');
             
             // Buscar permissões do localStorage
             let perms = {};
@@ -174,7 +174,8 @@ const UI = {
                 console.error('[UI] Erro ao ler permissões no menu:', e);
             }
 
-            // Painel de Controle: EXCLUSIVO Admin
+            // Painel de Controle: EXCLUSIVO Admin (não mostra para Gestor)
+            // SuperAdmin também tem acesso ao painel de controle
             if (isAdmin) {
                 items.push({ 
                     href: 'central.html' + (contextQuery ? '?' + contextQuery.substring(1) : ''), 
@@ -182,6 +183,7 @@ const UI = {
                     label: 'Painel de Controle' 
                 });
             }
+            // Gestor NÃO vê Painel de Controle - já coberto pela condição acima (isAdmin é false para Gestor)
 
             // Módulos de cadastro com trava de permissão para Gestores
             if (isAdmin || perms.setores)

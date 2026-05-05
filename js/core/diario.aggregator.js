@@ -40,8 +40,11 @@ export const DiarioAggregator = {
             pontos: resP.data || []
         };
 
+        const total = this.aggregate(rawData, userId);
+        console.log(`[DiarioAggregator] Agregação para ${userId}: Total=${total}`, rawData);
+
         return {
-            total: this.aggregate(rawData, userId),
+            total: total,
             rawData: rawData
         };
     },
@@ -76,6 +79,9 @@ export const DiarioAggregator = {
                 items = [...(data.justificativas || []), ...(data.logs || []).filter(l => l.tipo === 'justificativa_resultado')];
             } else if (type === 'ferias_folgas') {
                 items = data.feriados || [];
+            } else if (type === 'ponto') {
+                // Alertas de Geofence/GPS (Logs) + Registros de Ponto Pendentes
+                items = [...(data.pontos || []), ...(data.logs || []).filter(l => l.tipo === 'pendencia_geofence')];
             }
 
             typeSum += provider.counter.count(items, userId);

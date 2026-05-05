@@ -16,13 +16,21 @@ export const BusinessRulesManager = {
 
         const { data, error } = await supabase
             .from('funcionarios')
-            .select('biometria_cadastrada, biometria_token')
+            .select(`
+                id,
+                identidades_globais!inner (
+                    biometria_cadastrada, 
+                    biometria_token
+                )
+            `)
             .eq('id', user.id)
             .single();
 
-        const parsedTemplate = BiometricHelper.parseTemplate(data?.biometria_token || '');
-        if (error || !data || !data.biometria_cadastrada || !parsedTemplate.valid) {
-            console.warn('[Compliance] Biometria nao detectada. Redirecionando...');
+        const ident = data?.identidades_globais;
+        const parsedTemplate = BiometricHelper.parseTemplate(ident?.biometria_token || '');
+        
+        if (error || !data || !ident || !ident.biometria_cadastrada || !parsedTemplate.valid) {
+            console.warn('[Compliance] Biometria nao detectada ou invalida na Identidade Global. Redirecionando...');
             return false;
         }
 
@@ -59,6 +67,7 @@ export const BusinessRulesManager = {
 
     async createAbsenceLog(funcionarioId, dataHora, adminObs) {
         const dateStr = new Date(dataHora).toLocaleDateString('pt-BR');
+        
         await supabase.from('diario_logs').insert([{
             funcionario_id: funcionarioId,
             data_hora: new Date().toISOString(),
@@ -80,6 +89,7 @@ export const BusinessRulesManager = {
             return;
         }
 
+        const compId = user.company_id;
         const escala = user.escalas;
         const [hE, mE] = (escala.horario_entrada || '08:00:00').split(':').map(Number);
         const workMinutes = ScalesEngine.calculateDailyWorkMinutes(escala);

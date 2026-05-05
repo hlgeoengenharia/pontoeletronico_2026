@@ -381,10 +381,14 @@
       try {
         const { data, error } = await supabase
           .from('funcionarios')
-          .select('id, nome_completo, nickname')
-          .order('nome_completo');
+          .select('id, identidades_globais(nome_completo), perfis_tripulantes(nickname)');
         if (error) throw error;
-        allFuncionarios = data;
+        
+        allFuncionarios = (data || []).map(f => ({
+            id: f.id,
+            nome_completo: f.identidades_globais?.nome_completo || 'Tripulante',
+            nickname: (Array.isArray(f.perfis_tripulantes) ? f.perfis_tripulantes[0]?.nickname : f.perfis_tripulantes?.nickname) || ''
+        })).sort((a, b) => a.nome_completo.localeCompare(b.nome_completo));
       } catch (err) {
         console.error('Erro ao pré-carregar funcionários:', err);
       }
@@ -460,16 +464,30 @@
     async function loadSetores() {
       const container = document.getElementById('lista-setores');
       const countSpan = document.getElementById('total-setores');
+      
+      const userRole = localStorage.getItem('userRole') || '';
+      const userEmpresaId = localStorage.getItem('companyId');
+      const isSuperAdmin = userRole === 'SuperAdmin';
+      
       try {
-        const { data, error } = await supabase
+        let query = supabase
           .from('setores')
-          .select('*, gestor:funcionarios!gestor_id(nome_completo)')
+          .select('*, gestor:funcionarios!gestor_id(identidades_globais(nome_completo))')
           .order('nome');
+        
+        // Filtrar por empresa para Admin (não SuperAdmin)
+        if (!isSuperAdmin && userEmpresaId) {
+          query = query.eq('empresa_id', userEmpresaId);
+        }
+        
+        const { data, error } = await query;
 
         if (error) throw error;
 
         countSpan.innerText = `${data.length} ATIVOS`;
-        container.innerHTML = data.map(s => `
+        container.innerHTML = data.map(s => {
+            const gestorNome = s.gestor?.identidades_globais?.nome_completo || 'N/A';
+            return `
                 <div id="card-${s.id}" class="glass-panel rounded-xl border-l-4 border-l-primary group hover:bg-primary/5 transition-all overflow-hidden mb-3 shadow-lg">
                   <!-- Header do Card -->
                   <div onclick="toggleSetorDetails('${s.id}', ${s.latitude}, ${s.longitude}, ${s.raio})" 
@@ -480,12 +498,12 @@
                       </div>
                       <div id="header-info-${s.id}">
                         <h3 class="font-bold text-slate-100 uppercase tracking-wide text-xs">${s.nome}</h3>
-                        <p class="text-[9px] text-slate-500 uppercase">Gestor: ${s.gestor?.nome_completo || 'N/A'}</p>
+                        <p class="text-[9px] text-slate-500 uppercase">Gestor: ${gestorNome}</p>
                         <p class="text-[9px] text-primary font-mono mt-1 uppercase tracking-tight">Raio Ativo: ${s.raio}m</p>
                       </div>
                     </div>
                     <div class="flex gap-2 opacity-40 group-hover:opacity-100 transition-opacity">
-                      <button onclick="event.stopPropagation(); startInlineEdit('${s.id}', '${s.nome}', '${s.gestor_id}', '${s.gestor?.nome_completo || ''}', ${s.raio}, ${s.latitude}, ${s.longitude})" 
+                      <button onclick="event.stopPropagation(); startInlineEdit('${s.id}', '${s.nome}', '${s.gestor_id}', '${gestorNome.replace(/'/g, "\\'")}', ${s.raio}, ${s.latitude}, ${s.longitude})" 
                               class="p-2.5 bg-primary/10 border border-primary/20 rounded-xl text-primary hover:bg-primary/20 hover:scale-110 shadow-lg shadow-primary/5 transition-all group/btn"
                               title="Editar Setor">
                         <span class="material-symbols-outlined text-lg">edit_note</span>
@@ -529,7 +547,7 @@
                             </div>
                             <div class="space-y-1 relative">
                                 <label class="text-[9px] font-bold text-primary uppercase">Gestor Responsável</label>
-                                <input id="edit-gestor-search-${s.id}" type="text" value="${s.gestor?.nome_completo || ''}" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs text-slate-200 outline-none focus:border-primary/50 transition-all" placeholder="Buscar gestor...">
+                                <input id="edit-gestor-search-${s.id}" type="text" value="${gestorNome}" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs text-slate-200 outline-none focus:border-primary/50 transition-all" placeholder="Buscar gestor...">
                                 <input id="edit-gestor-id-${s.id}" type="hidden" value="${s.gestor_id}">
                                 <div id="edit-gestor-results-${s.id}" class="absolute z-[100] left-0 right-0 top-full mt-1 bg-slate-900 border border-white/10 rounded-xl hidden shadow-2xl max-h-48 overflow-y-auto"></div>
                             </div>
@@ -561,7 +579,8 @@
                     </div>
                   </div>
                 </div>
-            `).join('');
+            `;
+        }).join('');
       } catch (err) {
         console.error('Erro ao carregar setores:', err);
         container.innerHTML = '<p class="text-red-500 text-center py-4 text-xs font-bold uppercase">Erro ao carregar setores</p>';
@@ -816,12 +835,14 @@
 
       UI.showLoader();
 
+      const userEmpresaId = localStorage.getItem('companyId');
       const dados = {
         nome: document.getElementById('nome-setor').value,
         gestor_id: gestorId,
         raio: parseInt(document.getElementById('radius-input').value),
         latitude: selectedLat,
-        longitude: selectedLng
+        longitude: selectedLng,
+        empresa_id: userEmpresaId
       };
 
       try {
