@@ -41,7 +41,7 @@ export const BusinessRulesManager = {
      * Aplica penalidades apos rejeicao do Admin/Gestor.
      */
     async processRejection(item, type, adminObs) {
-        console.log(`[BusinessRules] Processando rejeicao (${type}):`, item?.id);
+        console.log(`[BusinessRules] Processando rejeição (${type}):`, item?.id);
 
         if (!item || !item.id) {
             console.warn('[BusinessRules] Item inválido, ignorando penalidade');
@@ -52,10 +52,31 @@ export const BusinessRulesManager = {
             const punchType = item.tipo || 'check-in';
             const funcionarioId = item.funcionario_id;
 
-            if (punchType === 'check-in') {
-                await this.createAbsenceLog(funcionarioId, item.data_hora, adminObs);
+            // Se for um log de SISTEMA (esquecimento), precisamos encontrar o PONTO de check-out correspondente
+            if (type === 'SISTEMA' || type === 'ALERTA_MENSAL') {
+                const punchDate = item.data_hora ? item.data_hora.split('T')[0] : new Date().toISOString().split('T')[0];
+                const { data: relatedPunch } = await supabase
+                    .from('pontos')
+                    .select('*')
+                    .eq('funcionario_id', funcionarioId)
+                    .eq('tipo', 'check-out')
+                    .gte('data_hora', `${punchDate}T00:00:00`)
+                    .lte('data_hora', `${punchDate}T23:59:59`)
+                    .order('created_at', { ascending: false })
+                    .limit(1)
+                    .maybeSingle();
+
+                if (relatedPunch) {
+                    await this.applyHalfJourneyPenalty(relatedPunch, adminObs);
+                } else {
+                    console.warn('[BusinessRules] Nenhum ponto de check-out encontrado para vincular à rejeição do log.');
+                }
             } else {
-                await this.applyHalfJourneyPenalty(item, adminObs);
+                if (punchType === 'check-in') {
+                    await this.createAbsenceLog(funcionarioId, item.data_hora, adminObs);
+                } else {
+                    await this.applyHalfJourneyPenalty(item, adminObs);
+                }
             }
 
             return { success: true };
@@ -77,67 +98,90 @@ export const BusinessRulesManager = {
         }]);
     },
 
-    async applyHalfJourneyPenalty(item, adminObs) {
-        const { data: user } = await supabase
-            .from('funcionarios')
-            .select('*, escalas(*)')
-            .eq('id', item.funcionario_id)
-            .single();
+    async applyHalfJourneyPenalty(item, adminObs, escala = null) {
+        let activeEscala = escala;
 
-        if (!user || !user.escalas) {
-            console.warn('[BusinessRules] Impossivel calcular penalidade: escala nao encontrada.');
+        if (!activeEscala) {
+            const { data: user } = await supabase
+                .from('funcionarios')
+                .select('*, escalas(*)')
+                .eq('id', item.funcionario_id)
+                .single();
+            activeEscala = user?.escalas;
+        }
+
+        if (!activeEscala) {
+            console.warn('[BusinessRules] Impossível calcular penalidade: escala não encontrada.');
             return;
         }
 
-        const compId = user.company_id;
-        const escala = user.escalas;
-        const [hE, mE] = (escala.horario_entrada || '08:00:00').split(':').map(Number);
-        const workMinutes = ScalesEngine.calculateDailyWorkMinutes(escala);
+        const [hE, mE] = (activeEscala.horario_entrada || '08:00:00').split(':').map(Number);
+        const workMinutes = ScalesEngine.calculateDailyWorkMinutes(activeEscala);
         const halfMinutes = Math.floor(workMinutes / 2);
 
-        const departureTime = new Date(item.data_hora); // Baseado na entrada
-        departureTime.setHours(hE, mE, 0, 0);
-        departureTime.setMinutes(departureTime.getMinutes() + halfMinutes);
+        // Penalidade: Define o horário como Entrada Prevista + 50% da Jornada
+        const penaltyTime = new Date(item.data_hora || item.created_at);
+        penaltyTime.setHours(hE, mE, 0, 0);
+        penaltyTime.setMinutes(penaltyTime.getMinutes() + halfMinutes);
 
-        // Se o item já existir (rejeição de checkout manual), atualizamos. 
-        // Se formos criar um checkout automático, inserimos.
-        if (item.tipo === 'check-out' && item.id) {
+        // Se o item já existir (rejeição de checkout automático ou manual), atualizamos. 
+        if (item.id) {
             await supabase.from('pontos').update({
-                data_hora: departureTime.toISOString(),
+                data_hora: penaltyTime.toISOString(),
                 status_validacao: 'rejeitado',
                 justificativa_usuario: `[PENALIDADE: MEIO-TURNO APLICADO] ${item.justificativa_usuario || ''}`,
                 comentario_gestor: adminObs
             }).eq('id', item.id);
-        } else {
-            // Check-out Automático: Sincronizado c/ esquema real do banco (latitude/longitude)
-            await supabase.from('pontos').insert([{
-                funcionario_id: item.funcionario_id,
-                data_hora: departureTime.toISOString(),
-                tipo: 'check-out',
-                status_validacao: 'pendente',
-                dentro_do_raio: true,
-                justificativa_usuario: `[SISTEMA] Checkout automático aplicado por esquecimento (Penalidade 50%).`,
-                comentario_gestor: adminObs,
-                latitude: 0,
-                longitude: 0,
-                biometria_verificada: true,
-                biometria_score: 1.0,
-                biometria_metodo: 'SISTEMA',
-                biometria_timestamp: new Date().toISOString()
-            }]);
         }
-
-        await supabase.from('diario_logs').insert([{
-            funcionario_id: item.funcionario_id,
-            data_hora: new Date().toISOString(),
-            tipo: 'sistema',
-            status_pendencia: 'pendente',
-            mensagem_padrao: `[PENALIDADE] Ponto de ${new Date(item.data_hora).toLocaleDateString()} encerrado automaticamente por esquecimento. Motivo: ${adminObs}`
-        }]);
     },
 
     /**
-     * Autorresolução: Fecha pontos abertos de dias anteriores baseando-se na janela técnica.
+     * Cria um encerramento automático baseado na Saída Prevista (100% jornada)
+     */
+    async createAutoExitAtScheduledTime(lastPunch, escala, adminObs) {
+        const [hS, mS] = (escala.horario_saida || '14:00:00').split(':').map(Number);
+        
+        const scheduledExit = new Date(lastPunch.data_hora);
+        scheduledExit.setHours(hS, mS, 0, 0);
+
+        // Se a saída for menor que a entrada (virada de dia), avançar 1 dia
+        if (scheduledExit < new Date(lastPunch.data_hora)) {
+            scheduledExit.setDate(scheduledExit.getDate() + 1);
+        }
+
+        const { data: newPoint, error } = await supabase.from('pontos').insert([{
+            funcionario_id: lastPunch.funcionario_id,
+            data_hora: scheduledExit.toISOString(),
+            tipo: 'check-out',
+            status_validacao: 'pendente',
+            dentro_do_raio: true,
+            justificativa_usuario: `[SISTEMA] Checkout automático realizado (Esquecimento). Baseado na Saída Prevista: ${escala.horario_saida.substring(0,5)}.`,
+            comentario_gestor: adminObs,
+            latitude: 0,
+            longitude: 0,
+            biometria_verificada: true,
+            biometria_score: 1.0,
+            biometria_metodo: 'SISTEMA',
+            biometria_timestamp: new Date().toISOString()
+        }]).select().single();
+
+        if (error) throw error;
+
+        // Registrar o log de pendência para o diário/gestor
+        await supabase.from('diario_logs').insert([{
+            funcionario_id: lastPunch.funcionario_id,
+            data_hora: new Date().toISOString(),
+            tipo: 'sistema',
+            status_pendencia: 'pendente',
+            mensagem_padrao: `[PENALIDADE] Ponto de ${new Date(lastPunch.data_hora).toLocaleDateString()} encerrado automaticamente por esquecimento. O funcionário será penalizado com corte de 50% de sua jornada de trabalho caso este registro seja REJEITADO. Motivo: ${adminObs}`
+        }]);
+
+        return newPoint;
+    },
+
+    /**
+     * Autorresolução: Fecha pontos abertos (órfãos) baseando-se no limite de prorrogação.
+     * Funciona tanto para dias anteriores quanto para o dia atual, desde que o tempo limite tenha expirado.
      */
     async resolveOrphanedPunches(user) {
         if (!user || !user.id || user.nivel_acesso === 'Admin') return null;
@@ -152,9 +196,14 @@ export const BusinessRulesManager = {
                 .limit(1)
                 .maybeSingle();
 
+            // Se não houver ponto ou for checkout, não há nada a resolver
             if (!lastPunch || lastPunch.tipo === 'check-out') return null;
 
-            // 1.1 Verificação de duplicidade: Já existe um Checkout Automático PENDENTE para este evento?
+            const now = new Date();
+            const punchDate = new Date(lastPunch.data_hora);
+            const punchDateStr = punchDate.toISOString().split('T')[0];
+
+            // 2. Verificar se já existe um Checkout Automático PENDENTE para este evento
             const { data: existingAuto } = await supabase
                 .from('pontos')
                 .select('id')
@@ -170,43 +219,33 @@ export const BusinessRulesManager = {
                 return null;
             }
 
-            // 2. Verificar se é de dia anterior
-            const punchDate = new Date(lastPunch.data_hora);
-            const now = new Date();
-            const todayStr = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
-            const punchDateStr = new Date(punchDate.getTime() - (punchDate.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
-
-            if (punchDateStr >= todayStr) return null;
-
-            // 3. Validar se a janela técnica já fechou
+            // 3. Validar se a prorrogação técnica já fechou
             const escala = user.escalas;
             if (!escala) return null;
 
-            // Buscar HE para aquele dia
+            // Buscar HE para o dia do ponto (seja hoje ou anterior)
             const extraMin = await this.getExtraMinutesForDate(user.id, user.setor_id, punchDateStr);
-            const win = ScalesEngine.calculateWindowDetails(escala, extraMin);
+            const closingTime = ScalesEngine.getShiftEndWithHE(escala, extraMin, punchDate);
             
-            if (!win) return null;
+            if (!closingTime) return null;
 
-            // O corte ocorre após a 'prorrogacao' (Saída + JanelaDepois + HE)
-            const [hP, mP] = win.prorrogacao.horario.split(':').map(Number);
-            const closingTime = new Date(punchDate);
-            closingTime.setHours(hP, mP, 0, 0);
+            console.log(`[Compliance] Verificando Ponto Órfão: Início ${lastPunch.data_hora}, Limite Janela: ${closingTime.toLocaleTimeString()}`);
 
-            // Se for troca de dia (ex: sai as 02h), ajustamos a data do fechamento
-            if (hP < 12 && punchDate.getHours() > 12) {
-                closingTime.setDate(closingTime.getDate() + 1);
-            }
-
+            // REGRA DE OURO: Se AGORA for maior que o LIMITE DE PRORROGAÇÃO, fecha automaticamente.
             if (now > closingTime) {
-                console.log('[Compliance] Detectado ponto órfão. Aplicando autorresolução...');
-                await this.applyHalfJourneyPenalty(lastPunch, 'Ponto esquecido (fechamento automático pela janela técnica)');
-                return { resolved: true, date: punchDateStr };
+                console.log(`[Compliance] !!! PONTO ÓRFÃO DETECTADO !!! Agora (${now.toLocaleTimeString()}) > Limite (${closingTime.toLocaleTimeString()})`);
+                try {
+                    await this.createAutoExitAtScheduledTime(lastPunch, escala, 'Esquecimento de registro (Fechamento Automático por Prorrogação Esgotada)');
+                    console.log(`[Compliance] Sucesso: Ponto de ${punchDateStr} resolvido com Saída Prevista.`);
+                    return { resolved: true, date: punchDateStr };
+                } catch (err) {
+                    console.error(`[Compliance] Erro ao realizar checkout automático:`, err);
+                }
             }
 
             return null;
         } catch (e) {
-            console.error('[Compliance] Erro na autorresolução:', e);
+            console.error('[Compliance] Erro fatal na autorresolução:', e);
             return null;
         }
     },

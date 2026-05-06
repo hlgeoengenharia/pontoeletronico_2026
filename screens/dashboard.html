@@ -555,7 +555,9 @@
                 // Autorresolução de Pontos Esquecidos (Ponto Órfão)
                 const autoRes = await BusinessRulesManager.resolveOrphanedPunches(funcionario);
                 if (autoRes && autoRes.resolved) {
-                    UI.showToast(`O sistema detectou um ponto aberto em ${autoRes.date} e realizou o fechamento automático (Penalidade 50% aplicada).`, 'warning');
+                    UI.showToast(`O sistema detectou um ponto aberto em ${autoRes.date} e realizou o fechamento automático.`, 'warning');
+                    setTimeout(() => window.location.reload(), 1500);
+                    return;
                 }
 
                 setupDashboard(funcionario);
@@ -636,11 +638,13 @@
             const startMonth = new Date(year, month, 1).toISOString();
             const endMonth = new Date(year, month + 1, 0).toISOString();
 
+            const sId = currentUser.setor_id || '00000000-0000-0000-0000-000000000000';
+
             const [feriadosRes, pontosRes, feriasRes, diaExtraRes, seenRes] = await Promise.all([
-                supabase.from('feriados_folgas').select('*').or(`funcionario_id.eq.${currentUser.id},setor_id.eq.${currentUser.setor_id},escopo.eq.geral`).gte('data', startMonth).lte('data', endMonth),
+                supabase.from('feriados_folgas').select('*').or(`funcionario_id.eq.${currentUser.id},setor_id.eq.${sId},escopo.eq.geral`).gte('data', startMonth).lte('data', endMonth),
                 supabase.from('pontos').select('*').eq('funcionario_id', currentUser.id).gte('data_hora', startMonth + 'T00:00:00').lte('data_hora', endMonth + 'T23:59:59'),
                 supabase.from('ferias').select('*').eq('funcionario_id', currentUser.id).eq('status', 'aprovado'),
-                supabase.from('comunicados').select('*').eq('subtipo', 'dia_trabalho_extra').or(`destinatario_id.eq.${currentUser.id},setor_id.eq.${currentUser.setor_id},tipo.eq.geral`),
+                supabase.from('comunicados').select('*').eq('subtipo', 'dia_trabalho_extra').or(`destinatario_id.eq.${currentUser.id},setor_id.eq.${sId},tipo.eq.geral`),
                 supabase.from('config_notificacoes_lidas').select('item_id').eq('funcionario_id', currentUser.id)
             ]);
 
@@ -877,7 +881,8 @@
                 type = (!lastPunch || lastPunch.tipo === 'check-out') ? 'check-in' : 'check-out';
             }
             
-            let isActive = ScalesEngine.isInActivationWindow(currentUser.escalas, type, extraMin, new Date(), isFirstCheckin);
+            let windowStatus = ScalesEngine.isInActivationWindow(currentUser.escalas, type, extraMin, new Date(), isFirstCheckin);
+            let isActive = windowStatus === true;
             const statusLabel = document.getElementById('punch-status-label');
 
             // REGRA: Se for dia isento (Feriado/Folga) e NÃO houver Hora Extra authorized, BLOQUEIA.
@@ -891,9 +896,20 @@
             } else if (!isActive) {
                 if (statusLabel) {
                     const win = ScalesEngine.calculateWindowDetails(currentUser.escalas, extraMin);
-                    statusLabel.innerText = type === 'check-in' ? `AGUARDANDO JANELA (ÀS ${win?.antes.horario}) / EXCEDEU TOLERÂNCIA` : 'FORA DA JANELA DE SAÍDA';
+                    let msg = '';
+                    if (windowStatus === 'PRORROGAÇÃO_ESGOTADA') {
+                        msg = 'PRORROGAÇÃO ESGOTADA: FECHAMENTO AUTOMÁTICO REQUERIDO';
+                        // Tentar resolver ponto órfão imediatamente se a prorrogação esgotou
+                        BusinessRulesManager.resolveOrphanedPunches(currentUser).then(res => {
+                            if (res?.resolved) window.location.reload();
+                        });
+                    } else {
+                        msg = type === 'check-in' ? `AGUARDANDO JANELA (ÀS ${win?.antes.horario}) / EXCEDEU TOLERÂNCIA` : 'FORA DA JANELA DE SAÍDA';
+                    }
+                    
+                    statusLabel.innerText = msg;
                     statusLabel.classList.remove('hidden');
-                    statusLabel.className = 'text-[9px] font-black text-amber-500 uppercase tracking-widest mt-2';
+                    statusLabel.className = 'text-[9px] font-black text-rose-500 uppercase tracking-widest mt-2';
                 }
             } else {
                 if (statusLabel) statusLabel.classList.add('hidden');

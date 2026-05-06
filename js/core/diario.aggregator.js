@@ -10,7 +10,7 @@ export const DiarioAggregator = {
      * Busca todos os dados necessários e calcula o total de notificações.
      */
     async fetchAndAggregate(supabase, userId, sectorId) {
-        const sId = sectorId || '00000000-0000-0000-0000-000000000000';
+        const sId = (sectorId && sectorId !== 'null') ? sectorId : '00000000-0000-0000-0000-000000000000';
         
         // Inicializar serviço de Awareness antes de agregar
         await AwarenessManager.init(userId);

@@ -7,19 +7,30 @@ export const ResultadoFeedbackHistory = {
         const date = new Date(item.created_at || item.data_hora || new Date());
         const rawMsg = item.mensagem_padrao || item.content || 'Seu pedido foi processado.';
         
-        // Parsing robusto para múltiplas linhas (usando [\s\S]* para incluir quebras de linha)
-        const contextoMatch = rawMsg.match(/\[CONTEXTO: ([\s\S]*?)\]/);
-        const userMatch = rawMsg.match(/\[USER: ([\s\S]*?)\]/);
-        const analiseMatch = rawMsg.match(/\[ANÁLISE: ([\s\S]*?)\]/);
+        // Parsing robusto para múltiplas linhas
+        const contextoMatch = rawMsg.match(/\[CONTEXTO:?\s*([\s\S]*?)\]/i);
+        const userMatch = rawMsg.match(/\[USER:?\s*([\s\S]*?)\]/i);
+        const analiseMatch = rawMsg.match(/\[ANÁLISE:?\s*([\s\S]*?)\]/i);
         
         const contexto = contextoMatch ? contextoMatch[1].trim() : 'SOLICITAÇÃO DE PONTO';
         const userMsg = userMatch ? userMatch[1].trim() : 'Divergência técnica de localização.';
         const analise = analiseMatch ? analiseMatch[1].trim() : 'PROCESSADO';
         
-        // Extrair a mensagem do Admin (tudo após o último colchete de análise)
-        const adminMsg = rawMsg.split(/\[ANÁLISE:.*?\]/).pop().trim();
+        // Extrair a mensagem do Admin (remover tags técnicas)
+        let adminMsg = rawMsg
+            .replace(/\[CONTEXTO:?.*?\]/gi, '')
+            .replace(/\[USER:?.*?\]/gi, '')
+            .replace(/\[ANÁLISE:?.*?\]/gi, '')
+            .trim();
 
-        const isRejeitado = analise.toUpperCase().includes('REJEITAD') || analise.toUpperCase().includes('INDEFERID');
+        // Fallback: Se adminMsg ficou vazio mas a analise tem conteúdo longo, usamos ela
+        if (!adminMsg && analise && analise.length > 15) {
+            adminMsg = analise;
+        }
+
+        const isRejeitado = analise.toUpperCase().includes('REJEITAD') || 
+                           analise.toUpperCase().includes('INDEFERID') ||
+                           rawMsg.toUpperCase().includes('REJEITADA');
         
         const statusClass = isRejeitado 
             ? 'bg-rose-500/10 text-rose-500 border-rose-500/20' 

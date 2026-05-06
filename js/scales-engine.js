@@ -351,6 +351,8 @@ const ScalesEngine = {
         const janelaDepois = (escala.janela_ativa_depois_minutos !== null && escala.janela_ativa_depois_minutos !== undefined) ? parseInt(escala.janela_ativa_depois_minutos) : 30;
         const tolEntrada = (escala.tolerancia_entrada_minutos !== null && escala.tolerancia_entrada_minutos !== undefined) ? parseInt(escala.tolerancia_entrada_minutos) : 15;
 
+        let blockReason = null;
+
         for (let offset = -1; offset <= 1; offset++) {
             const baseDate = new Date(targetDate);
             baseDate.setDate(baseDate.getDate() + offset);
@@ -361,37 +363,32 @@ const ScalesEngine = {
             const endShift = new Date(baseDate);
             endShift.setHours(hS, mS, 0, 0);
 
-            // Tratamento de jornada que atravessa a meia-noite
             if (endShift < startShift) endShift.setDate(endShift.getDate() + 1);
 
             let startWindow, endWindow;
-
             const safeExtra = Number(extraMinutes || 0);
 
             if (type === 'check-in') {
                 startWindow = new Date(startShift.getTime() - janelaAntes * 60000);
                 if (isFirstCheckin) {
-                    // REGRA 1: Primeiro Check-in MATA o relógio no limite da Tolerância (O funcionário volta pra casa).
                     endWindow = new Date(startShift.getTime() + tolEntrada * 60000);
                 } else {
-                    // REGRA 3: Retorno. Se for um acúmulo de turno na mesma escala, o botão volta à vida até o limite.
                     endWindow = new Date(endShift.getTime());
                 }
             } else {
-                // REGRA 2: Check-out TOTALMENTE LIVRE a partir do momento que bateu o check-in até o fim da janela/HE.
                 startWindow = new Date(startShift.getTime());
                 endWindow = new Date(endShift.getTime() + (janelaDepois + safeExtra) * 60000);
+                
+                // Diagnóstico específico para Saída
+                if (targetDate > endWindow) blockReason = 'PRORROGAÇÃO_ESGOTADA';
             }
 
-            // Auditoria de Janela (Dashboard/Diagnóstico)
             if (targetDate >= startWindow && targetDate <= endWindow) {
-                console.log(`[ScalesEngine] Sucesso: dentro da janela em offset ${offset} (${type})`);
                 return true;
             }
         }
 
-        console.warn(`[ScalesEngine] Bloqueio: fora da janela ativa (${type}) para o horário ${targetDate.toLocaleTimeString()}`);
-        return false;
+        return blockReason || false;
     },
 
     /**

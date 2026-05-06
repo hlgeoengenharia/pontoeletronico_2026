@@ -18,20 +18,68 @@
     <title>ChronoSync - Resumo do Dia</title>
     <style>
         @media print {
-            .no-print { display: none !important; }
-            body { background: white !important; color: black !important; font-size: 10pt !important; }
-            main { max-width: 100% !important; padding: 0 !important; }
-            .bg-white\/5, .bg-emerald-500\/5, .bg-rose-500\/5, .bg-blue-500\/10 { background: white !important; border: 1px solid #e2e8f0 !important; }
-            .text-slate-100, .text-slate-200, .text-slate-300 { color: black !important; }
-            .text-slate-500, .text-slate-600 { color: #475569 !important; }
-            .card-history { border: 1px solid #e2e8f0 !important; color: black !important; background: white !important; border-left-width: 3px !important; }
-            .card-history p { color: black !important; }
-            .stats-grid { display: grid !important; grid-template-columns: repeat(4, 1fr) !important; gap: 0.5rem !important; }
+            .no-print {
+                display: none !important;
+            }
+
+            body {
+                background: white !important;
+                color: black !important;
+                font-size: 10pt !important;
+            }
+
+            main {
+                max-width: 100% !important;
+                padding: 0 !important;
+            }
+
+            .bg-white\/5,
+            .bg-emerald-500\/5,
+            .bg-rose-500\/5,
+            .bg-blue-500\/10 {
+                background: white !important;
+                border: 1px solid #e2e8f0 !important;
+            }
+
+            .text-slate-100,
+            .text-slate-200,
+            .text-slate-300 {
+                color: black !important;
+            }
+
+            .text-slate-500,
+            .text-slate-600 {
+                color: #475569 !important;
+            }
+
+            .card-history {
+                border: 1px solid #e2e8f0 !important;
+                color: black !important;
+                background: white !important;
+                border-left-width: 3px !important;
+            }
+
+            .card-history p {
+                color: black !important;
+            }
+
+            .stats-grid {
+                display: grid !important;
+                grid-template-columns: repeat(4, 1fr) !important;
+                gap: 0.5rem !important;
+            }
         }
+
         /* Audit Slim Card Styles */
-        .audit-card { transition: all 0.3s ease; }
+        .audit-card {
+            transition: all 0.3s ease;
+        }
+
         @media print {
-            .no-print { display: none !important; }
+            .no-print {
+                display: none !important;
+            }
+
             .audit-card {
                 background: white !important;
                 border: 2px solid #334155 !important;
@@ -42,11 +90,27 @@
                 width: 100% !important;
                 color: black !important;
             }
-            .audit-card img { filter: grayscale(1) contrast(1.2); border-color: #334155 !important; }
-            .audit-card h3 { color: black !important; border-bottom: 2px solid #334155 !important; }
-            .audit-card .text-primary { color: black !important; font-weight: 800 !important; }
-            .audit-card .text-slate-500 { color: #64748b !important; }
+
+            .audit-card img {
+                filter: grayscale(1) contrast(1.2);
+                border-color: #334155 !important;
+            }
+
+            .audit-card h3 {
+                color: black !important;
+                border-bottom: 2px solid #334155 !important;
+            }
+
+            .audit-card .text-primary {
+                color: black !important;
+                font-weight: 800 !important;
+            }
+
+            .audit-card .text-slate-500 {
+                color: #64748b !important;
+            }
         }
+
         /* Estilos do Novo Card de Histórico */
         .card-history {
             position: relative;
@@ -57,14 +121,23 @@
             border-radius: 20px;
             padding: 16px;
         }
+
         .card-history.slim-mode {
             padding: 8px 12px !important;
             margin-bottom: 4px !important;
             border-radius: 8px !important;
             background: rgba(255, 255, 255, 0.02) !important;
         }
-        .card-history.slim-mode p { font-size: 10px !important; line-height: 1.4 !important; }
-        .card-history.slim-mode .material-symbols-outlined { font-size: 10px !important; }
+
+        .card-history.slim-mode p {
+            font-size: 10px !important;
+            line-height: 1.4 !important;
+        }
+
+        .card-history.slim-mode .material-symbols-outlined {
+            font-size: 10px !important;
+        }
+
         .card-history::before {
             content: '';
             position: absolute;
@@ -76,11 +149,26 @@
             background: currentColor;
             opacity: 0.8;
         }
-        .premium-border-blue { color: #3b82f6; }
-        .premium-border-amber { color: #f59e0b; }
-        .premium-border-green { color: #10b981; }
-        .premium-border-rose { color: #f43f5e; }
-        .premium-border-purple { color: #a855f7; }
+
+        .premium-border-blue {
+            color: #3b82f6;
+        }
+
+        .premium-border-amber {
+            color: #f59e0b;
+        }
+
+        .premium-border-green {
+            color: #10b981;
+        }
+
+        .premium-border-rose {
+            color: #f43f5e;
+        }
+
+        .premium-border-purple {
+            color: #a855f7;
+        }
 
         .map-container-card {
             height: 0;
@@ -90,18 +178,21 @@
             margin-top: 0;
             opacity: 0;
         }
+
         .map-container-card.active {
             height: 250px;
             margin-top: 12px;
             opacity: 1;
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
+
         .edit-container-card {
             max-height: 0;
             overflow: hidden;
             transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
             opacity: 0;
         }
+
         .edit-container-card.active {
             max-height: 500px;
             margin-top: 12px;
@@ -109,34 +200,80 @@
             border-top: 1px solid rgba(255, 255, 255, 0.05);
             opacity: 1;
         }
+
         /* Animações de Transição de Página (Slide) */
-        @keyframes slide-out-to-left { 
-            0% { transform: translateX(0); opacity: 1; }
-            100% { transform: translateX(-30px); opacity: 0; }
-        }
-        @keyframes slide-out-to-right { 
-            0% { transform: translateX(0); opacity: 1; }
-            100% { transform: translateX(30px); opacity: 0; }
-        }
-        @keyframes slide-in-from-right { 
-            0% { transform: translateX(30px); opacity: 0; }
-            100% { transform: translateX(0); opacity: 1; }
-        }
-        @keyframes slide-in-from-left { 
-            0% { transform: translateX(-30px); opacity: 0; }
-            100% { transform: translateX(0); opacity: 1; }
+        @keyframes slide-out-to-left {
+            0% {
+                transform: translateX(0);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateX(-30px);
+                opacity: 0;
+            }
         }
 
-        .anim-slide-out-left { animation: slide-out-to-left 0.3s forwards ease-in; }
-        .anim-slide-out-right { animation: slide-out-to-right 0.3s forwards ease-in; }
-        .anim-slide-in-right { animation: slide-in-from-right 0.4s forwards ease-out; }
-        .anim-slide-in-left { animation: slide-in-from-left 0.4s forwards ease-out; }
+        @keyframes slide-out-to-right {
+            0% {
+                transform: translateX(0);
+                opacity: 1;
+            }
 
-        .transition-container { transition: opacity 0.5s ease; }
+            100% {
+                transform: translateX(30px);
+                opacity: 0;
+            }
+        }
+
+        @keyframes slide-in-from-right {
+            0% {
+                transform: translateX(30px);
+                opacity: 0;
+            }
+
+            100% {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slide-in-from-left {
+            0% {
+                transform: translateX(-30px);
+                opacity: 0;
+            }
+
+            100% {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .anim-slide-out-left {
+            animation: slide-out-to-left 0.3s forwards ease-in;
+        }
+
+        .anim-slide-out-right {
+            animation: slide-out-to-right 0.3s forwards ease-in;
+        }
+
+        .anim-slide-in-right {
+            animation: slide-in-from-right 0.4s forwards ease-out;
+        }
+
+        .anim-slide-in-left {
+            animation: slide-in-from-left 0.4s forwards ease-out;
+        }
+
+        .transition-container {
+            transition: opacity 0.5s ease;
+        }
     </style>
 </head>
 
-<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen pb-24 font-['Space_Grotesk']">
+<body
+    class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen pb-24 font-['Space_Grotesk']">
     <header class="border-b border-primary/20 bg-background-dark/80 backdrop-blur-md sticky top-0 z-50 px-4">
         <div class="flex items-center p-4 justify-between max-w-2xl mx-auto">
             <div id="btn-voltar"
@@ -146,11 +283,14 @@
             <div class="text-center flex flex-col items-center">
                 <h2 class="text-slate-100 text-lg font-black tracking-widest uppercase italic">Resumo do Dia</h2>
                 <div class="flex items-center justify-center gap-4 mt-1">
-                    <button onclick="navigateDay(-1)" class="no-print text-slate-500 hover:text-primary transition-all flex items-center justify-center bg-white/5 hover:bg-white/10 active:scale-95 rounded-xl w-12 h-12">
+                    <button onclick="navigateDay(-1)"
+                        class="no-print text-slate-500 hover:text-primary transition-all flex items-center justify-center bg-white/5 hover:bg-white/10 active:scale-95 rounded-xl w-12 h-12">
                         <span class="material-symbols-outlined text-2xl">chevron_left</span>
                     </button>
-                    <p id="dataHeader" class="text-[10px] text-primary font-bold uppercase tracking-[0.2em] m-0">CARREGANDO...</p>
-                    <button onclick="navigateDay(1)" class="no-print text-slate-500 hover:text-primary transition-all flex items-center justify-center bg-white/5 hover:bg-white/10 active:scale-95 rounded-xl w-12 h-12">
+                    <p id="dataHeader" class="text-[10px] text-primary font-bold uppercase tracking-[0.2em] m-0">
+                        CARREGANDO...</p>
+                    <button onclick="navigateDay(1)"
+                        class="no-print text-slate-500 hover:text-primary transition-all flex items-center justify-center bg-white/5 hover:bg-white/10 active:scale-95 rounded-xl w-12 h-12">
                         <span class="material-symbols-outlined text-2xl">chevron_right</span>
                     </button>
                 </div>
@@ -162,28 +302,37 @@
     </header>
 
     <main id="main-content" class="max-w-2xl mx-auto p-4 md:p-8 space-y-8 transition-container">
-        <div class="audit-card bg-slate-900 border border-white/5 rounded-3xl p-5 flex items-center gap-6 shadow-2xl relative group">
-            <div class="relative w-24 h-24 rounded-2xl border-4 border-amber-500/30 overflow-hidden shrink-0 shadow-2xl transition-all group-hover:border-amber-500/50">
-                <img id="user-photo-audit" src="https://ui-avatars.com/api/?name=User&background=020617&color=fff" 
-                     class="w-full h-full object-cover">
+        <div
+            class="audit-card bg-slate-900 border border-white/5 rounded-3xl p-5 flex items-center gap-6 shadow-2xl relative group">
+            <div
+                class="relative w-24 h-24 rounded-2xl border-4 border-amber-500/30 overflow-hidden shrink-0 shadow-2xl transition-all group-hover:border-amber-500/50">
+                <img id="user-photo-audit" src="https://ui-avatars.com/api/?name=User&background=020617&color=fff"
+                    class="w-full h-full object-cover">
                 <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent pointer-events-none"></div>
             </div>
             <div class="flex-1 min-w-0">
-                <h3 id="user-nome-audit" class="text-xl font-black text-slate-100 uppercase italic truncate leading-tight border-b border-amber-500/20 pb-2 mb-2">
+                <h3 id="user-nome-audit"
+                    class="text-xl font-black text-slate-100 uppercase italic truncate leading-tight border-b border-amber-500/20 pb-2 mb-2">
                     CARREGANDO...
                 </h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-y-1 gap-x-4">
                     <div class="flex items-center gap-2">
-                        <span class="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none">Cargo:</span>
-                        <span id="user-cargo-audit" class="text-[9px] font-bold text-amber-500 uppercase truncate leading-none">---</span>
+                        <span
+                            class="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none">Cargo:</span>
+                        <span id="user-cargo-audit"
+                            class="text-[9px] font-bold text-amber-500 uppercase truncate leading-none">---</span>
                     </div>
                     <div class="flex items-center gap-2">
-                        <span class="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none">Setor:</span>
-                        <span id="user-setor-audit" class="text-[9px] font-bold text-amber-500 uppercase truncate leading-none">---</span>
+                        <span
+                            class="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none">Setor:</span>
+                        <span id="user-setor-audit"
+                            class="text-[9px] font-bold text-amber-500 uppercase truncate leading-none">---</span>
                     </div>
                     <div class="flex items-center gap-2">
-                        <span class="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none">Matrícula:</span>
-                        <span id="user-matricula-audit" class="text-[9px] font-bold text-amber-500 uppercase truncate leading-none">#---</span>
+                        <span
+                            class="text-[8px] font-black text-slate-500 uppercase tracking-widest leading-none">Matrícula:</span>
+                        <span id="user-matricula-audit"
+                            class="text-[9px] font-bold text-amber-500 uppercase truncate leading-none">#---</span>
                     </div>
                 </div>
             </div>
@@ -191,19 +340,26 @@
 
         <!-- Estatísticas do Dia -->
         <div class="stats-grid grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div class="bg-white/5 border border-white/10 p-5 rounded-3xl border-l-4 border-l-slate-400 flex flex-col justify-center">
+            <div
+                class="bg-white/5 border border-white/10 p-5 rounded-3xl border-l-4 border-l-slate-400 flex flex-col justify-center">
                 <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1 leading-tight">Horário</p>
-                <p id="horarioPrevisto" class="text-lg font-black text-slate-300 italic leading-none mt-1">--:-- / --:--</p>
+                <p id="horarioPrevisto" class="text-lg font-black text-slate-300 italic leading-none mt-1">--:-- / --:--
+                </p>
             </div>
-            <div class="bg-primary/5 border border-primary/10 p-5 rounded-3xl border-l-4 border-l-primary flex flex-col justify-center">
-                <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1 leading-tight">Trabalhado</p>
+            <div
+                class="bg-primary/5 border border-primary/10 p-5 rounded-3xl border-l-4 border-l-primary flex flex-col justify-center">
+                <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1 leading-tight">Trabalhado
+                </p>
                 <p id="totalTrabalhado" class="text-2xl font-black text-slate-100 italic leading-none mt-1">00:00</p>
             </div>
-            <div class="bg-white/5 border border-white/10 p-5 rounded-3xl border-l-4 border-l-slate-400 flex flex-col justify-center">
-                <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1 leading-tight">Previsto</p>
+            <div
+                class="bg-white/5 border border-white/10 p-5 rounded-3xl border-l-4 border-l-slate-400 flex flex-col justify-center">
+                <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1 leading-tight">Previsto
+                </p>
                 <p id="totalEsperado" class="text-2xl font-black text-slate-300 italic leading-none mt-1">00:00</p>
             </div>
-            <div id="saldoCard" class="bg-emerald-500/5 border border-emerald-500/10 p-5 rounded-3xl border-l-4 border-l-emerald-500 flex flex-col justify-center">
+            <div id="saldoCard"
+                class="bg-emerald-500/5 border border-emerald-500/10 p-5 rounded-3xl border-l-4 border-l-emerald-500 flex flex-col justify-center">
                 <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1 leading-tight">Saldo</p>
                 <p id="totalSaldo" class="text-2xl font-black text-emerald-400 italic leading-none mt-1">00:00</p>
             </div>
@@ -250,7 +406,7 @@
             const dataRef = urlParams.get('date') || new Date().toISOString().split('T')[0];
 
             document.getElementById('dataHeader').innerText = new Date(dataRef + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' }).toUpperCase();
-            
+
             UI.showLoader();
 
             try {
@@ -286,22 +442,22 @@
                     `)
                     .eq('funcionario_id', targetId)
                     .single();
-                
+
                 if (errPerfil) throw errPerfil;
-                
-                const func = { 
-                    ...perfil?.funcionarios, 
+
+                const func = {
+                    ...perfil?.funcionarios,
                     nome_completo: perfil?.funcionarios?.identidades_globais?.nome_completo || 'Tripulante',
                     // Importante: A vigência para o ScalesEngine agora vem de data_inicio_prevista
                     vigencia_inicio: perfil?.funcionarios?.data_inicio_prevista,
-                    foto_url: perfil?.foto_url 
+                    foto_url: perfil?.foto_url
                 };
 
                 document.getElementById('user-nome-audit').innerText = (func.nome_completo || 'Tripulante').toUpperCase();
                 document.getElementById('user-cargo-audit').innerText = (func.funcao || 'N/A').toUpperCase();
                 document.getElementById('user-setor-audit').innerText = (func.setores?.nome || 'N/A').toUpperCase();
                 document.getElementById('user-matricula-audit').innerText = `#${func.matricula || '---'}`;
-                
+
                 // Photo Sync Logic with Error Fallback
                 const photoImg = document.getElementById('user-photo-audit');
                 if (func.foto_url) {
@@ -366,19 +522,19 @@
             const dateObj = new Date(dataRef + 'T12:00:00');
             const month = dateObj.getMonth();
             const year = dateObj.getFullYear();
-            
+
             // Re-fetch manual dos feriados/ferias para o ScalesEngine decidir os badges do header
             // (Mas vamos usar as variáveis locais se possível)
             const plannedDays = (escala) ? ScalesEngine.projectBaseDays(escala, escala.vigencia_inicio, month, year) : [];
-            
+
             // Determinar isenção para estatísticas
             const isPlanned = plannedDays.includes(dataRef);
             const isFeriado = allItems.some(i => i.itemType === 'FERIAS_FOLGA');
             const isVacation = allItems.some(i => i.itemType === 'CRONOGRAMA_FERIAS' || i.itemType === 'FERIAS');
-            
-            const dayExemptInfo = { 
-                exempt: !isPlanned || isFeriado || isVacation, 
-                type: isVacation ? 'FÉRIAS' : (isFeriado ? 'FERIADO' : 'FOLGA') 
+
+            const dayExemptInfo = {
+                exempt: !isPlanned || isFeriado || isVacation,
+                type: isVacation ? 'FÉRIAS' : (isFeriado ? 'FERIADO' : 'FOLGA')
             };
 
             // [NOVO] Lógica de DIA EXTRA: Convocação sobrepõe folga original
@@ -387,14 +543,14 @@
                 dayExemptInfo.exempt = false;
                 dayExemptInfo.type = 'CONVOCADO'; // Texto para o badge superior
             }
-            
+
             // 1. Cálculos de Tempo
             const possessesLunch = escala?.possui_almoco !== false;
             let workedMins = calculateWorkedMinutes(pontos, possessesLunch);
-            
+
             // Abono se aprovado
             const isAbonado = allItems.some(i => i.itemType === 'JUSTIFICATIVA' && (i.status === 'aprovado' || i.status === 'abonado'));
-            
+
             const isFinished = ScalesEngine.isDayFinished(dataRef, escala);
             const shouldCharge = (isPlanned || isDiaExtra) && !dayExemptInfo.exempt && (pontos.length > 0 || isFinished);
             const dailyPlannedMinutes = shouldCharge ? ScalesEngine.calculateDailyWorkMinutes(escala) : 0;
@@ -407,17 +563,17 @@
 
             document.getElementById('totalTrabalhado').innerText = formatMinutes(workedMins);
             document.getElementById('totalEsperado').innerText = dayExemptInfo.exempt ? dayExemptInfo.type : formatMinutes(dailyPlannedMinutes);
-            
+
             if (dayExemptInfo.exempt || dayExemptInfo.type === 'CONVOCADO') {
-                const badgeColor = dayExemptInfo.type === 'FÉRIAS' ? 'bg-blue-500' : 
-                                   (dayExemptInfo.type === 'FERIADO' ? 'bg-purple-500' : 
-                                   (dayExemptInfo.type === 'CONVOCADO' ? 'bg-emerald-500' : 'bg-slate-600'));
+                const badgeColor = dayExemptInfo.type === 'FÉRIAS' ? 'bg-blue-500' :
+                    (dayExemptInfo.type === 'FERIADO' ? 'bg-purple-500' :
+                        (dayExemptInfo.type === 'CONVOCADO' ? 'bg-emerald-500' : 'bg-slate-600'));
                 const existingBadge = document.querySelector('.status-exempt-badge');
                 if (!existingBadge) {
-                   document.getElementById('user-nome-audit').innerHTML += ` <span class="status-exempt-badge ml-2 px-3 py-1 ${badgeColor} text-white text-[10px] font-black rounded-full italic shadow-lg">${dayExemptInfo.type === 'CONVOCADO' ? '' : 'EM '}${dayExemptInfo.type}</span>`;
+                    document.getElementById('user-nome-audit').innerHTML += ` <span class="status-exempt-badge ml-2 px-3 py-1 ${badgeColor} text-white text-[10px] font-black rounded-full italic shadow-lg">${dayExemptInfo.type === 'CONVOCADO' ? '' : 'EM '}${dayExemptInfo.type}</span>`;
                 }
             }
-            
+
             const horarioEl = document.getElementById('horarioPrevisto');
             if (pontos && pontos.length > 0) {
                 const primeiroPonto = new Date(pontos[0].data_hora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
@@ -426,7 +582,7 @@
             } else {
                 horarioEl.innerText = dayExemptInfo.exempt ? dayExemptInfo.type : '--:-- / --:--';
             }
-            
+
             const saldoLabel = document.getElementById('totalSaldo');
             if (dayExemptInfo.exempt) {
                 saldoLabel.innerText = `00:00 | ${dayExemptInfo.type}`;
@@ -482,10 +638,10 @@
 
             // 3. Render Cards Dinâmicos (HistoryRenderer)
             const obsCont = document.getElementById('containerObservacoes');
-            obsCont.innerHTML = HistoryRenderer.renderList(allItems, { 
+            obsCont.innerHTML = HistoryRenderer.renderList(allItems, {
                 isAdmin: localStorage.getItem('userRole') === 'Admin',
                 isContextDiario: false,
-                hideActions: true 
+                hideActions: true
             });
         }
 
@@ -493,7 +649,7 @@
             let mins = 0;
             // Filtrar apenas batidas aprovadas ou pendentes (ignorar rejeitadas)
             const activePoints = points.filter(p => p.status_validacao !== 'rejeitado');
-            
+
             for (let i = 0; i < activePoints.length; i += 2) {
                 if (activePoints[i + 1]) mins += (new Date(activePoints[i + 1].data_hora) - new Date(activePoints[i].data_hora)) / 60000;
             }
@@ -501,7 +657,7 @@
             // Dedução automática de 1h APENAS se a escala possui_almoco E jornada > 6h
             // (Mesma lógica do ScalesEngine.calculateDailyWorkMinutes)
             if (possuiAlmoco && mins > 360) mins -= 60;
-            
+
             return Math.max(0, mins);
         }
 
@@ -523,30 +679,30 @@
             const m = absMins % 60;
             return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
         }
-        
-        window.navigateDay = function(offset) {
+
+        window.navigateDay = function (offset) {
             const urlParams = new URLSearchParams(window.location.search);
             const targetId = urlParams.get('id');
             const currentDateStr = urlParams.get('date') || new Date().toISOString().split('T')[0];
-            
+
             const dateObj = new Date(currentDateStr + 'T12:00:00');
             dateObj.setDate(dateObj.getDate() + offset);
-            
+
             const newDateStr = dateObj.toISOString().split('T')[0];
-            
+
             urlParams.set('date', newDateStr);
             if (targetId) {
                 urlParams.set('id', targetId);
             }
-            
+
             // Aplicar animação de saída
             const content = document.getElementById('main-content');
             const outClass = offset > 0 ? 'anim-slide-out-left' : 'anim-slide-out-right';
             content.classList.add(outClass);
-            
+
             // Salvar direção para a animação de entrada na nova página
             sessionStorage.setItem('last_nav_direction', offset > 0 ? 'next' : 'prev');
-            
+
             setTimeout(() => {
                 window.location.href = `resumo_dia.html?${urlParams.toString()}`;
             }, 250);
@@ -564,10 +720,10 @@
         const handleEnd = (e) => {
             const endX = e.type.includes('touch') ? e.changedTouches[0].clientX : e.clientX;
             const endY = e.type.includes('touch') ? e.changedTouches[0].clientY : e.clientY;
-            
+
             const diffX = touchStartX - endX;
             const diffY = touchStartY - endY;
-            
+
             // Threshold: 100px para evitar toques acidentais
             // E garantir que o movimento horizontal é maior que o vertical
             if (Math.abs(diffX) > 100 && Math.abs(diffX) > Math.abs(diffY)) {
@@ -595,11 +751,11 @@
             if (!container) return;
 
             const isActive = container.classList.toggle('active');
-            
+
             if (isActive) {
                 if (btnTxt) btnTxt.innerText = 'Fechar Visualização';
                 if (btnIcon) btnIcon.innerText = 'close';
-                
+
                 setTimeout(() => {
                     if (!mapInstances[id]) {
                         const [lat, lng] = coordenadas.split(',').map(Number);
@@ -609,7 +765,7 @@
                         }).setView([lat, lng], 16);
 
                         L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
-                        
+
                         const pinIcon = L.divIcon({
                             html: `<span class="material-symbols-outlined text-rose-500 font-variation-settings-fill" style="font-size: 32px; filter: drop-shadow(0 0 5px rgba(244,63,94,0.5))">location_on</span>`,
                             className: 'custom-div-icon',
@@ -617,7 +773,7 @@
                             iconAnchor: [16, 32]
                         });
 
-                        L.marker([lat, lng], {icon: pinIcon}).addTo(map);
+                        L.marker([lat, lng], { icon: pinIcon }).addTo(map);
                         mapInstances[id] = map;
                     } else {
                         mapInstances[id].invalidateSize();
@@ -733,22 +889,28 @@
     </script>
 
     <!-- Bottom Navigation (Links dinâmicos) -->
-    <nav class="fixed bottom-0 left-0 right-0 bg-background-dark/90 border-t border-white/5 py-4 z-50 flex justify-center backdrop-blur-xl no-print">
+    <nav
+        class="fixed bottom-0 left-0 right-0 bg-background-dark/90 border-t border-white/5 py-4 z-50 flex justify-center backdrop-blur-xl no-print">
         <div class="flex items-center justify-around w-full max-w-md px-6">
-            <a href="dashboard.html" class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+            <a href="dashboard.html"
+                class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
                 <span class="material-symbols-outlined text-2xl">home</span>
                 <span class="text-[9px] font-black uppercase tracking-widest text-center">Início</span>
             </a>
-            <a href="estatistica_funcionario.html" class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+            <a href="estatistica_funcionario.html"
+                class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
                 <span class="material-symbols-outlined text-2xl">bar_chart</span>
                 <span class="text-[9px] font-black uppercase tracking-widest text-center">Estatística</span>
             </a>
-            <a href="diario_funcionario.html" class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors relative">
+            <a href="diario_funcionario.html"
+                class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors relative">
                 <span class="material-symbols-outlined text-2xl">edit_note</span>
                 <span class="text-[9px] font-black uppercase tracking-widest text-center">Diário</span>
-                <span id="notif-badge-footer" class="absolute top-0 right-0 size-3.5 bg-amber-500 text-white text-[7px] font-black rounded-full flex items-center justify-center border border-background-dark hidden">0</span>
+                <span id="notif-badge-footer"
+                    class="absolute top-0 right-0 size-3.5 bg-amber-500 text-white text-[7px] font-black rounded-full flex items-center justify-center border border-background-dark hidden">0</span>
             </a>
-            <a id="nav-perfil-link" href="perfil_funcionario.html" class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
+            <a id="nav-perfil-link" href="perfil_funcionario.html"
+                class="flex flex-col items-center gap-1.5 text-slate-500 hover:text-primary transition-colors">
                 <span class="material-symbols-outlined text-2xl">person</span>
                 <span class="text-[9px] font-black uppercase tracking-widest text-center">Perfil</span>
             </a>

@@ -292,6 +292,15 @@
             <!-- Gestão e Escala (Admin & Gestor) -->
             <div id="management-fields" class="space-y-6 pt-6 border-t border-primary/20">
                 <div class="grid grid-cols-2 gap-4">
+                    <!-- Empresa (Largura Total) -->
+                    <div class="group col-span-full">
+                        <label class="block text-xs font-bold uppercase tracking-widest text-amber-500 mb-3">Empresa</label>
+                        <select id="empresa-select" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg py-3 px-4 text-sm outline-none transition-all">
+                            <option value="">Selecionar...</option>
+                        </select>
+                    </div>
+
+                    <!-- Cargo -->
                     <div class="group">
                         <div class="flex items-center justify-between mb-3">
                             <label class="block text-xs font-bold uppercase tracking-widest text-primary">Cargo</label>
@@ -303,16 +312,12 @@
                             <option value="">Selecionar...</option>
                         </select>
                     </div>
+
+                    <!-- Setor -->
                     <div class="group">
                         <label class="block text-xs font-bold uppercase tracking-widest text-primary mb-3">Setor</label>
                         <select id="setor-select" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg py-3 px-4 text-sm outline-none transition-all">
                             <option value="">Carregando...</option>
-                        </select>
-                    </div>
-                    <div class="group">
-                        <label class="block text-xs font-bold uppercase tracking-widest text-amber-500 mb-3">Empresa</label>
-                        <select id="empresa-select" class="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-lg py-3 px-4 text-sm outline-none transition-all">
-                            <option value="">Selecionar...</option>
                         </select>
                     </div>
                 </div>
@@ -955,44 +960,53 @@
                      s.innerHTML = '';
                  });
 
-                 defaultParent.appendChild(formContainer);
-                 formContainer.classList.remove('hidden');
+                 if (formContainer && defaultParent) {
+                    defaultParent.appendChild(formContainer);
+                    formContainer.classList.remove('hidden');
+                 }
 
                  if (existingUser?.funcionarios && existingUser.funcionarios.length > 0) {
-                     // Usuário já existe na base - verificar vinculação
-                     const loggedUser = Auth.getUser();
-                     const userEmpresaId = loggedUser?.empresa_id;
-                     const existingFunc = existingUser.funcionarios[0];
+                     // Usuário já existe na base - verificar vinculação em todo o array
+                     const userRole = localStorage.getItem('userRole') || '';
+                     const userEmpresaId = localStorage.getItem('companyId');
+                     
+                     // Procurar se algum dos vínculos é com a empresa atual
+                     const alreadyInCompany = existingUser.funcionarios.find(f => f.empresa_id === userEmpresaId);
 
-                     // Verificar se já está vinculado a esta empresa
-                     if (userEmpresaId && existingFunc.empresa_id === userEmpresaId) {
-                         UI.showToast('Este tripulante já está vinculado à sua empresa.', 'warning');
-                         // Carregar dados para visualização
-                         carregarDadosTripulante(existingFunc.id);
+                     if (alreadyInCompany) {
+                         UI.showToast('Este tripulante já possui um cadastro ativo na sua empresa.', 'warning');
+                         // Carregar dados para visualização/edição conforme permissão
+                         carregarDadosTripulante(alreadyInCompany.id);
                          setFormLocked(true);
                      } else {
-                         // Não está vinculado - oferecemos vincular
-                         if (confirm(`Tripulante encontrado: ${existingUser.nome_completo}. Deseja vincular à sua empresa?`)) {
-                             // Atualizar empresa_id do funcionário
-                             const { error: updateError } = await supabase
+                         // Não está vinculado a esta empresa, mas existe globalmente
+                         if (confirm(`Tripulante encontrado no sistema: ${existingUser.nome_completo}. Deseja vincular este perfil à sua empresa?`)) {
+                             // Criar novo vínculo (portabilidade)
+                             const { error: linkError } = await supabase
                                  .from('funcionarios')
-                                 .update({ empresa_id: userEmpresaId })
-                                 .eq('id', existingFunc.id);
+                                 .insert([{ 
+                                     identidade_id: existingUser.id, 
+                                     empresa_id: userEmpresaId,
+                                     matricula: 'NOVO-' + Math.random().toString(36).substring(7).toUpperCase()
+                                 }]);
 
-                             if (updateError) throw updateError;
-                             UI.showToast('Tripulante vinculado com sucesso!', 'success');
-                             // Recarregar lista
-                             if (typeof carregarLista === 'function') carregarLista();
+                             if (linkError) throw linkError;
+                             UI.showToast('Tripulante vinculado com sucesso! Complete os dados profissionais.', 'success');
+                             loadFuncionarios();
+                         } else {
+                             fecharFormCadastro();
+                             UI.hideLoader();
+                             return;
                          }
                      }
                  } else {
                      // Novo usuário - abrir formulário em branco
-                     document.getElementById('cpf').value = cpf;
-                     carregarDadosTripulante(null);
+                     await carregarDadosTripulante(null);
+                     if (document.getElementById('cpf')) document.getElementById('cpf').value = cpf;
                      setFormLocked(false);
                  }
 
-                 formContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                 if (formContainer) formContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
              } catch (err) {
                  console.error('Erro ao buscar CPF:', err);
@@ -1001,15 +1015,64 @@
                  // Mesmo com erro, abre o formulário
                  const formContainer = document.getElementById('container-form');
                  const defaultParent = document.querySelector('section.space-y-4');
-                 defaultParent.appendChild(formContainer);
-                 formContainer.classList.remove('hidden');
-                 document.getElementById('cpf').value = cpf;
-                 carregarDadosTripulante(null);
+                 if (formContainer && defaultParent) {
+                    defaultParent.appendChild(formContainer);
+                    formContainer.classList.remove('hidden');
+                 }
+                 await carregarDadosTripulante(null);
+                 if (document.getElementById('cpf')) document.getElementById('cpf').value = cpf;
                  setFormLocked(false);
              } finally {
                  UI.hideLoader();
              }
         };
+
+        // --- GESTÃO DE EMPRESAS ---
+        window.abrirFormularioEmpresa = () => {
+            document.getElementById('empresa-form-container').classList.remove('hidden');
+            document.getElementById('empresa-form').reset();
+            document.getElementById('empresa-id').value = '';
+            document.getElementById('empresa-logo-preview').classList.add('hidden');
+            document.getElementById('empresa-form-container').scrollIntoView({ behavior: 'smooth' });
+        };
+
+        window.fecharFormularioEmpresa = () => {
+            document.getElementById('empresa-form-container').classList.add('hidden');
+        };
+
+        document.getElementById('empresa-form').onsubmit = async (e) => {
+            e.preventDefault();
+            UI.showLoader();
+            
+            const id = document.getElementById('empresa-id').value;
+            const dados = {
+                nome_fantasia: document.getElementById('empresa-nome-fantasia').value,
+                cnpj: document.getElementById('empresa-cnpj').value,
+                razao_social: document.getElementById('empresa-razao').value,
+                email_contato: document.getElementById('empresa-email').value,
+                logo_url: document.getElementById('empresa-logo').value
+            };
+
+            try {
+                if (id) {
+                    const { error } = await supabase.from('empresas').update(dados).eq('id', id);
+                    if (error) throw error;
+                    UI.showToast('Empresa atualizada!', 'success');
+                } else {
+                    const { error } = await supabase.from('empresas').insert([dados]);
+                    if (error) throw error;
+                    UI.showToast('Empresa cadastrada!', 'success');
+                }
+                fecharFormularioEmpresa();
+                carregarDadosIniciais(); // Recarrega os selects
+            } catch (err) {
+                console.error('Erro ao salvar empresa:', err);
+                UI.showToast('Erro ao salvar empresa', 'error');
+            } finally {
+                UI.hideLoader();
+            }
+        };
+
 
 
         // Toggle Form Principal (Novo)
@@ -1280,12 +1343,13 @@
             }
         });
 
-        async function carregarDadosTripulante(id = null) {
+        async function carregarDadosTripulante(id = undefined) {
             UI.showLoader();
             try {
-                // Se não houver id passado, tenta pegar da URL (carregamento inicial da página)
+                // Se id for null, forçamos um novo cadastro independente da URL
+                // Se id for undefined, tentamos pegar da URL
                 const urlParams = new URLSearchParams(window.location.search);
-                const editId = id || urlParams.get('id');
+                const editId = (id === null) ? null : (id || urlParams.get('id'));
 
                 if (editId) {
                     isEditMode = true;
@@ -1306,6 +1370,11 @@
                         .single();
                     if (errEmp) throw errEmp;
                     if (emp) {
+                         // Primeiro carrega as dependências da empresa do funcionário
+                         if (emp.empresa_id) {
+                             document.getElementById('empresa-select').value = emp.empresa_id;
+                             await carregarDependenciasEmpresa(emp.empresa_id);
+                         }
                          document.getElementById('nome_completo').value = emp.identidades_globais?.nome_completo || '';
                          document.getElementById('cpf').value = emp.identidades_globais?.cpf || '';
                          document.getElementById('rg').value = emp.identidades_globais?.rg || '';
@@ -1469,23 +1538,125 @@ document.getElementById('setor-select').value = emp.setor_id || '';
         }
 
 
+        async function carregarDependenciasEmpresa(empresaId) {
+            console.log(`[DEBUG] carregarDependenciasEmpresa chamada para ID: ${empresaId}`);
+            if (!empresaId) {
+                // Desabilitar selects se nenhuma empresa estiver selecionada
+                ['setor-select', 'funcao-select', 'escala-select'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        el.innerHTML = '<option value="">Selecione uma empresa primeiro...</option>';
+                        el.disabled = true;
+                        el.classList.add('opacity-50', 'cursor-not-allowed');
+                    }
+                });
+                return;
+            }
+
+            UI.showLoader();
+            try {
+                // 1. Carregar Setores (Específicos da Empresa + Globais)
+                const { data: setores, error: errorSetores } = await supabase
+                    .from('setores')
+                    .select('*')
+                    .or(`empresa_id.eq.${empresaId},empresa_id.is.null`)
+                    .order('nome');
+                
+                console.log(`[DEBUG] Setores encontrados: ${setores?.length || 0}`, setores);
+                
+                const setorSelect = document.getElementById('setor-select');
+                if (setorSelect) {
+                    setorSelect.innerHTML = '<option value="">Selecionar Setor...</option>';
+                    if (setores && setores.length > 0) {
+                        setoresData = setores;
+                        setores.forEach(s => {
+                            const opt = document.createElement('option');
+                            opt.value = s.id;
+                            opt.textContent = s.nome + (s.empresa_id ? '' : ' (GLOBAL)');
+                            setorSelect.appendChild(opt);
+                        });
+                    }
+                    setorSelect.disabled = false;
+                    setorSelect.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+
+                // 2. Carregar Cargos (Específicos da Empresa + Globais)
+                const { data: cargos, error: errorCargos } = await supabase
+                    .from('cargos')
+                    .select('*')
+                    .or(`empresa_id.eq.${empresaId},empresa_id.is.null`)
+                    .order('nome');
+                
+                console.log(`[DEBUG] Cargos encontrados: ${cargos?.length || 0}`, cargos);
+
+                const cargoSelect = document.getElementById('funcao-select');
+                if (cargoSelect) {
+                    cargoSelect.innerHTML = '<option value="">Selecionar Cargo...</option>';
+                    if (cargos && cargos.length > 0) {
+                        cargosData = cargos;
+                        cargos.forEach(c => {
+                            const opt = document.createElement('option');
+                            opt.value = c.id;
+                            opt.textContent = `${c.nome} (${c.nivel})${c.empresa_id ? '' : ' [GLOBAL]'}`;
+                            cargoSelect.appendChild(opt);
+                        });
+                    }
+                    cargoSelect.disabled = false;
+                    cargoSelect.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+
+                // 3. Carregar Escalas (Específicas da Empresa + Globais)
+                const { data: escalas, error: errorEscalas } = await supabase
+                    .from('escalas')
+                    .select('*')
+                    .or(`empresa_id.eq.${empresaId},empresa_id.is.null`)
+                    .order('nome');
+                
+                console.log(`[DEBUG] Escalas encontradas: ${escalas?.length || 0}`, escalas);
+
+                const escalaSelect = document.getElementById('escala-select');
+                if (escalaSelect) {
+                    escalaSelect.innerHTML = '<option value="">Selecionar Escala...</option>';
+                    if (escalas && escalas.length > 0) {
+                        escalas.forEach(e => {
+                            escalasData[e.id] = {
+                                nome: e.nome,
+                                carga: e.carga_horaria_semanal,
+                                tipo: "Presencial",
+                                entrada: e.horario_entrada,
+                                saida: e.horario_saida,
+                                diasSemana: e.dias_trabalho_semana,
+                                dias: e.dias_padrao || []
+                            };
+                            const opt = document.createElement('option');
+                            opt.value = e.id;
+                            opt.textContent = e.nome + (e.empresa_id ? '' : ' (GLOBAL)');
+                            escalaSelect.appendChild(opt);
+                        });
+                    }
+                    escalaSelect.disabled = false;
+                    escalaSelect.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+
+                if ((!setores || setores.length === 0) && (!cargos || cargos.length === 0) && (!escalas || escalas.length === 0)) {
+                    UI.showToast('Aviso: Esta empresa ainda não possui Setores, Cargos ou Escalas cadastrados.', 'warning');
+                }
+
+            } catch (err) {
+                console.error('Erro ao carregar dependências da empresa:', err);
+                UI.showToast('Erro ao filtrar opções da empresa', 'error');
+            } finally {
+                UI.hideLoader();
+            }
+        }
+
+
         async function carregarDadosIniciais() {
             console.log('[Cadastro] Iniciando carregamento de dados básicos...');
             UI.showLoader();
             try {
-                // Carregar Setores
-                const { data: setores, error: errorSetores } = await supabase.from('setores').select('*').order('nome');
-                if (errorSetores) throw errorSetores;
-                setoresData = setores;
-
-                const setorSelect = document.getElementById('setor-select');
-                setorSelect.innerHTML = '<option value="">Selecionar Setor...</option>';
-                setores.forEach(s => {
-                    const opt = document.createElement('option');
-                    opt.value = s.id;
-                    opt.textContent = s.nome;
-                    setorSelect.appendChild(opt);
-                });
+                // Inicialmente desabilita dependências
+                await carregarDependenciasEmpresa(null);
 
                 // Carregar Empresas
                 const { data: empresas, error: errorEmpresas } = await supabase.from('empresas').select('*').order('nome_fantasia');
@@ -1493,56 +1664,68 @@ document.getElementById('setor-select').value = emp.setor_id || '';
                     console.warn('Erro ao carregar empresas:', errorEmpresas);
                 } else {
                     const empresaSelect = document.getElementById('empresa-select');
+                    const empresasList = document.getElementById('empresas-list');
+                    
                     empresaSelect.innerHTML = '<option value="">Selecionar Empresa...</option>';
+                    empresasList.innerHTML = '';
+
                     empresas.forEach(e => {
+                        // Popula Select
                         const opt = document.createElement('option');
                         opt.value = e.id;
                         opt.textContent = e.nome_fantasia;
                         empresaSelect.appendChild(opt);
+
+                        // Popula Lista (Card Estilo Premium)
+                        const card = document.createElement('div');
+                        card.className = "bg-slate-900/40 border border-white/5 rounded-xl p-4 flex items-center justify-between group hover:border-amber-500/30 transition-all cursor-pointer";
+                        card.onclick = () => {
+                            document.getElementById('empresa-id').value = e.id;
+                            document.getElementById('empresa-nome-fantasia').value = e.nome_fantasia || '';
+                            document.getElementById('empresa-cnpj').value = e.cnpj || '';
+                            document.getElementById('empresa-razao').value = e.razao_social || '';
+                            document.getElementById('empresa-email').value = e.email_contato || '';
+                            document.getElementById('empresa-logo').value = e.logo_url || '';
+                            
+                            if (e.logo_url) {
+                                document.getElementById('empresa-logo-img').src = e.logo_url;
+                                document.getElementById('empresa-logo-preview').classList.remove('hidden');
+                            }
+                            
+                            document.getElementById('empresa-form-container').classList.remove('hidden');
+                            document.getElementById('empresa-form-container').scrollIntoView({ behavior: 'smooth' });
+                        };
+
+                        card.innerHTML = `
+                            <div class="flex items-center gap-3">
+                                <div class="size-10 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center overflow-hidden">
+                                    ${e.logo_url ? `<img src="${e.logo_url}" class="w-full h-full object-contain">` : `<span class="material-symbols-outlined text-amber-500">business</span>`}
+                                </div>
+                                <div>
+                                    <h4 class="text-[11px] font-bold text-slate-200 uppercase">${e.nome_fantasia}</h4>
+                                    <p class="text-[8px] text-slate-500 uppercase font-black">${e.cnpj || 'SEM CNPJ'}</p>
+                                </div>
+                            </div>
+                            <span class="material-symbols-outlined text-slate-600 group-hover:text-amber-500 transition-colors">edit</span>
+                        `;
+                        empresasList.appendChild(card);
                     });
+
+                    // Se houver empresa pré-setada (ex: Admin Logado)
+                    const userEmpresaId = localStorage.getItem('companyId');
+                    if (userEmpresaId) {
+                        empresaSelect.value = userEmpresaId;
+                        await carregarDependenciasEmpresa(userEmpresaId);
+                    }
                 }
 
-                // Carregar Cargos
-                const { data: cargos, error: errorCargos } = await supabase.from('cargos').select('*').order('nome');
-                if (errorCargos) throw errorCargos;
-
-                const cargoSelect = document.getElementById('funcao-select');
-                cargoSelect.innerHTML = '<option value="">Selecionar Cargo...</option>';
-                cargos.forEach(c => {
-                    const opt = document.createElement('option');
-                    opt.value = c.id;
-                    opt.textContent = `${c.nome} (${c.nivel})`;
-                    cargoSelect.appendChild(opt);
-                });
-
-                // Carregar Escalas
-                const { data: escalas, error: errorEscalas } = await supabase.from('escalas').select('*').order('nome');
-                if (errorEscalas) throw errorEscalas;
-
-                const escalaSelect = document.getElementById('escala-select');
-                escalaSelect.innerHTML = '<option value="">Selecionar Escala...</option>';
-                escalas.forEach(e => {
-                    escalasData[e.id] = {
-                        nome: e.nome,
-                        carga: e.carga_horaria_semanal,
-                        tipo: "Presencial",
-                        entrada: e.horario_entrada,
-                        saida: e.horario_saida,
-                        diasSemana: e.dias_trabalho_semana,
-                        dias: e.dias_padrao || []
-                    };
-                    const opt = document.createElement('option');
-                    opt.value = e.id;
-                    opt.textContent = e.nome;
-                    escalaSelect.appendChild(opt);
-                });
-
-                // Carregar Especialidades para o Catálogo e Datalist
+                // Carregar Especialidades para o Catálogo e Datalist (Globais)
                 const { data: especialidades, error: errorEsp } = await supabase.from('especialidades').select('*').order('nome');
                 if (!errorEsp) {
                     especialidadesCatalogo = especialidades;
                     const graduacoes = [...new Set(especialidades.map(e => e.nome_graduacao_principal).filter(Boolean))];
                     const gradSelect = document.getElementById('graduacao_principal_select');
+                    gradSelect.innerHTML = '<option value="">Selecionar...</option>';
                     graduacoes.forEach(g => {
                         const opt = document.createElement('option');
                         opt.value = g;
@@ -1550,8 +1733,6 @@ document.getElementById('setor-select').value = emp.setor_id || '';
                         gradSelect.appendChild(opt);
                     });
                 }
-
-                cargosData = cargos;
 
                 // Carregar dados específicos se for edição
                 await carregarDadosTripulante();
@@ -1566,6 +1747,7 @@ document.getElementById('setor-select').value = emp.setor_id || '';
                 UI.hideLoader();
             }
         }
+
 
         // Funções de Escala
         function renderizarMiniCalendario(escalaParaProjetar = null) {
@@ -1778,193 +1960,6 @@ document.getElementById('setor-select').value = emp.setor_id || '';
                     document.getElementById('pers-dias-semana').value = config.diasSemana || 5;
                     document.getElementById('pers-entrada').value = config.entrada;
                     document.getElementById('pers-saida').value = config.saida;
-                cargosData = cargos;
-
-                // Carregar dados específicos se for edição
-                await carregarDadosTripulante();
-                
-                // Inicializar calendário
-                refreshCalendar();
-
-            } catch (err) {
-                console.error('Erro ao carregar dados iniciais:', err);
-                UI.showToast('Erro ao carregar configurações básicas', 'error');
-            } finally {
-                UI.hideLoader();
-            }
-        }
-
-        // Funções de Escala
-        function renderizarMiniCalendario(escalaParaProjetar = null) {
-            const grid = document.getElementById('mini-calendario');
-            if (!grid) return;
-            grid.innerHTML = '';
-            
-            const firstDay = new Date(currentYear, currentMonth, 1).getDay();
-            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-
-            // Projeção usando ScalesEngine
-            const projection = escalaParaProjetar ? ScalesEngine.projectBaseDays(
-                escalaParaProjetar,
-                '2024-01-01', // Data base genérica para escala semanal
-                currentMonth,
-                currentYear
-            ) : [];
-
-            // Padding inicial
-            for (let i = 0; i < firstDay; i++) {
-                const empty = document.createElement('div');
-                empty.className = 'h-8';
-                grid.appendChild(empty);
-            }
-
-            for (let d = 1; d <= daysInMonth; d++) {
-                const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-                const isTrabalho = projection.includes(dateStr);
-                const dayDate = new Date(currentYear, currentMonth, d);
-
-                const day = document.createElement('div');
-                day.className = `h-8 rounded-lg flex items-center justify-center text-[10px] border transition-all cursor-pointer select-none ${isTrabalho
-                    ? 'bg-primary text-white border-primary shadow-[0_0_8px_rgba(13,89,242,0.4)] font-bold'
-                    : 'bg-slate-100 dark:bg-slate-800/50 border-transparent opacity-30'}`;
-                day.innerText = d;
-                grid.appendChild(day);
-            }
-        }
-
-        function initEscalaListeners() {
-            const inputs = ['pers-carga', 'pers-entrada', 'pers-dias-semana'];
-            inputs.forEach(id => {
-                const el = document.getElementById(id);
-                if (el) {
-                    ['input', 'change'].forEach(evt => {
-                        el.addEventListener(evt, calcularSaidaAutomatica);
-                    });
-                }
-            });
-            if (modoPersonalizado) calcularSaidaAutomatica();
-
-            document.querySelectorAll('.pers-day-btn').forEach(btn => {
-                btn.onclick = () => {
-                    const isCurrentlyLocked = document.getElementById('nome_completo').disabled;
-                    if (isCurrentlyLocked) return;
-
-                    const day = parseInt(btn.dataset.day);
-                    const index = diasSelecionadosPers.indexOf(day);
-                    if (index > -1) {
-                        diasSelecionadosPers.splice(index, 1);
-                        btn.classList.remove('bg-primary', 'text-white', 'border-primary', 'neon-border-sm');
-                    } else {
-                        diasSelecionadosPers.push(day);
-                        btn.classList.add('bg-primary', 'text-white', 'border-primary', 'neon-border-sm');
-                    }
-                    
-                    document.getElementById('pers-dias-semana').value = diasSelecionadosPers.length;
-                    calcularSaidaAutomatica();
-                    refreshCalendar();
-                };
-            });
-        }
-
-        function calcularSaidaAutomatica() {
-            const carga = parseFloat(document.getElementById('pers-carga').value);
-            const entrada = document.getElementById('pers-entrada').value;
-            const diasManual = parseInt(document.getElementById('pers-dias-semana').value) || 5;
-            const diasCount = diasSelecionadosPers.length || diasManual;
-
-            if (!carga || !entrada || diasCount === 0) return;
-
-            const horasPorDia = carga / diasCount;
-            const h = Math.floor(horasPorDia);
-            const m = Math.round((horasPorDia - h) * 60);
-
-            const [entH, entM] = entrada.split(':').map(Number);
-            let saiH = entH + h;
-            let saiM = entM + m;
-
-            if (saiM >= 60) {
-                saiH += Math.floor(saiM / 60);
-                saiM = saiM % 60;
-            }
-
-            const format = (n) => String(n).padStart(2, '0');
-            const saidaFinal = `${format(saiH % 24)}:${format(saiM)}`;
-            document.getElementById('pers-saida').value = saidaFinal;
-            refreshCalendar();
-        }
-
-        function updatePersonalizedDaysUI() {
-            document.getElementById('pers-dias-semana').value = diasSelecionadosPers.length;
-            document.querySelectorAll('.pers-day-btn').forEach(btn => {
-                const day = parseInt(btn.dataset.day);
-                if (diasSelecionadosPers.includes(day)) {
-                    btn.classList.add('bg-primary', 'text-white', 'border-primary', 'neon-border-sm');
-                } else {
-                    btn.classList.remove('bg-primary', 'text-white', 'border-primary', 'neon-border-sm');
-                }
-            });
-        }
-
-        function atualizarDetalhesEscala() {
-            modoPersonalizado = false;
-            const select = document.getElementById('escala-select');
-            const card = document.getElementById('detalhes-escala-card');
-            const config = escalasData[select.value];
-
-            document.getElementById('view-escala-padrao').classList.remove('hidden');
-            document.getElementById('edit-escala-personalizada').classList.add('hidden');
-            document.getElementById('aviso-personalizacao').classList.add('hidden');
-
-            if (!config) {
-                card.classList.add('hidden');
-                return;
-            }
-            card.classList.remove('hidden');
-            document.getElementById('detalhe-nome').innerText = config.nome;
-            document.getElementById('detalhe-tipo').innerText = document.getElementById('regime_trabalho').value;
-            document.getElementById('detalhe-carga').innerText = config.carga + 'h/sem';
-            document.getElementById('detalhe-turno').innerText = `${config.entrada} às ${config.saida}`;
-
-            const setorId = document.getElementById('setor-select').value;
-            if (setorId) {
-                const setor = setoresData.find(s => s.id === setorId);
-                if (setor) {
-                    const radiusBadge = document.createElement('div');
-                    radiusBadge.id = 'badge-raio-setor';
-                    radiusBadge.className = "mt-2 p-2 bg-primary/10 border border-primary/20 rounded-lg flex items-center gap-2";
-                    radiusBadge.innerHTML = `
-                        <span class="material-symbols-outlined text-xs text-primary">distance</span>
-                        <span class="text-[9px] font-bold text-primary uppercase">Raio de Bloqueio: ${setor.raio}m (Definido pelo Setor)</span>
-                    `;
-                    const oldBadge = document.getElementById('badge-raio-setor');
-                    if (oldBadge) oldBadge.remove();
-                    card.querySelector('div').appendChild(radiusBadge);
-                }
-            }
-
-            refreshCalendar();
-        }
-
-        function alternarPersonalizacao() {
-            const isCurrentlyLocked = document.getElementById('nome_completo').disabled;
-            if (isCurrentlyLocked) return;
-
-            modoPersonalizado = !modoPersonalizado;
-            const viewPadrao = document.getElementById('view-escala-padrao');
-            const editPers = document.getElementById('edit-escala-personalizada');
-            const aviso = document.getElementById('aviso-personalizacao');
-            const select = document.getElementById('escala-select');
-            const config = escalasData[select.value];
-
-            if (modoPersonalizado) {
-                viewPadrao.classList.add('hidden');
-                editPers.classList.remove('hidden');
-                aviso.classList.remove('hidden');
-                if (config) {
-                    document.getElementById('pers-carga').value = config.carga;
-                    document.getElementById('pers-dias-semana').value = config.diasSemana || 5;
-                    document.getElementById('pers-entrada').value = config.entrada;
-                    document.getElementById('pers-saida').value = config.saida;
                     diasSelecionadosPers = config.dias ? [...config.dias] : [];
                     updatePersonalizedDaysUI();
                 }
@@ -1979,6 +1974,8 @@ document.getElementById('setor-select').value = emp.setor_id || '';
             if (config) refreshCalendar();
         }
 
+
+        document.getElementById('empresa-select').addEventListener('change', (e) => carregarDependenciasEmpresa(e.target.value));
         document.getElementById('escala-select').addEventListener('change', atualizarDetalhesEscala);
         document.getElementById('regime_trabalho').addEventListener('change', atualizarDetalhesEscala);
         document.getElementById('setor-select').addEventListener('change', atualizarDetalhesEscala);
@@ -2255,18 +2252,13 @@ document.getElementById('setor-select').value = emp.setor_id || '';
                 } else {
                     // --- MODO INSERÇÃO ---
                     // 3.1 Criar Identidade
-                    // 3.1 Criar Identidade (Global - pode não ter company_id dependendo da arquitetura, mas mantemos isolado por segurança se a tabela permitir)
-                    const { data: identData, error: identErr } = await supabase.from('identidades_globais').insert([{...dadosIdentidade, company_id: companyId}]).select().single();
-                    if (identErr) {
-                        // Fallback se idents_globais não tiver company_id ainda
-                        if (identErr.code === 'PGRST204' || identErr.message.includes('company_id')) {
-                            const { data: identRetry, error: retryErr } = await supabase.from('identidades_globais').insert([dadosIdentidade]).select().single();
-                            if (retryErr) throw retryErr;
-                            identData = identRetry;
-                        } else {
-                            throw identErr;
-                        }
-                    }
+                    const selectedCompanyId = document.getElementById('empresa-select').value;
+                    let identData = null;
+                    
+                    const { data: identRes, error: identErr } = await supabase.from('identidades_globais').insert([dadosIdentidade]).select().single();
+                    
+                    if (identErr) throw identErr;
+                    identData = identRes;
 
                     // 3.2 Criar Funcionário vinculado à identidade
                     dadosProfissionais.identidade_id = identData.id;

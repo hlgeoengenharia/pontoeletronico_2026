@@ -65,6 +65,16 @@
       </div>
       <div id="container-form" class="hidden bg-slate-900/50 border border-primary/20 rounded-xl p-6 sci-fi-gradient glow-border neon-border scroll-mt-24">
         <form id="form-cargo" class="space-y-5">
+          <!-- 0. Empresa (Apenas para SuperAdmin) -->
+          <div id="empresa-selection-container" class="hidden space-y-2 mb-6 pb-6 border-b border-white/10">
+              <label class="text-xs font-black text-primary uppercase tracking-[0.2em] ml-1">Vincular à Empresa</label>
+              <div class="relative">
+                  <select id="cargo_empresa_id" class="w-full bg-slate-800 border border-primary/30 rounded-xl h-14 px-4 focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none text-slate-100 appearance-none cursor-pointer font-bold text-sm">
+                      <option value="" class="bg-slate-900 text-slate-100">-- Cargo Global (Todas as Empresas) --</option>
+                  </select>
+                  <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-primary pointer-events-none">corporate_fare</span>
+              </div>
+          </div>
           <div class="space-y-2">
             <label class="text-xs font-semibold uppercase tracking-tighter opacity-60 ml-1">Identificação do Cargo</label>
             <div class="relative">
@@ -219,6 +229,35 @@
     let especialidadesDisponiveis = [];
     let graduacoesDisponiveis = []; // Lista única de nomes de graduação
     let especialidadesSelecionadasIds = [];
+    let empresasCache = [];
+    const userRole = localStorage.getItem('userRole') || '';
+    const isSuperAdmin = userRole.toLowerCase() === 'superadmin';
+
+    async function carregarEmpresasParaSuperAdmin() {
+        if (!isSuperAdmin) return;
+        
+        const container = document.getElementById('empresa-selection-container');
+        const select = document.getElementById('cargo_empresa_id');
+        if (!container || !select) return;
+
+        try {
+            const { data: empresas, error } = await supabase.from('empresas').select('id, nome_fantasia').order('nome_fantasia');
+            if (error) throw error;
+
+            empresasCache = empresas;
+            select.innerHTML = '<option value="">-- Cargo Global (Todas as Empresas) --</option>';
+            empresas.forEach(emp => {
+                const opt = document.createElement('option');
+                opt.value = emp.id;
+                opt.textContent = emp.nome_fantasia;
+                select.appendChild(opt);
+            });
+            container.classList.remove('hidden');
+        } catch (err) {
+            console.error('Erro ao carregar empresas:', err);
+        }
+    }
+    carregarEmpresasParaSuperAdmin();
 
     async function carregarEspecialidadesBase() {
       try {
@@ -244,9 +283,7 @@
       const container = document.getElementById('lista-cargos');
       const countSpan = document.getElementById('total-cargos');
 
-      const userRole = localStorage.getItem('userRole') || '';
       const userEmpresaId = localStorage.getItem('companyId');
-      const isSuperAdmin = userRole === 'SuperAdmin';
 
       try {
         // Busca cargos e suas especialidades usando a tabela de ligação
@@ -317,6 +354,19 @@
                   </div>
 
                   <div id="detalhes-edit-${c.id}" class="hidden space-y-4 pt-4 border-t border-white/10">
+                    <!-- 0. Empresa (Apenas para SuperAdmin) -->
+                    ${isSuperAdmin ? `
+                    <div class="space-y-2 mb-6 pb-6 border-b border-white/10">
+                        <label class="text-[10px] font-black text-primary uppercase tracking-widest ml-1">Vincular à Empresa</label>
+                        <div class="relative">
+                            <select id="edit-empresa-${c.id}" class="w-full bg-slate-800 border border-white/10 rounded-xl px-4 py-3 text-xs text-slate-100 outline-none focus:border-primary/50 transition-all appearance-none cursor-pointer font-bold">
+                                <option value="" class="bg-slate-900 text-slate-100">-- Cargo Global (Todas as Empresas) --</option>
+                                ${empresasCache.map(emp => `<option value="${emp.id}" ${c.empresa_id === emp.id ? 'selected' : ''} class="bg-slate-900 text-slate-100">${emp.nome_fantasia}</option>`).join('')}
+                            </select>
+                            <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-primary/50 text-sm pointer-events-none">business</span>
+                        </div>
+                    </div>
+                    ` : ''}
                     <div class="space-y-4">
                         <div class="space-y-2">
                             <label class="text-[10px] font-bold uppercase text-slate-500">Nome do Cargo</label>
@@ -662,7 +712,8 @@
             nome: document.getElementById(`edit-nome-${id}`).value,
             nivel: document.getElementById(`edit-nivel-${id}`).value,
             descricao: document.getElementById(`edit-desc-${id}`).value,
-            graduacao_principal: document.getElementById(`edit-grad-${id}`).value
+            graduacao_principal: document.getElementById(`edit-grad-${id}`).value,
+            empresa_id: (document.getElementById(`edit-empresa-${id}`)?.value && document.getElementById(`edit-empresa-${id}`)?.value !== "") ? document.getElementById(`edit-empresa-${id}`)?.value : null
         };
 
         try {
@@ -715,7 +766,8 @@
       e.preventDefault();
       UI.showLoader();
 
-      const userEmpresaId = localStorage.getItem('companyId');
+      const userEmpresaId = document.getElementById('cargo_empresa_id')?.value || localStorage.getItem('companyId');
+      
       const dados = {
         nome: document.getElementById('nome-cargo').value,
         nivel: document.getElementById('nivel-cargo').value,
@@ -788,13 +840,20 @@
         document.getElementById('total-cargos').innerText = `${count} REGISTROS`;
     };
 
-    carregarEspecialidadesBase().then(() => loadCargos());
-
-    // Navegação dinâmica
     (async () => {
       const { Auth } = await import('../js/auth.js');
       const { UI } = await import('../js/ui-utils.js');
       const currentUser = Auth.getUser();
+
+      // 1. Carregar Empresas (Para SuperAdmin)
+      await carregarEmpresasParaSuperAdmin();
+
+      // 2. Carregar Especialidades Base
+      await carregarEspecialidadesBase();
+
+      // 3. Carregar Lista de Cargos (Depende do empresasCache para renderizar selects inline)
+      await loadCargos();
+
       if (currentUser) {
         UI.updateFooterNavigation(currentUser.role);
         UI.initSidebar(currentUser.role);

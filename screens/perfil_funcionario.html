@@ -1200,7 +1200,7 @@
                                     regime_trabalho,
                                     rastreio_ativo,
                                     data_inicio_prevista,
-                                    identidades_globais!inner(id, nome_completo, cpf, rg, data_nascimento, sexo, biometria_cadastrada, biometria_token, foto_url),
+                                    identidades_globais(id, nome_completo, cpf, rg, data_nascimento, sexo, biometria_cadastrada, biometria_token, foto_url),
                                     setores!funcionarios_setor_id_fkey (nome, raio),
                                     cargos!cargo_id (nome, nivel),
                                     escalas!escala_id(
@@ -1222,7 +1222,14 @@
                             .eq('funcionario_id', funcionarioId)
                             .single();
 
-                        if (error) throw error;
+                        if (error) {
+                            console.error('[Perfil] Erro crítico na busca:', error);
+                            UI.showToast('Erro ao carregar dados do perfil.', 'error');
+                            UI.hideLoader();
+                            // Forçar saída do estado de carregamento
+                            document.getElementById('detalhe-nome').innerText = 'ERRO AO CARREGAR';
+                            return;
+                        }
                         
                         // Mesclar os dados para manter a compatibilidade com a UI existente
                         let funcData = perfilData.funcionarios;
@@ -2147,28 +2154,7 @@
                 }
 
                 const inputConfirmar = document.getElementById('confirmar_senha');
-                const checkPasswordsMatch = () => {
-                    const pass = inputNovaSenha.value;
-                    const confirm = inputConfirmar.value;
-                    const icon = document.getElementById('icon-confirm-senha');
-                    
-                    if (!confirm) {
-                        icon.innerText = 'verified';
-                        icon.className = 'material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 transition-colors';
-                        return;
-                    }
-
-                    if (pass === confirm && pass.length > 0) {
-                        icon.innerText = 'verified';
-                        icon.className = 'material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-emerald-500 transition-colors scale-110';
-                    } else {
-                        icon.innerText = 'gpp_bad';
-                        icon.className = 'material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-rose-500 transition-colors scale-110';
-                    }
-                };
-
-                if (inputNovaSenha) inputNovaSenha.addEventListener('input', checkPasswordsMatch);
-                if (inputConfirmar) inputConfirmar.addEventListener('input', checkPasswordsMatch);
+                
                 window.handleBiometriaClick = async () => {
                     const isLocked = document.getElementById('nome_completo').disabled;
                     if (isLocked) {

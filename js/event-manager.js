@@ -271,36 +271,47 @@ const EventManager = {
             if (isJustificativaRedundante || isFeriasRedundante) return;
 
             // CARD DE RESULTADO DE ANÁLISE: 
-            // REGRA CHRONOSYNC: Não adicionamos como card separado na timeline do diário, 
-            // pois o feedback já é incorporado ao card original da justificativa ou do ponto.
-            // Isso evita a duplicidade visual relatada (dois cards para o mesmo evento).
+            // REGRA CHRONOSYNC: O feedback incorporado a cards de PONTO ou JUSTIFICATIVA é ocultado.
+            // Aqui, também tentaremos encontrar se este resultado pertence a um log de SISTEMA (Penalidade).
             if (l.tipo === 'justificativa_resultado') {
-                return; // Ignorar renderização como card independente
+                return; // Ignorar renderização como card independente (o fluxo H ou a fusão abaixo cuidará disso)
             }
 
             const content = l.mensagem_padrao || l.tipo_log || '';
             const isGeofenceLog = content.toUpperCase().includes('FORA DO RAIO');
+            const isPenalidadeLog = content.includes('[PENALIDADE]');
+
+            // Tentar encontrar resultado para este log de penalidade
+            let adminFeedback = null;
+            let finalStatus = 'pendente';
+            if (isPenalidadeLog) {
+                const lTime = new Date(l.created_at || l.data_hora).getTime();
+                const result = justificativaResultadosByContext.find(r => 
+                    r.funcionario_id === l.funcionario_id &&
+                    Math.abs(new Date(r.created_at).getTime() - lTime) / (1000 * 60 * 60) < 48 // Janela de 48h para análise
+                );
+                if (result) {
+                    adminFeedback = result.mensagem_padrao;
+                    finalStatus = adminFeedback.toUpperCase().includes('REJEITADA') ? 'rejeitado' : 'abonado';
+                }
+            }
 
             // --- FILTRO DE LIMPEZA CHRONOSYNC ---
-            // Ignorar mensagens de rotina do rastreador que NÃO sejam divergências
             const isRoutinePulse = content.includes('Localização registrada automaticamente') || 
                                    content.includes('validar sua presença') ||
                                    content.includes('TrackPulse: OK');
             
             if (isRoutinePulse && !isGeofenceLog) return;
-
-            if (isGeofenceLog) {
-                // REGRA CHRONOSYNC: Os logs de Geofence não devem mais gerar cards clonados na timeline.
-                // A Seção H. (Registros de Pontos) processa a tabela real e constrói o card unificado final com o Parecer.
-                return;
-            }
+            if (isGeofenceLog) return;
 
             unified.push({ 
                 ...l, 
                 tipo: 'sistema', 
-                itemType: 'DIARIO_LOG',
+                itemType: 'SISTEMA',
                 time: l.created_at || l.data_hora,
-                content: content
+                content: content,
+                status: finalStatus,
+                admin_feedback: adminFeedback
             });
         });
 

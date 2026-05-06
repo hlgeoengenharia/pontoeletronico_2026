@@ -106,19 +106,29 @@
             opacity: 1;
         }
 
-        /* Estilos Slim e Otimização de Impressão */
-        .card-history.slim-mode {
-            padding: 8px 12px !important;
-            margin-bottom: 4px !important;
-            border-radius: 8px !important;
-            background: rgba(255, 255, 255, 0.02) !important;
+        /* Otimização de Tabelas para Mobile */
+        .table-responsive-container {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            width: 100%;
+            border-radius: 24px;
         }
-        .card-history.slim-mode p {
-            font-size: 10px !important;
-            line-height: 1.4 !important;
-        }
-        .card-history.slim-mode .material-symbols-outlined {
-            font-size: 10px !important;
+
+        @media (max-width: 640px) {
+            .audit-card { flex-direction: column; text-align: center; gap: 12px; padding: 20px; }
+            .audit-card .relative { margin: 0 auto; }
+            .audit-card h3 { font-size: 16px; }
+            
+            #espelhoBody td { padding: 12px 8px !important; }
+            .col-data { width: 50px !important; min-width: 50px !important; }
+            .col-registros { min-width: 160px !important; }
+            .col-saldo { width: 60px !important; font-size: 10px !important; }
+            
+            .punch-grid { grid-template-columns: 1fr !important; gap: 8px !important; }
+            .punch-item { gap: 6px !important; }
+            .punch-icon { size: 24px !important; }
+            
+            .details-container { max-width: 100% !important; margin-left: 0 !important; }
         }
 
         @media print {
@@ -254,7 +264,7 @@
                             <th class="p-4 text-[10px] font-black uppercase text-slate-500 tracking-widest">Data</th>
                             <th colspan="2" class="p-4 text-[10px] font-black uppercase text-slate-500 tracking-widest text-center">Registros de Ponto (E / S)</th>
                             <th class="p-4 text-[10px] font-black uppercase text-slate-500 tracking-widest">Saldo</th>
-                            <th class="p-4 text-[10px] font-black uppercase text-slate-500 tracking-widest text-center">Status</th>
+                            <th class="p-4 text-[10px] font-black uppercase text-slate-500 tracking-widest text-center hidden sm:table-cell">Status</th>
                         </tr>
                     </thead>
                     <tbody id="espelhoBody" class="divide-y divide-white/10">
@@ -481,14 +491,14 @@
                 const startMonth = new Date(year, month, 1, 0, 0, 0).toISOString();
                 const endMonth = new Date(year, month + 1, 0, 23, 59, 59).toISOString();
 
-                const mySectorId = func.setor_id;
+                const sId = func.setor_id || '00000000-0000-0000-0000-000000000000';
                 const [ptsRes, anotRes, justRes, comsRes, logsRes, ferRes, vacRes] = await Promise.all([
                     supabase.from('pontos').select('*').eq('funcionario_id', targetId).gte('data_hora', startMonth).lte('data_hora', endMonth).order('data_hora', { ascending: true }),
                     supabase.from('anotacoes').select('*').eq('funcionario_id', targetId).gte('data', startMonth.split('T')[0]).lte('data', endMonth.split('T')[0]),
                     supabase.from('justificativas').select('*').eq('funcionario_id', targetId).gte('data_incidente', startMonth.split('T')[0]).lte('data_incidente', endMonth.split('T')[0]),
-                    supabase.from('comunicados').select('*').or(`destinatario_id.eq.${targetId},tipo.eq.geral,setor_id.eq.${mySectorId || '00000000-0000-0000-0000-000000000000'}`),
+                    supabase.from('comunicados').select('*').or(`destinatario_id.eq.${targetId},tipo.eq.geral,setor_id.eq.${sId}`),
                     supabase.from('diario_logs').select('*').eq('funcionario_id', targetId).gte('created_at', startMonth).lte('created_at', endMonth),
-                    supabase.from('feriados_folgas').select('*').or(`funcionario_id.eq.${targetId},setor_id.eq.${mySectorId},escopo.eq.geral`).gte('data', startMonth.split('T')[0]).lte('data', endMonth.split('T')[0]),
+                    supabase.from('feriados_folgas').select('*').or(`funcionario_id.eq.${targetId},setor_id.eq.${sId},escopo.eq.geral`).gte('data', startMonth.split('T')[0]).lte('data', endMonth.split('T')[0]),
                     supabase.from('ferias').select('*').eq('funcionario_id', targetId).eq('status', 'aprovado').lte('data_inicio', endMonth.split('T')[0]).gte('data_fim', startMonth.split('T')[0])
                 ]);
 
@@ -685,18 +695,18 @@
 
                     html += `
                         <tr class="${rowBgClass} transition-colors relative group">
-                            <td class="p-4 align-top w-16">
+                            <td class="p-4 align-top col-data">
                                 <div class="flex flex-col items-center">
                                     <p class="text-sm font-black text-slate-100">${d.toString().padStart(2, '0')}</p>
                                     <p class="text-[9px] font-bold text-slate-500 uppercase">${dateHeader.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '')}</p>
                                 </div>
                             </td>
-                            <td colspan="2" class="p-4 align-top min-w-[260px]">
-                                 <div class="grid grid-cols-2 gap-x-6 gap-y-4">
+                            <td colspan="2" class="p-4 align-top col-registros">
+                                 <div class="grid grid-cols-2 gap-x-6 gap-y-4 punch-grid">
                                     <div class="space-y-3">
                                         ${dayPoints.filter((_, i) => i % 2 === 0).map((p, i) => `
-                                            <div class="flex items-center gap-3">
-                                                <div class="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shadow-sm shrink-0">
+                                             <div class="flex items-center gap-3 punch-item">
+                                                <div class="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shadow-sm shrink-0 punch-icon">
                                                     <span class="material-symbols-outlined text-emerald-500 text-sm">login</span>
                                                 </div>
                                                 <div class="min-w-0">
@@ -708,8 +718,8 @@
                                     </div>
                                     <div class="space-y-3">
                                         ${dayPoints.filter((_, i) => i % 2 !== 0).map((p, i) => `
-                                            <div class="flex items-center gap-3">
-                                                <div class="w-8 h-8 rounded-full bg-rose-500/10 flex items-center justify-center border border-rose-500/20 shadow-sm shrink-0">
+                                             <div class="flex items-center gap-3 punch-item">
+                                                <div class="w-8 h-8 rounded-full bg-rose-500/10 flex items-center justify-center border border-rose-500/20 shadow-sm shrink-0 punch-icon">
                                                     <span class="material-symbols-outlined text-rose-500 text-sm">logout</span>
                                                 </div>
                                                 <div class="min-w-0">
@@ -722,17 +732,17 @@
                                  </div>
                                  ${dayPoints.length === 0 ? `<div class="text-center py-2 text-[10px] text-slate-700 font-bold uppercase italic opacity-40 tracking-widest">${dayExemptInfo.exempt ? dayExemptInfo.type : 'Sem Registros'}</div>` : ''}
                             </td>
-                            <td class="p-4 align-top text-xs font-black italic ${balanceClass}">${balanceText}</td>
-                            <td class="p-4 align-top text-center">${statusHtml}</td>
+                            <td class="p-4 align-top text-xs font-black italic col-saldo ${balanceClass}">${balanceText}</td>
+                            <td class="p-4 align-top text-center hidden sm:table-cell">${statusHtml}</td>
                         </tr>
                     `;
 
                     if (hasDetails) {
                         html += `
                             <tr class="${rowBgClass} border-b-0 no-print">
-                                <td></td>
+                                <td class="hidden sm:table-cell"></td>
                                 <td colspan="4" class="p-2 pb-6">
-                                    <div class="space-y-2 max-w-xl">
+                                    <div class="space-y-2 details-container">
                                         ${HistoryRenderer.renderList(dayUnified, { 
                                             isAdmin: localStorage.getItem('userRole') === 'Admin',
                                             isContextDiario: false,

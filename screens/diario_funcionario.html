@@ -197,21 +197,21 @@
         </div>
     </nav>
 
-    <div id="modal-ferias" class="fixed inset-0 z-[2500] bg-black/95 backdrop-blur-xl hidden items-start justify-center overflow-y-auto p-4 md:p-12">
-        <div class="glass-panel w-full max-w-6xl rounded-[2.5rem] p-0 relative overflow-visible shadow-[0_0_100px_rgba(13,89,242,0.1)] border border-white/10 my-auto min-h-min">
+    <div id="modal-ferias" class="fixed inset-0 z-[2500] bg-black/95 backdrop-blur-xl hidden items-start justify-center overflow-y-auto p-2 md:p-6 lg:p-12">
+        <div class="glass-panel w-full max-w-6xl rounded-[1.5rem] md:rounded-[2.5rem] p-0 relative overflow-hidden shadow-[0_0_100px_rgba(13,89,242,0.1)] border border-white/10 my-auto min-h-min">
             <div class="absolute top-0 left-0 w-full h-1 bg-primary"></div>
             
-            <header class="p-8 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
-                <div class="flex items-center gap-6">
-                    <div class="size-20 rounded-full border-2 border-blue-500/30 p-1 bg-slate-800 overflow-hidden shadow-2xl">
+            <header class="p-6 md:p-8 border-b border-white/5 flex flex-col md:flex-row justify-between items-center bg-white/[0.02] gap-6">
+                <div class="flex items-center gap-4 md:gap-6 w-full md:w-auto">
+                    <div class="size-16 md:size-20 rounded-full border-2 border-blue-500/30 p-1 bg-slate-800 overflow-hidden shadow-2xl flex-shrink-0">
                         <img id="ferias-foto" src="" class="w-full h-full object-cover rounded-full" onerror="this.src='https://ui-avatars.com/api/?name='+document.getElementById('ferias-nome').innerText+'&background=101622&color=60A5FA'">
                     </div>
-                    <div>
-                        <h2 class="text-2xl font-black italic tracking-tighter text-white uppercase">Meus Períodos de Férias</h2>
+                    <div class="overflow-hidden">
+                        <h2 class="text-lg md:text-2xl font-black italic tracking-tighter text-white uppercase truncate">Meus Períodos de Férias</h2>
                         <div class="flex items-center gap-3">
-                            <p id="ferias-nome" class="text-[10px] text-white font-black uppercase tracking-widest opacity-60">---</p>
+                            <p id="ferias-nome" class="text-[9px] md:text-[10px] text-white font-black uppercase tracking-widest opacity-60 truncate">---</p>
                             <span class="size-1 rounded-full bg-blue-500"></span>
-                            <p id="ferias-cargo" class="text-[10px] text-blue-400 font-black uppercase tracking-widest">---</p>
+                            <p id="ferias-cargo" class="text-[9px] md:text-[10px] text-blue-400 font-black uppercase tracking-widest truncate">---</p>
                         </div>
                     </div>
                 </div>
@@ -233,13 +233,13 @@
                     </div>
                 </div>
 
-                <div class="flex items-center gap-6">
-                    <div class="text-right">
-                        <p class="text-[9px] text-slate-500 uppercase font-black tracking-widest mb-1">Total Marcado</p>
-                        <p class="text-2xl font-black text-white"><span id="txt-dias-marcados">0</span>/30 <span class="text-xs text-slate-500">DIAS</span></p>
+                <div class="flex items-center justify-between md:justify-end gap-6 w-full md:w-auto border-t md:border-none border-white/5 pt-4 md:pt-0">
+                    <div class="text-left md:text-right">
+                        <p class="text-[8px] md:text-[9px] text-slate-500 uppercase font-black tracking-widest mb-1">Total Marcado</p>
+                        <p class="text-xl md:text-2xl font-black text-white"><span id="txt-dias-marcados">0</span>/30 <span class="text-[10px] md:text-xs text-slate-500">DIAS</span></p>
                     </div>
-                    <button onclick="window.fecharModalFerias()" class="size-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-all hover:bg-white/10">
-                        <span class="material-symbols-outlined">close</span>
+                    <button onclick="window.fecharModalFerias()" class="size-10 md:size-12 rounded-xl md:rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-all hover:bg-white/10">
+                        <span class="material-symbols-outlined text-xl md:text-2xl">close</span>
                     </button>
                 </div>
             </header>
@@ -247,7 +247,7 @@
             <main class="grid grid-cols-1 lg:grid-cols-12 gap-0">
                 <div class="lg:col-span-7 p-8 border-r border-white/5 space-y-8 bg-black/20">
                     <div class="space-y-6">
-                        <div class="flex items-center justify-between">
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                             <div class="flex items-center gap-4">
                                 <div class="size-12 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-500">
                                     <span class="material-symbols-outlined text-2xl font-variation-settings-fill">event_note</span>
@@ -257,7 +257,7 @@
                                     <p id="ferias-regras-info" class="text-[9px] text-slate-500 font-bold uppercase tracking-widest mt-1 italic">Mínimo de 10 dias por parcela</p>
                                 </div>
                             </div>
-                            <div class="flex items-center gap-3 bg-white/5 p-1 rounded-xl border border-white/5">
+                            <div class="flex items-center gap-3 bg-white/5 p-1 rounded-xl border border-white/5 w-full sm:w-auto justify-between sm:justify-start">
                                 <button id="btn-prev-month" class="size-9 flex items-center justify-center hover:bg-white/10 rounded-lg transition-all text-slate-400">
                                     <span class="material-symbols-outlined text-lg">chevron_left</span>
                                 </button>

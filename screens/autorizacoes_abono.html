@@ -390,9 +390,15 @@
               
               if (errJ) throw errJ;
             } else if (type === 'SISTEMA' || type === 'ALERTA_MENSAL') {
+              const cardEl = document.getElementById(`card-${id}`);
+              const cardTitle = cardEl?.querySelector('p.text-slate-200')?.innerText?.trim() || 'OCORRÊNCIA DE SISTEMA';
+              const employeeMsg = cardEl?.querySelector('p.text-slate-400')?.innerText?.trim() || '';
+              
+              const fullMsg = `[CONTEXTO: ${cardTitle}] [USER: ${employeeMsg}] [ANÁLISE: ${status.toUpperCase()}] ${obs}`;
+
               const { error: errL } = await supabase.from('diario_logs').update({ 
                   status_pendencia: status, 
-                  mensagem_padrao: `[ANÁLISE] ${obs}` 
+                  mensagem_padrao: fullMsg 
               }).eq('id', id);
               if (errL) throw errL;
             } else {

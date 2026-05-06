@@ -1,0 +1,70 @@
+    /**
+     * Autorresolução: Fecha pontos abertos (órfãos) baseando-se no limite de prorrogação.
+     * Funciona tanto para dias anteriores quanto para o dia atual, desde que o tempo limite tenha expirado.
+     */
+    async resolveOrphanedPunches(user) {
+        if (!user || !user.id || user.nivel_acesso === 'Admin') return null;
+
+        try {
+            // 1. Buscar última batida
+            const { data: lastPunch } = await supabase
+                .from('pontos')
+                .select('*')
+                .eq('funcionario_id', user.id)
+                .order('data_hora', { ascending: false })
+                .limit(1)
+                .maybeSingle();
+
+            // Se não houver ponto ou for checkout, não há nada a resolver
+            if (!lastPunch || lastPunch.tipo === 'check-out') return null;
+
+            const now = new Date();
+            const punchDate = new Date(lastPunch.data_hora);
+            const punchDateStr = punchDate.toISOString().split('T')[0];
+
+            // 2. Verificar se já existe um Checkout Automático PENDENTE para este evento
+            const { data: existingAuto } = await supabase
+                .from('pontos')
+                .select('id')
+                .eq('funcionario_id', user.id)
+                .eq('tipo', 'check-out')
+                .ilike('justificativa_usuario', '%[SISTEMA]%')
+                .gte('data_hora', lastPunch.data_hora)
+                .limit(1)
+                .maybeSingle();
+
+            if (existingAuto) {
+                console.log('[Compliance] Autorresolução já processada ou pendente para este evento.');
+                return null;
+            }
+
+            // 3. Validar se a prorrogação técnica já fechou
+            const escala = user.escalas;
+            if (!escala) return null;
+
+            // Buscar HE para o dia do ponto (seja hoje ou anterior)
+            const extraMin = await this.getExtraMinutesForDate(user.id, user.setor_id, punchDateStr);
+            const closingTime = ScalesEngine.getShiftEndWithHE(escala, extraMin, punchDate);
+            
+            if (!closingTime) return null;
+
+            console.log(`[Compliance] Verificando Ponto Órfão: Início ${lastPunch.data_hora}, Limite Janela: ${closingTime.toLocaleTimeString()}`);
+
+            // REGRA DE OURO: Se AGORA for maior que o LIMITE DE PRORROGAÇÃO, fecha automaticamente.
+            if (now > closingTime) {
+                console.log(`[Compliance] !!! PONTO ÓRFÃO DETECTADO !!! Agora (${now.toLocaleTimeString()}) > Limite (${closingTime.toLocaleTimeString()})`);
+                try {
+                    await this.createAutoExitAtScheduledTime(lastPunch, escala, 'Esquecimento de registro (Fechamento Automático por Prorrogação Esgotada)');
+                    console.log(`[Compliance] Sucesso: Ponto de ${punchDateStr} resolvido com Saída Prevista.`);
+                    return { resolved: true, date: punchDateStr };
+                } catch (err) {
+                    console.error(`[Compliance] Erro ao realizar checkout automático:`, err);
+                }
+            }
+
+            return null;
+        } catch (e) {
+            console.error('[Compliance] Erro fatal na autorresolução:', e);
+            return null;
+        }
+    },

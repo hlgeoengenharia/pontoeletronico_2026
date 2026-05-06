@@ -85,6 +85,16 @@
 
       <div id="container-form" class="hidden glass-panel p-6 rounded-xl space-y-6 sci-fi-gradient glow-border neon-border scroll-mt-24">
         <form id="form-setor" class="space-y-6">
+          <!-- 0. Empresa (Apenas para SuperAdmin) -->
+          <div id="empresa-selection-container" class="hidden space-y-2 mb-6 pb-6 border-b border-white/10">
+              <label class="text-xs font-black text-primary uppercase tracking-[0.2em] ml-1">Vincular à Empresa</label>
+              <div class="relative">
+                  <select id="setor_empresa_id" class="w-full bg-slate-800 border border-primary/30 rounded-xl h-14 px-4 focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none text-slate-100 appearance-none cursor-pointer font-bold text-sm">
+                      <option value="" class="bg-slate-900 text-slate-100">-- Setor Global (Todas as Empresas) --</option>
+                  </select>
+                  <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-primary pointer-events-none">corporate_fare</span>
+              </div>
+          </div>
           <div class="space-y-2">
             <label class="text-sm font-medium text-slate-400 uppercase tracking-wider">Nome do Setor</label>
             <input id="nome-setor"
@@ -209,6 +219,37 @@
     const map = L.map('map', {
       maxZoom: 20
     }).setView([-23.5505, -46.6333], 15);
+
+    let allSetores = [];
+    let empresasCache = [];
+    const userRole = localStorage.getItem('userRole') || '';
+    const isSuperAdmin = userRole.toLowerCase() === 'superadmin';
+
+    async function carregarEmpresasParaSuperAdmin() {
+        if (!isSuperAdmin) return;
+        
+        const container = document.getElementById('empresa-selection-container');
+        const select = document.getElementById('setor_empresa_id');
+        if (!container || !select) return;
+
+        try {
+            const { data: empresas, error } = await supabase.from('empresas').select('id, nome_fantasia').order('nome_fantasia');
+            if (error) throw error;
+
+            empresasCache = empresas;
+            select.innerHTML = '<option value="">-- Setor Global (Todas as Empresas) --</option>';
+            empresas.forEach(emp => {
+                const opt = document.createElement('option');
+                opt.value = emp.id;
+                opt.textContent = emp.nome_fantasia;
+                select.appendChild(opt);
+            });
+            container.classList.remove('hidden');
+        } catch (err) {
+            console.error('Erro ao carregar empresas:', err);
+        }
+    }
+    carregarEmpresasParaSuperAdmin();
 
     // Camada Híbrida (Satélite + Ruas)
     L.tileLayer('https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
@@ -465,9 +506,7 @@
       const container = document.getElementById('lista-setores');
       const countSpan = document.getElementById('total-setores');
       
-      const userRole = localStorage.getItem('userRole') || '';
       const userEmpresaId = localStorage.getItem('companyId');
-      const isSuperAdmin = userRole === 'SuperAdmin';
       
       try {
         let query = supabase
@@ -481,12 +520,12 @@
         }
         
         const { data, error } = await query;
-
         if (error) throw error;
 
+        allSetores = data || [];
         countSpan.innerText = `${data.length} ATIVOS`;
         container.innerHTML = data.map(s => {
-            const gestorNome = s.gestor?.identidades_globais?.nome_completo || 'N/A';
+            const gestorNome = s.gestor?.identidades_globais?.nome_completo || 'GESTÃO NÃO DEFINIDA';
             return `
                 <div id="card-${s.id}" class="glass-panel rounded-xl border-l-4 border-l-primary group hover:bg-primary/5 transition-all overflow-hidden mb-3 shadow-lg">
                   <!-- Header do Card -->
@@ -517,29 +556,55 @@
 
                   </div>
 
-                  <!-- Detalhes / Edição Expansível -->
-                  <div id="details-${s.id}" class="hidden p-4 border-t border-white/5 bg-background-dark/30 space-y-4 animate-in slide-in-from-top-2 duration-300">
+                    <div id="details-${s.id}" class="hidden p-4 border-t border-white/5 bg-background-dark/30 space-y-4 animate-in slide-in-from-top-2 duration-300">
                     
-                    <!-- View Mode Info -->
-                    <div id="view-fields-${s.id}" class="grid grid-cols-2 gap-4 text-[9px] uppercase font-bold text-slate-500">
-                        <div class="space-y-1">
-                            <span class="opacity-50">Coordenadas</span>
-                            <div class="text-slate-100 font-mono bg-white/5 p-2 rounded">
-                                LAT: ${s.latitude.toFixed(6)}<br>
-                                LNG: ${s.longitude.toFixed(6)}
+                        <!-- View Mode Info -->
+                        <div id="view-fields-${s.id}" class="grid grid-cols-1 md:grid-cols-2 gap-4 text-[9px] uppercase font-bold text-slate-500">
+                            <div class="space-y-1">
+                                <span class="opacity-50">Coordenadas</span>
+                                <div class="text-slate-100 font-mono bg-white/5 p-2 rounded">
+                                    LAT: ${s.latitude?.toFixed(6) || '0.00'}<br>
+                                    LNG: ${s.longitude?.toFixed(6) || '0.00'}
+                                </div>
                             </div>
-                        </div>
-                        <div class="space-y-1">
-                            <span class="opacity-50">Parâmetros de Geofence</span>
-                            <div class="text-slate-100 font-mono bg-white/5 p-2 rounded">
-                                RAIO: ${s.raio} METROS<br>
-                                STATUS: ATIVO
+                            <div class="space-y-1">
+                                <span class="opacity-50">Parâmetros de Geofence</span>
+                                <div class="text-slate-100 font-mono bg-white/5 p-2 rounded">
+                                    RAIO: ${s.raio} METROS<br>
+                                    STATUS: ATIVO
+                                </div>
                             </div>
+                            ${s.empresa_id ? `
+                            <div class="space-y-1 md:col-span-2">
+                                <span class="opacity-50">Empresa Vinculada</span>
+                                <div class="text-primary font-mono bg-primary/5 p-2 rounded border border-primary/10">
+                                    ID: ${s.empresa_id}
+                                </div>
+                            </div>
+                            ` : `
+                            <div class="space-y-1 md:col-span-2">
+                                <span class="opacity-50 font-bold text-amber-500">SETOR GLOBAL</span>
+                                <div class="text-amber-500/70 font-mono bg-amber-500/5 p-2 rounded border border-amber-500/10 uppercase">
+                                    Disponível para todas as empresas
+                                </div>
+                            </div>
+                            `}
                         </div>
-                    </div>
 
                     <!-- Edit Mode Form (Hidden initially) -->
                     <div id="edit-fields-${s.id}" class="hidden space-y-4">
+                        ${isSuperAdmin ? `
+                        <div class="space-y-1 mb-4">
+                            <label class="text-[10px] font-black text-primary uppercase tracking-widest">Vincular à Empresa</label>
+                            <div class="relative">
+                                <select id="edit-empresa-${s.id}" class="w-full bg-slate-800 border border-white/10 rounded-xl px-4 py-3 text-xs text-slate-100 outline-none focus:border-primary/50 transition-all appearance-none cursor-pointer font-bold">
+                                    <option value="" class="bg-slate-900 text-slate-100">-- Setor Global (Todas as Empresas) --</option>
+                                    ${empresasCache.map(emp => `<option value="${emp.id}" ${s.empresa_id === emp.id ? 'selected' : ''} class="bg-slate-900 text-slate-100">${emp.nome_fantasia}</option>`).join('')}
+                                </select>
+                                <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-primary/50 text-sm pointer-events-none">business</span>
+                            </div>
+                        </div>
+                        ` : ''}
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div class="space-y-1">
                                 <label class="text-[9px] font-bold text-primary uppercase">Nome do Setor</label>
@@ -548,7 +613,7 @@
                             <div class="space-y-1 relative">
                                 <label class="text-[9px] font-bold text-primary uppercase">Gestor Responsável</label>
                                 <input id="edit-gestor-search-${s.id}" type="text" value="${gestorNome}" class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs text-slate-200 outline-none focus:border-primary/50 transition-all" placeholder="Buscar gestor...">
-                                <input id="edit-gestor-id-${s.id}" type="hidden" value="${s.gestor_id}">
+                                <input id="edit-gestor-id-${s.id}" type="hidden" value="${s.gestor_id || ''}">
                                 <div id="edit-gestor-results-${s.id}" class="absolute z-[100] left-0 right-0 top-full mt-1 bg-slate-900 border border-white/10 rounded-xl hidden shadow-2xl max-h-48 overflow-y-auto"></div>
                             </div>
                         </div>
@@ -718,23 +783,29 @@
 
     window.saveInlineEdit = async (id) => {
         const nome = document.getElementById(`edit-nome-${id}`).value;
-        const gestorId = document.getElementById(`edit-gestor-id-${id}`).value;
+        const gestorIdRaw = document.getElementById(`edit-gestor-id-${id}`).value;
+        const gestorId = (gestorIdRaw && gestorIdRaw !== "" && gestorIdRaw !== "null") ? gestorIdRaw : null;
+        
         const raio = parseInt(document.getElementById(`edit-raio-${id}`).value);
         const { lat, lng } = inlineCoords[id];
 
-        if (!nome || !gestorId) {
-            UI.showToast('Preencha nome e selecione um gestor', 'error');
+        if (!nome) {
+            UI.showToast('O nome do setor é obrigatório', 'error');
             return;
         }
 
         UI.showLoader();
         try {
+            const empresaIdRaw = document.getElementById(`edit-empresa-${id}`)?.value;
+            const empresa_id = (empresaIdRaw && empresaIdRaw !== "") ? empresaIdRaw : null;
+
             const { error } = await supabase.from('setores').update({
                 nome,
                 gestor_id: gestorId,
                 raio,
                 latitude: lat,
-                longitude: lng
+                longitude: lng,
+                empresa_id: empresa_id
             }).eq('id', id);
 
             if (error) throw error;
@@ -827,18 +898,15 @@
         return;
       }
 
-      const gestorId = gestorIdInput.value;
-      if (!gestorId) {
-        UI.showToast('Selecione um gestor válido na lista', 'error');
-        return;
-      }
+      // Gestor opcional
 
       UI.showLoader();
 
-      const userEmpresaId = localStorage.getItem('companyId');
+      const userEmpresaId = document.getElementById('setor_empresa_id')?.value || localStorage.getItem('companyId');
+      
       const dados = {
         nome: document.getElementById('nome-setor').value,
-        gestor_id: gestorId,
+        gestor_id: gestorIdInput.value || null,
         raio: parseInt(document.getElementById('radius-input').value),
         latitude: selectedLat,
         longitude: selectedLng,
@@ -866,15 +934,23 @@
       }
     });
 
-    preloadFuncionarios();
-    loadSetores();
-    initUserLocation();
-
-    // Navegação dinâmica
     (async () => {
       const { Auth } = await import('../js/auth.js');
       const { UI } = await import('../js/ui-utils.js');
       const currentUser = Auth.getUser();
+      
+      // 1. Carregar Empresas (Contexto SuperAdmin)
+      await carregarEmpresasParaSuperAdmin();
+      
+      // 2. Pré-carregar funcionários (para busca de gestor)
+      await preloadFuncionarios();
+      
+      // 3. Carregar lista de setores (depende do empresasCache para renderizar selects inline)
+      await loadSetores();
+      
+      // 4. Localização do Usuário
+      initUserLocation();
+
       if (currentUser) {
         UI.updateFooterNavigation(currentUser.role);
         UI.initSidebar(currentUser.role);

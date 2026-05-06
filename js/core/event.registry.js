@@ -13,6 +13,7 @@ import { AlertarFeriadosBadge } from '../modules/Alertar_feriados_folgas/alertar
 import { AlertarFeriadosCard } from '../modules/Alertar_feriados_folgas/alertar.feriados.card.js';
 import { PontoHistory } from '../modules/ponto/ponto.history.js';
 import { PontoCounter } from '../modules/ponto/ponto.counter.js';
+import { SistemaHistory } from '../modules/sistema/sistema.history.js';
 
 /**
  * EventRegistry - ChronoSync Core
@@ -76,3 +77,5 @@ EventRegistry.register('ferias_folgas', { history: FeriadosHistory, counter: Fer
 EventRegistry.register('alerta_feriados_folgas', { history: { render: (item) => AlertarFeriadosCard.render(item) }, counter: AlertarFeriadosBadge });
 EventRegistry.register('justificativa_resultado', { history: ResultadoFeedbackHistory });
 EventRegistry.register('ponto', { history: PontoHistory, counter: PontoCounter });
+EventRegistry.register('sistema', { history: SistemaHistory });
+EventRegistry.register('diario_log', { history: SistemaHistory });

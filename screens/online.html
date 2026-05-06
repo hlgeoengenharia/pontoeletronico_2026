@@ -751,6 +751,34 @@
 
         // Busca
         document.getElementById('search-online').oninput = (e) => filterSidebar(e.target.value);
+
+        // --- FECHAMENTO AUTOMÁTICO DO MENU (UX SMARTPHONE/MAPA) ---
+        const fecharMenuSeAberto = () => {
+            if (menuLateral && !menuLateral.classList.contains('collapsed')) {
+                menuLateral.classList.add('collapsed');
+                btnToggleMenu.classList.remove('active');
+                btnToggleMenu.querySelector('span').innerText = 'menu';
+                
+                btnToggleMenu.classList.remove('bg-rose-500/10', 'border-rose-500/30', 'text-rose-500');
+            }
+        };
+
+        // Ao clicar no mapa (Leaflet) - Vários eventos para garantir captura
+        map.on('click mousedown touchstart', () => fecharMenuSeAberto());
+
+        // Ao clicar em qualquer lugar fora do menu lateral e do botão de toggle
+        document.addEventListener('click', (e) => {
+            if (menuLateral && btnToggleMenu && !menuLateral.contains(e.target) && !btnToggleMenu.contains(e.target)) {
+                fecharMenuSeAberto();
+            }
+        });
+
+        // Suporte para Touch (Smartphones)
+        document.addEventListener('touchstart', (e) => {
+            if (menuLateral && btnToggleMenu && !menuLateral.contains(e.target) && !btnToggleMenu.contains(e.target)) {
+                fecharMenuSeAberto();
+            }
+        }, { passive: true });
     }
 
     async function fetchData() {
@@ -1237,13 +1265,16 @@
                 }
             });
 
-            // Toggle sublista no menu
+            // Toggle sublista no menu (Acordeão)
             const sublista = document.getElementById(`sublista-${id}`);
+            const isAlreadyOpen = !sublista.classList.contains('hidden');
+            
             const allSublistas = document.querySelectorAll('[id^="sublista-"]');
-            allSublistas.forEach(el => {
-                if (el !== sublista) el.classList.add('hidden');
-            });
-            sublista.classList.remove('hidden');
+            allSublistas.forEach(el => el.classList.add('hidden'));
+
+            if (!isAlreadyOpen) {
+                sublista.classList.remove('hidden');
+            }
         }
     };
 

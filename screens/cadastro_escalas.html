@@ -67,7 +67,14 @@
 
       <div id="container-form" class="hidden sci-fi-gradient sci-fi-border rounded-xl p-6 glow-border neon-border scroll-mt-24">
         <form id="form-escala" class="space-y-4">
-        
+        <!-- 0. Empresa (Apenas para SuperAdmin) -->
+        <div id="empresa-selection-container" class="hidden space-y-1 mb-4 pb-4 border-b border-white/5">
+            <label class="text-[11px] font-bold uppercase opacity-50 text-slate-400">Vincular à Empresa</label>
+            <select id="escala_empresa_id" class="w-full bg-background-dark/50 border-primary/30 rounded-lg focus:ring-primary focus:border-primary text-slate-100 p-3 text-xs outline-none">
+                <option value="">-- Escala Global (Todas as Empresas) --</option>
+            </select>
+        </div>
+
         <!-- 1. Nome e Carga (Grid 2 Colunas) -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div class="space-y-1">
@@ -422,14 +429,41 @@
 
     document.getElementById('btn-cancelar-escala').onclick = fecharFormEscala;
 
+    let empresasCache = [];
+
     const tipoEscalaSel = document.getElementById('tipo_escala');
     const regimeTrabalhoSel = document.getElementById('regime_trabalho');
     const cicloInputs = document.getElementById('ciclo_inputs');
     const semanalInputs = document.getElementById('semanal_inputs');
     const hibridoInputs = document.getElementById('hibrido_inputs');
 
+    async function carregarEmpresasParaSuperAdmin() {
+        if ((user?.role || '').toLowerCase() !== 'superadmin') return;
+        
+        const container = document.getElementById('empresa-selection-container');
+        const select = document.getElementById('escala_empresa_id');
+        if (!container || !select) return;
+
+        try {
+            const { data: empresas, error } = await supabase.from('empresas').select('id, nome_fantasia').order('nome_fantasia');
+            if (error) throw error;
+
+            empresasCache = empresas;
+            select.innerHTML = '<option value="">-- Escala Global (Todas as Empresas) --</option>';
+            empresas.forEach(emp => {
+                const opt = document.createElement('option');
+                opt.value = emp.id;
+                opt.textContent = emp.nome_fantasia;
+                select.appendChild(opt);
+            });
+            container.classList.remove('hidden');
+        } catch (err) {
+            console.error('Erro ao carregar empresas:', err);
+        }
+    }
 
     function initEscalaLogic() {
+        carregarEmpresasParaSuperAdmin();
       const inputs = ['carga_horaria', 'horario_entrada'];
       inputs.forEach(id => {
       ['input', 'change'].forEach(evt => {
@@ -644,6 +678,20 @@
 
                   <!-- Modo Edição Inline (Expansível - CLONE DO FORM PRINCIPAL) -->
                   <div id="edit-escala-${e.id}" class="hidden p-6 border-t border-white/5 bg-background-dark/30 space-y-6 animate-in slide-in-from-top-2 duration-300">
+
+                      <!-- 0. Empresa (Apenas para SuperAdmin) -->
+                      ${(user?.role || '').toLowerCase() === 'superadmin' ? `
+                      <div class="space-y-2 mb-4 pb-4 border-b border-white/10">
+                          <label class="text-xs font-black text-primary uppercase tracking-[0.2em] ml-1">Vincular à Empresa</label>
+                          <div class="relative">
+                              <select id="inline-empresa-${e.id}" class="w-full bg-slate-800 border border-primary/30 rounded-xl h-12 px-4 focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none text-slate-100 appearance-none cursor-pointer font-bold text-xs">
+                                  <option value="">-- Escala Global (Todas as Empresas) --</option>
+                                  ${empresasCache.map(emp => `<option value="${emp.id}" ${e.empresa_id === emp.id ? 'selected' : ''}>${emp.nome_fantasia}</option>`).join('')}
+                              </select>
+                              <span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-primary pointer-events-none">corporate_fare</span>
+                          </div>
+                      </div>
+                      ` : ''}
 
                       <!-- 1. Nome e Carga -->
                       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1089,28 +1137,30 @@
 
             const tipo = getVal(`inline-tipo-${id}`);
 
-            const dados = {
-                nome: getVal(`inline-nome-${id}`)?.trim(),
-                carga_horaria_semanal: getNum(`inline-carga-${id}`, 44),
-                tipo_escala: tipo,
-                regime: getVal(`inline-regime-${id}`),
-                tipo_repeticao: getVal(`inline-repeticao-${id}`),
-                horario_entrada: getVal(`inline-in-${id}`),
-                horario_saida: getVal(`inline-out-${id}`),
-                janela_ativa_antes_minutos: getNum(`inline-janela-antes-${id}`, 30),
-                janela_ativa_depois_minutos: getNum(`inline-janela-depois-${id}`, 30),
-                tolerancia_entrada_minutos: getNum(`inline-tol-in-${id}`, 15),
-                
-                // Regras
-                restrito_gps: getCheck(`inline-rule-gps-${id}`),
-                aprovacao_excecao: getCheck(`inline-rule-appr-${id}`),
-                punicao_esquecimento: getCheck(`inline-rule-forget-${id}`),
-                gestao_horas_extras: false,
-                limite_horas_extras: 0,
-                rastreio_horario: getCheck(`inline-rule-track-${id}`),
-                possui_almoco: getCheck(`inline-rule-lunch-${id}`),
-                
-                // Configs Complexas
+                const esc = allEscalasData.find(x => x.id === id);
+                const dados = {
+                    nome: getVal(`inline-nome-${id}`)?.trim(),
+                    carga_horaria_semanal: getNum(`inline-carga-${id}`, 44),
+                    tipo_escala: tipo,
+                    regime: getVal(`inline-regime-${id}`),
+                    tipo_repeticao: getVal(`inline-repeticao-${id}`),
+                    horario_entrada: getVal(`inline-in-${id}`),
+                    horario_saida: getVal(`inline-out-${id}`),
+                    janela_ativa_antes_minutos: getNum(`inline-janela-antes-${id}`, 30),
+                    janela_ativa_depois_minutos: getNum(`inline-janela-depois-${id}`, 30),
+                    tolerancia_entrada_minutos: getNum(`inline-tol-in-${id}`, 15),
+                    
+                    // Regras
+                    restrito_gps: getCheck(`inline-rule-gps-${id}`),
+                    aprovacao_excecao: getCheck(`inline-rule-appr-${id}`),
+                    punicao_esquecimento: getCheck(`inline-rule-forget-${id}`),
+                    gestao_horas_extras: false,
+                    limite_horas_extras: 0,
+                    rastreio_horario: getCheck(`inline-rule-track-${id}`),
+                    possui_almoco: getCheck(`inline-rule-lunch-${id}`),
+                    empresa_id: (getVal(`inline-empresa-${id}`) && getVal(`inline-empresa-${id}`) !== "") ? getVal(`inline-empresa-${id}`) : null,
+                    
+                    // Configs Complexas
                 dias_padrao: diasSemana,
                 dias_trabalho_semana: tipo === 'semanal' ? diasSemana.length : 0,
                 dias_presenciais_json: diasHibridos,
@@ -1194,7 +1244,9 @@
 
       UI.showLoader();
 
-      const userEmpresaId = localStorage.getItem('companyId');
+      const userRole = (user?.role || '').toLowerCase();
+      const userEmpresaId = document.getElementById('escala_empresa_id')?.value || localStorage.getItem('companyId');
+      
       const dados = {
         nome: document.getElementById('nome_escala').value.trim(),
         tipo_escala: tipo,
@@ -1244,13 +1296,20 @@
       }
     });
 
-    loadEscalas();
-    initEscalaLogic();
+    (async () => {
+      // 1. Carregar Empresas (Para SuperAdmin)
+      await carregarEmpresasParaSuperAdmin();
 
-    // Iniciar Sidebar
-    if (user) {
-        UI.initSidebar(user.role);
-    }
+      // 2. Carregar Escalas
+      await loadEscalas();
+
+      // 3. Inicializar Lógica de Formulário
+      initEscalaLogic();
+
+      if (user) {
+          UI.initSidebar(user.role);
+      }
+    })();
   </script>
 
   <!-- Bottom Navigation -->
