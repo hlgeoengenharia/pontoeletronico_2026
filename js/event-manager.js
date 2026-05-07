@@ -267,8 +267,14 @@ const EventManager = {
             // OCULTAR redundâncias e itens já processados na fusão
             const isJustificativaRedundante = l.tipo === 'justificativa';
             const isFeriasRedundante = l.tipo === 'aviso_ferias' && avisoFeriasProcessado;
+
+            // REGRA: Ocultar card de falta se já houver um card de justificativa para o mesmo período (redundância visual)
+            const isFaltaRedundante = l.tipo === 'falta' && unified.some(u => 
+                (u.itemType === 'JUSTIFICATIVA' || u.tipo === 'ponto') && 
+                Math.abs(new Date(u.time).getTime() - new Date(l.created_at || l.data_hora).getTime()) / (1000 * 60 * 60) < 24
+            );
             
-            if (isJustificativaRedundante || isFeriasRedundante) return;
+            if (isJustificativaRedundante || isFeriasRedundante || isFaltaRedundante) return;
 
             // CARD DE RESULTADO DE ANÁLISE: 
             // REGRA CHRONOSYNC: O feedback incorporado a cards de PONTO ou JUSTIFICATIVA é ocultado.

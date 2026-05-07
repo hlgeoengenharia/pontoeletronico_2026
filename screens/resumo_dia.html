@@ -477,7 +477,7 @@
                     supabase.from('comunicados').select('*').or(`destinatario_id.eq.${targetId},tipo.eq.geral,setor_id.eq.${mySectorId || '00000000-0000-0000-0000-000000000000'}`),
                     supabase.from('diario_logs').select('*').eq('funcionario_id', targetId).gte('created_at', `${dataRef}T00:00:00`).lte('created_at', `${dataRef}T23:59:59`),
                     supabase.from('feriados_folgas').select('*').or(`funcionario_id.eq.${targetId},setor_id.eq.${mySectorId},escopo.eq.geral`).eq('data', dataRef),
-                    supabase.from('ferias').select('*').eq('funcionario_id', targetId).eq('status', 'aprovado').lte('data_inicio', dataRef).gte('data_fim', dataRef)
+                    supabase.from('ferias').select('*').eq('funcionario_id', targetId).eq('status', 'aprovado')
                 ]);
 
                 // [MELHORIA] Filtrar comunicados para o resumo do dia: 
@@ -496,17 +496,21 @@
                 const { HistoryRenderer } = await import('../js/core/history.renderer.js');
 
                 // 1. Unificar Histórico via Engine do Diário
+                // REGRA: Só mostrar o card completo (premium) no dia do abono (log de aviso_ferias)
+                const hasAvisoLog = (logsRes.data || []).some(l => l.tipo === 'aviso_ferias');
+                const vacationsForCard = hasAvisoLog ? (vacRes.data || []) : [];
+
                 const unifiedHistory = EventManager.unifyHistory(
                     anotRes.data || [],
                     justRes.data || [],
-                    activeComs, // Usar lista filtrada por tag e data
+                    activeComs,
                     logsRes.data || [],
-                    vacRes.data || [],
+                    vacationsForCard,
                     ferRes.data || [],
                     { hideActions: true, isContextDiario: false, pontos: ptsRes.data || [] }
                 );
 
-                renderResumo(ptsRes.data, unifiedHistory, func.escalas, dataRef, HistoryRenderer);
+                renderResumo(ptsRes.data, unifiedHistory, func.escalas, dataRef, HistoryRenderer, vacRes.data || []);
                 Notifications.updateBadges();
 
             } catch (err) {
@@ -517,7 +521,7 @@
             }
         }
 
-        function renderResumo(pontos, allItems, escala, dataRef, HistoryRenderer) {
+        function renderResumo(pontos, allItems, escala, dataRef, HistoryRenderer, vacData) {
             // Usando o helper centralizado do ScalesEngine para consistência
             const dateObj = new Date(dataRef + 'T12:00:00');
             const month = dateObj.getMonth();
@@ -530,7 +534,8 @@
             // Determinar isenção para estatísticas
             const isPlanned = plannedDays.includes(dataRef);
             const isFeriado = allItems.some(i => i.itemType === 'FERIAS_FOLGA');
-            const isVacation = allItems.some(i => i.itemType === 'CRONOGRAMA_FERIAS' || i.itemType === 'FERIAS');
+            // Identificar se o dia é de férias (para o badge superior) consultando a lista bruta
+            const isVacation = (vacData || []).some(v => dataRef >= v.data_inicio && dataRef <= v.data_fim);
 
             const dayExemptInfo = {
                 exempt: !isPlanned || isFeriado || isVacation,
@@ -565,7 +570,7 @@
             document.getElementById('totalEsperado').innerText = dayExemptInfo.exempt ? dayExemptInfo.type : formatMinutes(dailyPlannedMinutes);
 
             if (dayExemptInfo.exempt || dayExemptInfo.type === 'CONVOCADO') {
-                const badgeColor = dayExemptInfo.type === 'FÉRIAS' ? 'bg-blue-500' :
+                const badgeColor = dayExemptInfo.type === 'FÉRIAS' ? 'bg-sky-500' :
                     (dayExemptInfo.type === 'FERIADO' ? 'bg-purple-500' :
                         (dayExemptInfo.type === 'CONVOCADO' ? 'bg-emerald-500' : 'bg-slate-600'));
                 const existingBadge = document.querySelector('.status-exempt-badge');

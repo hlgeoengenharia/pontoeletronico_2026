@@ -73,7 +73,8 @@ export const BusinessRulesManager = {
                 }
             } else {
                 if (punchType === 'check-in') {
-                    await this.createAbsenceLog(funcionarioId, item.data_hora, adminObs);
+                    const eventDate = item.data_hora || item.data_incidente || item.created_at || new Date().toISOString();
+                    await this.createAbsenceLog(funcionarioId, eventDate, adminObs);
                 } else {
                     await this.applyHalfJourneyPenalty(item, adminObs);
                 }
@@ -87,7 +88,7 @@ export const BusinessRulesManager = {
     },
 
     async createAbsenceLog(funcionarioId, dataHora, adminObs) {
-        const dateStr = new Date(dataHora).toLocaleDateString('pt-BR');
+        const dateStr = dataHora ? new Date(dataHora).toLocaleDateString('pt-BR') : '---';
         
         await supabase.from('diario_logs').insert([{
             funcionario_id: funcionarioId,

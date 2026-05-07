@@ -499,7 +499,7 @@
                     supabase.from('comunicados').select('*').or(`destinatario_id.eq.${targetId},tipo.eq.geral,setor_id.eq.${sId}`),
                     supabase.from('diario_logs').select('*').eq('funcionario_id', targetId).gte('created_at', startMonth).lte('created_at', endMonth),
                     supabase.from('feriados_folgas').select('*').or(`funcionario_id.eq.${targetId},setor_id.eq.${sId},escopo.eq.geral`).gte('data', startMonth.split('T')[0]).lte('data', endMonth.split('T')[0]),
-                    supabase.from('ferias').select('*').eq('funcionario_id', targetId).eq('status', 'aprovado').lte('data_inicio', endMonth.split('T')[0]).gte('data_fim', startMonth.split('T')[0])
+                    supabase.from('ferias').select('*').eq('funcionario_id', targetId).eq('status', 'aprovado')
                 ]);
 
                 renderEspelho(ptsRes.data || [], anotRes.data || [], justRes.data || [], comsRes.data || [], logsRes.data || [], ferRes.data || [], vacRes.data || [], func.escalas, func, month, year);
@@ -633,12 +633,16 @@
                     const shouldCharge = (isPlanned || isDiaExtra) && !dayExemptInfo.exempt && (dayPoints.length > 0 || isFinished);
                     const dailyPlannedMinutes = shouldCharge ? ScalesEngine.calculateDailyWorkMinutes(escala) : 0;
 
+                    // REGRA: Só mostrar o card completo (premium) no dia do abono (log de aviso_ferias)
+                    const hasAvisoLog = dayLogs.some(l => l.tipo === 'aviso_ferias');
+                    const vacationsForCard = hasAvisoLog ? ferias : [];
+
                     const dayUnified = EventManager.unifyHistory(
                         dayAnotacoes,
                         dayJustificativas,
                         dayComunicados,
                         dayLogs,
-                        dayVacations,
+                        vacationsForCard,
                         daySpecial,
                         { hideActions: true, isContextDiario: false, pontos: dayPoints }
                     );
