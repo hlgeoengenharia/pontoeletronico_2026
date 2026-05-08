@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChronoSync - Ponto Eletrônico 4.0 com IA e Geofencing</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Space Grotesk', sans-serif; }
+        body { background: #020617; scroll-behavior: smooth; }
+        .gradient-text { background: linear-gradient(135deg, #3b82f6, #fbbf24); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+        .glass-card { background: rgba(255,255,255,0.03); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.05); transition: all 0.4s ease; }
+        .glass-card:hover { transform: translateY(-4px); border-color: rgba(59,130,246,0.4); }
+        .btn-primary { background: linear-gradient(135deg, #3b82f6, #2563eb); transition: all 0.3s ease; }
+        .btn-primary:hover { transform: scale(1.02); box-shadow: 0 0 25px rgba(59,130,246,0.5); }
+        .screenshot { border-radius: 20px; border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 20px 40px -15px rgba(0,0,0,0.5); transition: all 0.3s ease; }
+        .screenshot:hover { transform: scale(1.01); border-color: rgba(59,130,246,0.3); }
+        .badge-screen { background: rgba(59,130,246,0.2); border-radius: 100px; padding: 4px 12px; font-size: 9px; font-weight: 800; letter-spacing: 0.05em; color: #60a5fa; display: inline-block; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 10px; }
+    </style>
+</head>
+<body class="text-slate-100">
+
+    <!-- NAVBAR -->
+    <nav class="fixed top-0 w-full z-50 glass-card backdrop-blur-xl border-b border-white/5">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-amber-500 text-3xl">schedule</span>
+                <span class="text-xl font-black tracking-tight">Chrono<span class="text-amber-500">Sync</span></span>
+            </div>
+            <div class="hidden md:flex gap-8 text-sm font-medium">
+                <a href="#features" class="hover:text-amber-500 transition">Funcionalidades</a>
+                <a href="#tech" class="hover:text-amber-500 transition">Tecnologia</a>
+                <a href="#demo" class="hover:text-amber-500 transition">Demonstração</a>
+            </div>
+            <button onclick="scrollToDemo()" class="btn-primary px-6 py-2.5 rounded-full text-xs font-black uppercase tracking-wider shadow-lg">
+                Solicitar Demo
+            </button>
+        </div>
+    </nav>
+
+    <!-- HERO -->
+    <section class="pt-32 pb-20 px-6 relative overflow-hidden">
+        <div class="absolute top-40 left-1/4 w-96 h-96 bg-blue-600/20 rounded-full blur-[120px] pointer-events-none"></div>
+        <div class="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
+            <div class="space-y-8">
+                <span class="bg-amber-500/10 text-amber-500 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-wider border border-amber-500/20">Sistema 4.0</span>
+                <h1 class="text-5xl lg:text-7xl font-black leading-tight">
+                    Gestão de tempo <br>
+                    <span class="gradient-text">para a era digital</span>
+                </h1>
+                <p class="text-slate-400 text-lg leading-relaxed max-w-xl">
+                    ChronoSync unifica biometria facial, geolocalização e inteligência artificial para eliminar fraudes e automatizar seu RH. 
+                    Reduza custos operacionais em até <span class="text-amber-500 font-bold">70%</span>.
+                </p>
+                <div class="flex gap-4 flex-wrap">
+                    <button onclick="scrollToDemo()" class="btn-primary px-8 py-4 rounded-xl font-black uppercase tracking-wide text-sm shadow-2xl">Começar Agora</button>
+                    <button onclick="window.location.href='pagina_login_01.html'" class="border border-white/10 px-8 py-4 rounded-xl font-black uppercase tracking-wide text-sm hover:bg-white/5 transition">Área do Cliente</button>
+                </div>
+                <div class="flex flex-wrap gap-6 text-sm text-slate-500 pt-4">
+                    <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Selo LGPD</div>
+                    <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Conformidade MTE</div>
+                    <div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> Arquitetura Multi-Tenant</div>
+                </div>
+            </div>
+            <div class="relative">
+                <div class="absolute inset-0 bg-blue-500/20 blur-[100px] rounded-full"></div>
+                <img src="assets/imagens/dashboard_02.png" alt="Dashboard ChronoSync" class="relative z-10 rounded-2xl shadow-2xl border border-white/10 screenshot"
+                     onerror="this.src='https://placehold.co/600x400/0f172a/3b82f6?text=Dashboard+Preview'">
+                <div class="absolute -bottom-4 left-10 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full text-[9px] font-bold">
+                    📊 Dashboard Principal
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FEATURES COM IMAGENS REAIS -->
+    <section id="features" class="py-24 px-6 bg-white/5">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center space-y-4 mb-16">
+                <h2 class="text-3xl lg:text-5xl font-black uppercase tracking-tighter">Funcionalidades <span class="gradient-text">poderosas</span></h2>
+                <div class="w-24 h-1 bg-amber-500 mx-auto rounded-full"></div>
+                <p class="text-slate-400 max-w-2xl mx-auto">Capturas de tela reais do sistema ChronoSync em produção.</p>
+            </div>
+
+            <!-- 1. Dashboard + Estatísticas -->
+            <div class="grid lg:grid-cols-2 gap-8 items-center mb-20">
+                <div>
+                    <span class="badge-screen">📊 Gestão Completa</span>
+                    <h3 class="text-2xl font-black mt-4 mb-4">Dashboard 360°</h3>
+                    <p class="text-slate-400 leading-relaxed">Visão completa da jornada de trabalho, indicadores de frequência, calendário interativo e status em tempo real.</p>
+                    <ul class="mt-6 space-y-2 text-slate-300">
+                        <li class="flex items-center gap-2"><span class="material-symbols-outlined text-emerald-500 text-sm">check_circle</span> Card de identidade do funcionário</li>
+                        <li class="flex items-center gap-2"><span class="material-symbols-outlined text-emerald-500 text-sm">check_circle</span> Métricas de carga, faltas e frequência</li>
+                        <li class="flex items-center gap-2"><span class="material-symbols-outlined text-emerald-500 text-sm">check_circle</span> Calendário com feriados e eventos</li>
+                    </ul>
+                </div>
+                <img src="assets/imagens/dashboard_02.png" alt="Dashboard" class="screenshot" onerror="this.style.display='none'">
+            </div>
+
+            <!-- 2. Espelho de Ponto -->
+            <div class="grid lg:grid-cols-2 gap-8 items-center mb-20">
+                <img src="assets/imagens/espelhoponto.png" alt="Espelho de Ponto" class="screenshot order-1 lg:order-1" onerror="this.style.display='none'">
+                <div class="order-2">
+                    <span class="badge-screen">📋 Espelho de Ponto</span>
+                    <h3 class="text-2xl font-black mt-4 mb-4">Registros Diários com Saldo</h3>
+                    <p class="text-slate-400 leading-relaxed">Tabela completa com entrada, saída, carga trabalhada e saldo do dia. Visualização mensal e anual.</p>
+                    <ul class="mt-6 space-y-2 text-slate-300">
+                        <li class="flex items-center gap-2"><span class="material-symbols-outlined text-emerald-500 text-sm">check_circle</span> Cálculo automático de horas</li>
+                        <li class="flex items-center gap-2"><span class="material-symbols-outlined text-emerald-500 text-sm">check_circle</span> Sinalização de faltas e atrasos</li>
+                        <li class="flex items-center gap-2"><span class="material-symbols-outlined text-emerald-500 text-sm">check_circle</span> Exportação para PDF</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 3. Diário de Bordo -->
+            <div class="grid lg:grid-cols-2 gap-8 items-center mb-20">
+                <div>
+                    <span class="badge-screen">📝 Diário de Bordo</span>
+                    <h3 class="text-2xl font-black mt-4 mb-4">Registro de Atividades</h3>
+                    <p class="text-slate-400 leading-relaxed">Funcionários registram atividades diárias, justificativas e anexam evidências. Gestor aprova ou rejeita.</p>
+                    <ul class="mt-6 space-y-2 text-slate-300">
+                        <li class="flex items-center gap-2"><span class="material-symbols-outlined text-emerald-500 text-sm">check_circle</span> Anexo de fotos e PDFs</li>
+                        <li class="flex items-center gap-2"><span class="material-symbols-outlined text-emerald-500 text-sm">check_circle</span> Fluxo de aprovação integrado</li>
+                        <li class="flex items-center gap-2"><span class="material-symbols-outlined text-emerald-500 text-sm">check_circle</span> Histórico completo com linha do tempo</li>
+                    </ul>
+                </div>
+                <img src="assets/imagens/diario.png" alt="Diário de Bordo" class="screenshot" onerror="this.style.display='none'">
+            </div>
+
+            <!-- 4. Estatísticas e Evolução -->
+            <div class="grid lg:grid-cols-2 gap-8 items-center mb-20">
+                <img src="assets/imagens/estatistica.png" alt="Estatísticas" class="screenshot order-1 lg:order-1" onerror="this.style.display='none'">
+                <div class="order-2">
+                    <span class="badge-screen">📈 Análise de Desempenho</span>
+                    <h3 class="text-2xl font-black mt-4 mb-4">Evolução Mensal do Colaborador</h3>
+                    <p class="text-slate-400 leading-relaxed">Acompanhamento de carga horária, faltas, frequência e saldo acumulado mês a mês.</p>
+                    <ul class="mt-6 space-y-2 text-slate-300">
+                        <li class="flex items-center gap-2"><span class="material-symbols-outlined text-emerald-500 text-sm">check_circle</span> Comparativo anual</li>
+                        <li class="flex items-center gap-2"><span class="material-symbols-outlined text-emerald-500 text-sm">check_circle</span> Alertas automáticos de baixa frequência</li>
+                        <li class="flex items-center gap-2"><span class="material-symbols-outlined text-emerald-500 text-sm">check_circle</span> Exportação de relatórios gerenciais</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 5. Gestão de Férias -->
+            <div class="grid lg:grid-cols-2 gap-8 items-center mb-20">
+                <div>
+                    <span class="badge-screen">🏖️ Planejamento de Férias</span>
+                    <h3 class="text-2xl font-black mt-4 mb-4">Controle de Férias Digital</h3>
+                    <p class="text-slate-400 leading-relaxed">Solicitação, parcelamento e aprovação de férias. Calendário interativo com regras do setor.</p>
+                    <ul class="mt-6 space-y-2 text-slate-300">
+                        <li class="flex items-center gap-2"><span class="material-symbols-outlined text-emerald-500 text-sm">check_circle</span> Parcelamento em até 3x (mín. 10 dias)</li>
+                        <li class="flex items-center gap-2"><span class="material-symbols-outlined text-emerald-500 text-sm">check_circle</span> Conflito de datas e limites por setor</li>
+                        <li class="flex items-center gap-2"><span class="material-symbols-outlined text-emerald-500 text-sm">check_circle</span> Histórico completo do funcionário</li>
+                    </ul>
+                </div>
+                <img src="assets/imagens/ferias02.png" alt="Gestão de Férias" class="screenshot" onerror="this.style.display='none'">
+            </div>
+
+            <!-- 6. Monitoramento GPS / Geofencing -->
+            <div class="grid lg:grid-cols-2 gap-8 items-center mb-20">
+                <img src="assets/imagens/raiosetor.png" alt="Monitoramento GPS" class="screenshot order-1 lg:order-1" onerror="this.style.display='none'">
+                <div class="order-2">
+                    <span class="badge-screen">📍 Geolocalização</span>
+                    <h3 class="text-2xl font-black mt-4 mb-4">Geofencing em Tempo Real</h3>
+                    <p class="text-slate-400 leading-relaxed">Mapa interativo com localização dos funcionários. Cercas virtuais e alertas automáticos de divergência.</p>
+                    <ul class="mt-6 space-y-2 text-slate-300">
+                        <li class="flex items-center gap-2"><span class="material-symbols-outlined text-emerald-500 text-sm">check_circle</span> Raio de ativação por setor</li>
+                        <li class="flex items-center gap-2"><span class="material-symbols-outlined text-emerald-500 text-sm">check_circle</span> Pulse de atividade a cada 20min</li>
+                        <li class="flex items-center gap-2"><span class="material-symbols-outlined text-emerald-500 text-sm">check_circle</span> Histórico de localização</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- 7. Comunicação e Autorizações -->
+            <div class="grid lg:grid-cols-2 gap-8 items-center">
+                <div>
+                    <span class="badge-screen">📢 Central de Comunicação</span>
+                    <h3 class="text-2xl font-black mt-4 mb-4">Comunicados e Solicitações</h3>
+                    <p class="text-slate-400 leading-relaxed">Envios de comunicados, solicitações de hora extra, convocações e autorizações em um só lugar.</p>
+                    <ul class="mt-6 space-y-2 text-slate-300">
+                        <li class="flex items-center gap-2"><span class="material-symbols-outlined text-emerald-500 text-sm">check_circle</span> Comunicados gerais, setoriais e individuais</li>
+                        <li class="flex items-center gap-2"><span class="material-symbols-outlined text-emerald-500 text-sm">check_circle</span> Solicitações de hora extra com limite</li>
+                        <li class="flex items-center gap-2"><span class="material-symbols-outlined text-emerald-500 text-sm">check_circle</span> Convocação para dias extras</li>
+                    </ul>
+                </div>
+                <img src="assets/imagens/comunicacaosetor_01.png" alt="Comunicação" class="screenshot" onerror="this.style.display='none'">
+            </div>
+        </div>
+    </section>
+
+    <!-- DIFERENCIAIS TÉCNICOS -->
+    <section id="tech" class="py-24 px-6">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center space-y-4 mb-16">
+                <h2 class="text-3xl lg:text-5xl font-black uppercase">Tecnologia de <span class="gradient-text">ponta</span></h2>
+                <div class="w-24 h-1 bg-amber-500 mx-auto rounded-full"></div>
+                <p class="text-slate-400 max-w-2xl mx-auto">Arquitetura moderna, segura e escalável.</p>
+            </div>
+            <div class="grid md:grid-cols-3 gap-8 text-center">
+                <div class="glass-card p-8 rounded-2xl">
+                    <span class="material-symbols-outlined text-5xl text-blue-500 mb-4">cloud</span>
+                    <h3 class="text-xl font-black mb-2">Cloud Native</h3>
+                    <p class="text-slate-400 text-sm">99.9% de disponibilidade. Acesso de qualquer lugar.</p>
+                </div>
+                <div class="glass-card p-8 rounded-2xl">
+                    <span class="material-symbols-outlined text-5xl text-blue-500 mb-4">smartphone</span>
+                    <h3 class="text-xl font-black mb-2">Mobile First</h3>
+                    <p class="text-slate-400 text-sm">App responsivo para Android e iOS (PWA).</p>
+                </div>
+                <div class="glass-card p-8 rounded-2xl">
+                    <span class="material-symbols-outlined text-5xl text-blue-500 mb-4">lock</span>
+                    <h3 class="text-xl font-black mb-2">Segurança Total</h3>
+                    <p class="text-slate-400 text-sm">Criptografia AES-256, backup automático e logs imutáveis.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- NÚMEROS -->
+    <section class="py-24 px-6 bg-blue-500/5 border-y border-white/5">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center space-y-4 mb-16">
+                <h2 class="text-3xl lg:text-5xl font-black uppercase">Números que <span class="gradient-text">impressionam</span></h2>
+                <div class="w-24 h-1 bg-amber-500 mx-auto rounded-full"></div>
+            </div>
+            <div class="grid md:grid-cols-4 gap-8 text-center">
+                <div><p class="text-5xl font-black text-blue-500">+500</p><p class="text-slate-400 mt-2 text-sm uppercase tracking-wider">Empresas confiam</p></div>
+                <div><p class="text-5xl font-black text-blue-500">98%</p><p class="text-slate-400 mt-2 text-sm uppercase tracking-wider">Satisfação dos RHs</p></div>
+                <div><p class="text-5xl font-black text-blue-500">70%</p><p class="text-slate-400 mt-2 text-sm uppercase tracking-wider">Redução de fraudes</p></div>
+                <div><p class="text-5xl font-black text-blue-500">24/7</p><p class="text-slate-400 mt-2 text-sm uppercase tracking-wider">Suporte especializado</p></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- DEMONSTRAÇÃO -->
+    <section id="demo" class="py-24 px-6">
+        <div class="max-w-4xl mx-auto glass-card rounded-3xl p-10 text-center">
+            <h2 class="text-3xl lg:text-4xl font-black mb-4">Pronto para <span class="gradient-text">evoluir?</span></h2>
+            <p class="text-slate-400 mb-8">Solicite uma demonstração gratuita e descubra como o ChronoSync pode transformar a gestão da sua empresa.</p>
+            <form id="demoForm" class="grid md:grid-cols-2 gap-5 text-left max-w-2xl mx-auto">
+                <input type="text" placeholder="Nome completo" class="bg-white/5 border border-white/10 rounded-xl px-5 py-4 focus:border-blue-500 outline-none" required>
+                <input type="email" placeholder="E-mail corporativo" class="bg-white/5 border border-white/10 rounded-xl px-5 py-4 focus:border-blue-500 outline-none" required>
+                <input type="tel" placeholder="Telefone com DDD" class="bg-white/5 border border-white/10 rounded-xl px-5 py-4 focus:border-blue-500 outline-none" required>
+                <input type="text" placeholder="Empresa" class="bg-white/5 border border-white/10 rounded-xl px-5 py-4 focus:border-blue-500 outline-none" required>
+                <div class="md:col-span-2">
+                    <textarea rows="3" placeholder="Como podemos ajudar?" class="bg-white/5 border border-white/10 rounded-xl px-5 py-4 w-full focus:border-blue-500 outline-none"></textarea>
+                </div>
+                <button type="submit" class="md:col-span-2 btn-primary py-4 rounded-xl font-black uppercase tracking-wider text-sm">Solicitar Demonstração</button>
+                <p class="md:col-span-2 text-[10px] text-slate-500 text-center">Seus dados estão seguros. Não compartilhamos com terceiros.</p>
+            </form>
+            <div id="demoSuccess" class="hidden mt-6 p-4 bg-emerald-500/20 border border-emerald-500/30 rounded-xl text-emerald-500 text-sm">✅ Obrigado! Entraremos em contato em até 24h.</div>
+        </div>
+    </section>
+
+    <footer class="py-12 border-t border-white/5 text-center text-slate-500 text-xs uppercase tracking-wider">
+        <p>© 2026 ChronoSync - Tecnologia em Gestão de Tempo. Todos os direitos reservados.</p>
+        <div class="flex justify-center gap-8 mt-4">
+            <a href="#" class="hover:text-amber-500">Termos de uso</a>
+            <a href="#" class="hover:text-amber-500">Privacidade</a>
+            <a href="#" class="hover:text-amber-500">Suporte</a>
+        </div>
+    </footer>
+
+    <script>
+        function scrollToDemo() { document.getElementById('demo').scrollIntoView({ behavior: 'smooth' }); }
+        document.getElementById('demoForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            document.getElementById('demoSuccess').classList.remove('hidden');
+            this.reset();
+            setTimeout(() => document.getElementById('demoSuccess').classList.add('hidden'), 5000);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Central de Leads - ChronoSync</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
+    <style>
+        body { font-family: 'Space Grotesk', sans-serif; background-color: #020617; color: #f8fafc; }
+        .glass { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); }
+    </style>
+</head>
+<body class="p-6">
+    <div class="max-w-6xl mx-auto space-y-8">
+        <div class="flex justify-between items-center">
+            <h1 class="text-3xl font-black uppercase italic">Central de <span class="text-sky-500">Leads</span></h1>
+            <button onclick="location.href='dashboard.html'" class="glass px-6 py-2 rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-white/5 transition">Voltar ao Painel</button>
+        </div>
+
+        <!-- Tabela de Leads -->
+        <div class="glass rounded-[32px] overflow-hidden">
+            <table class="w-full text-left">
+                <thead class="bg-white/5 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+                    <tr>
+                        <th class="px-6 py-4">Data</th>
+                        <th class="px-6 py-4">Nome / Empresa</th>
+                        <th class="px-6 py-4">Contato</th>
+                        <th class="px-6 py-4">Status</th>
+                        <th class="px-6 py-4 text-right">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="leadsTable" class="divide-y divide-white/5">
+                    <tr>
+                        <td colspan="5" class="px-6 py-10 text-center text-slate-500 animate-pulse">Carregando leads...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script type="module">
+        const SUPABASE_URL = 'https://pptprelbbrcqrbjssoci.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBwdHByZWxiYnJjcXJianNzb2NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3NDgzNjksImV4cCI6MjA4ODMyNDM2OX0.votBbcGv7f9jpSSbBs0_GkgZ_Strm9IQxjl9oo0aPp8';
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        async function loadLeads() {
+            const { data, error } = await _supabase
+                .from('solicitacoes_demo')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                console.error('Erro ao carregar:', error);
+                return;
+            }
+
+            const tbody = document.getElementById('leadsTable');
+            tbody.innerHTML = data.map(lead => `
+                <tr class="hover:bg-white/[0.02] transition-all">
+                    <td class="px-6 py-4 text-xs text-slate-500">
+                        ${new Date(lead.created_at).toLocaleDateString('pt-BR')}
+                    </td>
+                    <td class="px-6 py-4">
+                        <p class="font-bold text-sm">${lead.nome}</p>
+                        <p class="text-[10px] text-sky-500 uppercase font-black">${lead.empresa}</p>
+                    </td>
+                    <td class="px-6 py-4">
+                        <p class="text-xs">${lead.email}</p>
+                        <p class="text-xs text-emerald-500">${lead.whatsapp}</p>
+                    </td>
+                    <td class="px-6 py-4">
+                        <select onchange="updateStatus('${lead.id}', this.value)" class="bg-slate-900 border border-white/10 rounded-lg text-[10px] font-black uppercase px-2 py-1 outline-none">
+                            <option value="novo" ${lead.status === 'novo' ? 'selected' : ''}>Novo</option>
+                            <option value="atendimento" ${lead.status === 'atendimento' ? 'selected' : ''}>Em Atendimento</option>
+                            <option value="concluido" ${lead.status === 'concluido' ? 'selected' : ''}>Concluído</option>
+                        </select>
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                        <button onclick="deleteLead('${lead.id}')" class="text-rose-500 hover:text-rose-400">
+                            <span class="material-symbols-outlined text-xl">delete</span>
+                        </button>
+                    </td>
+                </tr>
+            `).join('') || '<tr><td colspan="5" class="px-6 py-10 text-center text-slate-500 uppercase text-[10px] font-black tracking-widest">Nenhuma solicitação encontrada</td></tr>';
+        }
+
+        window.updateStatus = async (id, status) => {
+            const { error } = await _supabase
+                .from('solicitacoes_demo')
+                .update({ status })
+                .eq('id', id);
+            if (error) alert('Erro ao atualizar status');
+        };
+
+        window.deleteLead = async (id) => {
+            if (!confirm('Deseja realmente excluir este lead?')) return;
+            const { error } = await _supabase
+                .from('solicitacoes_demo')
+                .delete()
+                .eq('id', id);
+            if (error) alert('Erro ao excluir');
+            else loadLeads();
+        };
+
+        loadLeads();
+    </script>
+</body>
+</html>

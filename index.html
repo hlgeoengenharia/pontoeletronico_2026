@@ -8,8 +8,7 @@
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap"
     rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap"
-    rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
   <script src="js/theme.js?v=1.0"></script>
   <style>
     .glow-text {
@@ -37,7 +36,7 @@
   <div
     class="relative w-full max-w-md flex flex-col gap-8 bg-slate-900/40 backdrop-blur-xl border border-primary/20 p-8 rounded-xl neon-border">
     <div class="absolute -top-12 left-1/2 -translate-x-1/2 bg-primary/10 border border-primary/30 p-3 rounded-full">
-      <span class="material-symbols-outlined text-primary text-4xl">timer</span>
+      <span class="material-symbols-outlined text-primary text-4xl normal-case">timer</span>
     </div>
     <div class="text-center space-y-2 pt-4">
       <h2 class="text-primary font-bold tracking-[0.2em] text-sm uppercase glow-text">PROTOCOLO DE SISTEMA</h2>
@@ -51,7 +50,7 @@
             DO usuário</span>
           <div class="relative flex items-center group">
             <div class="absolute left-4 text-primary/60 group-focus-within:text-primary transition-colors">
-              <span class="material-symbols-outlined">account_circle</span>
+              <span class="material-symbols-outlined normal-case">account_circle</span>
             </div>
             <input id="username"
               class="w-full bg-slate-800/50 border-2 border-primary/20 rounded-lg py-4 pl-12 pr-4 focus:border-primary focus:ring-0 text-slate-100 placeholder:text-slate-500 transition-all"
@@ -63,7 +62,7 @@
             ACESSO</span>
           <div class="relative flex items-center group">
             <div class="absolute left-4 text-primary/60 group-focus-within:text-primary transition-colors">
-              <span class="material-symbols-outlined">lock</span>
+              <span class="material-symbols-outlined normal-case">lock</span>
             </div>
             <input id="password"
               class="w-full bg-slate-800/50 border-2 border-primary/20 rounded-lg py-4 pl-12 pr-4 focus:border-primary focus:ring-0 text-slate-100 placeholder:text-slate-500 transition-all"
@@ -83,15 +82,14 @@
       <button id="login-btn"
         class="w-full bg-primary hover:bg-primary/90 text-white font-bold py-5 rounded-lg transition-all transform active:scale-[0.98] shadow-lg shadow-primary/20 flex items-center justify-center gap-3 group">
         <span class="tracking-[0.15em] text-lg uppercase">INICIAR</span>
-        <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">bolt</span>
+        <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform normal-case">bolt</span>
       </button>
     </div>
-    <div class="pt-4 border-t border-primary/10 text-center">
-      <p class="text-sm text-slate-400">
-        Novo Jogador?
-        <a class="text-primary font-bold hover:underline underline-offset-4 ml-1 uppercase tracking-tight"
-          href="#">FAZER CADASTRO</a>
-      </p>
+    <div class="pt-4 border-t border-primary/10 text-center space-y-4">
+      <a href="screens/apresentacao.html" class="w-full inline-flex items-center justify-center gap-3 px-6 py-4 bg-gradient-to-r from-amber-400 to-amber-600 border border-amber-300/30 rounded-xl text-slate-900 text-[11px] font-black uppercase tracking-[0.2em] hover:from-amber-300 hover:to-amber-500 hover:scale-[1.02] active:scale-[0.98] transition-all group shadow-[0_0_20px_rgba(245,158,11,0.4)]">
+        <span class="material-symbols-outlined text-base normal-case">present_to_all</span>
+        CONHEÇA O CHRONOSYNC
+      </a>
     </div>
     <div class="absolute -bottom-10 left-0 w-full flex justify-center gap-8 opacity-20">
       <div class="flex items-center gap-2 text-[10px] text-primary uppercase font-bold"><span
