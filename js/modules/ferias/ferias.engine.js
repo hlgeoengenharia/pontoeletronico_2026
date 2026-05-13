@@ -508,11 +508,12 @@ export const FeriasEngine = {
                 mensagem_padrao: status === 'aprovado' ? 'Suas férias foram abonadas!' : (status === 'rejeitado' ? 'Seu planejamento foi analisado.' : 'Seu cronograma foi enviado para análise.')
             }]);
 
-            UI.showToast(status === 'aprovado' ? 'Férias abonadas!' : (status === 'rejeitado' ? 'Rejeitado.' : 'Cronograma enviado!'), 'success');
+            UI.showToast(status === 'aprovado' ? 'Férias abonadas!' : (status === 'rejeitado' ? 'Rejeitado.' : 'Solicitação de Férias enviada com sucesso.'), 'success');
 
             // 3. Fechar e Atualizar
             console.log('[FeriasEngine] Fechando card e agendando reinicialização...');
             if (typeof window.fecharCardFerias === 'function') window.fecharCardFerias();
+            if (typeof window.fecharModalFerias === 'function') window.fecharModalFerias();
             
             // Recarregar apenas os dados necessários
             setTimeout(() => {

@@ -18,7 +18,7 @@ const UI = {
         if (existingToast) existingToast.remove();
 
         const toast = document.createElement('div');
-        toast.className = `custom-toast fixed top-8 left-1/2 -translate-x-1/2 px-6 py-4 rounded-xl font-bold uppercase tracking-widest text-xs z-[1000] border-2 shadow-2xl transition-all duration-300 transform scale-0 opacity-0 flex items-center gap-3`;
+        toast.className = `custom-toast fixed top-8 left-1/2 -translate-x-1/2 px-6 py-4 rounded-xl font-bold uppercase tracking-widest text-xs z-[5000] border-2 shadow-2xl transition-all duration-300 transform scale-0 opacity-0 flex items-center gap-3`;
 
         const colors = {
             success: 'bg-emerald-950/80 border-emerald-500 text-emerald-400 shadow-emerald-500/20',

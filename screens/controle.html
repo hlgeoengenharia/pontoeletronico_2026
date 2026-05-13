@@ -262,26 +262,28 @@
                 console.log('[Controle] Buscando gestores...');
                 
                 const userRole = localStorage.getItem('userRole') || '';
-                const userEmpresaId = localStorage.getItem('companyId');
+                const userEmpresaId = localStorage.getItem('empresa_id') || localStorage.getItem('companyId');
                 const isSuperAdmin = userRole === 'SuperAdmin';
+
+                console.log(`[Controle] Role: ${userRole} | Empresa: ${userEmpresaId}`);
 
                 // 1. Buscar Funcionários Gestores com Join (Tenta o caminho oficial)
                 let query = supabase
                     .from('funcionarios')
-                    .select('id, matricula, permissoes_gestor, identidades_globais(nome_completo)')
-                    .eq('nivel_acesso', 'Gestor');
+                    .select('id, matricula, permissoes_gestor, identidades_globais!inner(nome_completo)')
+                    .ilike('nivel_acesso', 'gestor');
                 
                 // Filtrar por empresa para Admin (não SuperAdmin)
                 if (!isSuperAdmin && userEmpresaId) {
                     query = query.eq('empresa_id', userEmpresaId);
                 }
-
+                
                 const { data, error } = await query;
 
                 if (error) {
                     console.warn('[Controle] Erro no join direto, tentando busca separada:', error);
-                    // Fallback para busca separada (o que fizemos antes, mas revisado)
-                    let fallbackQuery = supabase.from('funcionarios').select('*').eq('nivel_acesso', 'Gestor');
+                    // Fallback para busca separada
+                    let fallbackQuery = supabase.from('funcionarios').select('*').ilike('nivel_acesso', 'gestor');
                     if (!isSuperAdmin && userEmpresaId) {
                         fallbackQuery = fallbackQuery.eq('empresa_id', userEmpresaId);
                     }

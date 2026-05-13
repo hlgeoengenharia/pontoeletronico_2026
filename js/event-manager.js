@@ -111,16 +111,16 @@ const EventManager = {
     getConfig(item) {
         let typeKey = item.itemType || item.type;
         const subtipo = (item.subtipo || '').toLowerCase();
-        
+
         // Mapeamentos específicos por subtipo ou tipo raw
         if (subtipo === 'hora_extra') return this.EVENT_CONFIG['HORA_EXTRA'];
         if (subtipo === 'dia_trabalho_extra') return this.EVENT_CONFIG['DIA_EXTRA'];
         if (subtipo === 'aviso_ferias' || subtipo === 'ferias') return this.EVENT_CONFIG['FERIAS'];
         if (subtipo === 'folga' || subtipo === 'feriado' || subtipo === 'ferias_manual') return this.EVENT_CONFIG['FERIAS_FOLGA'];
         if (subtipo === 'mensagem' || subtipo === 'comunicado') return this.EVENT_CONFIG['COMUNICADO'];
-        
+
         if (typeKey === 'DIA_EXTRA' || item.itemType === 'DIA_EXTRA') return this.EVENT_CONFIG['DIA_EXTRA'];
-        
+
         if (typeKey === 'ALERTA_FERIADOS_FOLGAS' || item.tipo === 'alerta_feriados_folgas') return this.EVENT_CONFIG['ALERTA_FERIADOS_FOLGAS'];
         if (typeKey === 'GPS' || item.tipo === 'gps_pulse' || item.tipo === 'gps_hora') return this.EVENT_CONFIG['GPS'];
         if (typeKey === 'FERIAS' || item.tipo === 'aviso_ferias') return this.EVENT_CONFIG['CRONOGRAMA_FERIAS'];
@@ -128,12 +128,12 @@ const EventManager = {
         if (typeKey === 'EVENTO') return this.EVENT_CONFIG['EVENTO'];
         if (typeKey === 'FERIAS_FOLGA' || typeKey === 'FERIAS_FOLGA_GROUP') return this.EVENT_CONFIG['FERIAS_FOLGA'];
         if (typeKey === 'justificativa_resultado') return this.EVENT_CONFIG['JUSTIFICATIVA_RESULTADO'];
-        
+
         // Fallback para registros brutos de feriados (que possuem campo 'escopo' ou 'data' sem tipo definido)
         if (item.escopo || (item.data && !item.conteudo && !item.anotacao)) {
             return this.EVENT_CONFIG['FERIAS_FOLGA'];
         }
-        
+
         return this.EVENT_CONFIG[typeKey] || this.EVENT_CONFIG['SISTEMA'];
     },
 
@@ -149,9 +149,9 @@ const EventManager = {
         const justificativasConsumidas = new Set();
 
         // A. Atividades (Anotações)
-        anotacoes.forEach(a => unified.push({ 
-            ...a, 
-            tipo: 'atividade', 
+        anotacoes.forEach(a => unified.push({
+            ...a,
+            tipo: 'atividade',
             itemType: 'ATIVIDADE',
             time: a.created_at || a.data_hora,
             content: a.justificativa_usuario || a.anotacao || ''
@@ -172,9 +172,9 @@ const EventManager = {
 
         justificativas.forEach(j => {
             const result = justificativaResultados[j.id];
-            unified.push({ 
-                ...j, 
-                tipo: 'justificativa', 
+            unified.push({
+                ...j,
+                tipo: 'justificativa',
                 itemType: 'JUSTIFICATIVA',
                 time: j.created_at || j.data_hora,
                 content: j.justificativa_usuario || j.descricao || '',
@@ -195,7 +195,7 @@ const EventManager = {
 
             const realType = (subtipo === 'hora_extra') ? 'hora_extra' : (subtipo === 'dia_trabalho_extra' ? 'dia_trabalho_extra' : 'mensagem');
             const itemType = (subtipo === 'hora_extra') ? 'HORA_EXTRA' : (subtipo === 'dia_trabalho_extra' ? 'DIA_EXTRA' : (subtipo === 'ferias_folgas' ? 'FERIAS_FOLGA' : 'COMUNICADO'));
-            
+
             // [SINCRONIZAÇÃO] Se for DIA EXTRA, o tempo do evento é o dia do trabalho marcado na tag
             let eventTime = c.created_at;
             const diaExtraTag = (c.conteudo || '').match(/\[DIA_EXTRA:(\d{4}-\d{2}-\d{2})\]/);
@@ -204,9 +204,9 @@ const EventManager = {
                 eventTime = `${diaExtraTag[1]}T08:00:00`;
             }
 
-            unified.push({ 
-                ...c, 
-                tipo: realType, 
+            unified.push({
+                ...c,
+                tipo: realType,
                 itemType: itemType,
                 time: eventTime,
                 content: c.conteudo || ''
@@ -220,17 +220,17 @@ const EventManager = {
             const logAviso = logs.find(l => l.tipo === 'aviso_ferias');
             if (logAviso) avisoFeriasProcessado = true;
 
-            unified.push({ 
-                ...first, 
+            unified.push({
+                ...first,
                 id: logAviso ? logAviso.id : `ferias_unificado_${first.funcionario_id}`,
-                tipo: 'ferias', 
+                tipo: 'ferias',
                 itemType: 'CRONOGRAMA_FERIAS',
                 subtipo: 'ferias',
                 time: first.created_at || first.data_inicio,
                 parcelas: ferias,
                 log_message: logAviso ? logAviso.mensagem_padrao : null,
-                content: first.status === 'pendente' ? 'Proposta de férias aguardando análise.' : 
-                         (first.status === 'aprovado' ? 'Cronograma de férias consolidado.' : 'Cronograma de férias necessita de ajustes.')
+                content: first.status === 'pendente' ? 'Proposta de férias aguardando análise.' :
+                    (first.status === 'aprovado' ? 'Cronograma de férias consolidado.' : 'Cronograma de férias necessita de ajustes.')
             });
         }
 
@@ -247,7 +247,7 @@ const EventManager = {
             const dates = list.map(f => new Date(f.data + 'T00:00:00'));
             const minDate = new Date(Math.min(...dates));
             const diffDays = (minDate - now) / (1000 * 60 * 60 * 24);
-            
+
             // REGRA: No contexto de Diário/Histórico, mostramos todos. No Online, apenas futuros/atuais.
             if (!options.isContextOnline && !options.isContextDiario && diffDays < -1) return; // Permitir histórico no diário
 
@@ -269,11 +269,11 @@ const EventManager = {
             const isFeriasRedundante = l.tipo === 'aviso_ferias' && avisoFeriasProcessado;
 
             // REGRA: Ocultar card de falta se já houver um card de justificativa para o mesmo período (redundância visual)
-            const isFaltaRedundante = l.tipo === 'falta' && unified.some(u => 
-                (u.itemType === 'JUSTIFICATIVA' || u.tipo === 'ponto') && 
+            const isFaltaRedundante = l.tipo === 'falta' && unified.some(u =>
+                (u.itemType === 'JUSTIFICATIVA' || u.tipo === 'ponto') &&
                 Math.abs(new Date(u.time).getTime() - new Date(l.created_at || l.data_hora).getTime()) / (1000 * 60 * 60) < 24
             );
-            
+
             if (isJustificativaRedundante || isFeriasRedundante || isFaltaRedundante) return;
 
             // CARD DE RESULTADO DE ANÁLISE: 
@@ -292,7 +292,7 @@ const EventManager = {
             let finalStatus = 'pendente';
             if (isPenalidadeLog) {
                 const lTime = new Date(l.created_at || l.data_hora).getTime();
-                const result = justificativaResultadosByContext.find(r => 
+                const result = justificativaResultadosByContext.find(r =>
                     r.funcionario_id === l.funcionario_id &&
                     Math.abs(new Date(r.created_at).getTime() - lTime) / (1000 * 60 * 60) < 48 // Janela de 48h para análise
                 );
@@ -303,16 +303,16 @@ const EventManager = {
             }
 
             // --- FILTRO DE LIMPEZA CHRONOSYNC ---
-            const isRoutinePulse = content.includes('Localização registrada automaticamente') || 
-                                   content.includes('validar sua presença') ||
-                                   content.includes('TrackPulse: OK');
-            
+            const isRoutinePulse = content.includes('Localização registrada automaticamente') ||
+                content.includes('validar sua presença') ||
+                content.includes('TrackPulse: OK');
+
             if (isRoutinePulse && !isGeofenceLog) return;
             if (isGeofenceLog) return;
 
-            unified.push({ 
-                ...l, 
-                tipo: 'sistema', 
+            unified.push({
+                ...l,
+                tipo: 'sistema',
                 itemType: 'SISTEMA',
                 time: l.created_at || l.data_hora,
                 content: content,
@@ -329,8 +329,8 @@ const EventManager = {
 
                 // Evitar duplicação se já tiver sido adicionado via LOG
                 const pTime = new Date(p.data_hora).getTime();
-                const alreadyAdded = unified.some(u => 
-                    u.itemType === 'PONTO' && 
+                const alreadyAdded = unified.some(u =>
+                    u.itemType === 'PONTO' &&
                     Math.abs(new Date(u.time).getTime() - pTime) / (1000 * 60) < 1
                 );
                 if (alreadyAdded) return;
@@ -344,7 +344,7 @@ const EventManager = {
                 // Buscar resultado de análise por referencia_id ou proximidade temporal
                 const findResultForPonto = () => {
                     if (justificativaResultados[p.id]) return justificativaResultados[p.id];
-                    return justificativaResultadosByContext.find(r => 
+                    return justificativaResultadosByContext.find(r =>
                         r.funcionario_id === p.funcionario_id &&
                         (r.referencia_id === p.id || Math.abs(new Date(r.created_at).getTime() - pTime) / (1000 * 60 * 60) < 24)
                     ) || null;
@@ -353,7 +353,7 @@ const EventManager = {
                 if (justificativa) {
                     justificativasConsumidas.add(justificativa.id);
                     const result = justificativaResultados[justificativa.id] || findResultForPonto();
-                    
+
                     // Status: priorizar justificativa.status, depois status_validacao do ponto
                     let finalStatus = justificativa.status || 'pendente';
                     if (finalStatus === 'pendente' && p.status_validacao && p.status_validacao !== 'pendente') {
@@ -432,7 +432,7 @@ const EventManager = {
         // 2. Feriados e Folgas (Regra Admin: Online + 1 dia antes do evento)
         if (typeKey === 'FERIAS_FOLGA') {
             if (!options.isContextOnline) return false;
-            
+
             // Buscar a data mais próxima do evento na lista agrupada
             const list = item.list || [item];
             const dates = list.map(f => {
@@ -440,7 +440,7 @@ const EventManager = {
                 return d ? new Date(d + 'T00:00:00') : now;
             });
             const minDate = new Date(Math.min(...dates));
-            
+
             // O botão some no início do dia anterior ao evento (24h antes do 00:00:00 do feriado)
             const deadline = new Date(minDate.getTime() - (24 * 60 * 60 * 1000));
             return now < deadline;
@@ -477,7 +477,7 @@ const EventManager = {
         if (!escala) return { status: 'normal', msg: '' };
 
         const results = [];
-        
+
         // A. Geofence - Prioridade: escala > setor > default
         const lat = ponto.latitude || (ponto.geolocalizacao_json ? ponto.geolocalizacao_json.lat : null);
         const lng = ponto.longitude || (ponto.geolocalizacao_json ? ponto.geolocalizacao_json.lng : null);
@@ -518,7 +518,7 @@ const EventManager = {
     // 5. Limpeza de Diário (Marcação de Leitura)
     async clearAutoInformativos(userId, allItems, force = false) {
         if (!allItems || !allItems.length || !userId) return;
-        
+
         // Trava de Segurança: A limpeza automática SÓ deve ocorrer na tela do Diário ou se forçado
         const isDiarioPage = window.location.pathname.endsWith('diario_funcionario.html');
         if (!isDiarioPage && !force) {
@@ -527,11 +527,11 @@ const EventManager = {
         }
 
         console.log(`[EventManager] Analisando ${allItems.length} itens para limpeza automática de badges...`);
-        
+
         const pendingComIds = [];
         const markSeenIfPending = (id, type, sub, item) => {
             if (!id) return;
-            
+
             let key = `visto_${id}`;
             const t = String(type || '').toUpperCase();
             const it = String(item?.tipo || '').toUpperCase();
@@ -542,14 +542,14 @@ const EventManager = {
             const isJustificativa = t === 'JUSTIFICATIVA' || t === 'ABONO' || t === 'JUSTIFICATIVA_RESULTADO' || it === 'JUSTIFICATIVA' || item?.status === 'abonado' || item?.status === 'rejeitado';
             const isFeriasAnalise = t === 'CRONOGRAMA_FERIAS' || s === 'ferias' || it === 'FERIAS';
 
-            if (isFeriado) { 
-                key = `visto_feriado_${id}`; 
+            if (isFeriado) {
+                key = `visto_feriado_${id}`;
             } else if (isJustificativa) {
                 key = `visto_justificativa_${id}`;
             } else if (isFeriasAnalise) {
                 key = `visto_ferias_analise_${item.funcionario_id || id}`;
-            } else if (t === 'COMUNICADO' || t === 'HORA_EXTRA' || s === 'mensagem') { 
-                key = `ciente_${id}`; 
+            } else if (t === 'COMUNICADO' || t === 'HORA_EXTRA' || s === 'mensagem') {
+                key = `ciente_${id}`;
                 if (s && s !== 'hora_extra' && t !== 'HORA_EXTRA') pendingComIds.push(id);
             }
 
@@ -562,14 +562,14 @@ const EventManager = {
         allItems.forEach(item => {
             const config = this.getConfig(item);
             if (!config || !config.autoClear) return;
-            
+
             const sub = (item.subtipo || '').toLowerCase();
-            
+
             // Se for um grupo de feriados/folgas, limpar TODOS os IDs da lista interna
             if (item.list && Array.isArray(item.list)) {
                 item.list.forEach(subItem => markSeenIfPending(subItem.id, item.itemType, sub, subItem));
-            } 
-            
+            }
+
             // Limpar também o ID principal do evento
             markSeenIfPending(item.id || item.editId, item.itemType, sub, item);
         });
@@ -578,13 +578,13 @@ const EventManager = {
         if (pendingComIds.length > 0 || userId) {
             try {
                 const { supabase: sb } = await import('./supabase-config.js');
-                
+
                 const promises = [];
                 if (pendingComIds.length > 0) {
                     // Marcar comunicados específicos como lidos (Sincronização Remota)
                     promises.push(sb.from('comunicados').update({ lido: true }).in('id', pendingComIds));
                 }
-                
+
                 // Limpeza Global de Logs Informativos (Fundamental para o Dashboard zerar)
                 // PROTEGE justificativa_resultado: esses logs precisam manter status_pendencia='pendente'
                 // até que o funcionário os visualize no Diário (o JustificativasCounter depende disso)
@@ -596,8 +596,8 @@ const EventManager = {
 
                 await Promise.all(promises);
                 console.log('[EventManager] Limpeza de informativos sincronizada com o banco.');
-            } catch (e) { 
-                console.error('[EventManager] Falha crítica na sincronização de limpeza:', e); 
+            } catch (e) {
+                console.error('[EventManager] Falha crítica na sincronização de limpeza:', e);
             }
         }
 

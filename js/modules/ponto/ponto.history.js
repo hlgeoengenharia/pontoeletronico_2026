@@ -8,12 +8,12 @@ export const PontoHistory = {
         const content = (item.content || '').toUpperCase();
         const isCheckin = item.tipo === 'ENTRADA' || content.includes('CHECK-IN') || content.includes('ENTRADA');
         const icon = isCheckin ? 'login' : 'logout';
-        
+
         const status = (item.status || 'pendente').toLowerCase();
-        
+
         let statusClass = 'bg-amber-500/10 text-amber-500 border-amber-500/20';
         let statusLabel = 'AGUARDANDO ANÁLISE';
-        
+
         let accentBorder = isCheckin ? 'border-l-emerald-500' : 'border-l-rose-500';
         let colorClass = isCheckin ? 'text-emerald-500 bg-emerald-500/10' : 'text-rose-500 bg-rose-500/10';
         let borderClass = isCheckin ? 'border-emerald-500/20' : 'border-rose-500/20';
@@ -31,7 +31,7 @@ export const PontoHistory = {
             colorClass = 'text-rose-500 bg-rose-500/10';
             borderClass = 'border-rose-500/20';
         }
-        
+
         return `
             <div class="group relative bg-[#0f1115] border border-white/5 rounded-[2.5rem] p-6 border-l-4 ${accentBorder} hover:border-white/10 transition-all duration-300 shadow-2xl overflow-hidden mb-4">
                 <!-- Background Glow -->

@@ -365,19 +365,18 @@
             </div>
         </div>
 
-        <!-- Detalhamento de Batidas -->
-        <div class="bg-[#0f172a] border border-white/5 rounded-3xl overflow-hidden shadow-xl">
-            <div class="bg-white/5 px-6 py-4 border-b border-white/5">
-                <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Registros de Ponto</h4>
+        <!-- Linha do Tempo Unificada do Dia -->
+        <div class="bg-[#0f172a]/50 border border-white/5 rounded-[2.5rem] overflow-hidden shadow-2xl backdrop-blur-sm">
+            <div class="bg-white/5 px-8 py-6 border-b border-white/5 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <span class="material-symbols-outlined text-primary">timeline</span>
+                    <h4 class="text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">Linha do Tempo do Dia</h4>
+                </div>
+                <div id="timeline-count" class="text-[9px] font-black text-primary bg-primary/10 px-3 py-1 rounded-full uppercase tracking-widest">---</div>
             </div>
-            <div id="batidasContainer" class="p-6 space-y-4">
-                <!-- Batidas serão injetadas aqui -->
+            <div id="timeline-dia-container" class="p-6 space-y-4">
+                <!-- Eventos unificados (Ponto + Diário) serão injetados aqui -->
             </div>
-        </div>
-
-        <!-- Observações e Justificativas -->
-        <div id="containerObservacoes" class="space-y-4">
-            <!-- Cards de Anotações e Justificativas -->
         </div>
     </main>
 
@@ -448,7 +447,6 @@
                 const func = {
                     ...perfil?.funcionarios,
                     nome_completo: perfil?.funcionarios?.identidades_globais?.nome_completo || 'Tripulante',
-                    // Importante: A vigência para o ScalesEngine agora vem de data_inicio_prevista
                     vigencia_inicio: perfil?.funcionarios?.data_inicio_prevista,
                     foto_url: perfil?.foto_url
                 };
@@ -458,16 +456,8 @@
                 document.getElementById('user-setor-audit').innerText = (func.setores?.nome || 'N/A').toUpperCase();
                 document.getElementById('user-matricula-audit').innerText = `#${func.matricula || '---'}`;
 
-                // Photo Sync Logic with Error Fallback
                 const photoImg = document.getElementById('user-photo-audit');
-                if (func.foto_url) {
-                    photoImg.src = func.foto_url;
-                } else {
-                    photoImg.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(func.nome_completo || 'User')}&background=020617&color=fbbf24&bold=true`;
-                }
-                photoImg.onerror = () => {
-                    photoImg.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(func.nome_completo || 'User')}&background=020617&color=fbbf24&bold=true`;
-                };
+                if (func.foto_url) photoImg.src = func.foto_url;
 
                 const mySectorId = func.setor_id;
                 const [ptsRes, anotRes, justRes, comsRes, logsRes, ferRes, vacRes] = await Promise.all([
@@ -480,14 +470,10 @@
                     supabase.from('ferias').select('*').eq('funcionario_id', targetId).eq('status', 'aprovado')
                 ]);
 
-                // [MELHORIA] Filtrar comunicados para o resumo do dia: 
-                // Se for convocação de DIA_EXTRA, aparece apenas no dia do trabalho.
-                // Se for comunicado comum, aparece no dia da criação.
                 const activeComs = (comsRes.data || []).filter(c => {
                     const isDiaExtraTag = (c.conteudo || '').includes('[DIA_EXTRA:');
                     const isScheduledForToday = (c.conteudo || '').includes(`[DIA_EXTRA:${dataRef}]`);
                     const isCreatedToday = (c.created_at || '').startsWith(dataRef);
-
                     if (isDiaExtraTag) return isScheduledForToday;
                     return isCreatedToday;
                 });
@@ -495,19 +481,16 @@
                 const { EventManager } = await import('../js/event-manager.js');
                 const { HistoryRenderer } = await import('../js/core/history.renderer.js');
 
-                // 1. Unificar Histórico via Engine do Diário
-                // REGRA: Só mostrar o card completo (premium) no dia do abono (log de aviso_ferias)
-                const hasAvisoLog = (logsRes.data || []).some(l => l.tipo === 'aviso_ferias');
-                const vacationsForCard = hasAvisoLog ? (vacRes.data || []) : [];
-
+                // UNIFICAÇÃO TOTAL: Ponto + Diário intercalados por horário
+                // Sincronizado com diario_funcionario.html para paridade absoluta
                 const unifiedHistory = EventManager.unifyHistory(
                     anotRes.data || [],
                     justRes.data || [],
                     activeComs,
                     logsRes.data || [],
-                    vacationsForCard,
+                    vacRes.data || [], // Férias Reativadas (Premium)
                     ferRes.data || [],
-                    { hideActions: true, isContextDiario: false, pontos: ptsRes.data || [] }
+                    { hideActions: true, isContextDiario: true, pontos: ptsRes.data || [] }
                 );
 
                 renderResumo(ptsRes.data, unifiedHistory, func.escalas, dataRef, HistoryRenderer, vacRes.data || []);
@@ -522,19 +505,13 @@
         }
 
         function renderResumo(pontos, allItems, escala, dataRef, HistoryRenderer, vacData) {
-            // Usando o helper centralizado do ScalesEngine para consistência
             const dateObj = new Date(dataRef + 'T12:00:00');
             const month = dateObj.getMonth();
             const year = dateObj.getFullYear();
 
-            // Re-fetch manual dos feriados/ferias para o ScalesEngine decidir os badges do header
-            // (Mas vamos usar as variáveis locais se possível)
             const plannedDays = (escala) ? ScalesEngine.projectBaseDays(escala, escala.vigencia_inicio, month, year) : [];
-
-            // Determinar isenção para estatísticas
             const isPlanned = plannedDays.includes(dataRef);
             const isFeriado = allItems.some(i => i.itemType === 'FERIAS_FOLGA');
-            // Identificar se o dia é de férias (para o badge superior) consultando a lista bruta
             const isVacation = (vacData || []).some(v => dataRef >= v.data_inicio && dataRef <= v.data_fim);
 
             const dayExemptInfo = {
@@ -542,26 +519,22 @@
                 type: isVacation ? 'FÉRIAS' : (isFeriado ? 'FERIADO' : 'FOLGA')
             };
 
-            // [NOVO] Lógica de DIA EXTRA: Convocação sobrepõe folga original
             const isDiaExtra = allItems.some(i => i.itemType === 'DIA_EXTRA');
             if (isDiaExtra) {
                 dayExemptInfo.exempt = false;
-                dayExemptInfo.type = 'CONVOCADO'; // Texto para o badge superior
+                dayExemptInfo.type = 'CONVOCADO';
             }
 
             // 1. Cálculos de Tempo
             const possessesLunch = escala?.possui_almoco !== false;
             let workedMins = calculateWorkedMinutes(pontos, possessesLunch);
-
-            // Abono se aprovado
             const isAbonado = allItems.some(i => i.itemType === 'JUSTIFICATIVA' && (i.status === 'aprovado' || i.status === 'abonado'));
-
             const isFinished = ScalesEngine.isDayFinished(dataRef, escala);
             const shouldCharge = (isPlanned || isDiaExtra) && !dayExemptInfo.exempt && (pontos.length > 0 || isFinished);
             const dailyPlannedMinutes = shouldCharge ? ScalesEngine.calculateDailyWorkMinutes(escala) : 0;
 
             if (isAbonado && (isPlanned || isDiaExtra) && !dayExemptInfo.exempt) {
-                workedMins = dailyPlannedMinutes; // Abono
+                workedMins = dailyPlannedMinutes;
             }
 
             const balance = workedMins - dailyPlannedMinutes;
@@ -600,54 +573,21 @@
                 saldoLabel.className = `text-2xl font-black italic text-${isPositive ? 'emerald' : 'rose'}-400`;
             }
 
-            // 2. Render Batidas (Visual do Espelho de Ponto)
-            const batidasCont = document.getElementById('batidasContainer');
-            if (pontos.length === 0) {
-                batidasCont.innerHTML = '<p class="text-sm text-slate-500 italic text-center py-4">Nenhum registro de ponto encontrado.</p>';
+            // 2. Render Linha do Tempo Unificada (Ponto + Diário)
+            const timelineCont = document.getElementById('timeline-dia-container');
+            const timelineCount = document.getElementById('timeline-count');
+            
+            if (allItems.length === 0) {
+                timelineCont.innerHTML = '<p class="text-[9px] text-slate-600 uppercase text-center py-10 italic tracking-widest">Nenhuma transmissão registrada para este dia</p>';
+                if (timelineCount) timelineCount.innerText = '0 REGISTROS';
             } else {
-                batidasCont.innerHTML = `
-                    <div class="grid grid-cols-2 gap-6">
-                        <div class="space-y-4">
-                            ${pontos.filter((_, i) => i % 2 === 0).map((p, i) => `
-                                <div class="flex items-center gap-4">
-                                    <div class="flex items-center gap-1.5 bg-emerald-500/10 p-2 rounded-lg">
-                                        <span class="material-symbols-outlined text-emerald-500 text-sm">login</span>
-                                    </div>
-                                    <div>
-                                        <div class="flex items-center gap-2">
-                                            <p class="text-[8px] font-black text-slate-500 uppercase tracking-tighter">Entrada ${i + 1}</p>
-                                        </div>
-                                        <p class="text-sm font-black text-slate-200">${formatTime(p)}</p>
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                        <div class="space-y-4">
-                            ${pontos.filter((_, i) => i % 2 !== 0).map((p, i) => `
-                                <div class="flex items-center gap-4">
-                                    <div class="flex items-center gap-1.5 bg-rose-500/10 p-2 rounded-lg">
-                                        <span class="material-symbols-outlined text-rose-500 text-sm">logout</span>
-                                    </div>
-                                    <div>
-                                        <div class="flex items-center gap-2">
-                                            <p class="text-[8px] font-black text-slate-500 uppercase tracking-tighter">Saída ${i + 1}</p>
-                                        </div>
-                                        <p class="text-sm font-black text-slate-200">${formatTime(p)}</p>
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                `;
+                if (timelineCount) timelineCount.innerText = `${allItems.length} REGISTROS`;
+                timelineCont.innerHTML = HistoryRenderer.renderList(allItems, {
+                    isAdmin: localStorage.getItem('userRole') === 'Admin',
+                    isContextDiario: true,
+                    hideActions: true
+                });
             }
-
-            // 3. Render Cards Dinâmicos (HistoryRenderer)
-            const obsCont = document.getElementById('containerObservacoes');
-            obsCont.innerHTML = HistoryRenderer.renderList(allItems, {
-                isAdmin: localStorage.getItem('userRole') === 'Admin',
-                isContextDiario: false,
-                hideActions: true
-            });
         }
 
         function calculateWorkedMinutes(points, possuiAlmoco = true) {
