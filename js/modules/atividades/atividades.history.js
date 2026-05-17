@@ -17,12 +17,21 @@ export const AtividadesHistory = {
         const isEditing = options.editingId === item.id;
         let contentHtml = '';
 
+        let rawContent = item.conteudo || item.content || '';
+        let geoTag = '';
+        const geoTagMatch = rawContent.match(/\|GEO:([^|]+)\|/);
+        if (geoTagMatch) {
+            geoTag = geoTagMatch[0];
+            rawContent = rawContent.replace(geoTag, '').trim();
+        }
+
         if (isEditing) {
             contentHtml = `
                 <div class="space-y-3">
                     <textarea id="edit-content-${item.id}" 
                         class="w-full bg-black/40 border border-primary/30 rounded-xl p-3 text-[11px] text-slate-200 focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all font-medium min-h-[80px]"
-                        placeholder="Descreva a atividade...">${item.conteudo || item.content || ''}</textarea>
+                        placeholder="Descreva a atividade...">${rawContent}</textarea>
+                    <input type="hidden" id="edit-geo-${item.id}" value="${geoTag}">
                 </div>
             `;
             actionButtons = `
@@ -38,10 +47,40 @@ export const AtividadesHistory = {
                 </div>
             `;
         } else {
+            let displayContent = item.conteudo || item.content || '';
+            let lat = item.latitude;
+            let lng = item.longitude;
+
+            const geoMatch = displayContent.match(/\|GEO:([^,]+),([^|]+)\|/);
+            if (geoMatch) {
+                lat = parseFloat(geoMatch[1]);
+                lng = parseFloat(geoMatch[2]);
+                displayContent = displayContent.replace(geoMatch[0], '').trim();
+            }
+
+            let mapHtml = '';
+            if (lat && lng) {
+                const mapUrl = `https://static-maps.yandex.ru/1.x/?lang=pt-BR&ll=${lng},${lat}&z=16&l=sat,skl&size=400,200&pt=${lng},${lat},pm2blm`;
+                const gmapsLink = `https://www.google.com/maps?q=${lat},${lng}`;
+                mapHtml = `
+                    <a href="${gmapsLink}" target="_blank" class="block mt-3 relative rounded-xl overflow-hidden border border-white/10 h-32 w-full group/map shadow-md cursor-pointer">
+                        <img src="${mapUrl}" class="w-full h-full object-cover transition-transform duration-500 group-hover/map:scale-110" alt="Localização Satélite">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent group-hover/map:from-black/70 transition-all"></div>
+                        <div class="absolute bottom-2 left-2 flex items-center gap-2">
+                            <div class="size-6 rounded-full bg-blue-500/20 backdrop-blur-md border border-blue-500/50 flex items-center justify-center text-blue-500 animate-pulse">
+                                <span class="material-symbols-outlined text-[12px]">my_location</span>
+                            </div>
+                            <span class="text-[9px] font-black uppercase text-white tracking-widest drop-shadow-md">Ver no Mapa</span>
+                        </div>
+                    </a>
+                `;
+            }
+
             contentHtml = `
                 <div class="bg-black/20 rounded-xl p-3 border border-white/5">
-                    <p class="text-[11px] text-slate-300 leading-relaxed font-medium opacity-90">${item.conteudo || item.content || 'Nenhuma descrição informada.'}</p>
+                    <p class="text-[11px] text-slate-300 leading-relaxed font-medium opacity-90">${displayContent || 'Nenhuma descrição informada.'}</p>
                 </div>
+                ${mapHtml}
             `;
             if (canEdit && !options.hideActions) {
                 actionButtons = `

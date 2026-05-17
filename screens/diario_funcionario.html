@@ -153,6 +153,23 @@
 
             <div class="space-y-4">
                 <input id="inputTipoModo" type="hidden" value="atividade" />
+                
+                <div id="containerGeolocalizacao" class="w-full flex items-center justify-between bg-white/5 border border-white/10 rounded-xl p-3">
+                    <div class="flex items-center gap-3">
+                        <div class="size-8 rounded-lg bg-blue-500/20 text-blue-500 flex items-center justify-center">
+                            <span class="material-symbols-outlined text-lg">location_on</span>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="text-[10px] font-black uppercase text-slate-200 tracking-widest">Registrar Geolocalização?</span>
+                            <span class="text-[8px] text-slate-500 font-bold uppercase mt-0.5">Anexar posição ao registro</span>
+                        </div>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="toggleGeo" class="sr-only peer">
+                        <div class="w-9 h-5 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
+                    </label>
+                </div>
+
                 <div id="camposJustificativa" class="hidden space-y-4">
                     <select id="selectTipoJustificativa" class="w-full bg-background-dark border border-white/10 rounded-xl py-3 px-4 text-sm text-slate-100 outline-none focus:ring-1 focus:ring-primary/50">
                         <option value="ESQUECIMENTO">Esquecimento de Registro</option>
@@ -425,6 +442,8 @@
 
             document.getElementById('inputTipoModo').value = mode;
             document.getElementById('camposJustificativa').classList.toggle('hidden', mode !== 'justificativa');
+            const elGeo = document.getElementById('containerGeolocalizacao');
+            if(elGeo) elGeo.classList.toggle('hidden', mode !== 'atividade');
             document.getElementById('titleAnotacao').innerText = mode === 'atividade' ? 'REGISTRAR ATIVIDADE' : 'ENVIAR JUSTIFICATIVA';
         }
 
@@ -437,6 +456,28 @@
             UI.showLoader();
             
             try {
+                let lat = null;
+                let lng = null;
+
+                if (mode === 'atividade' && document.getElementById('toggleGeo').checked) {
+                    try {
+                        const position = await new Promise((resolve, reject) => {
+                            navigator.geolocation.getCurrentPosition(resolve, reject, {
+                                enableHighAccuracy: true,
+                                timeout: 10000,
+                                maximumAge: 0
+                            });
+                        });
+                        lat = position.coords.latitude;
+                        lng = position.coords.longitude;
+                    } catch (err) {
+                        console.error("Erro ao obter geolocalização", err);
+                        UI.showToast('Ative a localização no navegador.', 'error');
+                        UI.hideLoader();
+                        return;
+                    }
+                }
+
                 const emp = DiarioEngine.state.employee;
                 const basePayload = { 
                     funcionario_id: targetId, 
@@ -445,6 +486,11 @@
                     descricao: content, 
                     data_incidente: new Date().toISOString() 
                 };
+
+                if (lat && lng) {
+                    basePayload.conteudo += ` |GEO:${lat},${lng}|`;
+                    basePayload.descricao = basePayload.conteudo;
+                }
                 
                 let res;
                 if (mode === 'atividade') {

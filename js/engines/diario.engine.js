@@ -189,10 +189,14 @@ export const DiarioEngine = {
     async saveEdit(id, type) {
         // Tentar encontrar o elemento de conteúdo (textarea) por diferentes IDs possíveis
         const textarea = document.getElementById(`edit-content-${id}`) || document.getElementById(`edit-desc-${id}`);
+        const geoInput = document.getElementById(`edit-geo-${id}`);
         if (!textarea) return;
         
-        const newContent = textarea.value.trim();
+        let newContent = textarea.value.trim();
         if (!newContent) return;
+        if (geoInput && geoInput.value) {
+            newContent += ' ' + geoInput.value;
+        }
 
         UI.showLoader();
         try {

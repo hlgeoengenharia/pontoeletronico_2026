@@ -23,6 +23,11 @@ export const AtividadesActions = {
                 data: data.data || data.data_incidente || new Date().toISOString()
             };
 
+            if (data.latitude && data.longitude) {
+                payload.latitude = data.latitude;
+                payload.longitude = data.longitude;
+            }
+
             console.log('[Atividades] Tentando salvar:', payload);
 
             let res;
