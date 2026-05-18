@@ -337,6 +337,17 @@
                       class="w-full bg-background-dark/50 border border-white/10 rounded-2xl p-4 text-xs text-slate-100 placeholder:text-slate-700 focus:border-primary outline-none transition-all"
                       placeholder="Digite a mensagem ou instruções da solicitação..."></textarea>
                       
+                  <div class="flex items-center justify-between p-3 bg-rose-500/5 border border-rose-500/20 rounded-xl mt-3">
+                      <div class="space-y-1">
+                          <label class="text-[9px] font-black text-rose-500 uppercase tracking-widest block">ADVERTIR FUNCIONÁRIO?</label>
+                          <span class="text-[8px] text-slate-500 font-bold uppercase block">Inclui advertência formal no comunicado</span>
+                      </div>
+                      <label class="relative inline-flex items-center cursor-pointer">
+                          <input type="checkbox" id="toggle-advertencia" class="sr-only peer">
+                          <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-rose-500"></div>
+                      </label>
+                  </div>
+
                   <div id="container-limite-extra" class="hidden flex items-center justify-between p-3 bg-white/5 border border-white/10 rounded-xl mt-3 transition-opacity duration-300">
                       <div class="space-y-1">
                           <label class="text-[9px] font-black text-slate-300 uppercase tracking-widest block">Limite de Prorrogação</label>
@@ -1541,7 +1552,8 @@
                              <div class="space-y-2">
                                  <label class="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">Conteúdo da Transmissão</label>
                                  <textarea id="edit-content-${item.id}" 
-                                     class="w-full bg-slate-900/80 border border-white/10 rounded-2xl p-4 text-[12px] text-slate-200 outline-none focus:border-primary min-h-[120px] shadow-inner font-medium">${item.content.replace(/\[LIMITE:\d+\]\s*/, '')}</textarea>
+                                     class="w-full bg-slate-900/80 border border-white/10 rounded-2xl p-4 text-[12px] text-slate-200 outline-none focus:border-primary min-h-[120px] shadow-inner font-medium">${item.content.replace(/\[LIMITE:\d+\]\s*/, '').replace(/\[ADVERTÊNCIA\]\s*/, '')}</textarea>
+                                 <input type="hidden" id="edit-advertencia-${item.id}" value="${item.content.includes('[ADVERTÊNCIA]') ? 'true' : 'false'}">
                              </div>
 
                              <div class="flex gap-3">
@@ -1582,7 +1594,12 @@
             let newContent = document.getElementById(`edit-content-${id}`).value.trim();
             if (!newContent) return;
 
-            // 1. Se for Hora Extra, reconstruir a tag de limite
+            // 1. Reconstruir tags
+            const hadAdvertencia = document.getElementById(`edit-advertencia-${id}`)?.value === 'true';
+            if (hadAdvertencia) {
+                newContent = `[ADVERTÊNCIA] ${newContent}`;
+            }
+
             if (item.tipo === 'hora_extra') {
                 const limitInput = document.getElementById(`edit-limit-${id}`);
                 const extraLimit = limitInput ? limitInput.value : 120;
@@ -2046,6 +2063,13 @@
             // 1. Criar ou Atualizar Comunicado
             let finalConteudo = conteudo;
             let finalSubtipo = activeComunicado.subtipo;
+
+            const toggleAdvertencia = document.getElementById('toggle-advertencia');
+            if (toggleAdvertencia && toggleAdvertencia.checked) {
+                finalConteudo = `[ADVERTÊNCIA] ${finalConteudo}`;
+                // Desmarca após o uso
+                toggleAdvertencia.checked = false;
+            }
 
             if (activeComunicado.subtipo === 'hora_extra') {
                 const limit = document.getElementById('input-limite-extra').value || 120;

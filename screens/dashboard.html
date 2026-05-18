@@ -527,7 +527,7 @@
                 const employeeIdParam = urlParams.get('id');
                 const loggedUser = Auth.getUser();
                 const role = String(loggedUser?.role || '').toLowerCase();
-                const isAdminOrGestor = role === 'admin' || role === 'gestor';
+                const isAdminOrGestor = role === 'admin' || role === 'superadmin' || role === 'gestor';
 
                 // Definir ID alvo: Prioridade para o parâmetro da URL se for Admin/Gestor inspecionando
                 const targetId = (employeeIdParam && isAdminOrGestor) ? employeeIdParam : session.userId;
@@ -1219,7 +1219,8 @@
                         workedMin += (outT - inT) / 60000;
                     }
 
-                    if (workedMin > 0 || (isPast && !event && !diaExtra)) {
+                    const isExpectedWorkDay = futureScale.includes(dateStr);
+                    if (workedMin > 0 || (isPast && isExpectedWorkDay && !event && !diaExtra && !isVacation)) {
                         balanceClass = workedMin >= jornadaDiariaMin ? 'bg-emerald-500' : 'bg-rose-500';
                     }
                 }

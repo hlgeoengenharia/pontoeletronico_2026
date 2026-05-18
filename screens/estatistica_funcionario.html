@@ -15,32 +15,86 @@
     <script src="../js/manager-context.js?v=4.5"></script>
     <title>ChronoSync - Estatísticas de Desempenho</title>
     <style>
-        @media print {
-            .no-print { display: none !important; }
-            body { background: white !important; color: black !important; padding-bottom: 0 !important; }
-            main { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
-            .stats-grid { display: grid !important; grid-template-columns: repeat(3, 1fr) !important; gap: 1rem !important; }
-            .bg-background-dark, .bg-\[\#0f172a\] { background: #f8fafc !important; border: 1px solid #e2e8f0 !important; }
-            .text-slate-100, .text-slate-300 { color: #0f172a !important; }
-        }
         /* Audit Slim Card Styles */
         .audit-card { transition: all 0.3s ease; }
+
         @media print {
             .no-print { display: none !important; }
-            .audit-card {
+            body { 
+                background: white !important; 
+                color: black !important; 
+                padding-bottom: 0 !important; 
+                font-size: 10pt !important; 
+                -webkit-print-color-adjust: exact !important; 
+                print-color-adjust: exact !important; 
+            }
+            main { max-width: 100% !important; padding: 10px 20px !important; margin: 0 auto !important; }
+            
+            header { 
                 background: white !important;
-                border: 2px solid #334155 !important;
+                border-bottom: 2px solid #334155 !important; 
+                margin-bottom: 20px !important; 
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: center !important;
+                padding: 10px 0 !important;
+            }
+            header h2 { color: black !important; font-size: 18pt !important; margin-bottom: 5px !important; }
+            
+            .audit-card {
+                background: #f8fafc !important;
+                border: 2px solid #cbd5e1 !important;
                 border-radius: 12px !important;
                 padding: 1.5rem !important;
-                margin-bottom: 2rem !important;
+                margin-bottom: 1.5rem !important;
                 box-shadow: none !important;
-                width: 100% !important;
                 color: black !important;
+                page-break-inside: avoid !important;
+                display: flex !important;
+                align-items: center !important;
+                gap: 20px !important;
             }
-            .audit-card img { filter: grayscale(1) contrast(1.2); border-color: #334155 !important; }
-            .audit-card h3 { color: black !important; border-bottom: 2px solid #334155 !important; }
-            .audit-card .text-primary { color: black !important; font-weight: 800 !important; }
-            .audit-card .text-slate-500 { color: #64748b !important; }
+            .audit-card .relative { border: 2px solid #cbd5e1 !important; border-radius: 12px !important; overflow: hidden !important; }
+            .audit-card img { filter: none !important; }
+            .audit-card h3 { color: black !important; border-bottom: 2px solid #cbd5e1 !important; padding-bottom: 5px !important; margin-bottom: 10px !important; font-size: 14pt !important; }
+            .audit-card span { color: black !important; }
+            .audit-card .text-amber-500 { color: #0f172a !important; font-weight: 800 !important; }
+            
+            /* Grid de Estatísticas (Stats do Ano) */
+            .stats-grid {
+                display: grid !important;
+                grid-template-columns: repeat(3, 1fr) !important;
+                gap: 15px !important;
+                width: 100% !important;
+                margin-bottom: 1.5rem !important;
+                page-break-inside: avoid !important;
+            }
+            .stats-grid > div {
+                border: 2px solid #cbd5e1 !important;
+                background: white !important;
+                color: black !important;
+                padding: 15px !important;
+                border-radius: 12px !important;
+                text-align: center !important;
+            }
+            .stats-grid p { color: black !important; }
+            .stats-grid span.material-symbols-outlined { color: #334155 !important; }
+
+            /* Tabela de Evolução Mensal */
+            table { border-collapse: collapse !important; width: 100% !important; margin-bottom: 20px !important; }
+            th { border-bottom: 2px solid #94a3b8 !important; padding: 8px !important; color: black !important; background: #f1f5f9 !important; font-weight: bold !important; font-size: 9pt !important;}
+            td { padding: 8px !important; border-bottom: 1px solid #e2e8f0 !important; font-size: 9pt !important; }
+            #evolucaoBody tr { page-break-inside: avoid !important; }
+            
+            .bg-background-dark, .bg-\[\#0f172a\], .bg-white\/\[0\.04\] { background: white !important; border: none !important; box-shadow: none !important;}
+            .bg-primary\/5 { background: #f8fafc !important; border: 1px solid #e2e8f0 !important; }
+            .text-slate-100, .text-slate-300, .text-slate-200, .text-white { color: black !important; }
+            .text-slate-500, .text-slate-600 { color: #475569 !important; }
+
+            /* Text colors overrides for printing */
+            .text-emerald-400, .text-emerald-500 { color: #059669 !important; }
+            .text-rose-400, .text-rose-500 { color: #e11d48 !important; }
+            .text-primary { color: #3b82f6 !important; }
         }
     </style>
 </head>

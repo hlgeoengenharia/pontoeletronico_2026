@@ -17,12 +17,15 @@ export const ComunicadoHistory = {
         // Extrair minutos do conteúdo [LIMITE:XX] se houver
         const match = (item.content || '').match(/\[LIMITE:(\d+)\]/);
         const extraMinutes = match ? match[1] : null;
+
+        const isAdvertencia = (item.content || '').includes('[ADVERTÊNCIA]');
         
         // Estado de "Ciente" (apenas para colaborador e se não for contexto Online)
         const isCiente = options.isContextOnline ? false : (localStorage.getItem(`ciente_${item.id}`) === 'true');
         
-        const bgBadge = isCiente ? 'bg-emerald-500/10 text-emerald-500' : 'bg-primary/10 text-primary';
-        const colorClass = isCiente ? 'border-l-emerald-500/80' : 'border-l-primary/80';
+        const bgBadge = isAdvertencia ? 'bg-rose-500/10 text-rose-500' : (isCiente ? 'bg-emerald-500/10 text-emerald-500' : 'bg-primary/10 text-primary');
+        let colorClass = isCiente ? 'border-l-emerald-500/80' : 'border-l-primary/80';
+        if (isAdvertencia) colorClass = 'border-l-rose-500/80';
 
         // Botão de Ciência (EXCLUSIVO PARA HORA EXTRA no portal do colaborador)
         let actionButtons = '';
@@ -68,7 +71,8 @@ export const ComunicadoHistory = {
                             <h5 class="text-[8px] font-black uppercase tracking-widest text-slate-500 italic">${extraMinutes ? 'HORA EXTRA' : 'COMUNICADO'}</h5>
                             <span class="text-[7px] font-bold text-slate-600">${date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
                         </div>
-                        <p class="text-[10px] text-slate-400 leading-tight italic line-clamp-2">"${cleanContent || '...'}"</p>
+                        ${isAdvertencia ? `<p class="text-[8px] font-black text-rose-500 uppercase tracking-widest mb-0.5 flex items-center gap-1"><span class="material-symbols-outlined text-[10px]">warning</span> Advertência</p>` : ''}
+                        <p class="text-[10px] text-slate-400 leading-tight italic line-clamp-2">"${cleanContent.replace(/\[ADVERTÊNCIA\]\s*/, '') || '...'}"</p>
                     </div>
                     ${extraMinutes && !isCiente && !options.hideActions ? `
                         <button onclick="window.marcarCiente && window.marcarCiente('${item.id}', 'HE')" class="px-2 py-1 bg-primary/10 border border-primary/20 rounded-md text-primary text-[7px] font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all">
@@ -100,7 +104,8 @@ export const ComunicadoHistory = {
                 </div>
 
                 <div class="bg-black/20 rounded-xl p-3 border border-white/5">
-                    <p class="text-[10px] text-slate-400 leading-relaxed italic line-clamp-3 font-medium opacity-80">"${(item.content || "").replace(/\[LIMITE:\d+\]\s*/, '')}"</p>
+                    ${isAdvertencia ? `<p class="text-[9px] font-black text-rose-500 uppercase tracking-widest mb-1 flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">warning</span> Advertência Registrada</p>` : ''}
+                    <p class="text-[10px] text-slate-400 leading-relaxed italic line-clamp-3 font-medium opacity-80">"${(item.content || "").replace(/\[LIMITE:\d+\]\s*/, '').replace(/\[ADVERTÊNCIA\]\s*/, '')}"</p>
                 </div>
                 
                 ${actionButtons}

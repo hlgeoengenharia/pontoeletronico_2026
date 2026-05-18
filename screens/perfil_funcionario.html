@@ -649,7 +649,7 @@
                         }
                     }
                     const loggedRole = String(loggedUser?.role || '').toLowerCase();
-                    const isAdmin = loggedRole === 'admin';
+                    const isAdmin = loggedRole === 'admin' || loggedRole === 'superadmin';
                     const isGestor = loggedRole === 'gestor' || loggedRole === 'manager' || loggedRole === 'comandante' || isAdmin;
 
                     // 1. REGRAS RÍGIDAS DE PERMISSÃO (Independente de 'locked')
