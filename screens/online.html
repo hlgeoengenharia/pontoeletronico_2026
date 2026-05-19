@@ -337,7 +337,7 @@
                       class="w-full bg-background-dark/50 border border-white/10 rounded-2xl p-4 text-xs text-slate-100 placeholder:text-slate-700 focus:border-primary outline-none transition-all"
                       placeholder="Digite a mensagem ou instruções da solicitação..."></textarea>
                       
-                  <div class="flex items-center justify-between p-3 bg-rose-500/5 border border-rose-500/20 rounded-xl mt-3">
+                  <div id="container-advertencia" class="flex items-center justify-between p-3 bg-rose-500/5 border border-rose-500/20 rounded-xl mt-3 transition-opacity duration-300">
                       <div class="space-y-1">
                           <label class="text-[9px] font-black text-rose-500 uppercase tracking-widest block">ADVERTIR FUNCIONÁRIO?</label>
                           <span class="text-[8px] text-slate-500 font-bold uppercase block">Inclui advertência formal no comunicado</span>
@@ -1377,6 +1377,7 @@
         const containerFerias = document.getElementById('container-ferias-folgas');
         const containerLimite = document.getElementById('container-limite-extra');
         const containerDiaExtra = document.getElementById('container-dia-extra');
+        const containerAdvertencia = document.getElementById('container-advertencia');
         
         // Reset Buttons
         [btnMsg, btnHE, btnDE, btnFer].forEach(btn => {
@@ -1392,6 +1393,7 @@
             containerPadrao.classList.remove('hidden');
             containerFerias.classList.add('hidden');
             if (containerLimite) containerLimite.classList.add('hidden');
+            if (containerAdvertencia) containerAdvertencia.classList.remove('hidden');
         } else if (subtipo === 'hora_extra') {
             btnHE.classList.add('bg-primary', 'text-white', 'shadow-lg');
             btnHE.classList.remove('text-slate-400');
@@ -1400,6 +1402,7 @@
             containerFerias.classList.add('hidden');
             if (containerLimite) containerLimite.classList.remove('hidden');
             if (containerDiaExtra) containerDiaExtra.classList.add('hidden');
+            if (containerAdvertencia) containerAdvertencia.classList.add('hidden');
         } else if (subtipo === 'dia_trabalho_extra') {
             btnDE.classList.add('bg-primary', 'text-white', 'shadow-lg');
             btnDE.classList.remove('text-slate-400');
@@ -1408,6 +1411,7 @@
             containerFerias.classList.add('hidden');
             if (containerLimite) containerLimite.classList.add('hidden');
             if (containerDiaExtra) containerDiaExtra.classList.remove('hidden');
+            if (containerAdvertencia) containerAdvertencia.classList.add('hidden');
             renderDiaExtraCalendar();
         } else if (subtipo === 'ferias_folgas') {
             btnFer.classList.add('bg-primary', 'text-white', 'shadow-lg');
@@ -1416,6 +1420,7 @@
             containerFerias.classList.remove('hidden');
             if (containerLimite) containerLimite.classList.add('hidden');
             if (containerDiaExtra) containerDiaExtra.classList.add('hidden');
+            if (containerAdvertencia) containerAdvertencia.classList.add('hidden');
             renderFeriasCalendar();
         }
         
